@@ -7,116 +7,8 @@ import type { AssetEntry } from './assets';
 
 export const ASSETS_V21_PART2: AssetEntry[] = [
   // v21-v30 B04 崩盤前夜／劉董戰場場景（載入時機建議：L29/L30 關卡載入，暫沿 Boot 預載）。
-  {
-    key: 'bg-crasheve-l',
-    url: new URL('../../assets/sprites/bg-crasheve-l.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'prop-crasheve-1',
-    url: new URL('../../assets/sprites/prop-crasheve-1.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'prop-crasheve-2',
-    url: new URL('../../assets/sprites/prop-crasheve-2.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'prop-crasheve-3',
-    url: new URL('../../assets/sprites/prop-crasheve-3.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'prop-crasheve-4',
-    url: new URL('../../assets/sprites/prop-crasheve-4.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'bg-market-l',
-    url: new URL('../../assets/sprites/bg-market-l.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'prop-market-1',
-    url: new URL('../../assets/sprites/prop-market-1.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'prop-market-2',
-    url: new URL('../../assets/sprites/prop-market-2.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'prop-market-3',
-    url: new URL('../../assets/sprites/prop-market-3.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'prop-market-4',
-    url: new URL('../../assets/sprites/prop-market-4.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
   // v21-v30 B04 劉董三形態補完與入金演出四幀（載入時機建議：L30 魔王關載入，暫沿 Boot 預載）。
-  {
-    key: 'boss-liudong-enraged',
-    url: new URL('../../assets/sprites/boss-liudong-enraged.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-liudong-doom',
-    url: new URL('../../assets/sprites/boss-liudong-doom.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-liudong-entry-1',
-    url: new URL('../../assets/sprites/boss-liudong-entry-1.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-liudong-entry-2',
-    url: new URL('../../assets/sprites/boss-liudong-entry-2.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-liudong-entry-3',
-    url: new URL('../../assets/sprites/boss-liudong-entry-3.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-liudong-entry-4',
-    url: new URL('../../assets/sprites/boss-liudong-entry-4.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
   // v21-v30 B04 牛熊怪與三市場圖示（載入時機建議：L29/L30 關卡載入，暫沿 Boot 預載）。
-  {
-    key: 'minion-bullrun',
-    url: new URL('../../assets/sprites/minion-bullrun.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'minion-bearmarket',
-    url: new URL('../../assets/sprites/minion-bearmarket.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
   // minion-bearlet：已於 §123 W3 接關認領（L27 入編），條目搬回主 manifest（assets.ts）。
   {
     key: 'ui-market-usstock',
@@ -137,61 +29,7 @@ export const ASSETS_V21_PART2: AssetEntry[] = [
     phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
   },
   // v21-v30 B04 下跌箭頭三變體（假箭頭空心鈍頭可辨識）與市場攻擊單件。
-  {
-    key: 'fx-market-arrow-big',
-    url: new URL('../../assets/sprites/fx-market-arrow-big.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'fx-market-arrow-small',
-    url: new URL('../../assets/sprites/fx-market-arrow-small.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'fx-market-arrow-fake',
-    url: new URL('../../assets/sprites/fx-market-arrow-fake.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'fx-market-coin',
-    url: new URL('../../assets/sprites/fx-market-coin.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'fx-market-candle-green',
-    url: new URL('../../assets/sprites/fx-market-candle-green.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'fx-market-candle-pin',
-    url: new URL('../../assets/sprites/fx-market-candle-pin.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'fx-market-circuitwall',
-    url: new URL('../../assets/sprites/fx-market-circuitwall.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
   // v21-v30 B04 市場終招分層 VFX（崩跌衝擊波/K線海嘯/市場黑洞/入金光束，各五層獨立疊加）。
-  {
-    key: 'fx-market-crashwave-core',
-    url: new URL('../../assets/sprites/fx-market-crashwave-core.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'fx-market-crashwave-shock',
-    url: new URL('../../assets/sprites/fx-market-crashwave-shock.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
   {
     key: 'fx-market-crashwave-trail',
     url: new URL('../../assets/sprites/fx-market-crashwave-trail.webp', import.meta.url).href,
@@ -207,18 +45,6 @@ export const ASSETS_V21_PART2: AssetEntry[] = [
   {
     key: 'fx-market-crashwave-overlay',
     url: new URL('../../assets/sprites/fx-market-crashwave-overlay.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'fx-market-klinewave-core',
-    url: new URL('../../assets/sprites/fx-market-klinewave-core.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'fx-market-klinewave-shock',
-    url: new URL('../../assets/sprites/fx-market-klinewave-shock.webp', import.meta.url).href,
 
     phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
   },
@@ -241,12 +67,6 @@ export const ASSETS_V21_PART2: AssetEntry[] = [
     phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
   },
   {
-    key: 'fx-market-blackhole-core',
-    url: new URL('../../assets/sprites/fx-market-blackhole-core.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
     key: 'fx-market-blackhole-shock',
     url: new URL('../../assets/sprites/fx-market-blackhole-shock.webp', import.meta.url).href,
 
@@ -265,26 +85,8 @@ export const ASSETS_V21_PART2: AssetEntry[] = [
     phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
   },
   {
-    key: 'fx-market-blackhole-overlay',
-    url: new URL('../../assets/sprites/fx-market-blackhole-overlay.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'fx-market-deposit-core',
-    url: new URL('../../assets/sprites/fx-market-deposit-core.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
     key: 'fx-market-deposit-shock',
     url: new URL('../../assets/sprites/fx-market-deposit-shock.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'fx-market-deposit-trail',
-    url: new URL('../../assets/sprites/fx-market-deposit-trail.webp', import.meta.url).href,
 
     phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
   },

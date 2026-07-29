@@ -4,24 +4,28 @@ import { SceneKeys, type GameResultData } from '../core/types';
 import { createMenuBackdrop, type BackgroundHandle } from '../systems/background';
 import { addDomButton } from '../systems/hud';
 
-// 星光復甦謝幕（GAME_DESIGN §84）：擊破蝕星魔核（L20）後的輕量 credits——
+// 星光復甦謝幕（GAME_DESIGN §84/§126）：擊破鏈末魔王後的輕量 credits——
 // 星核淨化演出＋製作名單逐段浮現，隨時可點擊跳過；播畢/跳過皆接 Result 結算。
+// §126 終章擴充：L30 劉董擊破＝全 30 關通關，謝幕文案升級崩盤終章收官版
+//（沿 v12 慣例零新資產；觸發關號由 GameScene 鏈末判定資料驅動）。
 // KISS：純 tween 序列零新資產（星核以 fx-star 疊金光表現）。
 
 const LINE_STEP_MS = 2200;
 const LINE_FADE_MS = 700;
 // 全序列自動收尾（未跳過時）：末行浮現後短拍接續。
 const CREDIT_LINES: readonly { text: string; size: number }[] = [
-  { text: '蝕星魔核 淨化', size: 26 },
-  { text: '被奪走的星光 一點一點回到果凍星球', size: 20 },
+  { text: '崩盤之王 退場', size: 26 },
+  { text: '市場歸於平靜 星光回到果凍星球', size: 20 },
   { text: '星噗噗', size: 40 },
-  { text: '二十關世界・全區收復', size: 20 },
+  { text: '三十關世界・十區全收復', size: 20 },
+  { text: '果凍平原到崩盤終章 每一顆星都是你吸回來的', size: 18 },
   { text: '企劃／設計／程式／美術　星噗噗製作組', size: 18 },
+  { text: '本遊戲純屬虛構迷因 非投資建議', size: 16 },
   { text: '謝謝你把星光帶回來', size: 22 },
 ] as const;
 
 export class CreditsScene extends Phaser.Scene {
-  private result: GameResultData = { result: 'won', timeMs: 0, deaths: 0, levelId: 20 };
+  private result: GameResultData = { result: 'won', timeMs: 0, deaths: 0, levelId: 30 };
   private backdrop: BackgroundHandle | null = null;
   private finished = false;
 
@@ -34,7 +38,7 @@ export class CreditsScene extends Phaser.Scene {
       result: data.result ?? 'won',
       timeMs: data.timeMs ?? 0,
       deaths: data.deaths ?? 0,
-      levelId: data.levelId ?? 20,
+      levelId: data.levelId ?? 30,
       // EX 變體（§86）：Credits 轉接 Result 時保留旗標，契約不折損。
       ex: data.ex === true,
       // 成就名單（§94）：謝幕轉接結算時保留，終局多重解鎖不漏看。

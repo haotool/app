@@ -2,6 +2,8 @@ import type Phaser from 'phaser';
 import type { EnemyKind } from '../core/types';
 import {
   updateBearlet,
+  updateBearmarket,
+  updateBullrun,
   updateCopypuff,
   updateDatamote,
   updateGravitybub,
@@ -72,6 +74,8 @@ export interface EnemyUpdateContext {
   spawnWaterBlade(x: number, y: number, vx: number, vy: number): void;
   // §123：bearlet 下跌箭頭（L30 前置教學），走 hazards 管線。
   spawnCrashArrow(x: number, y: number, directionX: 1 | -1): void;
+  // §126：bearmarket 地面震波（拍地雙側／甦醒全場），走 hazards 管線。
+  spawnMarketWave(x: number, y: number, directionX: 1 | -1, quake: boolean): void;
   // §123：datamote 聚攏尋找最近同類（enemies.ts 持有群組，經回呼查詢）。
   nearestKind(kind: EnemyKind, fromX: number, fromY: number): { x: number; y: number } | null;
 }
@@ -234,6 +238,15 @@ export function updateEnemyKind(
     }
     case 'bearlet': {
       updateBearlet(ctx, sprite, deltaMs);
+      break;
+    }
+    // §126 星海終局篇 W4 牛熊怪：AI 本體在 systems/fieldEnemies.ts。
+    case 'bullrun': {
+      updateBullrun(ctx, sprite, deltaMs);
+      break;
+    }
+    case 'bearmarket': {
+      updateBearmarket(ctx, sprite, deltaMs);
       break;
     }
     default: {

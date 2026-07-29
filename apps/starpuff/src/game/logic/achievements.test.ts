@@ -16,10 +16,10 @@ import {
 } from './achievements';
 import { BOSS_LEVEL_IDS, LEVELS } from './levels';
 
-// §121/§122/§123 星海終局篇：在編關卡 1-28（all-clear 由 LEVELS 派生）。
+// §121/§122/§123/§126 星海終局篇：在編關卡 1-30（all-clear 由 LEVELS 派生）。
 const ALL_IDS = [
   1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27,
-  28,
+  28, 29, 30,
 ] as const;
 
 function saveWithClears(ids: readonly number[], timeMs = 45000): SaveData {
@@ -37,8 +37,8 @@ function saveWithAllEggs(): SaveData {
 }
 
 describe('成就資料表（§94 SSOT 不變式）', () => {
-  it('id 唯一、數量 29（§122/§123 四新王首勝＋EX 各 +2）、名稱描述非空', () => {
-    expect(ACHIEVEMENTS).toHaveLength(29);
+  it('id 唯一、數量 31（§122/§123/§126 五新王首勝＋EX 各 +2）、名稱描述非空', () => {
+    expect(ACHIEVEMENTS).toHaveLength(31);
     expect(new Set(ACHIEVEMENTS.map((a) => a.id)).size).toBe(ACHIEVEMENTS.length);
     for (const spec of ACHIEVEMENTS) {
       expect(spec.nameZh.length).toBeGreaterThan(0);
@@ -104,7 +104,7 @@ describe('魔王類判定', () => {
   it('ex-conquest 文案王數由 BOSS_LEVEL_IDS 派生（§122 審查回饋：擴王不得漂移）', () => {
     const conquest = ACHIEVEMENTS.find((a) => a.id === 'ex-conquest');
     expect(conquest?.descZh).toBe(`${BOSS_LEVEL_IDS.length} 王 EX 變體全數制霸`);
-    expect(BOSS_LEVEL_IDS.length).toBe(9);
+    expect(BOSS_LEVEL_IDS.length).toBe(10);
   });
 });
 
@@ -191,7 +191,7 @@ describe('awardAchievements（補發與去重）', () => {
     expect(newly).not.toContain('first-clear');
   });
 
-  it('歷史滿進度存檔一次補發全部 29 條（舊玩家補發語意）', () => {
+  it('歷史滿進度存檔一次補發全部 31 條（舊玩家補發語意）', () => {
     const save = saveWithAllEggs();
     for (const id of BOSS_LEVEL_IDS) recordExClear(save, id);
     // 速通門檻：45000 ≤ 60000 → 兩條速通同時成立。

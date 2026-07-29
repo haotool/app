@@ -43,6 +43,8 @@ describe('LEVELS easterEggs 資料（§24）', () => {
       'crown-early-hit',
       'stand-count',
       'crown-early-hit',
+      'stand-count',
+      'crown-early-hit',
     ]);
     expect(LEVELS.map((l) => l.easterEggs[0]?.reward)).toEqual([
       'hp-up',
@@ -71,6 +73,8 @@ describe('LEVELS easterEggs 資料（§24）', () => {
       'full-magazine',
       'hp-up',
       'heal',
+      'full-magazine',
+      'full-magazine',
       'full-magazine',
       'full-magazine',
     ]);

@@ -576,6 +576,179 @@ export const ASSETS: AssetEntry[] = [
     url: new URL('../../assets/sprites/prop-voidring-4.webp', import.meta.url).href,
     phase: 'level',
   },
+  // §126 W4 接關：崩盤前夜/市場王座橫景與道具條、牛熊怪立繪、劉董完整動畫組
+  // 與市場 FX（liudongCinematics/systems/liudong 消費）自 assetsV21Part1/2/3 逐筆
+  // 搬回（#857 接關契約）。
+  {
+    key: 'bg-crasheve-l',
+    url: new URL('../../assets/sprites/bg-crasheve-l.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'prop-crasheve-1',
+    url: new URL('../../assets/sprites/prop-crasheve-1.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'prop-crasheve-2',
+    url: new URL('../../assets/sprites/prop-crasheve-2.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'prop-crasheve-3',
+    url: new URL('../../assets/sprites/prop-crasheve-3.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'prop-crasheve-4',
+    url: new URL('../../assets/sprites/prop-crasheve-4.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'bg-market-l',
+    url: new URL('../../assets/sprites/bg-market-l.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'prop-market-1',
+    url: new URL('../../assets/sprites/prop-market-1.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'prop-market-2',
+    url: new URL('../../assets/sprites/prop-market-2.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'prop-market-3',
+    url: new URL('../../assets/sprites/prop-market-3.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'prop-market-4',
+    url: new URL('../../assets/sprites/prop-market-4.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'minion-bullrun',
+    url: new URL('../../assets/sprites/minion-bullrun.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'minion-bearmarket',
+    url: new URL('../../assets/sprites/minion-bearmarket.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'boss-liudong',
+    url: new URL('../../assets/sprites/boss-liudong.webp', import.meta.url).href,
+    phase: 'boss',
+  },
+  {
+    key: 'boss-liudong-thinking',
+    url: new URL('../../assets/sprites/boss-liudong-thinking.webp', import.meta.url).href,
+    phase: 'boss',
+  },
+  {
+    key: 'boss-liudong-enraged',
+    url: new URL('../../assets/sprites/boss-liudong-enraged.webp', import.meta.url).href,
+    phase: 'boss',
+  },
+  {
+    key: 'boss-liudong-doom',
+    url: new URL('../../assets/sprites/boss-liudong-doom.webp', import.meta.url).href,
+    phase: 'boss',
+  },
+  {
+    key: 'fx-market-down-arrow',
+    url: new URL('../../assets/sprites/fx-market-down-arrow.webp', import.meta.url).href,
+    phase: 'boss',
+  },
+  {
+    key: 'fx-market-arrow-big',
+    url: new URL('../../assets/sprites/fx-market-arrow-big.webp', import.meta.url).href,
+    phase: 'boss',
+  },
+  {
+    key: 'fx-market-arrow-small',
+    url: new URL('../../assets/sprites/fx-market-arrow-small.webp', import.meta.url).href,
+    phase: 'boss',
+  },
+  {
+    key: 'fx-market-arrow-fake',
+    url: new URL('../../assets/sprites/fx-market-arrow-fake.webp', import.meta.url).href,
+    phase: 'boss',
+  },
+  {
+    key: 'fx-market-coin',
+    url: new URL('../../assets/sprites/fx-market-coin.webp', import.meta.url).href,
+    phase: 'boss',
+  },
+  {
+    key: 'fx-market-candle-green',
+    url: new URL('../../assets/sprites/fx-market-candle-green.webp', import.meta.url).href,
+    phase: 'boss',
+  },
+  {
+    key: 'fx-market-candle-pin',
+    url: new URL('../../assets/sprites/fx-market-candle-pin.webp', import.meta.url).href,
+    phase: 'boss',
+  },
+  {
+    key: 'fx-market-circuitwall',
+    url: new URL('../../assets/sprites/fx-market-circuitwall.webp', import.meta.url).href,
+    phase: 'boss',
+  },
+  {
+    key: 'fx-market-arrowrain-shock',
+    url: new URL('../../assets/sprites/fx-market-arrowrain-shock.webp', import.meta.url).href,
+    phase: 'boss',
+  },
+  {
+    key: 'fx-market-arrowrain-overlay',
+    url: new URL('../../assets/sprites/fx-market-arrowrain-overlay.webp', import.meta.url).href,
+    phase: 'boss',
+  },
+  {
+    key: 'fx-market-deposit-core',
+    url: new URL('../../assets/sprites/fx-market-deposit-core.webp', import.meta.url).href,
+    phase: 'boss',
+  },
+  {
+    key: 'fx-market-deposit-trail',
+    url: new URL('../../assets/sprites/fx-market-deposit-trail.webp', import.meta.url).href,
+    phase: 'boss',
+  },
+  {
+    key: 'fx-market-crashwave-core',
+    url: new URL('../../assets/sprites/fx-market-crashwave-core.webp', import.meta.url).href,
+    phase: 'boss',
+  },
+  {
+    key: 'fx-market-crashwave-shock',
+    url: new URL('../../assets/sprites/fx-market-crashwave-shock.webp', import.meta.url).href,
+    phase: 'boss',
+  },
+  {
+    key: 'fx-market-klinewave-core',
+    url: new URL('../../assets/sprites/fx-market-klinewave-core.webp', import.meta.url).href,
+    phase: 'boss',
+  },
+  {
+    key: 'fx-market-klinewave-shock',
+    url: new URL('../../assets/sprites/fx-market-klinewave-shock.webp', import.meta.url).href,
+    phase: 'boss',
+  },
+  {
+    key: 'fx-market-blackhole-core',
+    url: new URL('../../assets/sprites/fx-market-blackhole-core.webp', import.meta.url).href,
+    phase: 'boss',
+  },
+  {
+    key: 'fx-market-blackhole-overlay',
+    url: new URL('../../assets/sprites/fx-market-blackhole-overlay.webp', import.meta.url).href,
+    phase: 'boss',
+  },
 ];
 
 // v21-v30 未接關素材（442 條）獨立存放於 assetsV21Part1/2/3，刻意不併入本陣列：

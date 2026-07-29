@@ -171,6 +171,8 @@ describe('v18-level-bot INHALABLE 漂移守門（§107.4：量測近似集對齊
     orbiton: true,
     riftling: true,
     bearlet: true,
+    bullrun: true,
+    bearmarket: true,
   };
 
   it('腳本內嵌集合等於恆可吸真值（條件可吸 exposed 品種保守不計）', () => {

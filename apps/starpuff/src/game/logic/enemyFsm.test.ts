@@ -71,6 +71,10 @@ import {
   tickOrbiton,
   tickPrismbee,
   tickRiftling,
+  BULLRUN_FSM,
+  BEARMARKET_FSM,
+  tickBullrun,
+  tickBearmarket,
 } from './enemyFsm';
 
 // zzfx 於 import 期建 AudioContext（node 無此 API）；沿 finaleEnemies.test.ts 慣例替換。
@@ -809,5 +813,61 @@ describe('§123 星海終局篇 W3 新怪 FSM', () => {
     expect(inhaleFlavor('gravitybub')).toBe('boomy');
     expect(inhaleFlavor('orbiton')).toBe('boomy');
     expect(inhaleFlavor('riftling')).toBe('boomy');
+  });
+});
+
+describe('§126 星海終局篇 W4 牛熊怪 FSM', () => {
+  it('telegraph 紅線：bullrun 蓄力／bearmarket 拍地前搖與冬眠一律 ≥ telegraphMinMs', () => {
+    expect(BULLRUN_FSM.chargeMs).toBeGreaterThanOrEqual(AUDIT_THRESHOLDS.telegraphMinMs);
+    expect(BEARMARKET_FSM.slamwindMs).toBeGreaterThanOrEqual(AUDIT_THRESHOLDS.telegraphMinMs);
+    expect(BEARMARKET_FSM.hibernateMs).toBeGreaterThanOrEqual(AUDIT_THRESHOLDS.telegraphMinMs);
+  });
+
+  it('tickBullrun：prowl→charge→dash→（撞牆）redash→（再撞牆）recover→prowl', () => {
+    expect(tickBullrun('prowl', BULLRUN_FSM.prowlMs - 1, 1, false).state).toBe('charge');
+    expect(tickBullrun('charge', BULLRUN_FSM.chargeMs - 1, 1, false).state).toBe('dash');
+    expect(tickBullrun('dash', 100, 16, true)).toEqual({
+      state: 'redash',
+      stateMs: 0,
+      entered: 'redash',
+    });
+    expect(tickBullrun('redash', 100, 16, true).state).toBe('recover');
+    expect(tickBullrun('recover', BULLRUN_FSM.recoverMs - 1, 1, false).state).toBe('prowl');
+  });
+
+  it('tickBullrun：dash/redash 未撞牆以 dashMaxMs 斷尾收回（§56 有界）', () => {
+    expect(tickBullrun('dash', BULLRUN_FSM.dashMaxMs - 1, 1, false).state).toBe('recover');
+    expect(tickBullrun('redash', BULLRUN_FSM.dashMaxMs - 1, 1, false).state).toBe('recover');
+    expect(tickBullrun('dash', 100, 16, false).state).toBe('dash');
+  });
+
+  it('tickBearmarket：prowl→slamwind→slam（單幀事件態）→cool→prowl', () => {
+    expect(tickBearmarket('prowl', BEARMARKET_FSM.prowlMs - 1, 1, false).state).toBe('slamwind');
+    expect(tickBearmarket('slamwind', BEARMARKET_FSM.slamwindMs - 1, 1, false).state).toBe('slam');
+    expect(tickBearmarket('slam', 0, 16, false).state).toBe('cool');
+    expect(tickBearmarket('cool', BEARMARKET_FSM.coolMs - 1, 1, false).state).toBe('prowl');
+  });
+
+  it('tickBearmarket：低血旗標於 prowl/cool 觸發一次性冬眠→quake（單幀）→wake→prowl', () => {
+    expect(tickBearmarket('prowl', 0, 16, true)).toEqual({
+      state: 'hibernate',
+      stateMs: 0,
+      entered: 'hibernate',
+    });
+    expect(tickBearmarket('cool', 0, 16, true).state).toBe('hibernate');
+    // 前搖中不被冬眠打斷（telegraph 完整性）。
+    expect(tickBearmarket('slamwind', 100, 16, true).state).toBe('slamwind');
+    expect(tickBearmarket('hibernate', BEARMARKET_FSM.hibernateMs - 1, 1, true).state).toBe(
+      'quake',
+    );
+    expect(tickBearmarket('quake', 0, 16, false).state).toBe('wake');
+    expect(tickBearmarket('wake', BEARMARKET_FSM.wakeMs - 1, 1, false).state).toBe('prowl');
+  });
+
+  it('可吸口徑與波列有界（§126）：牛熊怪均不可吸；震波壽命有界（§56）', () => {
+    expect(canInhale('bullrun')).toBe(false);
+    expect(canInhale('bearmarket')).toBe(false);
+    expect(BEARMARKET_FSM.slamWaveLifeMs).toBeLessThanOrEqual(3000);
+    expect(BEARMARKET_FSM.quakeWaveLifeMs).toBeLessThanOrEqual(3000);
   });
 });

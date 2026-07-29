@@ -78,7 +78,11 @@ export function createDamageDirector(
       hooks.player().takeDamage(0, sourceX);
       return;
     }
+    // 慈悲轉發（§126.2 劉董）：實際掉血才回報魔王（i-frame/零傷不計——
+    // PRD §6.7「連續三次受傷」語意）；hp 前後對照沿 advanceTide 既有慣例。
+    const hpBefore = hooks.playerHp();
     hooks.player().takeDamage(damage, sourceX);
+    if (hooks.playerHp() < hpBefore) hooks.boss().notePlayerHurt?.();
   }
 
   // 短期增益（§69）：拾取單點——同時僅存一個、後拾覆蓋；移動倍率同步注入 player。

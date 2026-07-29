@@ -975,3 +975,111 @@ export function tickBearlet(state: BearletState, stateMs: number, deltaMs: numbe
     return { state: 'waddle', stateMs: 0, entered: 'waddle' };
   return { state, stateMs: next, entered: null };
 }
+
+// 牛市怪 Bull Run（§126，PRD §6.6）：緩走 prowl → 蓄力 charge 0.75s（定身閃爍
+// telegraph）→ 衝刺 dash（鎖定方向不修正）→ 撞牆反彈入二次加速 redash（呈現層
+// 翻向增速）→ 回復 recover。反制：跳越衝刺線／星彈命中蓄力期即中斷（雷化鏈電
+// 波及＝群體中斷優勢）／殼化反彈／風化空中迴避。
+export const BULLRUN_FSM = {
+  prowlMs: 1800,
+  chargeMs: 750,
+  // 單段衝刺時長上限（未撞牆的斷尾保險，§56 有界）。
+  dashMaxMs: 1600,
+  recoverMs: 1100,
+  walkSpeed: 46,
+  dashSpeed: 300,
+  // 二次加速倍率（撞牆反彈後）。
+  redashSpeedMul: 1.25,
+} as const;
+
+export type BullrunState = 'prowl' | 'charge' | 'dash' | 'redash' | 'recover';
+
+export interface BullrunTick {
+  state: BullrunState;
+  stateMs: number;
+  entered: BullrunState | null;
+}
+
+// hitWall：呈現層回報本 tick 撞牆（blocked.left/right）——dash 入二次加速、redash 收尾。
+export function tickBullrun(
+  state: BullrunState,
+  stateMs: number,
+  deltaMs: number,
+  hitWall: boolean,
+): BullrunTick {
+  const next = stateMs + deltaMs;
+  if (state === 'prowl' && next >= BULLRUN_FSM.prowlMs)
+    return { state: 'charge', stateMs: 0, entered: 'charge' };
+  if (state === 'charge' && next >= BULLRUN_FSM.chargeMs)
+    return { state: 'dash', stateMs: 0, entered: 'dash' };
+  if (state === 'dash') {
+    if (hitWall) return { state: 'redash', stateMs: 0, entered: 'redash' };
+    if (next >= BULLRUN_FSM.dashMaxMs) return { state: 'recover', stateMs: 0, entered: 'recover' };
+  }
+  if (state === 'redash' && (hitWall || next >= BULLRUN_FSM.dashMaxMs))
+    return { state: 'recover', stateMs: 0, entered: 'recover' };
+  if (state === 'recover' && next >= BULLRUN_FSM.recoverMs)
+    return { state: 'prowl', stateMs: 0, entered: 'prowl' };
+  return { state, stateMs: next, entered: null };
+}
+
+// 熊市怪 Bear Market（§126，PRD §6.6）：緩走 prowl → 拍地前搖 slamwind 0.7s
+//（telegraph 閃爍）→ 拍地 slam（雙側地面波＋召下跌小箭頭，單幀事件態）→ 冷卻 cool；
+// 低血（≤40%）一次性冬眠 hibernate 1.4s（定身大 telegraph）→ 全場震波 quake
+//（單幀事件態，跳躍迴避）→ 甦醒 wake。反制：跳越波列／雷化鏈電速清／風化越頂／
+// 殼化反彈。
+export const BEARMARKET_FSM = {
+  prowlMs: 2200,
+  slamwindMs: 700,
+  coolMs: 1400,
+  hibernateMs: 1400,
+  wakeMs: 1000,
+  walkSpeed: 40,
+  // 低血冬眠觸發閾值（HP 比例；一次性由呈現層 hibernated 旗標鎖存）。
+  hibernateHpRatio: 0.4,
+  // 拍地波與全場震波參數（呈現層生成）。
+  slamWaveSpeed: 180,
+  slamWaveLifeMs: 1400,
+  quakeWaveSpeed: 240,
+  quakeWaveLifeMs: 2600,
+} as const;
+
+export type BearmarketState =
+  | 'prowl'
+  | 'slamwind'
+  | 'slam'
+  | 'cool'
+  | 'hibernate'
+  | 'quake'
+  | 'wake';
+
+export interface BearmarketTick {
+  state: BearmarketState;
+  stateMs: number;
+  entered: BearmarketState | null;
+}
+
+// lowHpPending：呈現層回報「HP 已低於閾值且尚未冬眠過」——prowl/cool 期優先入冬眠。
+export function tickBearmarket(
+  state: BearmarketState,
+  stateMs: number,
+  deltaMs: number,
+  lowHpPending: boolean,
+): BearmarketTick {
+  const next = stateMs + deltaMs;
+  if ((state === 'prowl' || state === 'cool') && lowHpPending)
+    return { state: 'hibernate', stateMs: 0, entered: 'hibernate' };
+  if (state === 'prowl' && next >= BEARMARKET_FSM.prowlMs)
+    return { state: 'slamwind', stateMs: 0, entered: 'slamwind' };
+  if (state === 'slamwind' && next >= BEARMARKET_FSM.slamwindMs)
+    return { state: 'slam', stateMs: 0, entered: 'slam' };
+  if (state === 'slam') return { state: 'cool', stateMs: 0, entered: 'cool' };
+  if (state === 'cool' && next >= BEARMARKET_FSM.coolMs)
+    return { state: 'prowl', stateMs: 0, entered: 'prowl' };
+  if (state === 'hibernate' && next >= BEARMARKET_FSM.hibernateMs)
+    return { state: 'quake', stateMs: 0, entered: 'quake' };
+  if (state === 'quake') return { state: 'wake', stateMs: 0, entered: 'wake' };
+  if (state === 'wake' && next >= BEARMARKET_FSM.wakeMs)
+    return { state: 'prowl', stateMs: 0, entered: 'prowl' };
+  return { state, stateMs: next, entered: null };
+}

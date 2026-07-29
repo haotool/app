@@ -57,8 +57,12 @@ export interface BossHandle {
   // 段起點重試（§82 Voidra）：玩家死亡時嘗試段內重試（P2/P3 不回滾整場），
   // 成功回 true（呈現層已自清並重置 FSM）；未實作或 P1 期走一般敗北流程。
   trySegmentRespawn?(): boolean;
+  // 玩家實傷回報（§126.2 劉董慈悲機制）：damageDirector 於實際掉血後轉發——
+  // 連續受傷自動降攻擊節奏（PRD §6.7）；未實作品種靜默略過。
+  notePlayerHurt?(): void;
   // e2e 觀測（§83 v11 觀察項收尾）：FSM 階段/招式即時值；未實作回 null。
-  getDebugState?(): { phase: string; state: string } | null;
+  // speedFactor 為選配觀測欄（§126.2 慈悲整合守門用），既有消費端零影響。
+  getDebugState?(): { phase: string; state: string; speedFactor?: number } | null;
 }
 
 const GROUND_TOP = VIEW.height - 80;

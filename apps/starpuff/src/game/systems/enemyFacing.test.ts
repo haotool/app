@@ -163,6 +163,9 @@ const FACING_DRIVERS: Record<(typeof DIRECTIONAL_ENEMY_KINDS)[number], FacingDri
   prismbee: targetDriven({ state: 'hover', stateMs: 0, phase: 0 }),
   riftling: targetDriven({ state: 'idle', stateMs: 0, phase: 0 }),
   bearlet: targetDriven({ state: 'waddle', stateMs: 0 }),
+  // §126 牛熊怪：緩走朝玩家（prowl 態走速方向由目標側決定）。
+  bullrun: targetDriven({ state: 'prowl', stateMs: 0 }),
+  bearmarket: targetDriven({ state: 'prowl', stateMs: 0 }),
 };
 
 describe('方向性品種面向同步（表驅動守門）', () => {

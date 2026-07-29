@@ -52,6 +52,7 @@ import { createStarSteering, type StarSteering } from '../systems/starSteering';
 import { createToasts, type ToastSystem } from '../systems/toasts';
 import { createTide, type TideHandle } from '../systems/tide';
 import { createWaveRunner, type WaveRunner } from '../systems/waves';
+import { playMarketOpenVignette } from '../systems/liudongCinematics';
 import { bindSfxToEvents, playSfx, stopSfx } from '../audio/sfx';
 import { notifySaveUnavailable } from '../../shellCards';
 
@@ -716,8 +717,25 @@ export class GameScene extends Phaser.Scene {
         viewWidth: () => this.scale.width,
         onPlayerDied: (x, y) => this.handlePlayerDied(x, y),
         onBossDefeated: () => this.handleBossDefeated(),
+        playOutroCinematic: () => this.playOutroCinematic(),
       }),
     );
+  }
+
+  // 關卡收尾演出（§127）：依 LevelSpec.outroCinematic 值分派（exhaustive，資料驅動
+  // 非關號分支）；L29 市場開盤倒數＝L30 伏筆。
+  private playOutroCinematic(): void {
+    const outro = this.level.outroCinematic;
+    if (outro === undefined) return;
+    switch (outro) {
+      case 'market-open':
+        playMarketOpenVignette(this);
+        return;
+      default: {
+        const unhandled: never = outro;
+        throw new Error(`未知收尾演出：${String(unhandled)}`);
+      }
+    }
   }
 
   // 敗北語意：走動關死亡重試當前關（卡點關越過中點改自 checkpoint 重生，§67）；

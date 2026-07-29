@@ -80,6 +80,9 @@ const SPAWN_Y: Record<EnemyKind, number> = {
   orbiton: 180,
   riftling: 280,
   bearlet: 330,
+  // §126 牛熊怪：地面帶（劉董召喚體，spawn 管線統一供給）。
+  bullrun: 330,
+  bearmarket: 330,
 };
 
 // #812 救援懸浮品種的可及帶定高（站立吸入錐直達，免跳拍追擊）。

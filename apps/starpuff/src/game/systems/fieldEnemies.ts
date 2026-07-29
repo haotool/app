@@ -1,6 +1,8 @@
 import type Phaser from 'phaser';
 import {
   BEARLET_FSM,
+  BEARMARKET_FSM,
+  BULLRUN_FSM,
   GRAVITYBUB_FSM,
   MAGNO_FSM,
   ORBITON_FSM,
@@ -9,6 +11,8 @@ import {
   copypuffMirrorDx,
   riftlingBlinkX,
   tickBearlet,
+  tickBearmarket,
+  tickBullrun,
   tickCopypuff,
   tickGravitybub,
   tickMagno,
@@ -17,6 +21,8 @@ import {
   tickPrismbee,
   tickRiftling,
   type BearletState,
+  type BearmarketState,
+  type BullrunState,
   type CopypuffState,
   type MirriState,
   type OrbitonState,
@@ -160,6 +166,10 @@ const RIFTLING_RIFT_TINT = 0xd0b8ff;
 const RIFTLING_COOL_TINT = 0x9a90b8;
 const BEARLET_WINDUP_TINT = 0xffb8a8;
 const ORBITON_WINDUP_TINT = 0xe8d8ff;
+// §126 牛熊怪：蓄力金橘閃爍／拍地紫紅閃爍／冬眠深紫定身。
+const BULLRUN_CHARGE_TINT = 0xffd88a;
+const BEARMARKET_WIND_TINT = 0xc8a8e8;
+const BEARMARKET_HIBERNATE_TINT = 0x584878;
 
 const GRAVITYBUB_RING: WindupRingSpec = {
   radius: GRAVITYBUB_FSM.fieldRadiusPx,
@@ -554,4 +564,177 @@ export function updateBearlet(
   }
   setFacingFromVelocityX(sprite, body.velocity.x);
   sprite.setRotation(Math.sin(tick.stateMs * 0.008) * 0.05);
+}
+
+// ===== §126 星海終局篇 W4：牛熊怪（L30 劉董召喚體，PRD §6.6）=====
+
+// 牛市怪（§126）：緩走 → 蓄力閃爍 telegraph → 鎖定衝刺（不修正）→ 撞牆反彈
+// 二次加速 → 回復。蓄力期受星彈命中即中斷（enemies.damage 結算端）。
+export function updateBullrun(
+  ctx: EnemyUpdateContext,
+  sprite: Phaser.Physics.Arcade.Sprite,
+  deltaMs: number,
+): void {
+  const body = sprite.body as Phaser.Physics.Arcade.Body;
+  const hitWall = body.blocked.left || body.blocked.right;
+  const tick = tickBullrun(
+    sprite.getData('state') as BullrunState,
+    sprite.getData('stateMs') as number,
+    deltaMs,
+    hitWall,
+  );
+  sprite.setData('state', tick.state);
+  sprite.setData('stateMs', tick.stateMs);
+  const mul = (sprite.getData('eliteMul') as number) ?? 1;
+  if (tick.entered === 'dash') {
+    playSfx('shell-spin', 0.8);
+    const direction = ctx.target && ctx.target.x < sprite.x ? -1 : 1;
+    body.setVelocityX(BULLRUN_FSM.dashSpeed * mul * direction);
+    setFacingBySign(sprite, direction);
+  }
+  if (tick.entered === 'redash') {
+    // 撞牆反彈二次加速：bounce=1 已翻向，僅補增速（方向沿反彈後速度）。
+    playSfx('metal', 0.7);
+    const direction = body.velocity.x < 0 ? -1 : 1;
+    body.setVelocityX(BULLRUN_FSM.dashSpeed * BULLRUN_FSM.redashSpeedMul * mul * direction);
+    setFacingBySign(sprite, direction);
+    ctx.scene.cameras.main.shake(90, 0.003);
+  }
+  switch (tick.state) {
+    case 'charge': {
+      body.setVelocityX(0);
+      if (ctx.target) setFacingTowardX(sprite, ctx.target.x);
+      sprite.setTint(flickerBright(tick.stateMs) ? 0xffffff : BULLRUN_CHARGE_TINT);
+      sprite.setRotation(Math.sin(tick.stateMs * 0.04) * 0.08);
+      return;
+    }
+    case 'dash':
+    case 'redash': {
+      // 鎖定衝刺：不修正；傾角表達爆發感。
+      sprite.setRotation(Math.sin(tick.stateMs * 0.03) * 0.06);
+      return;
+    }
+    case 'recover': {
+      if (tick.entered === 'recover') {
+        sprite.clearTint();
+        sprite.setRotation(0);
+      }
+      body.setVelocityX(body.velocity.x * 0.85);
+      return;
+    }
+    case 'prowl': {
+      if (tick.entered === 'prowl') sprite.clearTint();
+      if (body.blocked.down) {
+        const direction = ctx.target && ctx.target.x < sprite.x ? -1 : 1;
+        body.setVelocityX(BULLRUN_FSM.walkSpeed * mul * direction);
+      }
+      setFacingFromVelocityX(sprite, body.velocity.x);
+      sprite.setRotation(Math.sin(tick.stateMs * 0.007) * 0.05);
+      return;
+    }
+    default: {
+      const exhaustive: never = tick.state;
+      void exhaustive;
+    }
+  }
+}
+
+// 熊市怪（§126）：緩走 → 拍地前搖閃爍 → 拍地（雙側地面波＋召下跌小箭頭）→ 冷卻；
+// 低血一次性冬眠（深紫定身大 telegraph）→ 全場震波 → 甦醒。
+export function updateBearmarket(
+  ctx: EnemyUpdateContext,
+  sprite: Phaser.Physics.Arcade.Sprite,
+  deltaMs: number,
+): void {
+  const body = sprite.body as Phaser.Physics.Arcade.Body;
+  const hp = (sprite.getData('hp') as number) ?? 0;
+  const maxHp = (sprite.getData('maxHp') as number) ?? hp;
+  const lowHpPending =
+    sprite.getData('hibernated') !== true &&
+    maxHp > 0 &&
+    hp / maxHp <= BEARMARKET_FSM.hibernateHpRatio;
+  const tick = tickBearmarket(
+    sprite.getData('state') as BearmarketState,
+    sprite.getData('stateMs') as number,
+    deltaMs,
+    lowHpPending,
+  );
+  sprite.setData('state', tick.state);
+  sprite.setData('stateMs', tick.stateMs);
+  const mul = (sprite.getData('eliteMul') as number) ?? 1;
+  if (tick.entered === 'hibernate') {
+    // 一次性冬眠鎖存＋定身讀感。
+    sprite.setData('hibernated', true);
+    playSfx('boss-roar', 0.5);
+    body.setVelocityX(0);
+  }
+  if (tick.state === 'slam') {
+    playSfx('boss-slam', 0.6);
+    ctx.scene.cameras.main.shake(110, 0.004);
+    for (const direction of [-1, 1] as const) {
+      ctx.spawnMarketWave(sprite.x + direction * 22, sprite.y + 10, direction, false);
+    }
+    const arrowDir = ctx.target && ctx.target.x < sprite.x ? -1 : 1;
+    ctx.spawnCrashArrow(sprite.x + arrowDir * 16, sprite.y - 20, arrowDir);
+    return;
+  }
+  if (tick.state === 'quake') {
+    playSfx('boss-slam', 1.1);
+    ctx.scene.cameras.main.shake(220, 0.007);
+    for (const direction of [-1, 1] as const) {
+      ctx.spawnMarketWave(sprite.x + direction * 22, sprite.y + 10, direction, true);
+    }
+    return;
+  }
+  switch (tick.state) {
+    case 'slamwind': {
+      body.setVelocityX(0);
+      if (ctx.target) setFacingTowardX(sprite, ctx.target.x);
+      sprite.setTint(flickerBright(tick.stateMs) ? 0xffffff : BEARMARKET_WIND_TINT);
+      sprite.setRotation(Math.sin(tick.stateMs * 0.03) * 0.1);
+      return;
+    }
+    case 'hibernate': {
+      body.setVelocityX(0);
+      sprite.setTint(BEARMARKET_HIBERNATE_TINT);
+      // 冬眠鼓脹：甦醒震波的體積前搖（fx 代理，物理箱不動）。
+      const swell = 1 + (tick.stateMs / BEARMARKET_FSM.hibernateMs) * 0.18;
+      const mod = ctx.vscale.mod(sprite);
+      mod.sx = swell;
+      mod.sy = swell;
+      return;
+    }
+    case 'wake': {
+      if (tick.entered === 'wake') {
+        sprite.clearTint();
+        const mod = ctx.vscale.mod(sprite);
+        mod.sx = 1;
+        mod.sy = 1;
+      }
+      body.setVelocityX(0);
+      return;
+    }
+    case 'cool': {
+      if (tick.entered === 'cool') {
+        sprite.clearTint();
+        sprite.setRotation(0);
+      }
+      body.setVelocityX(0);
+      return;
+    }
+    case 'prowl': {
+      if (tick.entered === 'prowl') sprite.clearTint();
+      if (body.blocked.down) {
+        const direction = ctx.target && ctx.target.x < sprite.x ? -1 : 1;
+        body.setVelocityX(BEARMARKET_FSM.walkSpeed * mul * direction);
+      }
+      setFacingFromVelocityX(sprite, body.velocity.x);
+      sprite.setRotation(Math.sin(tick.stateMs * 0.006) * 0.05);
+      return;
+    }
+    default: {
+      const exhaustive: never = tick.state;
+      void exhaustive;
+    }
+  }
 }

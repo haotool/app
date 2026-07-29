@@ -75,6 +75,12 @@ const BOSS_TITLES: Record<BossKind, { win: string; winDesc: string; ex: string; 
       ex: 'EX 侯爵制霸',
       exDesc: '以 EX 變體擊破引力侯爵',
     },
+    liudong: {
+      win: '崩盤終結',
+      winDesc: '擊破劉董・崩盤之王',
+      ex: 'EX 劉董制霸',
+      exDesc: '以 EX 變體擊破劉董・崩盤之王',
+    },
   };
 
 const BOSS_LEVELS = LEVELS.filter(
