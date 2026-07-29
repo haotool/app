@@ -1,5 +1,11 @@
 # @app/starpuff
 
+## 0.28.1
+
+### Patch Changes
+
+- 70581c6: 星噗噗 HUD 換上新繪製的彈藥星與 SP 寶石圖示；變身期間攻擊鍵會顯示該形態的專屬技能圖示。
+
 ## 0.28.0
 
 ### Minor Changes
