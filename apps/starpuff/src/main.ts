@@ -13,7 +13,8 @@ import { wasSettingsRecoveredFromCorruption } from './game/core/settings';
 import { notifySaveUnavailable, showShellCard, whenShellIdle } from './shellCards';
 import { awardAchievements } from './game/logic/achievements';
 import { initShellLayout, initialShellWidth } from './game/core/shellLayout';
-import { SceneKeys, type EnemyKind, type LevelId } from './game/core/types';
+import { markActiveScene } from './game/core/sceneSignal';
+import { SceneKeys, type EnemyKind, type LevelId, type SceneKey } from './game/core/types';
 import type { EnemySystem } from './game/systems/enemies';
 import type { PlayerHandle } from './game/systems/player';
 import type { WaveRunner } from './game/systems/waves';
@@ -120,6 +121,22 @@ const game = new Phaser.Game({
 
 // 旋轉殼佈局與 Phaser 私有 API 補償（recon-v4 A/B）集中於 core/shellLayout.ts。
 initShellLayout(game);
+
+// 當前場景訊號（#869）：單點接於各 Scene 的 START 事件，供殼層邏輯（PWA 更新閘）
+// 在生產環境判斷「現在是否適合 reload」——`__sp` 只在 dev/test 掛載，不可作生產訊號。
+// 逐一綁定而非讓各 Scene 自行回報：新增場景時上方 scene 陣列必然要改，這裡自動涵蓋。
+//
+// 必須等 Core READY：`new Phaser.Game()` 回傳當下 `scene.scenes` 尚未實例化，
+// 立即遍歷會得到空陣列而靜默失效（實測 data-scene 恆為 null）。
+game.events.once(Phaser.Core.Events.READY, () => {
+  for (const scene of game.scene.scenes) {
+    scene.events.on(Phaser.Scenes.Events.START, () => markActiveScene(scene.scene.key as SceneKey));
+  }
+  // READY 當下 Boot 已啟動，其 START 已錯過——補標一次，避免首個訊號要等到
+  // 下一次場景切換才出現（PWA 更新閘在此之前會 fail-closed 而延後套用）。
+  const running = game.scene.getScenes(true)[0];
+  if (running) markActiveScene(running.scene.key as SceneKey);
+});
 
 const gameScene = () => game.scene.getScene<GameScene>(SceneKeys.Game);
 
