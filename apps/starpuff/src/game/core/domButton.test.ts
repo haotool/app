@@ -54,6 +54,10 @@ interface FakeButton {
     handler: (event: { detail: number; preventDefault: () => void }) => void,
   ) => void;
   fire: (type: string, detail?: number) => void;
+  // 指標按下時的顯式聚焦（#870）：pointerdown 的 preventDefault 吞掉瀏覽器預設聚焦，
+  // 實作補 focus() 恢復原生語意；stub 需一併具備，否則測到的是 stub 缺漏而非行為。
+  focus: () => void;
+  focusCalls: number;
 }
 
 function makeFakeButton(): FakeButton {
@@ -61,11 +65,16 @@ function makeFakeButton(): FakeButton {
     string,
     (event: { detail: number; preventDefault: () => void }) => void
   >();
-  return {
+  const button: FakeButton = {
     listeners,
     addEventListener: (type, handler) => void listeners.set(type, handler),
     fire: (type, detail = 1) => listeners.get(type)?.({ detail, preventDefault: () => undefined }),
+    focus: () => {
+      button.focusCalls += 1;
+    },
+    focusCalls: 0,
   };
+  return button;
 }
 
 describe('bindButtonActivation（#823/#830 雙路徑觸發 SSOT）', () => {
@@ -76,6 +85,21 @@ describe('bindButtonActivation（#823/#830 雙路徑觸發 SSOT）', () => {
     button.fire('pointerdown');
     button.fire('click', 1);
     expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
+  // #870：pointerdown 的 preventDefault 連帶吞掉瀏覽器預設聚焦，焦點會留在 body——
+  // 「點按鈕開啟模態」時模態因此記不到觸發元素、關閉後無從還原。必須在 onPress
+  // 之前補上，因為 onPress 可能開啟需要讀取 activeElement 的模態。
+  it('指標按下時顯式聚焦按鈕，且發生在 onPress 之前', () => {
+    const button = makeFakeButton();
+    let focusCallsAtPress = -1;
+    const onPress = vi.fn(() => {
+      focusCallsAtPress = button.focusCalls;
+    });
+    bindButtonActivation(button as unknown as HTMLButtonElement, onPress);
+    button.fire('pointerdown');
+    expect(button.focusCalls).toBe(1);
+    expect(focusCallsAtPress).toBe(1);
   });
 
   it('鍵盤/AT activation（click detail=0，無指標前程）可觸發', () => {

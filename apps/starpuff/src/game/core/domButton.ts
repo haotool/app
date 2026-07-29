@@ -28,6 +28,11 @@ export function bindButtonActivation(button: HTMLButtonElement, onPress: () => v
   let swallowPointerClick = false;
   button.addEventListener('pointerdown', (event) => {
     event.preventDefault();
+    // preventDefault 連帶吞掉瀏覽器在指標按下時的預設聚焦（#870）：焦點留在 body，
+    // 於是「點按鈕開啟模態」時模態記不到觸發元素、關閉後無從還原，Tab 也從頭開始。
+    // 顯式補上即恢復原生語意；`:focus-visible` 讓指標路徑仍不顯示 focus ring，視覺無回歸。
+    // 必須在 onPress 之前——onPress 可能開啟需要讀取 activeElement 的模態。
+    button.focus();
     swallowPointerClick = true;
     onPress();
   });

@@ -241,6 +241,55 @@ test('設定頁鍵盤可操作（審查 Blocking）：Enter/Space 純鍵盤切�
   expect(errors).toEqual([]);
 });
 
+// #870：overlay 宣告 role="dialog" + aria-modal="true"，就必須真的鎖住焦點。
+// 修復前開啟後焦點仍留在底層 Title 按鈕，Shift+Tab 可回到「圖鑑／地圖」等鈕並啟用，
+// 造成模態視窗還開著就切換場景。
+test('設定頁焦點鎖定（#870）：焦點入框、Tab 循環不外漏、關閉還原至觸發鈕', async ({ page }) => {
+  const errors = collectErrors(page);
+  await gotoTitle(page);
+  // 以 click 開啟：Chromium 原生行為會讓 button 同時取得焦點，故觸發鈕仍是還原目標。
+  // 不用「focus + Enter」是因為 TitleScene 綁了場景級 `keydown-ENTER`→開始遊戲，
+  // 會搶在 DOM 按鈕的鍵盤啟用之前把場景切走——那是獨立於本 issue 的可及性缺陷，
+  // 不在此處順手改動 Title 的輸入語意（見 follow-up issue）。
+  await page.locator('[data-menu="settings"]').click();
+  await expect(page.locator('.settings-card')).toBeVisible();
+
+  const activeIsInsideCard = () =>
+    page.evaluate(() => {
+      const card = document.querySelector('.settings-card');
+      return (
+        card !== null && document.activeElement !== null && card.contains(document.activeElement)
+      );
+    });
+
+  // 驗收 1：焦點落在對話框內第一個可聚焦控制項。
+  expect(await activeIsInsideCard()).toBe(true);
+
+  // 驗收 2：Shift+Tab 於首項不外漏——這正是本 issue 的缺陷路徑。
+  await page.keyboard.press('Shift+Tab');
+  expect(await activeIsInsideCard()).toBe(true);
+  // 正向繞行一整圈也不得跑到底層（多繞兩次確保跨過邊界）。
+  const focusableCount = await page.evaluate(
+    () =>
+      document.querySelectorAll(
+        '.settings-card button, .settings-card [tabindex]:not([tabindex="-1"])',
+      ).length,
+  );
+  for (let i = 0; i < focusableCount + 2; i += 1) {
+    await page.keyboard.press('Tab');
+    expect(await activeIsInsideCard()).toBe(true);
+  }
+
+  // 驗收 3：關閉後焦點還原至觸發按鈕。
+  await page.locator('[data-setting="close"]').focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('.settings-card')).toHaveCount(0);
+  expect(await page.evaluate(() => document.activeElement?.getAttribute('data-menu') ?? null)).toBe(
+    'settings',
+  );
+  expect(errors).toEqual([]);
+});
+
 test('設定頁指標路徑（審查 Blocking）：完整指標事件鏈不雙觸發', async ({ page }) => {
   const errors = collectErrors(page);
   await gotoTitle(page);
