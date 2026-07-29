@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-2（reward 0、penalty 2、neutral 0）｜累計總分：+327
+> 本次分數變化：-4（reward 0、penalty 4、neutral 1）｜累計總分：+323
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,26 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-29
+- ID：neutral-starpuff-e2e-ci-quarantine
+- 原因：閘門接上後 starpuff e2e 三案（drop-intent 緩衝窗、斜下 45 度蹲住、暈眩窗吞殼殼）在 CI 穩定失敗且 retry ×2 皆敗，本機卻穩定通過——本機實測 6.4~7.7s 對 CI 11.2~16.1s 約 2 倍慢，而三案驗的都是真實時鐘窗口，CDP 派發與 evaluate 往返吃掉窗口
+- 解法：以 test.fixme(CI) 隔離而非刪除或放寬產品行為，本機仍照跑；docs/039 建立隔離清單與三項紀律（標記處寫根因、更新清單、連結追蹤 issue），守門責任移交 #915。隔離不等於問題消失
+
+- 日期：2026-07-29
+- ID：penalty-level-audit-import-side-effect
+- 原因：#890 為單元測試 export level-audit.mjs 的 gate 函式，但該檔 CLI 進入點無 direct-run 守衛——import 當下即執行 main()，缺 levelArg 拋錯並 process.exit(1)，使整個 vitest run 以 unhandled error 失敗；#890 的 PR CI 抓不到，因為 starpuff 的 test:coverage 正是 #918 才接上
+- 解法：CLI 進入點加 isDirectRun 守衛（沿 verify-002-log.mjs 慣例），並補守門測試釘住「守衛存在且無行首裸呼叫 main()」防同類回歸
+
+- 日期：2026-07-29
+- ID：penalty-papertrade-e2e-live-network-dependency
+- 原因：papertrade e2e 的 bybit mock 採「列舉開放」，未列舉的 instruments-info 直接打真網路——本機有外網時看似通過，CI 無外網才以 net::ERR_FAILED 汙染 console 斷言，是閘門接上後才暴露的隱性外網依賴
+- 解法：mock 改預設封閉——先註冊 bybit 網域兜底（未特化端點回合法空集合），再疊具體端點；另補 instruments-info 特化回應對齊 priceScale 靜態 tickSize，並以兜底改 abort 模擬完全斷網複驗 42 案全綠
+
+- 日期：2026-07-29
+- ID：penalty-starpuff-e2e-stale-world-assumptions
+- 原因：閘門接上後首次執行 starpuff e2e，三案立即紅——v16 圖鑑分頁硬編「2 頁」（怪物已增至 43 隻共 4 頁）、v13 星核制霸假設全通關存檔預設落五區頁（currentChallenge 已指向 L21 第 6 區）、v12 斷言 L20 擊破進 Credits（謝幕由 nextLevelId 回 null 資料驅動，鏈末已是 L30）
+- 解法：三案改為資料驅動——分頁改翻至末頁的行為契約、制霸案顯式走 zone-5 頁籤、謝幕案移出 L20 並新增以 finalBossLevelId 取鏈末的獨立案，避免移除斷言後 Credits 變零覆蓋
 
 - 日期：2026-07-29
 - ID：penalty-starpuff-inhale-fx-occludes-play
@@ -37,6 +57,11 @@
 - ID：penalty-starpuff-difficulty-gate-missing
 - 原因：GAME_DESIGN 宣稱「分級 bot 勝率量化驗收（普通 ≥40%、熟練 ≥80%）」為跨檔硬不變式，但 src 無任何 enforcement——level-audit 只輸出 clearRate 供人看；telegraph「≥600ms 跨檔恆成立」亦為過度宣稱，runtime 小怪普遍 500ms
 - 解法：勝率門檻入 AUDIT_THRESHOLDS（含最小樣本 5，使 40%/80% 落在整數成功次數）並由 level-audit 非零退出強制；telegraph 收窄為分層契約（魔王 ≥600、小怪 ≥500），例外表以掃描式測試固化並要求補償說明——順帶查出 issue 未提及的 syronaFsm.lobTelegraphMs 500ms
+
+- 日期：2026-07-29
+- ID：penalty-ci-starpuff-e2e-gate-absent
+- 原因：apps/starpuff 缺 test:coverage 使 pnpm -r 靜默跳過其 1300+ 單元測試；e2e-filter 只涵蓋 ratewise/nihonname/shared，starpuff／park-keeper／papertrade／split-meow 共 35 個 spec 既不在 PR smoke 也不在 main full，四個已上線 app 長期無任何自動化閘門
+- 解法：starpuff 補 test:coverage＋coverage 設定（scope 9→10 of 10）；e2e-filter 增 per-app paths-filter 產出 matrix，PR 只跑變更 app、main push 全跑；park-keeper CI webServer 由 undefined 改自帶；setup-playwright 加 browsers input（cache key 含組合 slug）供 papertrade/split-meow 的 webkit project
 
 - 日期：2026-07-29
 - ID：reward-starpuff-w5a-wave3-hud-keycap

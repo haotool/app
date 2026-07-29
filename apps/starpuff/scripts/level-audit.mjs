@@ -7,7 +7,8 @@
 //       [--transform]（#816：魔王關依 TRANSFORM_ADVANTAGE 集星變身，TTK 用/不用對照）
 // 前置：dev server（pnpm dev，埠 SP_DEV_PORT）；輸出至 .claude/product-intel/level-audits/。
 import { execSync } from 'node:child_process';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, realpathSync, writeFileSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
 import { loadLogic } from './lib/ts-bridge.mjs';
 import { installAuditDriver } from './lib/audit-driver.mjs';
 import {
@@ -739,7 +740,19 @@ async function main() {
   }
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+// 僅直接執行時跑 CLI（沿 scripts/verify-002-log.mjs 慣例）：本檔自 #890 起
+// export `evaluateClearRateGate` 供單元測試 import，無守衛時 import 即執行 main()——
+// 缺 levelArg 會拋錯並 process.exit(1)，使整個 vitest run 以 unhandled error 失敗。
+// 該回歸在 #890 的 PR CI 未被攔到，因為 starpuff 的 `test:coverage` 是 #918 才接上的。
+function isDirectRun() {
+  const invoked = process.argv[1];
+  if (!invoked) return false;
+  return import.meta.url === pathToFileURL(realpathSync(invoked)).href;
+}
+
+if (isDirectRun()) {
+  main().catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
+}

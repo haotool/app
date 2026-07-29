@@ -59,12 +59,13 @@ export default defineConfig({
     },
   ],
 
-  webServer: process.env['CI']
-    ? undefined
-    : {
-        command: 'pnpm preview',
-        url: 'http://localhost:4176/park-keeper/',
-        reuseExistingServer: !process.env['CI'],
-        timeout: 120000,
-      },
+  // CI 亦自帶 webServer（#918）：原 CI 分支為 undefined，設計上假設由 workflow 自行起
+  // server，但該 workflow 從未存在——park-keeper 的 10 個 spec 因此從未在 CI 執行過。
+  // 改為一律由 playwright 起 server（CI 需先 build，本機沿用既有 preview 產物）。
+  webServer: {
+    command: process.env['CI'] ? 'pnpm build && pnpm preview' : 'pnpm preview',
+    url: 'http://localhost:4176/park-keeper/',
+    reuseExistingServer: !process.env['CI'],
+    timeout: 180000,
+  },
 });

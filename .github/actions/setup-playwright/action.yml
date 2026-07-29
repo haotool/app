@@ -1,11 +1,18 @@
-name: Setup Playwright Chromium
-description: 快取並安裝 Playwright Chromium（瀏覽器下載與 OS deps 拆分並加 timeout，避免掛起燒滿 job 逾時）
+name: Setup Playwright Browsers
+description: 快取並安裝 Playwright 瀏覽器（瀏覽器下載與 OS deps 拆分並加 timeout，避免掛起燒滿 job 逾時）
 
 inputs:
   app-filter:
     description: pnpm filter（例如 @app/ratewise）
     required: true
     default: '@app/ratewise'
+  browsers:
+    description: >
+      要安裝的瀏覽器，空白分隔（例如 "chromium" 或 "chromium webkit"）。
+      預設僅 chromium；papertrade／split-meow 的 mobile project 走 webkit 引擎（#918），
+      需顯式加裝，否則 CI 會以 "browser not installed" 失敗。
+    required: false
+    default: 'chromium'
 
 runs:
   using: composite
@@ -16,39 +23,42 @@ runs:
       run: |
         version=$(pnpm --filter "${{ inputs.app-filter }}" exec playwright --version | awk '{print $2}')
         echo "version=${version}" >> "$GITHUB_OUTPUT"
+        # cache key 需含瀏覽器組合：同版本但不同組合共用 key 會讓 webkit job 命中
+        # 只有 chromium 的 cache 而略過安裝，於執行期才炸。
+        echo "slug=$(echo '${{ inputs.browsers }}' | tr ' ' '-')" >> "$GITHUB_OUTPUT"
 
     - name: Cache Playwright browsers
       id: pw-cache
       uses: actions/cache@v6
       with:
         path: ~/.cache/ms-playwright
-        key: playwright-chromium-${{ runner.os }}-${{ steps.pw-version.outputs.version }}
+        key: playwright-${{ steps.pw-version.outputs.slug }}-${{ runner.os }}-${{ steps.pw-version.outputs.version }}
         restore-keys: |
-          playwright-chromium-${{ runner.os }}-
+          playwright-${{ steps.pw-version.outputs.slug }}-${{ runner.os }}-
 
     # 僅在 cache miss 時下載瀏覽器。瀏覽器下載偶發卡死是 E2E job 失敗主因；
     # 過往僅調高單次 timeout 無法解決 CDN 暫時性卡死，改為每次嘗試加 timeout + 最多 3 次退避重試。
-    - name: Install Playwright browser (Chromium)
+    - name: Install Playwright browsers
       if: steps.pw-cache.outputs.cache-hit != 'true'
       shell: bash
       env:
         PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT: '120000'
       run: |
         for attempt in 1 2 3; do
-          if timeout 300 pnpm --filter "${{ inputs.app-filter }}" exec playwright install chromium; then
-            echo "✅ Chromium 安裝成功（第 ${attempt} 次嘗試）"
+          if timeout 600 pnpm --filter "${{ inputs.app-filter }}" exec playwright install ${{ inputs.browsers }}; then
+            echo "✅ 瀏覽器（${{ inputs.browsers }}）安裝成功（第 ${attempt} 次嘗試）"
             exit 0
           fi
           echo "⚠️ 第 ${attempt} 次安裝逾時/失敗，退避 $((attempt * 10))s 後重試"
           sleep "$((attempt * 10))"
         done
-        echo "❌ Chromium 重試 3 次仍失敗"
+        echo "❌ 瀏覽器重試 3 次仍失敗"
         exit 1
 
     # OS 相依套件不在 cache 內，cache hit/miss 皆需安裝。
     # 與瀏覽器下載拆開並加 timeout，避免 apt lock/網路問題無限掛起。
-    - name: Install Playwright system deps (Chromium)
+    - name: Install Playwright system deps
       shell: bash
       env:
         DEBIAN_FRONTEND: noninteractive
-      run: timeout 300 pnpm --filter "${{ inputs.app-filter }}" exec playwright install-deps chromium
+      run: timeout 300 pnpm --filter "${{ inputs.app-filter }}" exec playwright install-deps ${{ inputs.browsers }}

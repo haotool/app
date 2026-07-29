@@ -98,6 +98,19 @@ export interface MockMarket {
 }
 
 export async function mockBybit(page: Page): Promise<MockMarket> {
+  // 兜底攔截（預設封閉）：先前 mock 採「列舉開放」，未列舉的端點會直接打真網路——
+  // 本機有外網時看似通過，CI 無外網才炸成 `net::ERR_FAILED` 並汙染 console 斷言
+  //（#918 閘門接上後首度暴露，實例為 instruments-info）。改為凡 bybit 網域一律攔下，
+  // 未特化的端點回合法空集合，新端點因此永遠不會靜默依賴外網。
+  // 註冊順序：Playwright 後註冊的 route 優先，故兜底必須放在具體規則之前。
+  await page.route(/(^|\.)bybit\.com\//, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ retCode: 0, result: { list: [] } }),
+    });
+  });
+
   await page.route('**/v5/market/kline*', async (route) => {
     await route.fulfill({
       status: 200,
@@ -111,6 +124,32 @@ export async function mockBybit(page: Page): Promise<MockMarket> {
       status: 200,
       contentType: 'application/json',
       body: recentTradeRestBody(new URL(route.request().url())),
+    });
+  });
+
+  // instruments-info（tick size 的 live 覆蓋，services/instruments 開機即發）：
+  // 先前未攔截——本機有外網時真的打到 bybit 而看似通過，CI 無外網才以
+  // `Failed to load resource: net::ERR_FAILED` 汙染 console 斷言（#918 閘門接上後首度暴露）。
+  // 回應的 tickSize 與 priceScale 的靜態 fallback 一致，避免 mock 引入與正式值不同的精度。
+  await page.route('**/v5/market/instruments-info*', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        retCode: 0,
+        result: {
+          list: [
+            { symbol: 'BTCUSDT', priceFilter: { tickSize: '0.1' } },
+            { symbol: 'ETHUSDT', priceFilter: { tickSize: '0.01' } },
+            { symbol: 'SOLUSDT', priceFilter: { tickSize: '0.01' } },
+            { symbol: 'XRPUSDT', priceFilter: { tickSize: '0.0001' } },
+            { symbol: 'DOGEUSDT', priceFilter: { tickSize: '0.00001' } },
+            { symbol: 'BNBUSDT', priceFilter: { tickSize: '0.01' } },
+            { symbol: 'ADAUSDT', priceFilter: { tickSize: '0.0001' } },
+            { symbol: 'LTCUSDT', priceFilter: { tickSize: '0.01' } },
+          ],
+        },
+      }),
     });
   });
 
