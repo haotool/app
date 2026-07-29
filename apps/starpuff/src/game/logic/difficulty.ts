@@ -20,8 +20,11 @@ import { VOIDRA } from './voidraFsm';
 export const AUDIT_THRESHOLDS = {
   // #812 星暴誤放：全 20 關卡關恢復 p95 ≤10s。
   starburstRecoveryP95Ms: 10_000,
-  // #810/#813 telegraph 反應窗 ≥600ms（視覺反應 ~250ms＋位移時間）。
+  // #810/#813 telegraph 反應窗（視覺反應 ~250ms＋位移時間）。分層契約（#890）：
+  // 魔王招式 ≥600ms 為紅線；小怪 ≥500ms 是刻意設計——威脅較低、節奏較快，
+  // 全面拉到 600ms 會顯著拖慢戰鬥手感。稽核工具量的是魔王，沿用 600。
   telegraphMinMs: 600,
+  telegraphMinimalMinionMs: 500,
   // #810 地面尖刺專項：前搖 ≥900ms（500ms 反應＋位移裕度），500ms bot 迴避 ≥80%、350ms ≥85%。
   spikeTelegraphMinMs: 900,
   spikeDodgeMinRate500: 0.8,
@@ -29,9 +32,20 @@ export const AUDIT_THRESHOLDS = {
   // #811 殼殼：正確時機吞食成功率 ≥60%；縮殼旋轉（衝刺）期必須 0%。
   swallowStunMinRate: 0.6,
   swallowSpinMaxRate: 0,
-  // #814 EX 分級 bot：低階通過率 <20%、高階 ≥60%。
+  // #814 EX 分級 bot：低階通過率 <20%、高階 ≥60%。EX 走本組門檻，
+  // 不套用下方標準模式的 clearRateMin*（兩者語意不同：EX 要的是「難到低階過不了」）。
   exLowPassMaxRate: 0.2,
   exHighPassMinRate: 0.6,
+  // #890 標準模式分級 bot 勝率量化驗收（產品層硬需求：以數據取代「感覺很難」）。
+  // 普通＝mid（350ms 反應＋讀招迴避）≥40%；熟練＝high（250ms＋完整策略）≥80%。
+  // low tier 刻意不設下限——低階本就該常敗，設下限會反向逼降難度。
+  // 走動關與魔王關同標準：門檻描述的是「這一關對該級玩家該有多難」，與關型無關。
+  clearRateMinMid: 0.4,
+  clearRateMinHigh: 0.8,
+  // 最小樣本數（#890）：×3 時單次成敗就讓勝率跳動 33 個百分點，40% 門檻會 flaky。
+  // ×5 使每次成敗的粒度降到 20 個百分點，且讓 40%（2/5）與 80%（4/5）都恰好落在
+  // 整數次數上——門檻不再落在兩個可達值之間，邊界判定因此無歧義。
+  clearRateMinRuns: 5,
   // #816 變身優勢：用/不用變身 TTK 改善 ≥15% 且非必需（§57 anti-softlock 不變式）。
   transformTtkGainMinPct: 0.15,
   // #813 去背板：魔王招式序列條件熵下限（bits），固定循環＝0 不可過門。

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+332
+> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+331
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-29
+- ID：penalty-starpuff-difficulty-gate-missing
+- 原因：GAME_DESIGN 宣稱「分級 bot 勝率量化驗收（普通 ≥40%、熟練 ≥80%）」為跨檔硬不變式，但 src 無任何 enforcement——level-audit 只輸出 clearRate 供人看；telegraph「≥600ms 跨檔恆成立」亦為過度宣稱，runtime 小怪普遍 500ms
+- 解法：勝率門檻入 AUDIT_THRESHOLDS（含最小樣本 5，使 40%/80% 落在整數成功次數）並由 level-audit 非零退出強制；telegraph 收窄為分層契約（魔王 ≥600、小怪 ≥500），例外表以掃描式測試固化並要求補償說明——順帶查出 issue 未提及的 syronaFsm.lobTelegraphMs 500ms
 
 - 日期：2026-07-29
 - ID：reward-starpuff-w5a-wave3-hud-keycap

@@ -240,6 +240,46 @@ async function runStandardAudit(
   };
 }
 
+// ===== 勝率門檻裁定（#890）=====
+// 「關卡難度以分級 bot 勝率量化驗收」是產品層硬需求；先前只輸出 clearRate 供人看，
+// 沒有 gate＝這條驗收標準靠人記得去看數字。門檻常數單點取 AUDIT_THRESHOLDS，
+// 本檔不得複製第二份。EX 模式語意不同（要的是「難到低階過不了」），沿用既有
+// exLowPassMaxRate／exHighPassMinRate 由 PM 對照裁定，不套本門檻。
+export function evaluateClearRateGate(report) {
+  const minRate =
+    report.bot === 'mid'
+      ? AUDIT_THRESHOLDS.clearRateMinMid
+      : report.bot === 'high'
+        ? AUDIT_THRESHOLDS.clearRateMinHigh
+        : null;
+  if (report.ex || minRate === null) {
+    return {
+      applicable: false,
+      pass: true,
+      reason: report.ex ? 'EX 模式走 EX 門檻' : 'low bot 不設下限',
+    };
+  }
+  // 樣本不足不判「通過」——那會讓 --runs 1 成為繞過 gate 的後門。
+  if (report.runs < AUDIT_THRESHOLDS.clearRateMinRuns) {
+    return {
+      applicable: true,
+      pass: false,
+      minRate,
+      clearRate: report.clearRate,
+      reason: `樣本不足：runs ${report.runs} < 最小 ${AUDIT_THRESHOLDS.clearRateMinRuns}`,
+    };
+  }
+  const pct = (v) => (v === null ? '—' : `${Math.round(v * 100)}%`);
+  const pass = report.clearRate !== null && report.clearRate >= minRate;
+  return {
+    applicable: true,
+    pass,
+    minRate,
+    clearRate: report.clearRate,
+    reason: `${report.bot} bot 通關率 ${pct(report.clearRate)} ${pass ? '≥' : '<'} 門檻 ${pct(minRate)}`,
+  };
+}
+
 // ===== 報告輸出 =====
 function writeReport(name, json, markdown) {
   mkdirSync(OUT_DIR, { recursive: true });
@@ -259,6 +299,7 @@ function standardMd(r) {
     '',
     `- 基準：base ${baseSha}｜bot ${r.bot}（反應 ${r.reactionMs}ms）｜runs ${r.runs}｜cap ${r.capSec}s`,
     `- 通關率：${r.clearRate === null ? '—' : r.clearRate * 100 + '%'}｜平均通關 ${r.clearSecAvg ?? '—'}s${r.ttkSecAvg !== null ? `｜TTK ${r.ttkSecAvg}s` : ''}`,
+    `- 勝率門檻（#890）：${r.clearRateGate.applicable ? `${r.clearRateGate.pass ? '達標' : '未達標'}——${r.clearRateGate.reason}` : `不適用——${r.clearRateGate.reason}`}`,
     `- 死亡率：${r.deathsPerRun ?? '—'} 死/次｜死亡熱點：${hotspots}`,
     `- 卡關風險：${r.stallRisk}`,
     `- 三軸分：${axisLine}`,
@@ -518,12 +559,18 @@ function baselineMd(rows, probes) {
     '',
     '## 每關量測總表',
     '',
-    '| 關 | 型態 | 通關率 | 通關/TTK s | 死/次 | 斷檔峰 s | 飢荒峰 s | 卡關風險 | D | M | P | 總分 |',
-    '| -- | ---- | ------ | ---------- | ----- | -------- | -------- | -------- | - | - | - | ---- |',
+    '| 關 | 型態 | 通關率 | 勝率門檻 | 通關/TTK s | 死/次 | 斷檔峰 s | 飢荒峰 s | 卡關風險 | D | M | P | 總分 |',
+    '| -- | ---- | ------ | -------- | ---------- | ----- | -------- | -------- | -------- | - | - | - | ---- |',
     ...rows.map((r) => {
       const worstAmmo = Math.max(...r.runsDetail.map((x) => x.longestAmmoZeroSec ?? 0), 0);
       const worstStarve = Math.max(...r.runsDetail.map((x) => x.longestStarvingSec ?? 0), 0);
-      return `| L${r.levelId} | ${r.kind} | ${r.clearRate === null ? '—' : r.clearRate * 100 + '%'} | ${r.ttkSecAvg ?? r.clearSecAvg ?? '—'} | ${r.deathsPerRun ?? '—'} | ${worstAmmo} | ${worstStarve} | ${r.stallRisk} | ${r.axes.d} | ${r.axes.m} | ${r.axes.p} | ${r.axes.total} |`;
+      const gate = r.clearRateGate;
+      const gateCell = !gate?.applicable
+        ? '—'
+        : gate.pass
+          ? `✅ ≥${Math.round(gate.minRate * 100)}%`
+          : `❌ <${Math.round(gate.minRate * 100)}%`;
+      return `| L${r.levelId} | ${r.kind} | ${r.clearRate === null ? '—' : r.clearRate * 100 + '%'} | ${gateCell} | ${r.ttkSecAvg ?? r.clearSecAvg ?? '—'} | ${r.deathsPerRun ?? '—'} | ${worstAmmo} | ${worstStarve} | ${r.stallRisk} | ${r.axes.d} | ${r.axes.m} | ${r.axes.p} | ${r.axes.total} |`;
     }),
     '',
     '## 死亡熱點（座標，前 8 筆/關）',
@@ -608,15 +655,25 @@ async function main() {
         const tier = opt('bot', isBoss ? 'high' : 'mid');
         const capSec = Number(opt('cap', isBoss ? '600' : '300'));
         console.log(`standard audit → L${level.id}（${isBoss ? 'boss' : 'walk'}，bot ${tier}）`);
-        rows.push(
-          await runStandardAudit(page, level, {
-            tier,
-            ex: false,
-            capSec,
-            runCount: runs,
-            errors,
-          }),
+        const row = await runStandardAudit(page, level, {
+          tier,
+          ex: false,
+          capSec,
+          runCount: runs,
+          errors,
+        });
+        rows.push({ ...row, clearRateGate: evaluateClearRateGate(row) });
+      }
+      // 勝率 gate（#890）：--all 全關掃描一次列出所有未達標關卡再退出，
+      // 逐關中斷會讓 PM 每修一關就得重跑整輪。
+      const gateFails = rows.filter((r) => r.clearRateGate.applicable && !r.clearRateGate.pass);
+      if (gateFails.length > 0) {
+        console.error(
+          `❌ 勝率門檻未達標 ×${gateFails.length}：\n${gateFails
+            .map((r) => `  L${r.levelId} ${r.nameZh}——${r.clearRateGate.reason}`)
+            .join('\n')}`,
         );
+        process.exitCode = 1;
       }
       const probes = {};
       probes.jump = await runProbe(page, 'jump', null);
@@ -650,7 +707,7 @@ async function main() {
       transformSpec = TRANSFORM_ADVANTAGE.find((s) => s.levelId === level.id) ?? null;
     }
     const capSec = Number(opt('cap', exMode ? '900' : isBoss ? '600' : '300'));
-    const report = await runStandardAudit(page, level, {
+    const rawReport = await runStandardAudit(page, level, {
       tier,
       ex: exMode,
       capSec,
@@ -658,6 +715,7 @@ async function main() {
       errors,
       transformSpec,
     });
+    const report = { ...rawReport, clearRateGate: evaluateClearRateGate(rawReport) };
     const label = opt(
       'label',
       `l${String(level.id).padStart(2, '0')}${exMode ? '-ex' : ''}${transformSpec ? '-tf' : ''}-${tier}`,
@@ -666,6 +724,11 @@ async function main() {
     const { runsDetail, ...summary } = report;
     void runsDetail;
     console.log(JSON.stringify(summary, null, 2));
+    // 勝率 gate（#890）：未達標非零退出，讓量化驗收成為真閘門而非參考數字。
+    if (report.clearRateGate.applicable && !report.clearRateGate.pass) {
+      console.error(`❌ 勝率門檻未達標：L${level.id} ${report.clearRateGate.reason}`);
+      process.exitCode = 1;
+    }
   } finally {
     await browser.close();
     // console error 檢查置於 finally：--all/--probe 提前 return 也必經，確保非零退出。
