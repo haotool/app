@@ -172,11 +172,14 @@ export function starFxKeys(flavor: StarFlavor | 'tide' | 'prism' | 'gravity'): s
 }
 
 // 基礎動作分層特效（§124 W5a）：吸入／浮空／落地 × 五分層，systems/fxLayers 消費；
-// 動作每關可用，屬全關共用核心。
+// 動作每關可用，屬全關共用核心。HUD 彈藥星圖示（hud.ts 消費）同屬每關在場。
 export const COMMON_FX_LAYERS = ['core', 'shock', 'trail', 'debris', 'overlay'] as const;
-const COMMON_FX_KEYS: readonly string[] = ['inhale', 'float', 'landing'].flatMap((group) =>
-  COMMON_FX_LAYERS.map((layer) => `fx-common-${group}-${layer}`),
-);
+const COMMON_FX_KEYS: readonly string[] = [
+  ...['inhale', 'float', 'landing'].flatMap((group) =>
+    COMMON_FX_LAYERS.map((layer) => `fx-common-${group}-${layer}`),
+  ),
+  'ui-hud-ammo',
+];
 
 // 該關可得星味（§124 W5a）：吞入怪決定星味——kinds 經 inhaleFlavor 派生，
 // jelly 恆載（標準星保底：fillMagazine／pushGoldStar／空匣預設全為 jelly）。

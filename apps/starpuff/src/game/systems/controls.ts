@@ -2,8 +2,16 @@ import type Phaser from 'phaser';
 import { vibratePattern } from '../audio/haptics';
 import { applyLayoutToDom, loadLayout } from '../core/layout';
 import { getShellRotation, pointerToLocal } from '../core/rotation';
+import type { TransformForm } from '../core/types';
 import type { SpMode } from '../logic/starburst';
 import { TRANSFORM_FORMS } from '../logic/transform';
+import uiEmberSkillUrl from '../../assets/sprites/ui-ember-skill.webp';
+import uiGaleSkillUrl from '../../assets/sprites/ui-gale-skill.webp';
+import uiGravitySkillUrl from '../../assets/sprites/ui-gravity-skill.webp';
+import uiPrismSkillUrl from '../../assets/sprites/ui-prism-skill.webp';
+import uiShellSkillUrl from '../../assets/sprites/ui-shell-skill.webp';
+import uiTideSkillUrl from '../../assets/sprites/ui-tide-skill.webp';
+import uiVoltSkillUrl from '../../assets/sprites/ui-volt-skill.webp';
 
 // 每幀輸入狀態：pressed 為當幀觸發、held 為持續按住；down 為搖桿下向（§23 下衝擊預留）；
 // downBuffered（§85）＝即時 down 或釋放後緩衝窗內，供「先滑後按跳」下穿語意；
@@ -27,8 +35,22 @@ export interface ControlsSystem {
   setDropReady(ready: boolean): void;
   // SP 情境鍵（§109）：呈現模式由 player 派生、GameScene 逐幀同步；僅變更時碰 DOM。
   setSpMode(mode: SpMode): void;
+  // 變身技能圖示（§124 W5a）：變身期 B 鍵改役形態技——鍵帽換該形態 skill 素材；
+  // 由 playerFeel 逐幀同步，僅狀態轉變時碰 DOM。
+  setFormSkill(form: TransformForm | null): void;
   destroy(): void;
 }
+
+// 形態 → B 鍵技能圖示 URL（§124 W5a）：DOM 按鈕層直用 Vite 資產，不入 Phaser manifest。
+const FORM_SKILL_ICON_URLS: Record<TransformForm, string> = {
+  volt: uiVoltSkillUrl,
+  gale: uiGaleSkillUrl,
+  shell: uiShellSkillUrl,
+  ember: uiEmberSkillUrl,
+  tide: uiTideSkillUrl,
+  prism: uiPrismSkillUrl,
+  gravity: uiGravitySkillUrl,
+};
 
 type ButtonName = 'a' | 'b' | 'sp';
 
@@ -40,6 +62,8 @@ const ENGAGED_CLASS = 'is-engaged';
 const DROP_READY_CLASS = 'is-drop-ready';
 // SP 情境鍵可用態（§109）：opacity 淡入 150ms 由 CSS transition 承擔。
 const SP_ON_CLASS = 'is-sp-on';
+// 變身技能圖示態（§124 W5a）：B 鍵套形態 skill 素材、停用星形鍵帽。
+const FORM_SKILL_CLASS = 'is-form-skill';
 // SP 浮現輕震（§91 觸覺管線）：尊重靜音偏好，一次 15ms。
 const SP_APPEAR_VIBRATE_MS = 15;
 
@@ -303,6 +327,15 @@ export function createControls(scene: Phaser.Scene): ControlsSystem {
     spBtn?.setAttribute('aria-hidden', 'true');
   });
 
+  // 變身技能圖示（§124 W5a）：變身期 B 鍵換形態 skill 素材鍵帽。
+  const actionBtn = document.querySelector<HTMLElement>('[data-btn="b"]');
+  let formSkill: TransformForm | null = null;
+  cleanups.push(() => {
+    formSkill = null;
+    actionBtn?.classList.remove(FORM_SKILL_CLASS);
+    actionBtn?.style.removeProperty('background-image');
+  });
+
   return {
     state,
     update(deltaMs: number) {
@@ -351,6 +384,19 @@ export function createControls(scene: Phaser.Scene): ControlsSystem {
       // 浮現輕震一次（§91／v19 卡 11）：模式切換不震，僅隱藏→浮現邊緣；
       // 觸覺與靜音解耦——閘門收斂至 haptics.vibratePattern（hapticsEnabled）。
       if (wasHidden) vibratePattern(SP_APPEAR_VIBRATE_MS);
+    },
+    setFormSkill(form: TransformForm | null) {
+      if (form === formSkill) return;
+      formSkill = form;
+      if (!actionBtn) return;
+      actionBtn.classList.toggle(FORM_SKILL_CLASS, form !== null);
+      if (form !== null) {
+        actionBtn.style.backgroundImage = `url(${FORM_SKILL_ICON_URLS[form]})`;
+        actionBtn.setAttribute('aria-label', `${TRANSFORM_FORMS[form].nameZh}形態技`);
+      } else {
+        actionBtn.style.removeProperty('background-image');
+        actionBtn.setAttribute('aria-label', '吸入或發射');
+      }
     },
     destroy() {
       cleanups.forEach((fn) => fn());

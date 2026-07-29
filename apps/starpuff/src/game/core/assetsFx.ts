@@ -637,4 +637,12 @@ export const ASSETS_W5A_FX: AssetEntry[] = [
     url: new URL('../../assets/sprites/hero-shell-morph-complete.webp', import.meta.url).href,
     phase: 'deferred',
   },
+  // §124 W5a Wave3 接關：HUD 彈藥星圖示（quotaIcon 與彈匣槽共用）——全關共用
+  // 核心；ui-hud-sp 與七形態 skill 圖示走 DOM 按鈕層（controls Vite import），
+  // 不入 Phaser manifest。
+  {
+    key: 'ui-hud-ammo',
+    url: new URL('../../assets/sprites/ui-hud-ammo.webp', import.meta.url).href,
+    phase: 'level',
+  },
 ];

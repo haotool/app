@@ -107,37 +107,9 @@ export const ASSETS_V21_PART2: AssetEntry[] = [
   // 並標 'level'（星味由 levelAssetKeys 派生、fx-common 入全關共用核心）；本檔僅
   // 保留 tide/prism/gravity 形態星彈四層待 W5a Wave2 隨形態綁定鍵接關。
   // v21-v30 B05 共通技能分層 VFX（吸入/漂浮/落地，各五層獨立疊加）。
-  // v21-v30 B05 HUD 補完（volt/gale/shell 徽章技能圖示與通用彈藥/SP 圖示）。
-  {
-    key: 'ui-volt-skill',
-    url: new URL('../../assets/sprites/ui-volt-skill.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'form'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'ui-gale-skill',
-    url: new URL('../../assets/sprites/ui-gale-skill.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'form'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'ui-shell-skill',
-    url: new URL('../../assets/sprites/ui-shell-skill.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'form'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'ui-hud-ammo',
-    url: new URL('../../assets/sprites/ui-hud-ammo.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'ui-hud-sp',
-    url: new URL('../../assets/sprites/ui-hud-sp.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
+  // v21-v30 B05 HUD 補完：已於 §124 W5a Wave3 接關認領——ui-hud-ammo 搬入 assetsFx
+  //（Phaser manifest，level phase）；ui-hud-sp 與七形態 skill 圖示走 DOM 按鈕層
+  //（controls.ts／style.css 直用 Vite 資產），不入 Phaser manifest。
   // v21-v30 B06 Tariffang 動畫關鍵幀：已於 §125 W5 接關認領（L22 演出層），
   // 條目搬入 bossAnimAssets.ts（dynamic import 分檔，主 bundle 零字面量）。
 ];
