@@ -171,11 +171,13 @@ export function starFxKeys(flavor: StarFlavor | 'tide' | 'prism' | 'gravity'): s
   return STAR_FX_LAYERS.map((layer) => `fx-star-${flavor}-${layer}`);
 }
 
-// 基礎動作分層特效（§124 W5a）：吸入／浮空／落地 × 五分層，systems/fxLayers 消費；
+// 基礎動作分層特效（§124 W5a）：浮空／落地 × 五分層，systems/fxLayers 消費；
 // 動作每關可用，屬全關共用核心。HUD 彈藥星圖示（hud.ts 消費）同屬每關在場。
+// inhale 五層已退場：嘴前特效遮蔽待吸目標，吸入回饋回退為圓點漩渦（見 systems/fx.ts）。
+// 素材留在 assetsFx 但改標 lazy——重新設計接關前不得回到 level phase 白佔每關頻寬。
 export const COMMON_FX_LAYERS = ['core', 'shock', 'trail', 'debris', 'overlay'] as const;
 const COMMON_FX_KEYS: readonly string[] = [
-  ...['inhale', 'float', 'landing'].flatMap((group) =>
+  ...['float', 'landing'].flatMap((group) =>
     COMMON_FX_LAYERS.map((layer) => `fx-common-${group}-${layer}`),
   ),
   'ui-hud-ammo',

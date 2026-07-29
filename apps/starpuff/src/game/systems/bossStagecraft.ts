@@ -1,6 +1,6 @@
 import type Phaser from 'phaser';
 import type { StagecraftBossKind } from '../core/bossAnimAssets';
-import { getVisualScale } from './visualScale';
+import { createBossFrameFitter } from './bossFrameFit';
 
 // 四王演出共用件（GAME_DESIGN §125）：L22/L24/L26/L28 動畫組（39 鍵/王）的補載與
 // 分鏡播放單點。純呈現層——不動 FSM 常數與判定，分鏡一律鋪在既有 telegraph 窗上；
@@ -64,7 +64,6 @@ export function createBossStagecraft(
   body: Phaser.Physics.Arcade.Sprite,
   opts: { kind: StagecraftBossKind; bodyW: number; bodyH: number },
 ): BossStagecraft {
-  const vscale = getVisualScale(scene);
   const timers: Phaser.Time.TimerEvent[] = [];
   const frameKey = (suffix: string): string => `boss-${opts.kind}-${suffix}`;
   const baseKey = `boss-${opts.kind}`;
@@ -86,13 +85,17 @@ export function createBossStagecraft(
     timers.push(scene.time.delayedCall(ms, fn));
   };
 
-  // 換幀單點（§125 慣例）：缺圖靜默跳過；保持顯示尺寸並重錨物理基準（§77 解耦）。
-  const setFrame = (key: string): void => {
-    if (!scene.textures.exists(key)) return;
-    body.setTexture(key);
-    body.setDisplaySize(opts.bodyW, opts.bodyH);
-    vscale.rebase(body);
-  };
+  // 換幀單點（§125 慣例）：缺圖靜默跳過；顯示尺寸依素材佔幅正規化、碰撞箱世界尺寸
+  // 恆定（#943 根修，見 bossFrameFit）；並重錨物理基準（§77 解耦）。
+  const fitter = createBossFrameFitter(scene, body, {
+    baseKey,
+    bodyW: opts.bodyW,
+    bodyH: opts.bodyH,
+  });
+  const setFrame = fitter.setFrame;
+  // 構築期即取得碰撞箱所有權：覆蓋各王 createBoss 內的固定比例 setSize，入場運鏡
+  // 前就對齊 base 幀可見身體。
+  fitter.refit();
 
   // 代際綁定幀：排程當下鎖定代際，被更高優先演出打斷即作廢。
   const frameAt = (ms: number, key: string, gen: number): void => {

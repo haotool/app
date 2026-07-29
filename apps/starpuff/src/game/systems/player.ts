@@ -1034,18 +1034,8 @@ export function createPlayer(
       // 連吞升級（§23）強化音效；混合合成（§46）沿用 jingle 短奏提示。
       if (result.charged) playSfx('charge');
       else if (result.mixed) playSfx('jingle');
-      // 吞入衝擊圈（§124 W5a）：嘴前吞噬確認回饋，缺載時沿既有音效回饋。
-      const mouthX = sprite.x + facing * (PLAYER_SIZE / 2 + 4);
-      flashSprite(scene, 'fx-common-inhale-shock', mouthX, sprite.y, 52, {
-        durationMs: 220,
-        depth: 86,
-      });
-      flashSprite(scene, 'fx-common-inhale-trail', mouthX, sprite.y, 40, {
-        durationMs: 260,
-        depth: 85,
-        fromScale: 1.4,
-        rotate: true,
-      });
+      // 可視性優先（回退 §124 W5a 吞入衝擊圈）：吞噬確認緊接下一次吸入，嘴前殘留
+      // 220~260ms 的 shock/trail 會蓋住下一個待吸目標——確認回饋沿既有音效與彈匣 HUD。
       emitGameEvent(scene.events, GameEvents.ENEMY_INHALED, { kind });
       maybeCrystallize();
       emitAmmo();
