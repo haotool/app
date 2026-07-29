@@ -51,16 +51,23 @@ export function tickDetonation(state: StarburstState, deltaMs: number): Detonati
 // 此時裁決必須與 resolveSpMode 圖示一致（圖示即行為）。
 export type SpCommand = 'detonate' | 'transform' | 'dismiss' | 'none';
 
+// held（#948）：意圖分流取代優先序。修前蓄能星存在時恆回 'detonate'，變身分支
+// 不可達——玩家滿匣結晶後即使再湊齊同系 ≥3 也無法變身。改為長按＝變身、點按＝
+// 引爆，兩者遂可並存（結晶維持滿 5 自動觸發，語彙不變）。
 export function resolveSpPress(opts: {
   phase: StarburstPhase;
   transformActive: boolean;
   eligible: boolean;
   airborne: boolean;
+  held?: boolean;
 }): SpCommand {
   if (opts.transformActive) return 'dismiss';
-  if (opts.phase === 'charged') return 'detonate';
   if (opts.phase === 'detonating') return 'none';
-  return opts.eligible && !opts.airborne ? 'transform' : 'none';
+  const canTransform = opts.eligible && !opts.airborne;
+  // 長按優先變身；無資格時長按沿點按語意（不讓長按變成啞鍵）。
+  if (opts.held === true && canTransform) return 'transform';
+  if (opts.phase === 'charged') return 'detonate';
+  return canTransform ? 'transform' : 'none';
 }
 
 // SP 鍵可用模式（§109 呈現契約）：hidden 完全隱藏；detonate 金色大星；
@@ -77,4 +84,17 @@ export function resolveSpMode(opts: {
   if (opts.phase === 'charged') return 'detonate';
   if (opts.phase === 'detonating') return 'hidden';
   return opts.eligibleForm && !opts.airborne ? opts.eligibleForm : 'hidden';
+}
+
+// 次要可用性（#948 圖示即行為）：兩態並存時主圖示（resolveSpMode）顯示點按語意，
+// 本函式回傳長按語意供 HUD 疊加小徽——否則玩家無從得知還能變身。
+export function resolveSpSecondary(opts: {
+  phase: StarburstPhase;
+  transformForm: TransformForm | null;
+  eligibleForm: TransformForm | null;
+  airborne: boolean;
+}): TransformForm | null {
+  if (opts.transformForm) return null;
+  if (opts.phase !== 'charged') return null;
+  return opts.eligibleForm && !opts.airborne ? opts.eligibleForm : null;
 }

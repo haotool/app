@@ -864,3 +864,96 @@ export async function runTicketaTelegraphProbe(
     detail: events,
   };
 }
+
+// 形態技對魔王可達性探針（#948）：驗證「關卡宣告的優勢形態，其招牌技確實打得到
+// 該關魔王」。分項機制探針而非全自動通關——不要求 bot 會玩，只問單一機制是否可用。
+//
+// 存在理由（真實病例）：L24 宣告 tide-form、L28 宣告 gravity-form 為優勢解，但
+// resolveTidePull／resolveGravityWell 只遍歷 enemies 群組，對魔王本體零傷害。
+// 宣告與實作脫節了兩個章節版本而既有通關率量測抓不到——bot 本來就不變身，變身
+// 數據又走注入路徑。分項探針正是為了這種「宣告 ≠ 實作」的縫隙。
+//
+// 輸入走合成 KeyboardEvent（與 audit-driver 同一條真實輸入路徑），不新增 debug hook。
+export async function runFormStrikeProbe(
+  page,
+  { form, supplyFlavor, trials = 5, settleMs = 1400 },
+) {
+  const samples = [];
+  for (let i = 0; i < trials; i += 1) {
+    const sample = await page.evaluate(
+      async ({ flavor, settle }) => {
+        const sp = window.__sp;
+        const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+        const KEY = { left: 37, right: 39, action: 88, sp: 67 };
+        const send = (type, keyCode) => {
+          const ev = new KeyboardEvent(type, { bubbles: true, cancelable: true });
+          Object.defineProperty(ev, 'keyCode', { get: () => keyCode });
+          Object.defineProperty(ev, 'which', { get: () => keyCode });
+          window.dispatchEvent(ev);
+        };
+        const tap = async (k, ms = 70) => {
+          send('keydown', k);
+          await sleep(ms);
+          send('keyup', k);
+        };
+        if (!sp.bossHp || sp.bossHp() <= 0) return { ok: false, reason: 'no-boss' };
+        // trial 間狀態清理（探針可靠度）：前一輪的形態未退場、或彈匣殘留異味星，
+        // 都會使 eligibleForm（要求全數同味）不成立——首輪成功、後續全敗的假象。
+        if (sp.transform().form) {
+          await tap(KEY.sp, 90); // 解除變身
+          await sleep(200);
+        }
+        let guard = 0;
+        while ((sp.ammo?.().ammo ?? 0) > 0 && guard < 12) {
+          await tap(KEY.action, 60);
+          await sleep(140);
+          guard += 1;
+        }
+        // 湊星直接授星：本探針量的是「技能是否命中魔王」，取得成本由 transform
+        // probe 負責，此處消除該階段噪音。
+        for (let n = 0; n < 3; n += 1) sp.grantStar(flavor);
+        if (!sp.transformEligible()) return { ok: false, reason: 'not-eligible' };
+        await tap(KEY.sp, 90);
+        await sleep(200);
+        if (!sp.transform().form) return { ok: false, reason: 'transform-failed' };
+        // 入域：形態技多為近身（引力井 130px、水引 200px），先走到魔王側邊。
+        const boss = sp.bossPos();
+        const dir = boss.x > sp.probe().x ? KEY.right : KEY.left;
+        send('keydown', dir);
+        const approachUntil = Date.now() + 2500;
+        while (Date.now() < approachUntil) {
+          await sleep(100);
+          if (Math.abs(sp.bossPos().x - sp.probe().x) < 110) break;
+        }
+        send('keyup', dir);
+        await sleep(120);
+        const gapPx = Math.abs(sp.bossPos().x - sp.probe().x);
+        const before = sp.bossHp();
+        // 形態技：空匣時 B 點按即出技；有彈藥則需長按（#948 分流）。此處彈匣已由
+        // 變身消耗，仍以長按確保落在形態技分支而非射星。
+        send('keydown', KEY.action);
+        await sleep(360);
+        send('keyup', KEY.action);
+        await sleep(settle);
+        const after = sp.bossHp();
+        return { ok: true, gapPx: Math.round(gapPx), before, after, delta: before - after };
+      },
+      { flavor: supplyFlavor, settle: settleMs },
+    );
+    samples.push(sample);
+    await new Promise((r) => setTimeout(r, 250));
+  }
+  const hits = samples.filter((s) => s.ok && s.delta > 0);
+  const dmgs = hits.map((h) => h.delta).sort((a, b) => a - b);
+  return {
+    probe: 'formstrike',
+    form,
+    supplyFlavor,
+    trials,
+    samples,
+    hitRate: samples.length > 0 ? hits.length / samples.length : 0,
+    medianDamage: dmgs.length > 0 ? dmgs[dmgs.length >> 1] : 0,
+    // 可達性紅線：宣告為優勢解的形態技，對該關魔王必須造成傷害。
+    reachable: hits.length > 0,
+  };
+}

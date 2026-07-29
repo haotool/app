@@ -5,9 +5,16 @@ import { chromium } from '@playwright/test';
 export const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export async function openSession(port) {
-  const browser = await chromium.launch();
+  // 觀測模式（選配，不影響量測語意）：SP_AUDIT_HEADED=1 開視窗現場看 bot 打；
+  // SP_AUDIT_VIDEO=<dir> 錄 webm。兩者皆預設關閉——CI 與批次量測維持 headless。
+  const headed = process.env.SP_AUDIT_HEADED === '1';
+  const videoDir = process.env.SP_AUDIT_VIDEO ?? null;
+  const browser = await chromium.launch({ headless: !headed });
   // 1200 邏輯寬：殼 1250×500 → round(2.5×480)=1200（VIEW.maxWidth 夾限帶內）。
-  const ctx = await browser.newContext({ viewport: { width: 1250, height: 500 } });
+  const ctx = await browser.newContext({
+    viewport: { width: 1250, height: 500 },
+    ...(videoDir ? { recordVideo: { dir: videoDir, size: { width: 1250, height: 500 } } } : {}),
+  });
   const page = await ctx.newPage();
   const errors = [];
   page.on('console', (m) => {

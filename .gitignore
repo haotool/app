@@ -97,6 +97,8 @@ reports/lighthouse/
 !**/icons/*.png
 !**/og-image.png
 /screenshots/
+# QA 產物（截圖／audit 錄影）不進版控：apps/*/screenshots 亦然（#948 誤 commit 336MB webm）
+apps/*/screenshots/
 # Root-level ad-hoc screenshots (QA artifacts) should not pollute repo root
 /*.png
 /*.jpg

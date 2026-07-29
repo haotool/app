@@ -74,6 +74,7 @@ import {
   consumeDischarge,
   consumeTuck,
   createTransformState,
+  consumeForTransform,
   eligibleForm,
   endTransform,
   glideFallVy,
@@ -91,13 +92,14 @@ import {
   strideBob,
   strideTilt,
 } from '../logic/walkFeel';
+import { advanceHold, createHoldState } from '../logic/holdArbiter';
 import { playSfx } from '../audio/sfx';
 import { morphFrameKeys } from '../core/assetPlan';
 import { createChargedStar } from './chargedStar';
 import type { ControlsState } from './controls';
-import { FX_TEXTURES, burstSmall, ensureFxTextures } from './fx';
+import { FX_TEXTURES, burstSmall, ensureFxTextures, heroLandingRing } from './fx';
 import { burstLayers, flashSprite, flashStarImpact } from './fxLayers';
-import { createFormSkills } from './formSkills';
+import { createFormSkills, resolveFormSkill } from './formSkills';
 import { getVisualScale } from './visualScale';
 
 // 星彈命中結果：pierce 依剩餘穿透數決定續飛；absorb 一律回收（魔王或未死目標吃彈）。
@@ -178,6 +180,10 @@ const CROUCH_SINK_PX = 3;
 const INHALE_FRAME_MS = 160;
 // 變身分鏡幀長（§124 W5a）：五幀約 450ms，僅顯示層演出（操作不鎖）。
 const MORPH_FRAME_MS = 90;
+// SP 長按門檻（#948）：沿 prism 的 B 長按語彙量級，短於形態技以免誤觸。
+const SP_HOLD_MS = 250;
+// 形態技長按門檻（#948）：與 SP 同量級；變身期有彈藥時 B 點按射星、長按出技。
+const FORM_SKILL_HOLD_MS = 220;
 // 魔王頭頂命中回彈初速（§58）。
 const SLAM_BOUNCE_VY = -380;
 
@@ -190,9 +196,8 @@ export function createPlayer(
 ): PlayerHandle {
   // art stream 紋理未載入時退回內建白色矩形，避免本地驗證噴 missing texture。
   const tex = (key: string) => (scene.textures.exists(key) ? key : '__WHITE');
-  // 主角輪廓對比（§45 審查修復）：深紫剪影背襯作描邊，淡色底（草原 1.81:1）提升至 ≥3:1。
-  // 先建 image 使其繪於本體之後（免 depth 調度）；FILL tint 整面上色為剪影；
-  // 不用 Phaser 4 Glow filter——實測 SwiftShader/低階 GPU 下每幀模糊採樣致幀率崩跌。
+  // 主角輪廓對比（§45）：深紫剪影背襯作描邊，淡色底提升至 ≥3:1。先建 image 繪於
+  // 本體之後；不用 Glow filter——低階 GPU 下每幀模糊採樣致幀率崩跌。
   const silhouette = scene.add.image(x, y, tex('hero-idle'));
   silhouette.setDisplaySize(PLAYER_SIZE * HERO_OUTLINE_SCALE, PLAYER_SIZE * HERO_OUTLINE_SCALE);
   silhouette.setTint(HERO_OUTLINE_COLOR);
@@ -200,8 +205,7 @@ export function createPlayer(
   const sprite = scene.physics.add.sprite(x, y, tex('hero-idle'));
   sprite.setDisplaySize(PLAYER_SIZE, PLAYER_SIZE);
   sprite.setCollideWorldBounds(true);
-  // 物理/視覺縮放解耦（§77 根治）：物理基準錨定於此；擠壓/呼吸/蹲縮全走視覺通道，
-  // 物理箱恆為基準尺寸，不再有擠壓迴圈與腳底離台。
+  // 物理/視覺縮放解耦（§77）：擠壓/呼吸/蹲縮全走視覺通道，物理箱恆為基準尺寸。
   const vscale = getVisualScale(scene);
   vscale.register(sprite);
   const fxScale = vscale.fx(sprite);
@@ -218,10 +222,8 @@ export function createPlayer(
     silhouette.setVisible(sprite.visible);
   };
 
-  // 寬容度 hurtbox（§15.1）：視覺 75%W×80%H，貼齊腳底（setSize 以未縮放 frame 像素
-  // 為單位）。R8 改為換裝時現算：Body.updateBounds 每物理步以 sourceWidth×|scaleX|
-  // 重算世界尺寸——凍結生成時的 512 基準源尺寸，換到 768/1254 源貼圖後 scale 變小，
-  // 碰撞箱隨之縮水 33%~59% 而視覺不動（世界尺寸恆為 frameW×ratio×(48/frameW)＝常數）。
+  // 寬容度 hurtbox（§15.1）：視覺 75%W×80%H 貼齊腳底。R8 改換裝時現算——凍結
+  // 生成時的 512 源尺寸會使換到 768/1254 貼圖後碰撞箱縮水 33%~59% 而視覺不動。
   const fitHurtbox = () => {
     const frameW = sprite.frame.realWidth;
     const frameH = sprite.frame.realHeight;
@@ -268,6 +270,10 @@ export function createPlayer(
   let jumpBufferMs = 0;
   let inhaling = false;
   let inhaleAnimMs = 0;
+  // SP 長按分流狀態（#948）。
+  // 點按／長按仲裁（#948，共用 logic/holdArbiter）。
+  let spHoldState = createHoldState();
+  let formHoldState = createHoldState();
   let wasOnGround = false;
   // 走動手感（§45）：速度驅動步頻相位；bob/傾斜/落腳拍點皆由 walkFeel 純函式導出。
   let stridePhase = 0;
@@ -349,26 +355,8 @@ export function createPlayer(
 
   // 落地塵埃圈：腳邊白描邊橢圓擴散淡出（graphics 組合，不依賴 fx.ts）。
   // intensity > 1 為下衝擊加強版：更大擴散 + 更粗描邊。
-  const spawnDustRing = (intensity = 1) => {
-    const ring = scene.add
-      .ellipse(sprite.x, sprite.y + PLAYER_SIZE / 2 - 4, 26, 10)
-      .setStrokeStyle(3 * intensity, 0xffffff, 0.7);
-    scene.tweens.add({
-      targets: ring,
-      scaleX: 2.4 * intensity,
-      scaleY: 1.8 * intensity,
-      alpha: 0,
-      duration: 320 * intensity,
-      ease: 'Quad.easeOut',
-      onComplete: () => ring.destroy(),
-    });
-    // 落地分層特效（§124 W5a）：素材五層疊在白環上；缺載時白環單獨保底。
-    burstLayers(scene, sprite.x, sprite.y + PLAYER_SIZE / 2 - 6, 'fx-common-landing', {
-      sizePx: 52 * intensity,
-      depth: 12,
-      debrisCount: intensity > 1 ? 10 : 6,
-    });
-  };
+  const spawnDustRing = (intensity = 1) =>
+    heroLandingRing(scene, sprite.x, sprite.y, PLAYER_SIZE / 2, intensity);
 
   // 移動塵埃（§41）：起跑/急停/轉身腳邊小塵點，向行進反方向踢出後淡逝（預算 ≤4 顆/次）。
   const spawnMoveDust = (event: MoveFxEvent) => {
@@ -478,7 +466,7 @@ export function createPlayer(
 
   // 形態技世界結算事件單一出口（§119）：tide-pull／gravity-well／rainbow-beam。
   const emitFormStrike = (
-    kind: 'tide-pull' | 'gravity-well' | 'rainbow-beam',
+    kind: 'tide-pull' | 'gravity-well' | 'rainbow-beam' | 'volt-beam',
     form: TransformForm,
   ) => {
     emitGameEvent(scene.events, GameEvents.SKILL_TRANSFORM_STRIKE, {
@@ -493,7 +481,8 @@ export function createPlayer(
   // 變身進入（§57）：消耗全部彈匣、爆發特效、啟用形態 aura。
   const beginTransform = (form: TransformForm) => {
     transform = startTransform(form);
-    magazine = [];
+    // #948：只扣達標所需星單位，餘槽保留供變身期間射擊。
+    magazine = consumeForTransform(magazine);
     deferredFire = false;
     prismArm = false;
     halfDamagePool = 0;
@@ -729,70 +718,86 @@ export function createPlayer(
           }
         }
 
-        // B 鍵決策（§109 三語意收斂）：變身期間 B 改役形態技（吸入/發射停用）；
-        // 其餘僅頂槽殼盾星走延遲（點按發射 vs 長按舉盾），有彈藥即按即射。
-        if (controls.actionPressed) {
-          if (transform.form === 'volt') {
-            if (voltCdMs <= 0) {
-              voltCdMs = VOLT_BEAM.cooldownMs;
-              emitGameEvent(scene.events, GameEvents.SKILL_TRANSFORM_STRIKE, {
-                kind: 'volt-beam',
-                form: 'volt',
-                x: sprite.x + facing * (PLAYER_SIZE / 2 + 6),
-                y: sprite.y,
-                facing,
-              });
-            }
-          } else if (transform.form === 'gale') {
-            if (formCdMs <= 0) {
-              formCdMs = GALE_SHOT.cooldownMs;
-              fireFormShot(GALE_SHOT, true);
-            }
-          } else if (transform.form === 'ember') {
-            // 焰彈（§119）：直射小爆（借爆裂味效果表），burn 燒毀優勢由命中端結算。
-            if (formCdMs <= 0 && formSpec?.shot) {
-              formCdMs = formSpec.shot.cooldownMs;
-              fireFormShot(formSpec.shot, false);
-            }
-          } else if (transform.form === 'prism') {
-            // 稜化 B 語意延遲（§119）：放開時分派碎片（點按）或彩虹光束（長按）。
+        // B 鍵決策（§109／#948）：變身期有彈藥時點按射星、長按出形態技；空匣時
+        // 點按即形態技。修前 B 全被形態技接管＋變身清匣＝變身期零星彈輸出。
+        const formSkillOnTap = transform.form !== null && magazine.length === 0;
+        if (transform.form !== null && !formSkillOnTap && controls.actionPressed) {
+          // 有彈藥：點按射星（形態技改由下方長按分派）。
+          if (hurtLockMs <= 0) fireStar();
+        }
+        const formStep = advanceHold(formHoldState, {
+          pressed: controls.actionPressed,
+          held: controls.actionHeld,
+          deltaMs,
+          thresholdMs: FORM_SKILL_HOLD_MS,
+          ambiguous: !formSkillOnTap,
+        });
+        formHoldState = formStep.state;
+        // 空匣點按即出技（無星可射不該要求長按）；有彈藥則長按才出技。
+        const formSkillFire =
+          formStep.outcome === 'hold' || (formSkillOnTap && formStep.outcome === 'tap');
+        if (transform.form !== null && formSkillFire) {
+          const effect = resolveFormSkill({
+            form: transform.form,
+            spec: formSpec,
+            voltCdMs,
+            formCdMs,
+            chargeMs,
+            chargeCdMs,
+            galeShot: GALE_SHOT,
+            tidePullCooldownMs: TIDE_PULL.cooldownMs,
+            gravityWellCooldownMs: GRAVITY_WELL.cooldownMs,
+          });
+          if (effect.kind === 'volt-beam') {
+            voltCdMs = VOLT_BEAM.cooldownMs;
+            emitFormStrike('volt-beam', 'volt');
+          } else if (effect.kind === 'form-shot') {
+            formCdMs = effect.cooldownMs;
+            fireFormShot(effect.spec, effect.flat);
+          } else if (effect.kind === 'prism-arm') {
             prismArm = true;
-          } else if (transform.form === 'tide' || transform.form === 'gravity') {
-            // 水引／引力井（§119）：世界結算交 starCombat（沿 SKILL 事件契約）。
-            if (formCdMs <= 0 && formSpec?.tapStrike) {
-              formCdMs =
-                formSpec.tapStrike === 'tide-pull' ? TIDE_PULL.cooldownMs : GRAVITY_WELL.cooldownMs;
-              playSfx(formSpec.tapStrike === 'tide-pull' ? 'pop' : 'charge', 0.9);
-              emitFormStrike(formSpec.tapStrike, transform.form);
-            }
-          } else if (transform.form === 'shell') {
-            // 滾殼衝撞（§110）：B 點按起手；接觸傷由 overlaps 依衝撞態改判向小怪。
-            if (chargeCdMs <= 0 && chargeMs <= 0) {
-              chargeMs = SHELL_CHARGE.durationMs;
-              chargeCdMs = SHELL_CHARGE.cooldownMs;
-              playSfx('shell-spin');
-              squashStretch(1.2, 0.85);
-            }
-          } else if (!transform.form) {
-            const command = resolveActionPress({
-              ammo: magazine.length,
-              topIsShelly: isTopShelly(magazine),
-            });
-            if (command === 'fire') fireStar();
-            else if (command === 'defer') deferredFire = true;
+          } else if (effect.kind === 'tap-strike') {
+            formCdMs = effect.cooldownMs;
+            playSfx(effect.strike === 'tide-pull' ? 'pop' : 'charge', 0.9);
+            emitFormStrike(effect.strike, transform.form);
+          } else if (effect.kind === 'shell-charge') {
+            chargeMs = SHELL_CHARGE.durationMs;
+            chargeCdMs = SHELL_CHARGE.cooldownMs;
+            playSfx('shell-spin');
+            squashStretch(1.2, 0.85);
           }
         }
-
-        // SP 情境鍵（§109）：點按依天然互斥語意分派——變身中解除／蓄能星引爆／
-        // 資格成立（同系 ≥3、地面）立即變身；無技能可用時為 none。
-        if (controls.spPressed) {
-          const spEligible = eligibleForm(magazine, unlockedForms);
-          const command = resolveSpPress({
-            phase: starburst.phase,
-            transformActive: transform.form !== null,
-            eligible: spEligible !== null,
-            airborne: !onGround,
+        // 未變身：沿既有 B 語意（殼盾星延遲／即按即射）。
+        if (transform.form === null && controls.actionPressed) {
+          const command = resolveActionPress({
+            ammo: magazine.length,
+            topIsShelly: isTopShelly(magazine),
           });
+          if (command === 'fire') fireStar();
+          else if (command === 'defer') deferredFire = true;
+        }
+
+        // SP 情境鍵（§109／#948）：點按＝解除／引爆／變身、長按＝優先變身；
+        // 僅兩義並存時延遲判讀，其餘按下緣即時結算。
+        const spEligible = eligibleForm(magazine, unlockedForms);
+        const spArgs = {
+          phase: starburst.phase,
+          transformActive: transform.form !== null,
+          eligible: spEligible !== null,
+          airborne: !onGround,
+        };
+        const spTap = resolveSpPress({ ...spArgs, held: false });
+        const spHold = resolveSpPress({ ...spArgs, held: true });
+        const spStep = advanceHold(spHoldState, {
+          pressed: controls.spPressed,
+          held: controls.spHeld,
+          deltaMs,
+          thresholdMs: SP_HOLD_MS,
+          ambiguous: spTap !== spHold,
+        });
+        spHoldState = spStep.state;
+        if (spStep.outcome !== 'none') {
+          const command = spStep.outcome === 'hold' ? spHold : spTap;
           if (command === 'detonate') startDetonation();
           else if (command === 'transform' && spEligible) beginTransform(spEligible);
           else if (command === 'dismiss') finishTransform();

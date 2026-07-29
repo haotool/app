@@ -1,5 +1,6 @@
 import { GRAVITY_Y, PLAYER } from '../core/config';
-import type { EnemyKind } from '../core/types';
+import type { EnemyKind, TransformForm } from '../core/types';
+import type { StarFlavor } from '../core/config';
 import { BOSS } from './bossFsm';
 import type { LevelSpec } from './levels';
 import { GRAVION } from './gravionFsm';
@@ -370,12 +371,16 @@ export const BOSS_AUDIT_FACTS: readonly BossAuditFacts[] = [
 // 每王一個「優勢解但永不必需」情境；bot hook（level-audit --transform）據此以正式
 // swallow 管線集齊同系星並按 SP 變身，量測用/不用變身 TTK 差（門檻引 AUDIT_THRESHOLDS）。
 // T4 先落 Jellord/Noctra 兩王（§58 既有攻略線資料化）；其餘三王隨 T5 魔王主題化補齊。
+// §119 四新形態（ember/tide/prism/gravity）補入型別：原聯合只容三舊形態，導致
+// 「關卡宣告 bossApplies 含 gravity-form、量化驗收卻無從掛勾」的缺口無法被表達
+// ——型別本身就是缺口成因，先擴才談得上補條目。改用 SSOT 型別而非字面聯合，
+// 新增形態/星味時不必再回頭改這裡。
 export interface TransformAdvantageSpec {
   boss: BossId;
   levelId: number;
-  form: 'volt' | 'gale' | 'shell';
+  form: TransformForm;
   // bot 供給味（必須映射到 form，difficulty.test 以 eligibleForm 守門零漂移）。
-  supplyFlavor: 'zappy' | 'floaty' | 'shelly';
+  supplyFlavor: StarFlavor;
   scenarioZh: string;
 }
 
@@ -401,6 +406,17 @@ export const TRANSFORM_ADVANTAGE: readonly TransformAdvantageSpec[] = [
     form: 'volt',
     supplyFlavor: 'zappy',
     scenarioZh: '雷化清熊線：鏈電波及速清牛熊怪與小熊市群（PRD §6.6 反制），奪回輸出窗',
+  },
+  // §123 引力侯爵：L28 的 bossApplies 早已宣告 gravity-form，量化線於此補齊。
+  // 供給面 levels.ts 已鋪好——boomy 0.3 ＋ gravitybub 0.25 ＝ 迴旋味 0.55 雙供給。
+  {
+    boss: 'gravion',
+    levelId: 28,
+    form: 'gravity',
+    supplyFlavor: 'boomy',
+    scenarioZh:
+      '引力化免疫線：gravityFlipImmune 使 P1/P3 主招重力切換完全失效（力場位移歸零），' +
+      '近身以引力井（130px、2 傷 ×6 跳）承接 P3 黑洞彎折造成的遠場輸出劣勢',
   },
 ] as const;
 

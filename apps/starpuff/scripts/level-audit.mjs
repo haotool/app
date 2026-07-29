@@ -3,7 +3,7 @@
 // 分級 bot（低/中/高）與四專項探針（#809 jump/#810 telegraph/#811 swallow/#812 starburst）。
 //
 // 用法：node scripts/level-audit.mjs <levelId> [--ex] [--bot low|mid|high] [--runs N]
-//       [--cap 秒] [--probe jump|telegraph|ticketa|swallow|starburst|transform] [--all] [--port P] [--label 名]
+//       [--cap 秒] [--probe jump|telegraph|ticketa|swallow|starburst|transform|formstrike] [--all] [--port P] [--label 名]
 //       [--transform]（#816：魔王關依 TRANSFORM_ADVANTAGE 集星變身，TTK 用/不用對照）
 // 前置：dev server（pnpm dev，埠 SP_DEV_PORT）；輸出至 .claude/product-intel/level-audits/。
 import { execSync } from 'node:child_process';
@@ -17,6 +17,7 @@ import {
   runSwallowProbe,
   runTelegraphProbe,
   runTicketaTelegraphProbe,
+  runFormStrikeProbe,
 } from './lib/audit-probes.mjs';
 import {
   enterArena,
@@ -474,12 +475,38 @@ async function runProbe(page, name, level, overrides = {}) {
             : null,
     };
   }
+  if (name === 'formstrike') {
+    // 形態技可達性（#948）：關卡宣告的優勢形態，其招牌技必須打得到該關魔王。
+    if (!level || !level.boss) throw new Error('formstrike probe 僅適用魔王關');
+    const entry = (level.bossApplies ?? []).find((m) => m.endsWith('-form'));
+    if (!entry) throw new Error(`L${level.id} 未宣告 <form>-form（bossApplies）`);
+    const form = entry.replace('-form', '');
+    const supplyFlavor = Object.entries(FORM_BY_FLAVOR).find(([, f]) => f === form)?.[0];
+    if (!supplyFlavor) throw new Error(`形態 ${form} 未定義觸發味`);
+    await gotoLevel(page, level.id, false);
+    if (!(await enterArena(page))) throw new Error('進 arena 逾時');
+    return await runFormStrikeProbe(page, {
+      form,
+      supplyFlavor,
+      trials: Number(opt('trials', '5')),
+    });
+  }
   if (name === 'transform') {
     // §119 變身觸發密度：形態引入關 mid bot 獵集同系味首次變身 p50 ≤30s、p95 ≤60s
     //（門檻 SSOT＝difficulty.AUDIT_THRESHOLDS；供給味反查 FORM_BY_FLAVOR 零第二份映射）。
-    if (!level || level.boss) throw new Error('transform probe 僅適用走動關');
-    const formEntry = (level.teaches ?? []).find((t) => t.endsWith('-form'));
-    if (!formEntry) throw new Error(`L${level.id} 未定義形態教學位點（teaches *-form）`);
+    // #948 魔王關解禁：走動關讀 teaches、魔王關讀 bossApplies——兩者皆宣告
+    // `<form>-form` 即可量測。魔王關才是玩家真正需要知道「多久能變身」之處
+    //（L28 宣告 gravity-form 為優勢解，卻長期無從量測其取得成本）。
+    // 量測語意差異：魔王關的獵集發生在 arena 內（有魔王干擾），數值不與走動關
+    // 的引入關門檻（p50 ≤30s／p95 ≤60s）直接可比——魔王關取值為上界參考。
+    if (!level) throw new Error('transform probe 需要有效關卡');
+    const declared = level.boss ? (level.bossApplies ?? []) : (level.teaches ?? []);
+    const formEntry = declared.find((t) => t.endsWith('-form'));
+    if (!formEntry) {
+      throw new Error(
+        `L${level.id} 未宣告形態位點（走動關 teaches／魔王關 bossApplies 需含 *-form）`,
+      );
+    }
     const form = formEntry.replace('-form', '');
     const supplyFlavor = Object.entries(FORM_BY_FLAVOR).find(([, f]) => f === form)?.[0];
     if (!supplyFlavor) throw new Error(`形態 ${form} 未定義觸發味`);

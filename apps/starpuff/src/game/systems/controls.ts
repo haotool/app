@@ -26,6 +26,8 @@ export interface ControlsState {
   actionPressed: boolean;
   actionHeld: boolean;
   spPressed: boolean;
+  // spHeld（#948）：長按分流用——點按引爆蓄能星、長按變身，兩態遂可並存。
+  spHeld: boolean;
 }
 
 export interface ControlsSystem {
@@ -177,6 +179,7 @@ export function createControls(scene: Phaser.Scene): ControlsSystem {
     actionPressed: false,
     actionHeld: false,
     spPressed: false,
+    spHeld: false,
   };
 
   const held: Record<ButtonName, boolean> = { a: false, b: false, sp: false };
@@ -358,6 +361,7 @@ export function createControls(scene: Phaser.Scene): ControlsSystem {
       // SP 情境鍵（§109）：點按語意（僅取按下緣）；鍵盤 C 與觸控 SP 鍵同權。
       const spHeld = held.sp || keys?.C.isDown === true;
       state.spPressed = spHeld && !prevSpHeld;
+      state.spHeld = spHeld;
       prevSpHeld = spHeld;
     },
     setDropReady(ready: boolean) {
