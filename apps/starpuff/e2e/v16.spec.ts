@@ -201,10 +201,17 @@ test('圖鑑怪物分頁（F-03）：預設第 1 頁僅下一頁，翻至第 2 �
   // 第 1 頁：無上一頁、有下一頁。
   await expect(page.locator('[data-menu="monsters-prev"]')).toHaveCount(0);
   await expect(page.locator('[data-menu="monsters-next"]')).toHaveCount(1);
-  await page
-    .locator('[data-menu="monsters-next"]')
-    .dispatchEvent('pointerdown', { pointerId: 5, isPrimary: true });
-  // 第 2 頁（末頁）：有上一頁、無下一頁；返回第 1 頁。
+
+  // 一路翻到末頁——頁數隨 CODEX_MONSTERS 成長（星海終局篇 W1–W4 已由 2 頁增至 4 頁），
+  // 斷言不得硬編頁數，否則每次加怪就假性紅燈。上限僅作無限迴圈保險。
+  for (let guard = 0; guard < 20; guard += 1) {
+    if ((await page.locator('[data-menu="monsters-next"]').count()) === 0) break;
+    await page
+      .locator('[data-menu="monsters-next"]')
+      .dispatchEvent('pointerdown', { pointerId: 5, isPrimary: true });
+    await expect(page.locator('[data-menu="monsters-prev"]')).toHaveCount(1);
+  }
+  // 末頁：有上一頁、無下一頁；退回前一頁後下一頁鈕重現（雙向可達）。
   await expect(page.locator('[data-menu="monsters-prev"]')).toHaveCount(1);
   await expect(page.locator('[data-menu="monsters-next"]')).toHaveCount(0);
   await page

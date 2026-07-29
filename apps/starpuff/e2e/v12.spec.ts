@@ -10,6 +10,7 @@ declare global {
       fillQuota: () => void;
       lose: () => void;
       gotoLevel: (levelId: number) => void;
+      finalBossLevelId: () => number;
       damageBoss: (amount: number) => void;
       damageBossAt: (amount: number, x: number, y: number) => void;
       bossState: () => { phase: string; state: string } | null;
@@ -305,10 +306,38 @@ test('L20 Voidra 三段（§82）：P2 生存段免傷帶、過熱窗輸出、�
     .toBeLessThanOrEqual(44);
   const afterP3 = await pollDamage(page, 10, 15_000);
   expect(afterP3).toBeLessThan(44);
-  // 擊破 → 星光復甦謝幕（§84）→ 跳過 → Result → 通關寫檔。
+  // 擊破 → Result → 通關寫檔。謝幕（§84）由 GameScene 以 `nextLevelId() === null`
+  // 資料驅動判定，星海終局篇（L21–L30）落地後鏈末已是 L30——L20 擊破走一般結算，
+  // 謝幕改由下方鏈末案覆蓋。此處不得再斷言 Credits，否則每次延長關卡鏈就假性紅燈。
   await page.evaluate(() => window.__sp.damageBoss(999));
   await expect
     .poll(() => page.evaluate(() => window.__sp.scene()), { timeout: 15_000 })
+    .toBe('Result');
+  expect(await page.evaluate(() => window.__sp.save().levels['20']?.cleared)).toBe(true);
+  await page.waitForTimeout(400);
+  expect(errors).toEqual([]);
+});
+
+// 謝幕（§84）在關卡鏈末端才觸發。原本此契約掛在 L20，星海終局篇落地後鏈末改為
+// L30；本案接手覆蓋，關號取自 `__sp.finalBossLevelId()` 而非硬編——與 GameScene 的
+// `nextLevelId() === null` 判定同源，往後再延長關卡鏈也不需改動本案。
+test('關卡鏈末魔王擊破 → 星光復甦謝幕（§84）→ 跳過 → Result 通關寫檔', async ({ page }) => {
+  test.setTimeout(180_000);
+  const errors = collectErrors(page);
+  await startGame(page);
+  const finalLevelId = await page.evaluate(() => window.__sp.finalBossLevelId());
+  await gotoLevel(page, finalLevelId);
+  await page.evaluate(() => window.__sp.grantInvuln(120_000));
+  // 前室廊道（§69 慣例）：右行走入 arena 才生成魔王，bossHp 由 -1 轉正值。
+  await page.keyboard.down('ArrowRight');
+  await expect
+    .poll(() => page.evaluate(() => window.__sp.bossHp()), { timeout: 60_000 })
+    .toBeGreaterThan(0);
+  await page.keyboard.up('ArrowRight');
+  // 直接擊破：本案驗的是鏈末轉場契約，戰鬥流程由該王專屬案覆蓋。
+  await page.evaluate(() => window.__sp.damageBoss(9999));
+  await expect
+    .poll(() => page.evaluate(() => window.__sp.scene()), { timeout: 20_000 })
     .toBe('Credits');
   await page.locator('[data-menu="credits-skip"]').dispatchEvent('pointerdown', {
     pointerId: 9,
@@ -317,7 +346,9 @@ test('L20 Voidra 三段（§82）：P2 生存段免傷帶、過熱窗輸出、�
   await expect
     .poll(() => page.evaluate(() => window.__sp.scene()), { timeout: 8000 })
     .toBe('Result');
-  expect(await page.evaluate(() => window.__sp.save().levels['20']?.cleared)).toBe(true);
+  expect(
+    await page.evaluate((id) => window.__sp.save().levels[String(id)]?.cleared, finalLevelId),
+  ).toBe(true);
   await page.waitForTimeout(400);
   expect(errors).toEqual([]);
 });

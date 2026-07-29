@@ -12,6 +12,7 @@ import { isSaveStorageAvailable, loadSave, persistSave, type SaveData } from './
 import { wasSettingsRecoveredFromCorruption } from './game/core/settings';
 import { notifySaveUnavailable, showShellCard, whenShellIdle } from './shellCards';
 import { awardAchievements } from './game/logic/achievements';
+import { LEVELS } from './game/logic/levels';
 import { initShellLayout, initialShellWidth } from './game/core/shellLayout';
 import { markActiveScene } from './game/core/sceneSignal';
 import { SceneKeys, type EnemyKind, type LevelId, type SceneKey } from './game/core/types';
@@ -167,6 +168,9 @@ declare global {
       spawn: (kind: EnemyKind, x?: number, y?: number) => void;
       grantStar: (flavor: StarFlavor) => void;
       shieldRaised: () => boolean;
+      // 關卡鏈末魔王關（§84 謝幕契約）：e2e 不得硬編關號——鏈長會隨新章成長，
+      // 硬編會讓「鏈末才播謝幕」的斷言在每次延長時假性紅燈（#918 實證）。
+      finalBossLevelId: () => number;
       transform: () => { form: string | null; remainingMs: number };
       // 變身資格觀測（#848 審查修復）：同系星彈合計 ≥3（強化槽計 2）——槽數
       // 因連吞合成塌縮，slot count 無法代表資格，量測 driver 必須讀此真值。
@@ -245,6 +249,12 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
       internals().player.grantStar(flavor);
     },
     shieldRaised: () => internals().player.isShieldRaised(),
+    // 與 GameScene 的 `nextLevelId() === null` 判定同源，避免第二份鏈末定義。
+    finalBossLevelId: () => {
+      const last = [...LEVELS].reverse().find((level) => level.boss !== null);
+      if (!last) throw new Error('關卡鏈無魔王關');
+      return last.id;
+    },
     // v9 觀測點（§57 e2e）：星化形態與剩餘時間。
     transform: () => internals().player.getTransformState(),
     // 變身資格觀測（#848 審查修復）：走 player 資格單點（§119 含形態解鎖閘）。

@@ -200,8 +200,13 @@ test('星核制霸（§86）：五王 EX 全制霸存檔載入標題/圖鑑/地�
     isPrimary: true,
   });
   await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Map');
-  // 全通關存檔預設落五區頁（highestClearedLevel=20）：EX 徽鈕存在＝全制霸態不移除
-  // 入口、可重玩。
+  // 五區 EX 徽鈕存在＝全制霸態不移除入口、可重玩。
+  // 星海終局篇（L21–L30）落地後，highestClearedLevel=20 的 currentChallenge 指向
+  // L21＝第 6 區，預設頁不再是五區——改為顯式走頁籤切到五區再斷言，否則此案會隨
+  // 每次新增區域而假性紅燈。頁籤本身可達也一併驗到（§78 分頁即快速旅行）。
+  await page
+    .locator('[data-menu="zone-5"]')
+    .dispatchEvent('pointerdown', { pointerId: 9, isPrimary: true });
   await expect(page.locator('[data-menu="node-20-ex"]')).toBeAttached();
   await page.waitForTimeout(400);
   expect(errors).toEqual([]);
