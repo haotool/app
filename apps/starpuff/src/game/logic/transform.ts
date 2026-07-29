@@ -438,6 +438,21 @@ export function eligibleForm(
   return stars >= TRANSFORM.requiredStars ? form : null;
 }
 
+// 變身消耗（#948）：修前 beginTransform 無條件清空整匣——門檻 3 星卻收走 5 槽，
+// 使「達標後續囤星」毫無理由；且變身期間必然零彈藥，B 又被形態技接管＝完全無星彈
+// 輸出，玩家因此感受為「變身只是無敵」。改為自底部（最舊）扣滿 requiredStars 個
+// 星單位即止，保留其餘——頂槽（下一發）優先留給玩家。強化槽計 2、不做部分消耗。
+export function consumeForTransform(magazine: readonly MagazineSlot[]): readonly MagazineSlot[] {
+  let units = 0;
+  let cut = 0;
+  for (const slot of magazine) {
+    if (units >= TRANSFORM.requiredStars) break;
+    units += slot.charged ? 2 : 1;
+    cut += 1;
+  }
+  return magazine.slice(cut);
+}
+
 export interface TransformState {
   form: TransformForm | null;
   remainingMs: number;

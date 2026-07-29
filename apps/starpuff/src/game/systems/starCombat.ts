@@ -435,6 +435,17 @@ export function createStarCombat(scene: Phaser.Scene, hooks: StarCombatHooks): S
       const dist = Math.hypot(dx, dy) || 1;
       enemy.setVelocity((dx / dist) * TIDE_PULL.pullSpeed, (dy / dist) * TIDE_PULL.pullSpeed);
     }
+    // 魔王本體結算（#948）：修前只遍歷 enemies——潮化對魔王零傷，使 L24 宣告的
+    // tide-form 優勢解打不到 Maridella（引力化 gravity-well 同源病灶）。
+    // 魔王 immovable 不受牽引，僅結算傷害。
+    if (!hooks.boss().isActive()) return;
+    for (const body of hooks.bossBodies()) {
+      if (!(body.body as Phaser.Physics.Arcade.Body).enable) continue;
+      if (Math.sign(body.x - x) !== facing && body.x !== x) continue;
+      if (distanceBetween(x, y, body.x, body.y) > TIDE_PULL.rangePx) continue;
+      flashSprite(scene, 'fx-star-tide-hit', body.x, body.y, 40, { durationMs: 180, depth: 89 });
+      hooks.damageBossAt(TIDE_PULL.damage, body.x, body.y);
+    }
   }
 
   // 稜化彩虹光束（§119）：面向側走廊貫穿判定——小怪與魔王本體全結算，光帶漸隱演出。
@@ -480,9 +491,16 @@ export function createStarCombat(scene: Phaser.Scene, hooks: StarCombatHooks): S
     }
   }
 
-  // 引力化引力井（§119）：面向側定點初爆輕傷＋滯留週期牽引（壽命有界必回收）。
+  // 引力化引力井（§119）：面向側初爆輕傷＋滯留週期牽引（壽命有界必回收）。
+  //
+  // 傷害穩定性（#948 待解）：probe 實測全招傷害在 0~12 間跳動（理論上限 14），
+  // 近距 78px 施放仍有整招落空——魔王在 7 跳期間飄出 130px 半徑。曾試「井心追隨
+  // 捕獲目標」，probe 實測 hitRate 反而由 0.5 掉到 0.125（追隨後井心與魔王水平
+  // 重合，垂直落差反而更常出界），已回退。正解待進一步量測，勿再憑直覺調整。
   function resolveGravityWell(x: number, y: number, facing: 1 | -1): void {
-    const wellX = x + facing * GRAVITY_WELL.offsetPx;
+    const castX = x + facing * GRAVITY_WELL.offsetPx;
+    const castY = y;
+    const wellX = castX;
     // 引力井初爆（§124 W5a）：井心引力爆點；素材缺載沿圓域描邊保底。
     flashSprite(scene, 'fx-star-gravity-explosion', wellX, y, GRAVITY_WELL.radiusPx * 1.5, {
       durationMs: 300,
@@ -494,25 +512,41 @@ export function createStarCombat(scene: Phaser.Scene, hooks: StarCombatHooks): S
       .setDepth(59)
       .setScale(0.3);
     scene.tweens.add({ targets: well, scale: 1, duration: 200, ease: 'Quad.easeOut' });
-    for (const child of hooks.enemies().getGroup().getChildren()) {
-      if (!child.active) continue;
-      const enemy = child as Phaser.Physics.Arcade.Sprite;
-      if (distanceBetween(wellX, y, enemy.x, enemy.y) <= GRAVITY_WELL.radiusPx) {
-        hooks.enemies().damage(child, GRAVITY_WELL.damage);
+    // 井域結算單一出口（#948）：小怪走 enemies.damage、魔王本體走 damageBossAt。
+    // 修前只遍歷 enemies——引力化對魔王零傷，使 L28 宣告的 gravity-form 優勢解
+    // 打不到它要對付的魔王（潮化 tide-pull 同源病灶，見 resolveTidePull）。
+    const wellStrike = (damage: number): void => {
+      for (const child of hooks.enemies().getGroup().getChildren()) {
+        if (!child.active) continue;
+        const enemy = child as Phaser.Physics.Arcade.Sprite;
+        if (distanceBetween(wellX, castY, enemy.x, enemy.y) <= GRAVITY_WELL.radiusPx) {
+          hooks.enemies().damage(child, damage);
+        }
       }
-    }
+      if (!hooks.boss().isActive()) return;
+      for (const body of hooks.bossBodies()) {
+        if (!(body.body as Phaser.Physics.Arcade.Body).enable) continue;
+        if (distanceBetween(wellX, castY, body.x, body.y) > GRAVITY_WELL.radiusPx) continue;
+        hooks.damageBossAt(damage, body.x, body.y);
+      }
+    };
+    wellStrike(GRAVITY_WELL.damage);
     let ticksLeft = GRAVITY_WELL.ticks;
     const timer = scene.time.addEvent({
       delay: GRAVITY_WELL.tickMs,
       repeat: GRAVITY_WELL.ticks - 1,
       callback: () => {
         ticksLeft -= 1;
+        // 滯留傷（#948）：修前 6 跳只牽引不傷，全招總傷僅初爆 2——1.2s 冷卻下
+        // 1.67 DPS，對 124 HP 的 Gravion 需 74 秒完美貼身，實質不可用。改為逐跳
+        // 結算後全招 2×(1+6)=14 傷，與「井」的滯留語彙一致。
+        wellStrike(GRAVITY_WELL.damage);
         for (const child of hooks.enemies().getGroup().getChildren()) {
           if (!child.active) continue;
           const enemy = child as Phaser.Physics.Arcade.Sprite;
-          if (distanceBetween(wellX, y, enemy.x, enemy.y) > GRAVITY_WELL.radiusPx) continue;
+          if (distanceBetween(wellX, castY, enemy.x, enemy.y) > GRAVITY_WELL.radiusPx) continue;
           const dx = wellX - enemy.x;
-          const dy = y - enemy.y;
+          const dy = castY - enemy.y;
           const dist = Math.hypot(dx, dy) || 1;
           enemy.setVelocity(
             (dx / dist) * GRAVITY_WELL.pullSpeed,
@@ -522,7 +556,7 @@ export function createStarCombat(scene: Phaser.Scene, hooks: StarCombatHooks): S
         if (ticksLeft <= 0) {
           timer.remove();
           // 井收束爆點（§124 W5a）：滯留期滿的內縮回饋。
-          flashSprite(scene, 'fx-star-gravity-hit', wellX, y, 56, {
+          flashSprite(scene, 'fx-star-gravity-hit', wellX, castY, 56, {
             durationMs: 220,
             depth: 60,
             fromScale: 1.6,

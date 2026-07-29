@@ -357,6 +357,7 @@ const IDLE: ControlsState = {
   actionPressed: false,
   actionHeld: false,
   spPressed: false,
+  spHeld: false,
 };
 const PRESS: ControlsState = { ...IDLE, actionPressed: true, actionHeld: true };
 

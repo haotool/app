@@ -281,3 +281,58 @@ export function createFormSkills(
     },
   };
 }
+
+// 形態技分派（#948，自 player.ts 抽出——1200 行閘）：純裁決，不碰場景狀態。
+// 冷卻餘量由 player 持有並傳入，回傳「該做什麼」，副作用與計時歸位仍由 player
+// 施行——狀態所有權不遷移，僅把 7 分支的 if/else 鏈移出主迴圈。
+export type FormSkillEffect =
+  | { kind: 'none' }
+  | { kind: 'volt-beam' }
+  | { kind: 'form-shot'; spec: FormShotSpec; flat: boolean; cooldownMs: number }
+  | { kind: 'prism-arm' }
+  | { kind: 'tap-strike'; strike: 'tide-pull' | 'gravity-well'; cooldownMs: number }
+  | { kind: 'shell-charge' };
+
+export function resolveFormSkill(opts: {
+  form: TransformForm;
+  spec: TransformFormSpec | null | undefined;
+  voltCdMs: number;
+  formCdMs: number;
+  chargeMs: number;
+  chargeCdMs: number;
+  galeShot: FormShotSpec;
+  tidePullCooldownMs: number;
+  gravityWellCooldownMs: number;
+}): FormSkillEffect {
+  const { form, spec } = opts;
+  if (form === 'volt') return opts.voltCdMs <= 0 ? { kind: 'volt-beam' } : { kind: 'none' };
+  if (form === 'prism') return { kind: 'prism-arm' };
+  if (form === 'shell') {
+    // 滾殼衝撞（§110）：B 起手；接觸傷由 overlaps 依衝撞態改判向小怪。
+    return opts.chargeCdMs <= 0 && opts.chargeMs <= 0 ? { kind: 'shell-charge' } : { kind: 'none' };
+  }
+  if (opts.formCdMs > 0) return { kind: 'none' };
+  if (form === 'gale') {
+    // 風刃扁身（§57）：走 launchShot 但覆寫扁身與拖尾。
+    return {
+      kind: 'form-shot',
+      spec: opts.galeShot,
+      flat: true,
+      cooldownMs: opts.galeShot.cooldownMs,
+    };
+  }
+  if (form === 'ember' && spec?.shot) {
+    // 焰彈（§119）：直射小爆（借爆裂味效果表），burn 燒毀優勢由命中端結算。
+    return { kind: 'form-shot', spec: spec.shot, flat: false, cooldownMs: spec.shot.cooldownMs };
+  }
+  if ((form === 'tide' || form === 'gravity') && spec?.tapStrike) {
+    // 水引／引力井（§119）：世界結算交 starCombat（沿 SKILL 事件契約）。
+    const strike = spec.tapStrike;
+    return {
+      kind: 'tap-strike',
+      strike,
+      cooldownMs: strike === 'tide-pull' ? opts.tidePullCooldownMs : opts.gravityWellCooldownMs,
+    };
+  }
+  return { kind: 'none' };
+}

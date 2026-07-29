@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GameEvents, onGameEvent, offGameEvent, type GameEventName } from '../core/events';
 import { playSfx } from '../audio/sfx';
 import { getVisualScale, type ScalableSprite } from './visualScale';
+import { burstLayers } from './fxLayers';
 import { installCameraFxGate } from './cameraFxGate';
 
 export const FX_TEXTURES = {
@@ -563,4 +564,32 @@ export function createFx(scene: Phaser.Scene): FxSystem {
     },
     destroy,
   };
+}
+
+// 主角落地塵環（§18／§124 W5a，#948 自 player.ts 抽出——1200 行閘）：白環擴散
+// ＋landing 五分層疊加；素材缺載時白環單獨保底。純視覺，不碰玩家狀態。
+export function heroLandingRing(
+  scene: Phaser.Scene,
+  x: number,
+  y: number,
+  footOffsetPx: number,
+  intensity = 1,
+): void {
+  const ring = scene.add
+    .ellipse(x, y + footOffsetPx - 4, 26, 10)
+    .setStrokeStyle(3 * intensity, 0xffffff, 0.7);
+  scene.tweens.add({
+    targets: ring,
+    scaleX: 2.4 * intensity,
+    scaleY: 1.8 * intensity,
+    alpha: 0,
+    duration: 320 * intensity,
+    ease: 'Quad.easeOut',
+    onComplete: () => ring.destroy(),
+  });
+  burstLayers(scene, x, y + footOffsetPx - 6, 'fx-common-landing', {
+    sizePx: 52 * intensity,
+    depth: 12,
+    debrisCount: intensity > 1 ? 10 : 6,
+  });
 }

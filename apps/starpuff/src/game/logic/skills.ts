@@ -23,9 +23,24 @@ export interface SwallowResult {
   mixed: string | null;
 }
 
+// 槽位價值序（#948）：滿匣替換裁決用——高者不得被低者擠掉。
+// 金星（20 傷）> 合成星（配方表傷害）> 強化星（×1.6）> 素星（味表傷害）。
+export function slotValue(slot: MagazineSlot): number {
+  if (slot.gold) return 1000;
+  if (slot.mix !== undefined) return 500 + getMix(slot.mix).damage;
+  const base = STAR_FLAVORS[slot.flavor].damage;
+  return slot.charged ? 100 + base * CHARGED_STAR.damageMultiplier : base;
+}
+
 // 頂槽同種且未強化 → 連吞升級 charged（§23）；
 // 頂槽異種且素槽（未強化/非金/非混）且配方存在 → 合成混合星佔原槽（§46）；
-// 其餘推新槽；滿匣改吞 → 覆蓋頂槽（§20 最後吞下者覆蓋，混合槽被覆蓋即取消）。
+// 其餘推新槽。
+//
+// 滿匣裁決（#948 改）：修前無條件覆蓋頂槽——而彈匣是 LIFO，頂槽即下一發，
+// 且升級分支被 `!top.charged` 守衛擋掉，導致「滿匣吸一隻雜魚會摧毀一顆強化星」
+// 的嚴格降級。改為擠掉**價值最低**槽，且僅當新星價值較高才替換；否則整匣不動
+// （呼叫端仍發 ENEMY_INHALED 與音效，不讓玩家誤判吸入失效）。
+// 副效果（設計意圖）：低價值素星優先被同味/高階星擠出，使「湊滿同味變身」更可行。
 export function swallowIntoMagazine(
   magazine: readonly MagazineSlot[],
   kind: StarFlavor,
@@ -47,7 +62,21 @@ export function swallowIntoMagazine(
   }
   const slot: MagazineSlot = { flavor: kind, charged: false, gold: false };
   if (magazine.length >= STAR.maxAmmo) {
-    return { magazine: [...magazine.slice(0, -1), slot], charged: false, mixed: null };
+    // 擠出目標：優先取「異味」槽中價值最低者——同味槽保留才能朝 eligibleForm 的
+    // 「全數同味」收斂（設計意圖：滿匣仍可湊變身）；全同味時退回全域最低價值槽。
+    const valued = magazine.map((s, index) => ({ index, value: slotValue(s), flavor: s.flavor }));
+    const offFlavor = valued.filter((entry) => entry.flavor !== kind);
+    const pool = offFlavor.length > 0 ? offFlavor : valued;
+    const evict = pool.reduce((best, entry) => (entry.value < best.value ? entry : best));
+    // 不得降級：僅當新星價值不低於被擠者才替換（等值允許——等值替換的意義在
+    // 提升同味純度，而非傷害）。金星／合成星／強化星因此恆受保護。
+    if (slotValue(slot) < evict.value) {
+      return { magazine, charged: false, mixed: null };
+    }
+    const evictIndex = evict.index;
+    const next = [...magazine];
+    next[evictIndex] = slot;
+    return { magazine: next, charged: false, mixed: null };
   }
   return { magazine: [...magazine, slot], charged: false, mixed: null };
 }

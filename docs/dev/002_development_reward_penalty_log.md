@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-4（reward 0、penalty 4、neutral 1）｜累計總分：+323
+> 本次分數變化：-2（reward 1、penalty 3、neutral 0）｜累計總分：+321
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,26 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-30
+- ID：penalty-starpuff-form-strike-never-hits-boss
+- 原因：resolveTidePull／resolveGravityWell 只遍歷 hooks.enemies() 群組，從未觸及魔王本體——L24 宣告 tide-form、L28 宣告 gravity-form 為該關優勢解，而該優勢解對它要對付的魔王傷害恆為 0，橫跨兩個章節版本無人發現；引力井滯留 6 跳另只牽引不結算傷害，全招總傷僅初爆 2（1.67 DPS，對 124 HP 需 74 秒完美貼身）
+- 解法：兩招補 damageBossAt 結算並逐跳計傷（全招 14）；根因是驗收依賴「bot 能否通關」而 BOT_TIERS.high 標 transformUse:false（bot 從不變身）、--transform 又走 grantStar 注入——宣告與實作間零守門，遂新增 formstrike 分項探針釘住「宣告的優勢形態必須打得到該關魔王」
+
+- 日期：2026-07-30
+- ID：penalty-starpuff-magazine-full-swallow-downgrade
+- 原因：swallowIntoMagazine 滿匣時無條件覆蓋頂槽，而彈匣是 LIFO、頂槽即下一發，且升級分支被 !top.charged 守衛擋掉——滿匣吸一隻雜魚會摧毀一顆強化星；蓄能星存在時彈匣停在 5 槽不再結晶，此時每次吸入都走此降級路徑
+- 解法：改為擠掉「異味中最弱」槽且新星價值不得低於被擠者（金星／合成／強化恆受保護）；副效果使彈匣朝 eligibleForm 要求的「全數同味」收斂，滿匣仍可湊變身。另修變身清空整匣（改扣 3 星單位）與變身期 B 被形態技全接管（改點按射星／長按出技）
+
+- 日期：2026-07-30
+- ID：penalty-audit-bot-real-forage-regression
+- 原因：為讓 bot 以真實吸食湊星取代 grantStar 注入，連續兩次憑猜測改 audit-driver 而未先加診斷；移除注入後獵食未生效，bot 全程零彈藥零射擊、魔王血量從未下降，工具比修改前更差。加診斷後才發現需重寫決策層而非加分支
+- 解法：完整回退 audit-driver；量測路線改為分項機制探針（不要求 bot 會玩，只問單一機制可用性）。教訓有二：換掉有效路徑前必須保留降級；改行為前先加量測而非先改碼
+
+- 日期：2026-07-30
+- ID：reward-starpuff-formstrike-probe-catches-own-regression
+- 原因：分項探針上線後 2 分鐘內即回報「井心追隨」修法的 hitRate 異動，而同等級的通關率量測需 50 分鐘且死因混雜無法歸因
+- 解法：確立分項探針路線並記錄其現階段限制——同碼 8 trials 三次得 0.5/0.125/0.25，樣本數只夠回答二元可達性、不足以支撐平衡結論；據此更正先前「追隨修法更差」的判定為過度解讀噪音，回退理由改記為「無證據更好且增加複雜度」
 
 - 日期：2026-07-29
 - ID：neutral-starpuff-e2e-ci-quarantine

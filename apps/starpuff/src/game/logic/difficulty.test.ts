@@ -19,7 +19,7 @@ import {
 } from './difficulty';
 import { inhaleFlavor } from './combat';
 import { BOSS_LEVEL_IDS, LEVELS } from './levels';
-import { eligibleForm } from './transform';
+import { FORM_BY_FLAVOR, eligibleForm } from './transform';
 
 const levelOf = (id: number) => {
   const level = LEVELS.find((l) => l.id === id);
@@ -197,8 +197,13 @@ describe('魔王稽核事實表', () => {
 });
 
 describe('TRANSFORM_ADVANTAGE 變身優勢情境模板（#816 W2）', () => {
-  it('T4 先落 Jellord/Noctra 兩王＋§126 劉董雷化清熊線；王/關對映與稽核事實表一致', () => {
-    expect(TRANSFORM_ADVANTAGE.map((s) => s.boss)).toEqual(['jellord', 'noctra', 'liudong']);
+  it('T4 兩王＋§126 劉董＋§123 引力侯爵；王/關對映與稽核事實表一致', () => {
+    expect(TRANSFORM_ADVANTAGE.map((s) => s.boss)).toEqual([
+      'jellord',
+      'noctra',
+      'liudong',
+      'gravion',
+    ]);
     for (const spec of TRANSFORM_ADVANTAGE) {
       const facts = BOSS_AUDIT_FACTS.find((f) => f.boss === spec.boss);
       expect(facts?.levelId).toBe(spec.levelId);
@@ -225,6 +230,44 @@ describe('TRANSFORM_ADVANTAGE 變身優勢情境模板（#816 W2）', () => {
 
   it('TTK 改善門檻引 SSOT（≥15%）', () => {
     expect(AUDIT_THRESHOLDS.transformTtkGainMinPct).toBeCloseTo(0.15, 5);
+  });
+
+  // 覆蓋缺口守門：關卡在 bossApplies 宣告 `<form>-form` 等於宣稱「該形態是這關的
+  // 優勢解」，但量化驗收要能掛勾，必須有對應的 TRANSFORM_ADVANTAGE 條目——否則
+  // level-audit --transform 會直接拋「尚未定義」，宣告淪為無法驗證的文字。
+  // L28 曾以此形式靜默缺席（宣告 gravity-form 卻無條目），本測試防同類復發。
+  it('宣告 `<form>-form` 的魔王關必須有對應 TRANSFORM_ADVANTAGE 條目', () => {
+    // 尚未補齊的已知缺口：補條目時自本表移除即可（留在表內＝仍是已知債，
+    // 不得因為「測試綠了」就視為已覆蓋）。
+    const KNOWN_GAPS: readonly number[] = [22, 24, 26];
+    const declared = LEVELS.filter((level) => level.boss !== null).flatMap((level) =>
+      (level.bossApplies ?? [])
+        .filter((mechanic) => mechanic.endsWith('-form'))
+        .map((mechanic) => ({ levelId: level.id, form: mechanic.replace(/-form$/, '') })),
+    );
+    // 前提保護：宣告本身消失（改名/移除）時翻紅，避免守門空轉。
+    expect(declared.length).toBeGreaterThanOrEqual(4);
+
+    for (const { levelId, form } of declared) {
+      if (KNOWN_GAPS.includes(levelId)) continue;
+      const spec = TRANSFORM_ADVANTAGE.find((s) => s.levelId === levelId);
+      expect(spec, `L${levelId} 宣告 ${form}-form 但缺 TRANSFORM_ADVANTAGE 條目`).toBeDefined();
+      expect(spec?.form).toBe(form);
+      // 供給味必須經 FORM_BY_FLAVOR（SSOT）映射回該形態，杜絕第二份對照表。
+      expect(FORM_BY_FLAVOR[spec!.supplyFlavor]).toBe(form);
+    }
+  });
+
+  // 已知缺口本身也要釘住：缺口清單縮小是進度、擴大是回歸。
+  it('已知缺口僅 L22/L24/L26 三關（補齊後同步縮表）', () => {
+    const covered = new Set(TRANSFORM_ADVANTAGE.map((s) => s.levelId));
+    const missing = LEVELS.filter(
+      (level) =>
+        level.boss !== null &&
+        (level.bossApplies ?? []).some((m) => m.endsWith('-form')) &&
+        !covered.has(level.id),
+    ).map((level) => level.id);
+    expect(missing).toEqual([22, 24, 26]);
   });
 });
 

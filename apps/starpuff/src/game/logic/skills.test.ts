@@ -64,16 +64,39 @@ describe('swallowIntoMagazine（§23 槽位模型）', () => {
     expect(result.mixed).toBeNull();
   });
 
-  it('滿匣改吞（無配方）覆蓋頂槽（§20 最後吞下者覆蓋；§109 滿匣僅蓄能星存在時可達）', () => {
+  // #948：滿匣改為「擠掉異味最弱槽」而非無條件覆蓋頂槽——頂槽是 LIFO 的下一發，
+  // 舊行為使滿匣吸一隻雜魚就摧毀最好的一發（強化/合成/金星全在覆蓋範圍內）。
+  it('滿匣改吞：擠掉異味最弱槽（同值取最前），不再覆蓋頂槽', () => {
+    // 全素星；drilly 7 傷最高，jelly/floaty/puffy/zappy 同為 5 → 取最前的 jelly。
     const full = [slot('jelly'), slot('floaty'), slot('puffy'), slot('drilly'), slot('zappy')];
     const result = swallowIntoMagazine(full, 'shelly');
     expect(result.magazine).toEqual([
-      slot('jelly'),
+      slot('shelly'),
       slot('floaty'),
       slot('puffy'),
       slot('drilly'),
-      slot('shelly'),
+      slot('zappy'),
     ]);
+  });
+
+  // 頂槽已強化 → 連吞升級分支（§23）不適用，落入滿匣裁決；此時異味的 jelly
+  // 被擠掉，彈匣收斂為全 boomy＝eligibleForm 成立（設計意圖：滿匣仍可湊變身）。
+  it('滿匣改吞：同味純度優先——擠掉異味槽，收斂為可變身彈匣', () => {
+    const full = [slot('jelly'), slot('boomy'), slot('boomy'), slot('boomy'), slot('boomy', true)];
+    const result = swallowIntoMagazine(full, 'boomy');
+    expect(result.magazine.every((s) => s.flavor === 'boomy')).toBe(true);
+  });
+
+  it('滿匣改吞：不得降級——素星擠不掉金星與強化星', () => {
+    const full = [
+      slot('jelly', false, true),
+      slot('boomy', true),
+      slot('jelly', false, true),
+      slot('boomy', true),
+      slot('jelly', false, true),
+    ];
+    const result = swallowIntoMagazine(full, 'spora');
+    expect(result.magazine).toEqual(full);
   });
 
   it('金星槽不參與連吞升級', () => {
