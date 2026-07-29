@@ -102,7 +102,9 @@ function makeHarness(overrides: {
     add: { graphics: () => chainable(), circle: () => chainable() },
     tweens: { add: vi.fn() },
     cameras: { main: { flash, worldView: { x: 0, y: 0, width: 854, height: 480 } } },
-    time: { delayedCall },
+    // addEvent（#948 潮流滯留／引力井滯留共用）：替身只記錄不自動推進——滯留段
+    // 的逐跳結算屬時序行為，由專屬測試以顯式 callback 呼叫驗證，此處僅保證不炸。
+    time: { delayedCall, addEvent: () => ({ remove: () => {} }) },
   } as unknown as Phaser.Scene;
   const hooks: StarCombatHooks = {
     enemies: () =>
