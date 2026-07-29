@@ -64,4 +64,16 @@ describe('勝率門檻 gate（#890）', () => {
     expect(src).toContain('AUDIT_THRESHOLDS.clearRateMinHigh');
     expect(src).toContain('AUDIT_THRESHOLDS.clearRateMinRuns');
   });
+
+  // import 副作用守門：本檔 import level-audit.mjs 取 gate 函式，若 CLI 進入點沒有
+  // direct-run 守衛，import 當下就會執行 main()——缺 levelArg 即拋錯並 process.exit(1)，
+  // 使整個 vitest run 以 unhandled error 失敗。此回歸實際發生過（#890 引入，
+  // #918 接上 starpuff test:coverage 後才在 CI 曝光），故以斷言釘住守衛存在。
+  it('CLI 進入點有 direct-run 守衛，import 不得產生副作用', () => {
+    const src = readFileSync(join(here, 'level-audit.mjs'), 'utf8');
+    expect(src).toContain('function isDirectRun()');
+    expect(src).toMatch(/if\s*\(isDirectRun\(\)\)\s*\{[\s\S]*main\(\)/);
+    // 行首裸呼叫即代表守衛被繞過。
+    expect(src).not.toMatch(/^main\(\)/m);
+  });
 });

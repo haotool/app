@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-3（reward 0、penalty 3、neutral 0）｜累計總分：+322
+> 本次分數變化：-4（reward 0、penalty 4、neutral 0）｜累計總分：+318
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-29
+- ID：penalty-level-audit-import-side-effect
+- 原因：#890 為單元測試 export level-audit.mjs 的 gate 函式，但該檔 CLI 進入點無 direct-run 守衛——import 當下即執行 main()，缺 levelArg 拋錯並 process.exit(1)，使整個 vitest run 以 unhandled error 失敗；#890 的 PR CI 抓不到，因為 starpuff 的 test:coverage 正是 #918 才接上
+- 解法：CLI 進入點加 isDirectRun 守衛（沿 verify-002-log.mjs 慣例），並補守門測試釘住「守衛存在且無行首裸呼叫 main()」防同類回歸
 
 - 日期：2026-07-29
 - ID：penalty-papertrade-e2e-live-network-dependency
