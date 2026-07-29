@@ -41,7 +41,7 @@ describe('AppLayout Safe Area', () => {
     expect(header).toHaveStyle(`height: ${navigationTokens.header.heightWithSafeArea}`);
     expect(header).toHaveAttribute(
       'style',
-      expect.stringContaining(`padding-top: ${navigationTokens.safeArea.top}`),
+      expect.stringContaining('safe-area-inset-top'),
     );
   });
 
