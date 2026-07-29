@@ -438,14 +438,41 @@ export function createStarCombat(scene: Phaser.Scene, hooks: StarCombatHooks): S
     // 魔王本體結算（#948）：修前只遍歷 enemies——潮化對魔王零傷，使 L24 宣告的
     // tide-form 優勢解打不到 Maridella（引力化 gravity-well 同源病灶）。
     // 魔王 immovable 不受牽引，僅結算傷害。
-    if (!hooks.boss().isActive()) return;
-    for (const body of hooks.bossBodies()) {
-      if (!(body.body as Phaser.Physics.Arcade.Body).enable) continue;
-      if (Math.sign(body.x - x) !== facing && body.x !== x) continue;
-      if (distanceBetween(x, y, body.x, body.y) > TIDE_PULL.rangePx) continue;
-      flashSprite(scene, 'fx-star-tide-hit', body.x, body.y, 40, { durationMs: 180, depth: 89 });
-      hooks.damageBossAt(TIDE_PULL.damage, body.x, body.y);
-    }
+    const strikeBoss = (): void => {
+      if (!hooks.boss().isActive()) return;
+      for (const body of hooks.bossBodies()) {
+        if (!(body.body as Phaser.Physics.Arcade.Body).enable) continue;
+        if (Math.sign(body.x - x) !== facing && body.x !== x) continue;
+        if (distanceBetween(x, y, body.x, body.y) > TIDE_PULL.rangePx) continue;
+        flashSprite(scene, 'fx-star-tide-hit', body.x, body.y, 40, { durationMs: 180, depth: 89 });
+        hooks.damageBossAt(TIDE_PULL.damage, body.x, body.y);
+      }
+    };
+    strikeBoss();
+    // 潮流滯留（#948 平衡）：沿引力井逐跳模式補後續 3 跳——修前單發 2 傷／0.7s
+    // ＝2.9 DPS，是四形態技唯一異常值（焰彈 12.5、引力井 11.7、稜片 21.4）。
+    // 改後 8 傷／0.7s ＝11.4 DPS 對齊同儕，刻意不取稜片的 21.4：潮化的價值在
+    // 牽引控場，不該同時是最高輸出。牽引仍只在起手結算一次（不逐跳重複拉扯）。
+    let tideTicksLeft = TIDE_PULL.ticks;
+    const tideTimer = scene.time.addEvent({
+      delay: TIDE_PULL.tickMs,
+      repeat: TIDE_PULL.ticks - 1,
+      callback: () => {
+        tideTicksLeft -= 1;
+        for (const child of hooks.enemies().getGroup().getChildren()) {
+          if (!child.active) continue;
+          const enemy = child as Phaser.Physics.Arcade.Sprite;
+          if (Math.sign(enemy.x - x) !== facing && enemy.x !== x) continue;
+          if (distanceBetween(x, y, enemy.x, enemy.y) > TIDE_PULL.rangePx) continue;
+          const kind = hooks.enemies().kindOf(child);
+          // 供給型只拉不傷（PR #886）：滯留段沿用同一豁免。
+          if (kind !== null && pullOnlyKinds.includes(kind)) continue;
+          hooks.enemies().damage(child, TIDE_PULL.damage);
+        }
+        strikeBoss();
+        if (tideTicksLeft <= 0) tideTimer.remove();
+      },
+    });
   }
 
   // 稜化彩虹光束（§119）：面向側走廊貫穿判定——小怪與魔王本體全結算，光帶漸隱演出。

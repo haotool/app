@@ -356,6 +356,13 @@ export const TIDE_PULL = {
   damage: 2,
   pullSpeed: 300,
   cooldownMs: 700,
+  // 潮流滯留（#948）：修前單發 2 傷／0.7s CD ＝ 2.9 DPS，是四形態技唯一的異常
+  // 值——焰彈 12.5、引力井 11.7、稜片 21.4。formstrike 探針量到潮化對 108+ HP
+  // 魔王需 54 次施放（約 38 秒完美貼身），而形態期只有 10 秒，「優勢解」名不副實。
+  // 沿引力井逐跳模式改為持續段：2 傷 ×(1+3) ＝ 8／0.7s ＝ 11.4 DPS，對齊同儕
+  // 而非超越（刻意不取稜片的 21.4——潮化的價值在牽引控場，不該同時是最高輸出）。
+  ticks: 3,
+  tickMs: 180,
   pullOnlyKinds: ['cargo', 'ticketa', 'foamy', 'frosty', 'manta'],
 } as const;
 
