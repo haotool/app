@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+0（reward 0、penalty 0、neutral 1）｜累計總分：+321
+> 本次分數變化：-9（reward 1、penalty 10、neutral 2）｜累計總分：+321
 
 ## 新增模板（4 行）
 
