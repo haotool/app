@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+331
+> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+330
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-29
+- ID：penalty-starpuff-modal-not-actually-modal
+- 原因：設定頁宣告 role=dialog＋aria-modal 卻三項皆缺——不移焦點、不鎖 Tab、不還原；追 e2e flaky 又挖出兩層更底層成因：bindButtonActivation 的 pointerdown preventDefault 吞掉瀏覽器預設聚焦（焦點掉 body），以及模態未攔遊戲層鍵盤，關閉用的 Enter 冒泡到 window 觸發 TitleScene keydown-ENTER 而跑進遊戲
+- 解法：新增 core/focusTrap（移焦點／Tab 循環／還原，含節點被場景重建時以 data-menu 重查）；domButton 於 preventDefault 後顯式 focus 並置於 onPress 前；focusTrap 於容器冒泡階段 stopPropagation 阻斷遊戲層鍵盤，settingsPage 的 Escape listener 隨之由 document 改掛 card。5 連跑由 3/4 失敗轉全綠
 
 - 日期：2026-07-29
 - ID：penalty-starpuff-difficulty-gate-missing

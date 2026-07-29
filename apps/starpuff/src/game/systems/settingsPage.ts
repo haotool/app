@@ -6,6 +6,7 @@
 import { setMuted } from '../audio/mute';
 import { vibratePattern } from '../audio/haptics';
 import { bindButtonActivation } from '../core/domButton';
+import { createFocusTrap, type FocusTrap } from '../core/focusTrap';
 import {
   loadSettings,
   updateSettings,
@@ -133,8 +134,16 @@ export function openSettingsPage(onClose?: () => void): void {
   card.setAttribute('aria-modal', 'true');
   card.setAttribute('aria-label', '設定');
 
+  // 焦點鎖定（#870）：trap 於卡片內容全數 append 後才建立——建立當下即聚焦第一個
+  // 控制項，太早呼叫會聚焦到尚不存在的元素（等同沒鎖）。此處僅先宣告，
+  // 供 close() 在移除 overlay 前釋放並還原焦點。
+  let focusTrap: FocusTrap | null = null;
   const close = (): void => {
-    document.removeEventListener('keydown', onKeyDown);
+    card.removeEventListener('keydown', onKeyDown);
+    // 先 release 再 remove：release 要把焦點還原到觸發按鈕，若 overlay 已先移除，
+    // 瀏覽器會把焦點掉到 body，還原時就多一次可見的焦點跳動。
+    focusTrap?.release();
+    focusTrap = null;
     overlay.remove();
     open = false;
     dismiss = null;
@@ -143,7 +152,10 @@ export function openSettingsPage(onClose?: () => void): void {
   const onKeyDown = (event: KeyboardEvent): void => {
     if (event.key === 'Escape') close();
   };
-  document.addEventListener('keydown', onKeyDown);
+  // 掛在 card 而非 document（#870）：focusTrap 於容器冒泡階段 stopPropagation 以阻擋
+  // 遊戲層鍵盤，掛 document 的 listener 會因此收不到。焦點鎖定保證按鍵必發生在卡內，
+  // 故掛容器不縮小生效範圍；同節點同階段的 listener 不受 stopPropagation 影響。
+  card.addEventListener('keydown', onKeyDown);
   dismiss = close;
 
   const title = document.createElement('div');
@@ -176,4 +188,6 @@ export function openSettingsPage(onClose?: () => void): void {
 
   overlay.appendChild(card);
   shell.appendChild(overlay);
+  // 需在 append 進文件後才建立：未接上文件的節點無法取得焦點。
+  focusTrap = createFocusTrap(card);
 }
