@@ -520,10 +520,12 @@ export function createStarCombat(scene: Phaser.Scene, hooks: StarCombatHooks): S
 
   // 引力化引力井（§119）：面向側初爆輕傷＋滯留週期牽引（壽命有界必回收）。
   //
-  // 傷害穩定性（#948 待解）：probe 實測全招傷害在 0~12 間跳動（理論上限 14），
-  // 近距 78px 施放仍有整招落空——魔王在 7 跳期間飄出 130px 半徑。曾試「井心追隨
-  // 捕獲目標」，probe 實測 hitRate 反而由 0.5 掉到 0.125（追隨後井心與魔王水平
-  // 重合，垂直落差反而更常出界），已回退。正解待進一步量測，勿再憑直覺調整。
+  // 傷害穩定性（#951 已解）：舊註記把落空歸因於「魔王在 7 跳期間飄出 130px 半徑」，
+  // 軌跡量測證實主軸是垂直落差——地面玩家 y 376 對 Gravion 懸浮帶 240~260 恆有
+  // dy ∈ [116,136]，dy>130 時任何水平位置皆無解，命中由 bob 相位決定（hitRate
+  // 0.2~0.33）。修法為本體改柱狀判定（見 wellStrike），非調參。
+  // 歷史紀錄：曾試「井心水平追隨捕獲目標」使 hitRate 由 0.5 掉到 0.125 並回退——
+  // 該次失敗同樣源於垂直落差（水平重合後 dy 成為唯一出界因子），與本次修法不衝突。
   function resolveGravityWell(x: number, y: number, facing: 1 | -1): void {
     const castX = x + facing * GRAVITY_WELL.offsetPx;
     const castY = y;
@@ -553,7 +555,10 @@ export function createStarCombat(scene: Phaser.Scene, hooks: StarCombatHooks): S
       if (!hooks.boss().isActive()) return;
       for (const body of hooks.bossBodies()) {
         if (!(body.body as Phaser.Physics.Arcade.Body).enable) continue;
-        if (distanceBetween(wellX, castY, body.x, body.y) > GRAVITY_WELL.radiusPx) continue;
+        // 本體柱狀判定（#951）：懸浮魔王恆在地面施放的井域上方，2D 半徑對它是結構性
+        // 不可達；改為水平沿 radiusPx、垂直放寬 bossColumnHalfPx（SSOT 見 GRAVITY_WELL）。
+        if (Math.abs(body.x - wellX) > GRAVITY_WELL.radiusPx) continue;
+        if (Math.abs(body.y - castY) > GRAVITY_WELL.bossColumnHalfPx) continue;
         hooks.damageBossAt(damage, body.x, body.y);
       }
     };

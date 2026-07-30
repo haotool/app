@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+0（reward 0、penalty 0、neutral 0）｜累計總分：+321
+> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+320
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-30
+- ID：penalty-starpuff-gravity-well-vertical-unreachable
+- 原因：引力井域判定對魔王本體用 2D 半徑，而井心 castY 取玩家 y、懸浮魔王恆在其上方——Gravion HOVER_Y 250±BOB 10 對地面玩家 y 376 即 dy ∈ [116,136] 對 radiusPx 130，dy>130 時任何水平位置皆無解，命中由 bob 相位決定而非操作（hitRate 0.2~0.33）；#947 補了 damageBossAt 卻沿用圓域，故「打得到」達標而「穩定打到」未解，且該待解事項只寫在註解、指向的 #948 是 release PR 非 issue，無追蹤標的
+- 解法：本體改柱狀判定（水平沿 radiusPx、垂直放寬 bossColumnHalfPx 180），小怪維持 2D 圓域零回歸；probe 複驗 hitRate 0.2→0.8、中位傷害 6→14（理論上限），五輪 25 試驗全數一致。根因是舊註解把落空歸因於「7 跳期間水平飄出半徑」而未量測分量，遂憑直覺調參並回退過一次；本次先取施放瞬間 dx/dy 快照才定位到垂直軸，並補 resolveGravityWell 六案單測（修前零覆蓋，故 #947 的圓域殘留無守門）
 
 - 日期：2026-07-30
 - ID：neutral-starpuff-tide-pull-dps-outlier

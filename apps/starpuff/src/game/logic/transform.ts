@@ -390,6 +390,12 @@ export const GRAVITY_WELL = {
   tickMs: 200,
   ticks: 6,
   cooldownMs: 1200,
+  // 懸浮魔王本體的柱狀垂直容許（#951）：井心 castY 取玩家 y，懸浮魔王恆在其上方
+  // ——Gravion HOVER_Y 250 ±BOB_AMP 10 對地面玩家 y 376 即 dy ∈ [116,136]，對
+  // radiusPx 130 的 2D 判定是結構性邊界超界（dy>130 時任何水平位置皆無解，命中由
+  // bob 相位決定而非操作，實測 hitRate 0.2~0.33）。故本體改柱狀：水平沿 radiusPx、
+  // 垂直放寬至本值。小怪維持 2D 圓域——與玩家同地平面，圓域語意正確，零回歸。
+  bossColumnHalfPx: 180,
 } as const;
 
 // 觸發味 → 形態對應：gusty 吞入歸 floaty 味（§52），自然併入風化來源。
