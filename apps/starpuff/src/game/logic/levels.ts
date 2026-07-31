@@ -318,8 +318,8 @@ export const LEVELS: readonly LevelSpec[] = [
     ],
     boss: null,
     tutorial: false,
-    // §109 取捨教學（L3 明示一次）：滿匣自動結晶＝選擇星暴線；想變身在 3–4 發按 SP。
-    hint: '彈匣集滿 5 發自動結晶成蓄能星；想變身就在同系 3 發時按 SP',
+    // §109／#954 取捨教學（L3 明示一次）：滿匣按 SP 兌換星暴，或留著同系 3 發變身。
+    hint: '彈匣集滿 5 發可按 SP 結晶成蓄能星；同系 3 發則可按變身鍵星化',
     // §110 變身首教（機制 brief §6.1）：進關前段保證 3 隻同系（floaty→風化）供給。
     teaches: ['transform', 'starburst'],
     drillSpawns: [
@@ -618,7 +618,7 @@ export const LEVELS: readonly LevelSpec[] = [
     ],
     boss: null,
     tutorial: false,
-    hint: '同系星彈集滿 3 發，站在地面按 SP 鍵星化變身',
+    hint: '同系星彈集滿 3 發，按變身鍵星化（空中也可以）',
     teaches: ['magnet'],
   },
   // L9 鏡影迴廊：Mirri 主場反射主題＋移動平台複合陣＋雙精英；通關提示 EX 入口解鎖。
@@ -1940,7 +1940,7 @@ export const LEVELS: readonly LevelSpec[] = [
     tutorial: false,
     // 卡點（§67 沿用）：終局章走動關世界寬 4100＋雙精英——中點重生錨落於精英房界外。
     checkpointX: 2000,
-    hint: '連吞 3 隻迴旋味怪——地面按 SP 引力化變身',
+    hint: '吞 3 隻迴旋味怪——按變身鍵引力化',
     // §119 引力化首教：中段形態練習區保證 3 隻重力泡（迴旋味 ×3 直達資格），
     // 位點在首個精英門之前（開放跑道）；重力場只拉不傷——練習區低壓。
     teaches: ['gravity-form'],

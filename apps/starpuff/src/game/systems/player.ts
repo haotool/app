@@ -50,14 +50,18 @@ import {
 } from '../logic/skills';
 import {
   beginDetonation,
+  canCrystallize,
   chargeStarburst,
   createStarburstState,
   resolveSpMode,
   resolveSpPress,
-  shouldCrystallize,
+  resolveTransformMode,
+  resolveTransformPress,
+  starstormBossDamage,
   tickDetonation,
   type SpMode,
   type StarburstState,
+  type TransformKeyMode,
 } from '../logic/starburst';
 import {
   GALE_FLIGHT,
@@ -132,9 +136,10 @@ export interface PlayerHandle {
   isShellCharging(): boolean;
   // 星暴 2.0（§109）：蓄能相位觀測、跨關授星、死亡/EX 清除與 SP 鍵呈現模式。
   getStarburst(): StarburstState;
-  grantStarburstCharge(): void;
+  grantStarburstCharge(bossDamage: number): void;
   clearStarburst(): void;
   getSpMode(): SpMode;
+  getTransformKeyMode(): TransformKeyMode;
   isSlamming(): boolean;
   // 魔王頭頂命中（§58）：GameScene 結算後回彈玩家並結束本次下砸（進 CD）。
   onSlamBounce(): void;
@@ -181,7 +186,6 @@ const INHALE_FRAME_MS = 160;
 // 變身分鏡幀長（§124 W5a）：五幀約 450ms，僅顯示層演出（操作不鎖）。
 const MORPH_FRAME_MS = 90;
 // SP 長按門檻（#948）：沿 prism 的 B 長按語彙量級，短於形態技以免誤觸。
-const SP_HOLD_MS = 250;
 // 形態技長按門檻（#948）：與 SP 同量級；變身期有彈藥時 B 點按射星、長按出技。
 const FORM_SKILL_HOLD_MS = 220;
 // 魔王頭頂命中回彈初速（§58）。
@@ -272,7 +276,6 @@ export function createPlayer(
   let inhaleAnimMs = 0;
   // SP 長按分流狀態（#948）。
   // 點按／長按仲裁（#948，共用 logic/holdArbiter）。
-  let spHoldState = createHoldState();
   let formHoldState = createHoldState();
   let wasOnGround = false;
   // 走動手感（§45）：速度驅動步頻相位；bob/傾斜/落腳拍點皆由 walkFeel 純函式導出。
@@ -428,13 +431,17 @@ export function createPlayer(
 
   // 滿匣自動結晶（§109）：彈匣滿 5 槽瞬間清空並生成蓄能星；蓄能星存在時不疊加。
   // 結晶後立即可繼續吸怪（anti-softlock：吸怪循環即時可用）。
-  const maybeCrystallize = () => {
-    if (!shouldCrystallize(magazine.length, starburst.phase)) return;
+  // 結晶（§109／#954 改手動）：SP 鍵觸發，非滿匣自動。投入星值於此封存進相位——
+  // 彈匣隨即清空，引爆時已無從回讀。
+  const crystallize = () => {
+    if (!canCrystallize(magazine.length, starburst.phase)) return;
+    const bossDamage = starstormBossDamage(magazine);
     magazine = [];
-    starburst = chargeStarburst();
+    starburst = chargeStarburst(bossDamage);
     playSfx('charge');
     burstSmall(scene, sprite.x, sprite.y - 46, CHARGED_STAR.tint);
     emitStarburst();
+    emitAmmo();
   };
 
   // SP 引爆（§109）：0.3s 蓄爆不可取消，期滿於 update 內結算星暴。
@@ -482,7 +489,7 @@ export function createPlayer(
   const beginTransform = (form: TransformForm) => {
     transform = startTransform(form);
     // #948：只扣達標所需星單位，餘槽保留供變身期間射擊。
-    magazine = consumeForTransform(magazine);
+    magazine = consumeForTransform(magazine, form);
     deferredFire = false;
     prismArm = false;
     halfDamagePool = 0;
@@ -777,29 +784,20 @@ export function createPlayer(
           else if (command === 'defer') deferredFire = true;
         }
 
-        // SP 情境鍵（§109／#948）：點按＝解除／引爆／變身、長按＝優先變身；
-        // 僅兩義並存時延遲判讀，其餘按下緣即時結算。
+        // SP／TF 兩鍵（#952 拆鍵）：各自單義，按下緣即時結算——長按分流隨兩義消失
+        // 一併移除（holdArbiter 仍由稜化 B 鍵消費）。
         const spEligible = eligibleForm(magazine, unlockedForms);
-        const spArgs = {
-          phase: starburst.phase,
-          transformActive: transform.form !== null,
-          eligible: spEligible !== null,
-          airborne: !onGround,
-        };
-        const spTap = resolveSpPress({ ...spArgs, held: false });
-        const spHold = resolveSpPress({ ...spArgs, held: true });
-        const spStep = advanceHold(spHoldState, {
-          pressed: controls.spPressed,
-          held: controls.spHeld,
-          deltaMs,
-          thresholdMs: SP_HOLD_MS,
-          ambiguous: spTap !== spHold,
-        });
-        spHoldState = spStep.state;
-        if (spStep.outcome !== 'none') {
-          const command = spStep.outcome === 'hold' ? spHold : spTap;
-          if (command === 'detonate') startDetonation();
-          else if (command === 'transform' && spEligible) beginTransform(spEligible);
+        if (controls.spPressed) {
+          const spCommand = resolveSpPress({ phase: starburst.phase, ammo: magazine.length });
+          if (spCommand === 'detonate') startDetonation();
+          else if (spCommand === 'crystallize') crystallize();
+        }
+        if (controls.transformPressed) {
+          const command = resolveTransformPress({
+            transformActive: transform.form !== null,
+            eligible: spEligible !== null,
+          });
+          if (command === 'transform' && spEligible) beginTransform(spEligible);
           else if (command === 'dismiss') finishTransform();
         }
       }
@@ -830,7 +828,11 @@ export function createPlayer(
       if (detonation.detonated) {
         stormInvulnMs = STARSTORM.invulnMs;
         playSfx('starstorm');
-        emitGameEvent(scene.events, GameEvents.SKILL_STARSTORM, { x: sprite.x, y: sprite.y });
+        emitGameEvent(scene.events, GameEvents.SKILL_STARSTORM, {
+          x: sprite.x,
+          y: sprite.y,
+          bossDamage: starburst.bossDamage,
+        });
         emitStarburst();
       }
       chargedStar.update(sprite.x, sprite.y, deltaMs, starburst.phase);
@@ -1042,7 +1044,6 @@ export function createPlayer(
       // 可視性優先（回退 §124 W5a 吞入衝擊圈）：吞噬確認緊接下一次吸入，嘴前殘留
       // 220~260ms 的 shock/trail 會蓋住下一個待吸目標——確認回饋沿既有音效與彈匣 HUD。
       emitGameEvent(scene.events, GameEvents.ENEMY_INHALED, { kind });
-      maybeCrystallize();
       emitAmmo();
       return true;
     },
@@ -1072,12 +1073,10 @@ export function createPlayer(
     },
     grantFullMagazine() {
       magazine = fillMagazine(magazine);
-      maybeCrystallize();
       emitAmmo();
     },
     grantGoldStar() {
       magazine = pushGoldStar(magazine);
-      maybeCrystallize();
       emitAmmo();
     },
     // 星光虹吸被抽（§113）：頂槽出匣不發射；HUD ammo 事件同步。
@@ -1093,7 +1092,6 @@ export function createPlayer(
     grantStar(flavor: StarFlavor) {
       magazine = swallowIntoMagazine(magazine, flavor).magazine;
       lastFlavor = flavor;
-      maybeCrystallize();
       emitAmmo();
     },
     isShieldRaised() {
@@ -1112,9 +1110,9 @@ export function createPlayer(
       return starburst;
     },
     // 跨關授星（§109）：director 於 create 依 session 持有旗標呼叫；蓄爆中不覆蓋。
-    grantStarburstCharge() {
+    grantStarburstCharge(bossDamage: number) {
       if (starburst.phase !== 'none') return;
-      starburst = chargeStarburst();
+      starburst = chargeStarburst(bossDamage);
       emitStarburst();
     },
     // 死亡/EX 進場清除（§109）：蓄能星與蓄爆一併取消，視覺隨相位隱藏。
@@ -1125,12 +1123,13 @@ export function createPlayer(
     },
     // SP 鍵呈現模式（§109）：GameScene 逐幀同步至 controls；地面判定就地取樣。
     getSpMode() {
-      const body = sprite.body as Phaser.Physics.Arcade.Body;
-      return resolveSpMode({
-        phase: starburst.phase,
+      return resolveSpMode({ phase: starburst.phase, ammo: magazine.length });
+    },
+    // TF 鍵呈現模式（#952）：地面判定就地取樣，與 resolveTransformPress 同一裁決。
+    getTransformKeyMode() {
+      return resolveTransformMode({
         transformForm: transform.form,
         eligibleForm: eligibleForm(magazine, unlockedForms),
-        airborne: !(body.blocked.down || body.touching.down),
       });
     },
     isSlamming() {

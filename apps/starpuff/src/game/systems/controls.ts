@@ -3,7 +3,7 @@ import { vibratePattern } from '../audio/haptics';
 import { applyLayoutToDom, loadLayout } from '../core/layout';
 import { getShellRotation, pointerToLocal } from '../core/rotation';
 import type { TransformForm } from '../core/types';
-import type { SpMode } from '../logic/starburst';
+import type { SpMode, TransformKeyMode } from '../logic/starburst';
 import { TRANSFORM_FORMS } from '../logic/transform';
 import uiEmberSkillUrl from '../../assets/sprites/ui-ember-skill.webp';
 import uiGaleSkillUrl from '../../assets/sprites/ui-gale-skill.webp';
@@ -26,8 +26,8 @@ export interface ControlsState {
   actionPressed: boolean;
   actionHeld: boolean;
   spPressed: boolean;
-  // spHeld（#948）：長按分流用——點按引爆蓄能星、長按變身，兩態遂可並存。
-  spHeld: boolean;
+  // transformPressed（#952 拆鍵）：TF 鍵當幀點按（觸控 TF 鍵或鍵盤 V）。
+  transformPressed: boolean;
 }
 
 export interface ControlsSystem {
@@ -37,6 +37,7 @@ export interface ControlsSystem {
   setDropReady(ready: boolean): void;
   // SP 情境鍵（§109）：呈現模式由 player 派生、GameScene 逐幀同步；僅變更時碰 DOM。
   setSpMode(mode: SpMode): void;
+  setTransformKeyMode(mode: TransformKeyMode): void;
   // 變身技能圖示（§124 W5a）：變身期 B 鍵改役形態技——鍵帽換該形態 skill 素材；
   // 由 playerFeel 逐幀同步，僅狀態轉變時碰 DOM。
   setFormSkill(form: TransformForm | null): void;
@@ -54,9 +55,9 @@ const FORM_SKILL_ICON_URLS: Record<TransformForm, string> = {
   gravity: uiGravitySkillUrl,
 };
 
-type ButtonName = 'a' | 'b' | 'sp';
+type ButtonName = 'a' | 'b' | 'sp' | 'tf';
 
-type KeyMap = Record<'LEFT' | 'RIGHT' | 'DOWN' | 'Z' | 'X' | 'C', Phaser.Input.Keyboard.Key>;
+type KeyMap = Record<'LEFT' | 'RIGHT' | 'DOWN' | 'Z' | 'X' | 'C' | 'V', Phaser.Input.Keyboard.Key>;
 
 // 按壓視覺回饋 class；樣式規則由整合層在 style.css 補上。
 const PRESSED_CLASS = 'is-pressed';
@@ -77,7 +78,7 @@ const cssColor = (tint: number): string => `#${tint.toString(16).padStart(6, '0'
 export function drawSpGlyph(
   ctx: CanvasRenderingContext2D,
   size: number,
-  mode: Exclude<SpMode, 'hidden'>,
+  mode: Exclude<SpMode | TransformKeyMode, 'hidden'>,
 ): void {
   ctx.clearRect(0, 0, size, size);
   const cx = size / 2;
@@ -124,6 +125,25 @@ export function drawSpGlyph(
     ctx.lineTo(tipX - size * 0.05, tipY + size * 0.12);
     ctx.closePath();
     ctx.fill();
+    return;
+  }
+  if (mode === 'crystallize') {
+    // 結晶菱形（#954）：滿匣可兌換——與 detonate 的金色大星區辨為「尚未成星」。
+    ctx.fillStyle = 'rgba(255, 201, 60, 0.18)';
+    ctx.beginPath();
+    ctx.arc(cx, cy, size * 0.42, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+    ctx.fillStyle = 'rgba(255, 233, 168, 0.85)';
+    ctx.lineWidth = size * 0.045;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - size * 0.3);
+    ctx.lineTo(cx + size * 0.22, cy);
+    ctx.lineTo(cx, cy + size * 0.3);
+    ctx.lineTo(cx - size * 0.22, cy);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
     return;
   }
   // 形態色圓徽：形態 tint 圓盤＋白描邊（色即語意，SSOT 取 TRANSFORM_FORMS）。
@@ -179,10 +199,10 @@ export function createControls(scene: Phaser.Scene): ControlsSystem {
     actionPressed: false,
     actionHeld: false,
     spPressed: false,
-    spHeld: false,
+    transformPressed: false,
   };
 
-  const held: Record<ButtonName, boolean> = { a: false, b: false, sp: false };
+  const held: Record<ButtonName, boolean> = { a: false, b: false, sp: false, tf: false };
   const joy = { id: null as number | null, dx: 0, dy: 0 };
   const cleanups: (() => void)[] = [];
 
@@ -305,11 +325,12 @@ export function createControls(scene: Phaser.Scene): ControlsSystem {
     });
   });
 
-  const keys = scene.input.keyboard?.addKeys('LEFT,RIGHT,DOWN,Z,X,C') as KeyMap | undefined;
+  const keys = scene.input.keyboard?.addKeys('LEFT,RIGHT,DOWN,Z,X,C,V') as KeyMap | undefined;
 
   let prevJumpHeld = false;
   let prevActionHeld = false;
   let prevSpHeld = false;
+  let prevTfHeld = false;
   let downBufferMs = 0;
 
   // 下跳指示（§77）：跳鍵（A）變色＋箭頭翻轉；邊緣偵測防逐幀 class 抖動。
@@ -328,6 +349,16 @@ export function createControls(scene: Phaser.Scene): ControlsSystem {
     spMode = 'hidden';
     spBtn?.classList.remove(SP_ON_CLASS);
     spBtn?.setAttribute('aria-hidden', 'true');
+  });
+
+  // TF 變身鍵（#952 拆鍵）：與 SP 同制——僅資格成立時淡入浮現。
+  const tfBtn = document.querySelector<HTMLElement>('[data-btn="tf"]');
+  const tfCanvas = tfBtn?.querySelector<HTMLCanvasElement>('canvas') ?? null;
+  let tfMode: TransformKeyMode = 'hidden';
+  cleanups.push(() => {
+    tfMode = 'hidden';
+    tfBtn?.classList.remove(SP_ON_CLASS);
+    tfBtn?.setAttribute('aria-hidden', 'true');
   });
 
   // 變身技能圖示（§124 W5a）：變身期 B 鍵換形態 skill 素材鍵帽。
@@ -358,11 +389,15 @@ export function createControls(scene: Phaser.Scene): ControlsSystem {
       state.actionHeld = actionHeld;
       prevActionHeld = actionHeld;
 
-      // SP 情境鍵（§109）：點按語意（僅取按下緣）；鍵盤 C 與觸控 SP 鍵同權。
+      // SP 鍵（§109／#952）：星暴引爆專用；鍵盤 C 與觸控 SP 鍵同權。
       const spHeld = held.sp || keys?.C.isDown === true;
       state.spPressed = spHeld && !prevSpHeld;
-      state.spHeld = spHeld;
       prevSpHeld = spHeld;
+
+      // TF 鍵（#952 拆鍵）：變身／解除專用；鍵盤 V 與觸控 TF 鍵同權。
+      const tfHeld = held.tf || keys?.V.isDown === true;
+      state.transformPressed = tfHeld && !prevTfHeld;
+      prevTfHeld = tfHeld;
     },
     setDropReady(ready: boolean) {
       if (ready === dropReady) return;
@@ -379,14 +414,25 @@ export function createControls(scene: Phaser.Scene): ControlsSystem {
       spBtn.setAttribute('aria-hidden', visible ? 'false' : 'true');
       if (!visible) return;
       // aria-label 隨模式同步（圖示即行為，讀屏同權）。
-      spBtn.setAttribute(
-        'aria-label',
-        mode === 'dismiss' ? '解除變身' : mode === 'detonate' ? '引爆星暴' : '星化變身',
-      );
+      spBtn.setAttribute('aria-label', mode === 'crystallize' ? '結晶星力' : '引爆星暴');
       const ctx = spCanvas?.getContext('2d');
       if (ctx && spCanvas) drawSpGlyph(ctx, spCanvas.width, mode);
       // 浮現輕震一次（§91／v19 卡 11）：模式切換不震，僅隱藏→浮現邊緣；
       // 觸覺與靜音解耦——閘門收斂至 haptics.vibratePattern（hapticsEnabled）。
+      if (wasHidden) vibratePattern(SP_APPEAR_VIBRATE_MS);
+    },
+    setTransformKeyMode(mode: TransformKeyMode) {
+      if (mode === tfMode) return;
+      const wasHidden = tfMode === 'hidden';
+      tfMode = mode;
+      if (!tfBtn) return;
+      const visible = mode !== 'hidden';
+      tfBtn.classList.toggle(SP_ON_CLASS, visible);
+      tfBtn.setAttribute('aria-hidden', visible ? 'false' : 'true');
+      if (!visible) return;
+      tfBtn.setAttribute('aria-label', mode === 'dismiss' ? '解除變身' : '星化變身');
+      const ctx = tfCanvas?.getContext('2d');
+      if (ctx && tfCanvas) drawSpGlyph(ctx, tfCanvas.width, mode);
       if (wasHidden) vibratePattern(SP_APPEAR_VIBRATE_MS);
     },
     setFormSkill(form: TransformForm | null) {

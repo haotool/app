@@ -3,7 +3,13 @@ import type Phaser from 'phaser';
 import { SLAM, STARSTORM, STAR_FLAVORS, getMix } from '../core/config';
 import { createBuffState, pickupBuff, BUFF_SPECS } from '../logic/buffs';
 import { SHELL_SHIELD } from '../logic/skills';
-import { GALE_FLIGHT, TIDE_PULL, VOLT_BEAM, TRANSFORM_FORMS } from '../logic/transform';
+import {
+  GALE_FLIGHT,
+  GRAVITY_WELL,
+  TIDE_PULL,
+  VOLT_BEAM,
+  TRANSFORM_FORMS,
+} from '../logic/transform';
 import { createStarCombat, type StarCombatHooks } from './starCombat';
 import type { BossHandle } from './boss';
 import type { EnemySystem } from './enemies';
@@ -253,7 +259,7 @@ describe('resolveStarstorm 星暴（§23）', () => {
     const { combat, kill, flash, fx, damageBossAt, delayedCall } = makeHarness({
       enemies: [a, dead],
     });
-    combat.resolveStarstorm();
+    combat.resolveStarstorm(STARSTORM.bossDamage);
     expect(flash).toHaveBeenCalled();
     expect(fx.shake).toHaveBeenCalledWith(12);
     expect(kill).toHaveBeenCalledTimes(1);
@@ -262,11 +268,11 @@ describe('resolveStarstorm 星暴（§23）', () => {
     expect(damageBossAt).not.toHaveBeenCalled();
   });
 
-  it('魔王活動中：固定傷結算至玩家位置歸屬的存活本體（star 歸因）', () => {
+  it('魔王活動中：傷害由呼叫端傳入（#954 動態），結算至玩家位置歸屬本體（star 歸因）', () => {
     const { combat, damageBossAt } = makeHarness({ bossActive: true, playerAt: { x: 77, y: 88 } });
-    combat.resolveStarstorm();
+    combat.resolveStarstorm(30);
     // 星暴屬星彈來源（審查修復）：缺 source 會在滿盾＋虹吸窗下被護盾吸收為 0 傷。
-    expect(damageBossAt).toHaveBeenCalledWith(STARSTORM.bossDamage, 77, 88, 'star');
+    expect(damageBossAt).toHaveBeenCalledWith(30, 77, 88, 'star');
   });
 });
 
@@ -379,5 +385,80 @@ describe('resolveTransformStrike tide-pull（§119 水引，PR #886 收斂）', 
     killedHarness.damage.mockReturnValue('killed');
     killedHarness.combat.resolveTransformStrike('tide-pull', 120, 300, 1);
     expect(dead.setVelocity).not.toHaveBeenCalled();
+  });
+});
+
+// §119 引力井 + #951 柱狀判定。time.addEvent 替身不自動推進，故本組驗證的是
+// 初爆那一次 wellStrike——滯留逐跳走同一函式，域判定行為同構。
+describe('resolveTransformStrike gravity-well（§119 引力井，#951 柱狀判定）', () => {
+  const wellX = 100 + GRAVITY_WELL.offsetPx; // 施放點 x=100、facing=1
+
+  it('小怪維持 2D 圓域：域內受傷，垂直落差使其出圓者不受傷（零回歸）', () => {
+    const inside = makeEnemy(wellX + 20, 300);
+    // dx 20、dy 129 → dist ≈ 130.5 > radiusPx：與玩家同地平面的小怪仍走圓域。
+    const outsideByHeight = makeEnemy(wellX + 20, 300 - 129);
+    const { combat, damage } = makeHarness({ enemies: [inside, outsideByHeight] });
+    combat.resolveTransformStrike('gravity-well', 100, 300, 1);
+    expect(damage).toHaveBeenCalledTimes(1);
+    expect(damage).toHaveBeenCalledWith(inside, GRAVITY_WELL.damage);
+  });
+
+  it('懸浮魔王本體命中：舊 2D 半徑落空的 dy=126 幾何現在結算傷害', () => {
+    // Gravion 實測幾何：地面玩家 y 376 對懸浮帶 250 → dy 126；dx 40 時
+    // 2D 距離 ≈132 > radiusPx 130（舊判定落空），柱狀判定應命中。
+    const { combat, damageBossAt, hooks } = makeHarness({ bossActive: true });
+    const body = {
+      x: wellX + 40,
+      y: 300 - 126,
+      body: { enable: true },
+    } as unknown as Phaser.Physics.Arcade.Sprite;
+    vi.spyOn(hooks, 'bossBodies').mockReturnValue([body]);
+    combat.resolveTransformStrike('gravity-well', 100, 300, 1);
+    // 來源標記刻意留白：'star' 會誤觸 Voidra 虹吸窗反制（§113 只認星彈命中）。
+    expect(damageBossAt).toHaveBeenCalledWith(GRAVITY_WELL.damage, body.x, body.y);
+  });
+
+  it('本體水平出界不結算：柱狀只放寬垂直，radiusPx 仍是水平邊界', () => {
+    const { combat, damageBossAt, hooks } = makeHarness({ bossActive: true });
+    const body = {
+      x: wellX + GRAVITY_WELL.radiusPx + 10,
+      y: 300,
+      body: { enable: true },
+    } as unknown as Phaser.Physics.Arcade.Sprite;
+    vi.spyOn(hooks, 'bossBodies').mockReturnValue([body]);
+    combat.resolveTransformStrike('gravity-well', 100, 300, 1);
+    expect(damageBossAt).not.toHaveBeenCalled();
+  });
+
+  it('本體垂直超出柱高不結算：柱狀有界，非無限延伸', () => {
+    const { combat, damageBossAt, hooks } = makeHarness({ bossActive: true });
+    const body = {
+      x: wellX,
+      y: 300 - (GRAVITY_WELL.bossColumnHalfPx + 10),
+      body: { enable: true },
+    } as unknown as Phaser.Physics.Arcade.Sprite;
+    vi.spyOn(hooks, 'bossBodies').mockReturnValue([body]);
+    combat.resolveTransformStrike('gravity-well', 100, 300, 1);
+    expect(damageBossAt).not.toHaveBeenCalled();
+  });
+
+  it('本體 body 停用時跳過（入場/死亡演出期間不吃傷）', () => {
+    const { combat, damageBossAt, hooks } = makeHarness({ bossActive: true });
+    const body = {
+      x: wellX,
+      y: 300 - 126,
+      body: { enable: false },
+    } as unknown as Phaser.Physics.Arcade.Sprite;
+    vi.spyOn(hooks, 'bossBodies').mockReturnValue([body]);
+    combat.resolveTransformStrike('gravity-well', 100, 300, 1);
+    expect(damageBossAt).not.toHaveBeenCalled();
+  });
+
+  it('魔王未活動時不查本體（走動關零額外結算）', () => {
+    const { combat, damageBossAt, hooks } = makeHarness({ bossActive: false });
+    const bossBodies = vi.spyOn(hooks, 'bossBodies');
+    combat.resolveTransformStrike('gravity-well', 100, 300, 1);
+    expect(damageBossAt).not.toHaveBeenCalled();
+    expect(bossBodies).not.toHaveBeenCalled();
   });
 });

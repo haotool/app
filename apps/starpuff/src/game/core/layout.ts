@@ -27,7 +27,7 @@ export const KEY_SCALE = {
 } as const;
 
 // 基準鍵尺寸（CSS SSOT 鏡像）：A 76、B 72、SP 52；縮放經 keys-layer CSS 變數套用。
-export const KEY_BASE_PX = { a: 76, b: 72, sp: 52 } as const;
+export const KEY_BASE_PX = { a: 76, b: 72, sp: 52, tf: 52 } as const;
 
 // SP 情境鍵與 B 鍵間隙（§109）：SP 錨定 B 鍵「裝置空間上方」食指區。
 export const SP_GAP_PX = 10;
@@ -218,6 +218,25 @@ export function spKeyPosition(
   return clampKeyPositionForLayer(raw.cx, raw.cy, layerW, layerH, KEY_BASE_PX.sp * scale);
 }
 
+// TF 變身鍵位置（#952）：沿 SP 同軸再外推一級——SP 由 B 派生，TF 由 SP 派生，
+// 三鍵成一直線（直持為垂直、旋轉為水平），不讀自訂 schema。
+export function tfKeyPosition(
+  sp: KeyPosition,
+  rotation: ShellRotation,
+  layerW: number,
+  layerH: number,
+  scale: number,
+): KeyPosition {
+  const distancePx = (KEY_BASE_PX.sp * scale) / 2 + (KEY_BASE_PX.tf * scale) / 2 + SP_GAP_PX;
+  const raw =
+    rotation === 'none'
+      ? { cx: sp.cx, cy: sp.cy - distancePx / layerH }
+      : rotation === 'ccw'
+        ? { cx: sp.cx + distancePx / layerW, cy: sp.cy }
+        : { cx: sp.cx - distancePx / layerW, cy: sp.cy };
+  return clampKeyPositionForLayer(raw.cx, raw.cy, layerW, layerH, KEY_BASE_PX.tf * scale);
+}
+
 // 座標序列化為百分比字串：toFixed(2) 避免浮點尾數（0.92*100 = 92.00000000000001）。
 export function toPercent(fraction: number): string {
   return `${(fraction * 100).toFixed(2)}%`;
@@ -270,4 +289,10 @@ export function applyLayoutToDom(root: ParentNode, layout: ControlLayout): void 
   );
   sp.style.left = toPercent(pos.cx);
   sp.style.top = toPercent(pos.cy);
+  const tf = root.querySelector<HTMLElement>('[data-btn="tf"]');
+  if (!tf) return;
+  tf.style.setProperty('--sp-key-scale', String(layout.scale));
+  const tfPos = tfKeyPosition(pos, rotation, layer.clientWidth, layer.clientHeight, layout.scale);
+  tf.style.left = toPercent(tfPos.cx);
+  tf.style.top = toPercent(tfPos.cy);
 }

@@ -52,13 +52,17 @@ export function createPlayerFeel(groundTop: number, hooks: PlayerFeelHooks): Pla
   function syncSpMode(): void {
     const spMode = hooks.player().getSpMode();
     hooks.controls().setSpMode(spMode);
+    // TF 鍵（#952）：與 SP 同幀同步，兩鍵呈現皆為「圖示即行為」。
+    const tfMode = hooks.player().getTransformKeyMode();
+    hooks.controls().setTransformKeyMode(tfMode);
     // 變身技能圖示（§124 W5a）：變身期 B 鍵換形態 skill 鍵帽，解除即還原。
     hooks.controls().setFormSkill(hooks.player().getTransformState().form);
     // SP 變身教學（§110/§119）：任一形態資格徽章首次浮現即教一次。
-    const spIsForm = spMode !== 'hidden' && spMode !== 'detonate' && spMode !== 'dismiss';
-    if (!taughtTransformSp && spIsForm) {
+    // #952 拆鍵後資格徽章移至 TF 鍵，教學改讀 TF 模式。
+    const tfIsForm = tfMode !== 'hidden' && tfMode !== 'dismiss';
+    if (!taughtTransformSp && tfIsForm) {
       taughtTransformSp = true;
-      hooks.toasts().flavor('同系星彈 ×3！按 SP 鍵立即變身');
+      hooks.toasts().flavor('同系星彈 ×3！按變身鍵立即變身');
     }
   }
 

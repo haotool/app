@@ -73,7 +73,9 @@ export function wireSceneEvents(bus: Bus, hooks: SceneEventHooks): () => void {
     hooks.toasts().flavor(top.mix !== undefined ? MIX_HINTS[top.mix] : FLAVOR_HINTS[top.flavor]);
   });
   // 技能世界結算（§23）：player 只發事件，場上效果委派 starCombat。
-  bind(GameEvents.SKILL_STARSTORM, () => hooks.starCombat().resolveStarstorm());
+  bind(GameEvents.SKILL_STARSTORM, ({ bossDamage }) =>
+    hooks.starCombat().resolveStarstorm(bossDamage),
+  );
   // 下衝擊落點同步破磚（§29）：磚的 damage 接口由 stage 提供，沿用既有 SKILL 事件契約。
   bind(GameEvents.SKILL_SLAM_LANDED, ({ x, y }) => {
     hooks.starCombat().resolveSlamImpact(x, y);

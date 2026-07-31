@@ -11,8 +11,10 @@ import {
   TRANSFORM_FORMS,
   VOLT_DISCHARGE,
   unlockedTransformForms,
+  type TransformForm,
   absorbHalvedDamage,
   consumeDischarge,
+  consumeForTransform,
   consumeTuck,
   createTransformState,
   eligibleForm,
@@ -41,19 +43,70 @@ describe('eligibleForm 變身資格（§57）', () => {
     expect(eligibleForm([slot('jelly'), slot('jelly'), slot('jelly')])).toBeNull();
   });
 
-  it('未滿三發或混味不觸發', () => {
+  it('未滿三發不觸發（同味計數不足）', () => {
     expect(eligibleForm([slot('zappy'), slot('zappy')])).toBeNull();
     expect(eligibleForm([slot('zappy'), slot('zappy'), slot('floaty')])).toBeNull();
   });
 
-  it('金星與混合槽破壞同系資格；強化槽同味計入', () => {
-    expect(eligibleForm([slot('zappy'), slot('zappy'), slot('jelly', { gold: true })])).toBeNull();
+  // #953 放寬：改為同味計數 ≥3，異味槽不再否決整匣。
+  it('異味槽不再否決：3 同味 ＋ 2 異味即成立', () => {
     expect(
-      eligibleForm([slot('floaty'), slot('floaty'), slot('floaty', { mix: 'swiftlight' })]),
-    ).toBeNull();
+      eligibleForm([slot('boomy'), slot('boomy'), slot('boomy'), slot('jelly'), slot('floaty')]),
+    ).toBe('gravity');
+  });
+
+  it('金星與合成槽不計入亦不否決（#953）；強化槽同味計 2', () => {
+    // 修前：金星／合成槽在匣即 null。改後僅「不貢獻」，其餘同味仍可達標。
+    expect(
+      eligibleForm([slot('zappy'), slot('zappy'), slot('zappy'), slot('jelly', { gold: true })]),
+    ).toBe('volt');
+    expect(
+      eligibleForm([
+        slot('floaty'),
+        slot('floaty'),
+        slot('floaty'),
+        slot('floaty', { mix: 'swiftlight' }),
+      ]),
+    ).toBe('gale');
+    // 未達標時金星仍不補位。
+    expect(eligibleForm([slot('zappy'), slot('zappy'), slot('jelly', { gold: true })])).toBeNull();
     expect(eligibleForm([slot('shelly'), slot('shelly', { charged: true }), slot('shelly')])).toBe(
       'shell',
     );
+  });
+
+  it('並列裁決（#953 決定性）：取星單位最多者，同數取彈匣中最早出現者', () => {
+    // zappy 4 單位（含強化）vs floaty 3 → 取 volt。
+    expect(
+      eligibleForm([
+        slot('floaty'),
+        slot('floaty'),
+        slot('floaty'),
+        slot('zappy', { charged: true }),
+        slot('zappy', { charged: true }),
+      ]),
+    ).toBe('volt');
+    // 同為 3 單位：floaty 先出現 → gale。
+    expect(
+      eligibleForm([
+        slot('floaty'),
+        slot('floaty'),
+        slot('floaty'),
+        slot('zappy'),
+        slot('zappy'),
+        slot('zappy'),
+      ]),
+    ).toBe('gale');
+  });
+
+  it('未解鎖形態不列入候選：改取其他達標味系（#953）', () => {
+    const onlyVolt = new Set<TransformForm>(['volt']);
+    expect(
+      eligibleForm(
+        [slot('boomy'), slot('boomy'), slot('boomy'), slot('zappy'), slot('zappy'), slot('zappy')],
+        onlyVolt,
+      ),
+    ).toBe('volt');
   });
 
   it('強化槽計 2 發：連吞三隻同系（[強化,單發]）即達標；單一強化槽（2 發）未達', () => {
@@ -306,5 +359,86 @@ describe('§119 consumeTuck 泛化：潮化泡泡盾／引力化星體護衛', (
   it('無防禦形態（焰化/稜化）恆不觸發', () => {
     expect(consumeTuck(startTransform('ember')).triggered).toBe(false);
     expect(consumeTuck(startTransform('prism')).triggered).toBe(false);
+  });
+});
+
+// #953：資格放寬後彈匣可含異味，消耗必須只吃中選味系——修前無差別自底部扣。
+describe('consumeForTransform 變身消耗（#948／#953 只扣中選味系）', () => {
+  it('只扣中選味系，異味槽原封不動（#953 核心回歸點）', () => {
+    const magazine = [slot('jelly'), slot('boomy'), slot('boomy'), slot('boomy'), slot('floaty')];
+    expect(consumeForTransform(magazine, 'gravity')).toEqual([slot('jelly'), slot('floaty')]);
+  });
+
+  it('自底部（最舊）起扣，頂槽優先保留給玩家', () => {
+    const magazine = [slot('zappy'), slot('zappy'), slot('zappy'), slot('zappy')];
+    // 扣滿 3 單位即止 → 保留最後一槽。
+    expect(consumeForTransform(magazine, 'volt')).toEqual([slot('zappy')]);
+  });
+
+  it('強化槽計 2 且不做部分消耗：[強化,單發] 即滿 3 單位', () => {
+    const magazine = [slot('shelly', { charged: true }), slot('shelly'), slot('shelly')];
+    expect(consumeForTransform(magazine, 'shell')).toEqual([slot('shelly')]);
+  });
+
+  it('金星與合成槽不被扣（不屬任何味系）', () => {
+    const magazine = [
+      slot('jelly', { gold: true }),
+      slot('boomy'),
+      slot('boomy'),
+      slot('boomy', { mix: 'swiftlight' }),
+      slot('boomy'),
+    ];
+    expect(consumeForTransform(magazine, 'gravity')).toEqual([
+      slot('jelly', { gold: true }),
+      slot('boomy', { mix: 'swiftlight' }),
+    ]);
+  });
+
+  it('與 eligibleForm 同軸：資格成立的彈匣扣後恰少 3 單位', () => {
+    const magazine = [slot('boomy'), slot('boomy'), slot('boomy'), slot('jelly'), slot('floaty')];
+    const form = eligibleForm(magazine);
+    expect(form).toBe('gravity');
+    const after = consumeForTransform(magazine, form!);
+    expect(after).toHaveLength(2);
+    expect(after.every((s) => s.flavor !== 'boomy')).toBe(true);
+  });
+});
+
+// #955：合成為自動觸發（素頂槽遇配方夥伴即合成），修前會把兩顆星轉成對資格
+// 毫無貢獻的槽——等於無預警沒收變身進度，與 #953 放寬資格的意圖直接衝突。
+describe('合成星計入來源味資格（#955 合成不再搶星）', () => {
+  it('合成槽計入 pair 雙來源味各 1 單位：2 素 floaty ＋ 1 疾光星即達標', () => {
+    // swiftlight = jelly + floaty；修前此匣 floaty 僅 2 單位不成立。
+    const magazine = [slot('floaty'), slot('floaty'), slot('jelly', { mix: 'swiftlight' })];
+    expect(eligibleForm(magazine)).toBe('gale');
+  });
+
+  it('金星仍不計入任何味系（與合成星區辨）', () => {
+    const magazine = [slot('floaty'), slot('floaty'), slot('jelly', { gold: true })];
+    expect(eligibleForm(magazine)).toBeNull();
+  });
+
+  it('消耗優先扣素星，合成星保底：素星足夠時合成星原封不動', () => {
+    const magazine = [
+      slot('floaty'),
+      slot('floaty'),
+      slot('floaty'),
+      slot('jelly', { mix: 'swiftlight' }),
+    ];
+    expect(consumeForTransform(magazine, 'gale')).toEqual([slot('jelly', { mix: 'swiftlight' })]);
+  });
+
+  it('素星不足才動合成星——資格成立必扣得滿，不留死結', () => {
+    const magazine = [slot('floaty'), slot('floaty'), slot('jelly', { mix: 'swiftlight' })];
+    const form = eligibleForm(magazine);
+    expect(form).toBe('gale');
+    // 三單位全數來自本匣：素 2 ＋ 合成 1 → 扣完為空。
+    expect(consumeForTransform(magazine, form!)).toEqual([]);
+  });
+
+  it('合成星只對其 pair 內的味系有效，與無關味系不互通', () => {
+    // swiftlight = jelly + floaty，對 zappy 無貢獻。
+    const magazine = [slot('zappy'), slot('zappy'), slot('jelly', { mix: 'swiftlight' })];
+    expect(eligibleForm(magazine)).toBeNull();
   });
 });

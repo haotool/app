@@ -176,7 +176,7 @@ describe('sceneEvents HP/技能路由（§11/§23）', () => {
 
   it('SKILL_* 路由至 starCombat；下衝擊同步破磚（半徑由 slamRadiusPx 供給）', () => {
     const h = makeHarness();
-    h.emit(GameEvents.SKILL_STARSTORM, { x: 10, y: 20 });
+    h.emit(GameEvents.SKILL_STARSTORM, { x: 10, y: 20, bossDamage: 30 });
     expect(h.spies.resolveStarstorm).toHaveBeenCalledTimes(1);
     h.emit(GameEvents.SKILL_SLAM_LANDED, { x: 100, y: 380 });
     expect(h.spies.resolveSlamImpact).toHaveBeenCalledWith(100, 380);
