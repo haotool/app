@@ -403,3 +403,42 @@ describe('consumeForTransform 變身消耗（#948／#953 只扣中選味系）',
     expect(after.every((s) => s.flavor !== 'boomy')).toBe(true);
   });
 });
+
+// #955：合成為自動觸發（素頂槽遇配方夥伴即合成），修前會把兩顆星轉成對資格
+// 毫無貢獻的槽——等於無預警沒收變身進度，與 #953 放寬資格的意圖直接衝突。
+describe('合成星計入來源味資格（#955 合成不再搶星）', () => {
+  it('合成槽計入 pair 雙來源味各 1 單位：2 素 floaty ＋ 1 疾光星即達標', () => {
+    // swiftlight = jelly + floaty；修前此匣 floaty 僅 2 單位不成立。
+    const magazine = [slot('floaty'), slot('floaty'), slot('jelly', { mix: 'swiftlight' })];
+    expect(eligibleForm(magazine)).toBe('gale');
+  });
+
+  it('金星仍不計入任何味系（與合成星區辨）', () => {
+    const magazine = [slot('floaty'), slot('floaty'), slot('jelly', { gold: true })];
+    expect(eligibleForm(magazine)).toBeNull();
+  });
+
+  it('消耗優先扣素星，合成星保底：素星足夠時合成星原封不動', () => {
+    const magazine = [
+      slot('floaty'),
+      slot('floaty'),
+      slot('floaty'),
+      slot('jelly', { mix: 'swiftlight' }),
+    ];
+    expect(consumeForTransform(magazine, 'gale')).toEqual([slot('jelly', { mix: 'swiftlight' })]);
+  });
+
+  it('素星不足才動合成星——資格成立必扣得滿，不留死結', () => {
+    const magazine = [slot('floaty'), slot('floaty'), slot('jelly', { mix: 'swiftlight' })];
+    const form = eligibleForm(magazine);
+    expect(form).toBe('gale');
+    // 三單位全數來自本匣：素 2 ＋ 合成 1 → 扣完為空。
+    expect(consumeForTransform(magazine, form!)).toEqual([]);
+  });
+
+  it('合成星只對其 pair 內的味系有效，與無關味系不互通', () => {
+    // swiftlight = jelly + floaty，對 zappy 無貢獻。
+    const magazine = [slot('zappy'), slot('zappy'), slot('jelly', { mix: 'swiftlight' })];
+    expect(eligibleForm(magazine)).toBeNull();
+  });
+});

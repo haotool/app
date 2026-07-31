@@ -1,4 +1,4 @@
-import type { MagazineSlot, StarFlavor } from '../core/config';
+import { getMix, type MagazineSlot, type StarFlavor } from '../core/config';
 import type { TransformForm } from '../core/types';
 
 // 星化變身純狀態機（GAME_DESIGN §57 觸發面由 §109 取代，不 import phaser），vitest 對象。
@@ -445,8 +445,13 @@ export function transformFlavor(form: TransformForm): StarFlavor {
 //
 // 修前要求「彈匣全數同味且非金非混」——任一異味槽即否決，故 3 迴旋味＋2 果凍味
 // 不成立。門檻寫 3 實際卻要求「零雜質」，玩家遂感受為「非得連吞不可」。改為逐味
-// 統計星單位（強化槽計 2，§23 連吞合成），取達標且已解鎖者。金星／合成星不計入
-// 任何味系，但**不再否決**整匣——它們只是無法貢獻資格的槽。
+// 統計星單位（強化槽計 2，§23 連吞合成），取達標且已解鎖者。金星不計入任何味系，
+// 但**不再否決**整匣——它只是無法貢獻資格的槽。
+//
+// 合成星（#955）：計入其配方 pair 的**兩個來源味各 1 單位**。合成是自動觸發的
+// （素頂槽遇配方夥伴即合成），修前它會把兩顆星轉成「對資格毫無貢獻」的槽——等於
+// 系統無預警沒收變身進度，與 §953 放寬資格的意圖直接衝突。改為保留來源味歸屬後，
+// 合成純粹是升級而非取捨，玩家不必為了湊變身而避開合成。
 //
 // 並列裁決（決定性）：取星單位最多者；同數時取「在彈匣中最早出現」者（自底部＝最舊），
 // 使結果不依賴物件順序以外的任何狀態，e2e 與 HUD 可重現。
@@ -457,14 +462,22 @@ export function eligibleForm(
 ): TransformForm | null {
   const units = new Map<StarFlavor, number>();
   const firstIndex = new Map<StarFlavor, number>();
-  magazine.forEach((slot, index) => {
-    // 金星與合成星不屬任何味系：不計入、亦不否決。
-    if (slot.gold || slot.mix !== undefined) return;
-    const form = FORM_BY_FLAVOR[slot.flavor];
+  const credit = (flavor: StarFlavor, amount: number, index: number): void => {
+    const form = FORM_BY_FLAVOR[flavor];
     if (!form) return;
     if (unlocked && !unlocked.has(form)) return;
-    units.set(slot.flavor, (units.get(slot.flavor) ?? 0) + (slot.charged ? 2 : 1));
-    if (!firstIndex.has(slot.flavor)) firstIndex.set(slot.flavor, index);
+    units.set(flavor, (units.get(flavor) ?? 0) + amount);
+    if (!firstIndex.has(flavor)) firstIndex.set(flavor, index);
+  };
+  magazine.forEach((slot, index) => {
+    // 金星不屬任何味系：不計入、亦不否決。
+    if (slot.gold) return;
+    if (slot.mix !== undefined) {
+      // 合成槽歸屬雙來源味各 1 單位（#955）；合成槽恆非強化（合成分支要求素頂槽）。
+      for (const flavor of getMix(slot.mix).pair) credit(flavor, 1, index);
+      return;
+    }
+    credit(slot.flavor, slot.charged ? 2 : 1, index);
   });
   let best: { flavor: StarFlavor; units: number; index: number } | null = null;
   for (const [flavor, count] of units) {
@@ -482,18 +495,33 @@ export function eligibleForm(
 //
 // #953：資格放寬後彈匣可含異味，故**只扣中選味系**的槽——修前無差別自底部扣，
 // 放寬後會扣掉與本次變身無關的星（例如 [果凍,迴旋,迴旋,迴旋] 變引力化會先吃掉果凍）。
+//
+// #955 兩段扣除：合成星既計入資格，就必須可被消耗，否則會出現「資格成立卻扣不滿」
+// 的死結。但合成星價值高於素星，故**素星優先、合成星保底**——僅在素星不足時才動。
 export function consumeForTransform(
   magazine: readonly MagazineSlot[],
   form: TransformForm,
 ): readonly MagazineSlot[] {
   const flavor = transformFlavor(form);
+  const contributesAsMix = (slot: MagazineSlot): boolean =>
+    !slot.gold && slot.mix !== undefined && getMix(slot.mix).pair.includes(flavor);
+  const isPlainMatch = (slot: MagazineSlot): boolean =>
+    !slot.gold && slot.mix === undefined && slot.flavor === flavor;
+  const doomed = new Set<number>();
   let units = 0;
-  return magazine.filter((slot) => {
-    if (units >= TRANSFORM.requiredStars) return true;
-    if (slot.gold || slot.mix !== undefined || slot.flavor !== flavor) return true;
+  // 第一段：素星（含強化）自底部扣。
+  magazine.forEach((slot, index) => {
+    if (units >= TRANSFORM.requiredStars || !isPlainMatch(slot)) return;
     units += slot.charged ? 2 : 1;
-    return false;
+    doomed.add(index);
   });
+  // 第二段：素星不足時才動合成星（各計 1 單位）。
+  magazine.forEach((slot, index) => {
+    if (units >= TRANSFORM.requiredStars || !contributesAsMix(slot)) return;
+    units += 1;
+    doomed.add(index);
+  });
+  return magazine.filter((_, index) => !doomed.has(index));
 }
 
 export interface TransformState {
