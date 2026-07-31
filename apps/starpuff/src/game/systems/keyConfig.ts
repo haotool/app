@@ -118,12 +118,20 @@ export function openKeyConfig(onClose?: () => void): void {
   };
   dismissWithoutSave = cancelWithoutSave;
 
+  // 套用預設至草稿（#959）：Object.assign 不刪既有鍵，而 sp/tf 為選用欄位——
+  // 直接 assign 會讓拖曳過的情境鍵在「恢復預設」後仍保留自訂座標。
+  const assignDefaults = (): void => {
+    delete working.sp;
+    delete working.tf;
+    Object.assign(working, defaultLayoutFor(draftRotation()));
+  };
+
   addAction(actions, 'reset', '恢復預設', () => {
     rotationPref = DEFAULT_PORTRAIT_ROTATION;
     applyRotationClass(rotationPref);
     renderRotation();
     // 依當前持向給對的預設（§95 D1）：直持回拇指帶錨點、橫持回 v14 定案。
-    Object.assign(working, defaultLayoutFor(draftRotation()));
+    assignDefaults();
     usingDefaults = true;
     dirty = true;
     applyLayoutToDom(layer, working);
@@ -149,7 +157,7 @@ export function openKeyConfig(onClose?: () => void): void {
     applyRotationClass(rotationPref);
     renderRotation();
     // 預設態跟隨新方向重映射（§95 D1）：cw/ccw 拇指帶錨點不同；自訂布局不動。
-    if (usingDefaults) Object.assign(working, defaultLayoutFor(draftRotation()));
+    if (usingDefaults) assignDefaults();
     applyLayoutToDom(layer, working);
   });
   const renderRotation = (): void => {
@@ -186,7 +194,9 @@ export function openKeyConfig(onClose?: () => void): void {
 
   // 拖曳：座標經 pointerToLocal 轉 keys-layer 局部空間（portrait 旋轉殼換軸），
   // 中心點比例即時寫回 working 並套用（即時預覽）。
-  for (const name of ['a', 'b'] as const) {
+  // #959：SP／TF 一併可拖曳。兩鍵在配置頁強制顯示（平時僅技能可用時浮現），
+  // 否則玩家看不到也就拖不到。
+  for (const name of ['a', 'b', 'sp', 'tf'] as const) {
     const el = layer.querySelector<HTMLElement>(`[data-btn="${name}"]`);
     if (!el) continue;
     let activeId: number | null = null;
@@ -218,6 +228,7 @@ export function openKeyConfig(onClose?: () => void): void {
         event.clientY,
       );
       // 動態夾限含鍵半徑（審查修復）：短 keys-layer 也保證圓鍵完整在層內。
+      // 情境鍵拖曳後即成為顯式自訂（schema v3 選用欄位落盤）。
       working[name] = clampKeyPositionForLayer(
         local.x / layer.clientWidth,
         local.y / layer.clientHeight,

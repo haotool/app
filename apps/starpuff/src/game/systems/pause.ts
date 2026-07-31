@@ -2,6 +2,7 @@ import type Phaser from 'phaser';
 import { SceneKeys } from '../core/types';
 import { resumeAudio, suspendAudio } from '../audio/sfx';
 import { isKeyConfigOpen } from './keyConfig';
+import { openSettingsPage } from './settingsPage';
 
 // 暫停系統（GAME_DESIGN §35）：DOM 覆層選單（旋轉殼下 hit-test 天然正確）+ SceneManager
 // 級 pause（sys.pause 立即生效，非 ScenePlugin queueOp 的下一幀）+ AudioContext suspend
@@ -19,7 +20,7 @@ export function isGamePaused(): boolean {
 
 function addButton(
   card: HTMLElement,
-  action: 'resume' | 'restart' | 'quit',
+  action: 'resume' | 'settings' | 'restart' | 'quit',
   label: string,
   onPress: () => void,
 ): void {
@@ -71,6 +72,11 @@ export function openPauseMenu(game: Phaser.Game): void {
   addButton(card, 'resume', '繼續', () => {
     close();
     manager.resume(SceneKeys.Game);
+  });
+  // #959：暫停中改設定——修前設定頁 z-index 低於暫停覆層而被遮蔽，遂無此入口。
+  // 關閉設定後回到暫停態（不自動 resume），避免玩家在未預期時機被丟回戰鬥。
+  addButton(card, 'settings', '設定', () => {
+    openSettingsPage();
   });
   addButton(card, 'restart', '重新開始', () => {
     close();
