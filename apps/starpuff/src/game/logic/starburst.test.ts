@@ -78,52 +78,30 @@ describe('resolveSpMode（#952 呈現：圖示即行為）', () => {
   });
 });
 
-describe('resolveTransformPress（#952 拆鍵後專責變身）', () => {
-  it('資格成立且地面 → 變身', () => {
-    expect(resolveTransformPress({ transformActive: false, eligible: true, airborne: false })).toBe(
-      'transform',
-    );
+describe('resolveTransformPress（#952 拆鍵後專責變身；#953 解除地面限制）', () => {
+  it('資格成立 → 變身', () => {
+    expect(resolveTransformPress({ transformActive: false, eligible: true })).toBe('transform');
   });
 
-  it('空中不可變身（沿 §57 起手限地面）', () => {
-    expect(resolveTransformPress({ transformActive: false, eligible: true, airborne: true })).toBe(
-      'none',
-    );
-  });
-
-  it('變身中 → 提前解除（空中亦可）', () => {
-    expect(resolveTransformPress({ transformActive: true, eligible: false, airborne: true })).toBe(
-      'dismiss',
-    );
+  it('變身中 → 提前解除', () => {
+    expect(resolveTransformPress({ transformActive: true, eligible: false })).toBe('dismiss');
   });
 
   it('無資格 → none', () => {
-    expect(
-      resolveTransformPress({ transformActive: false, eligible: false, airborne: false }),
-    ).toBe('none');
+    expect(resolveTransformPress({ transformActive: false, eligible: false })).toBe('none');
   });
 
-  // 拆鍵不變式：蓄能相位不再是本鍵的輸入——兩鍵各自單義的結構保證。
-  it('星暴相位不影響變身鍵（拆鍵不變式）', () => {
-    expect(resolveTransformPress({ transformActive: false, eligible: true, airborne: false })).toBe(
-      'transform',
-    );
+  // #953 不變式：地面狀態不再是本裁決的輸入——空中可變身由簽章保證，非由分支保證。
+  it('簽章不含 airborne（#953 不變式）', () => {
+    expect(resolveTransformPress.length).toBe(1);
+    expect(resolveTransformPress({ transformActive: false, eligible: true })).toBe('transform');
   });
 });
 
-describe('resolveTransformMode（#952 TF 鍵呈現）', () => {
-  it('變身中 → dismiss；資格成立且地面 → 形態色圓徽；空中或無資格 → hidden', () => {
-    expect(
-      resolveTransformMode({ transformForm: 'volt', eligibleForm: null, airborne: false }),
-    ).toBe('dismiss');
-    expect(
-      resolveTransformMode({ transformForm: null, eligibleForm: 'gale', airborne: false }),
-    ).toBe('gale');
-    expect(
-      resolveTransformMode({ transformForm: null, eligibleForm: 'gale', airborne: true }),
-    ).toBe('hidden');
-    expect(resolveTransformMode({ transformForm: null, eligibleForm: null, airborne: false })).toBe(
-      'hidden',
-    );
+describe('resolveTransformMode（#952 TF 鍵呈現；#953 不受地面限制）', () => {
+  it('變身中 → dismiss；資格成立 → 形態色圓徽；無資格 → hidden', () => {
+    expect(resolveTransformMode({ transformForm: 'volt', eligibleForm: null })).toBe('dismiss');
+    expect(resolveTransformMode({ transformForm: null, eligibleForm: 'gale' })).toBe('gale');
+    expect(resolveTransformMode({ transformForm: null, eligibleForm: null })).toBe('hidden');
   });
 });

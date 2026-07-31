@@ -431,39 +431,69 @@ export function unlockedTransformForms(highestReachableLevel: number): Set<Trans
   return unlocked;
 }
 
-// 變身資格（§57）：彈匣全數同系可變身味、非金非混，同系星彈合計 ≥3 發——
-// 強化槽為連吞兩發合成（§23），計 2 發（三連吞 [強化,單發] 即達標）。
-// unlocked（§119）：給定時未解鎖形態不成立資格；缺省不設限（既有呼叫零回歸）。
+// 形態 → 供給味反查（#953）：由 FORM_BY_FLAVOR 派生，不維護第二份映射。
+// 供 consumeForTransform 以形態定位該扣哪些槽。
+const FLAVOR_BY_FORM = Object.fromEntries(
+  Object.entries(FORM_BY_FLAVOR).map(([flavor, form]) => [form, flavor as StarFlavor]),
+) as Record<TransformForm, StarFlavor>;
+
+export function transformFlavor(form: TransformForm): StarFlavor {
+  return FLAVOR_BY_FORM[form];
+}
+
+// 變身資格（§57／#953 放寬）：**同味計數 ≥3** 即成立，不再要求整匣純度。
+//
+// 修前要求「彈匣全數同味且非金非混」——任一異味槽即否決，故 3 迴旋味＋2 果凍味
+// 不成立。門檻寫 3 實際卻要求「零雜質」，玩家遂感受為「非得連吞不可」。改為逐味
+// 統計星單位（強化槽計 2，§23 連吞合成），取達標且已解鎖者。金星／合成星不計入
+// 任何味系，但**不再否決**整匣——它們只是無法貢獻資格的槽。
+//
+// 並列裁決（決定性）：取星單位最多者；同數時取「在彈匣中最早出現」者（自底部＝最舊），
+// 使結果不依賴物件順序以外的任何狀態，e2e 與 HUD 可重現。
+// unlocked（§119）：給定時未解鎖形態不列入候選；缺省不設限（既有呼叫零回歸）。
 export function eligibleForm(
   magazine: readonly MagazineSlot[],
   unlocked?: ReadonlySet<TransformForm>,
 ): TransformForm | null {
-  const first = magazine[0];
-  if (!first) return null;
-  const form = FORM_BY_FLAVOR[first.flavor];
-  if (!form) return null;
-  if (unlocked && !unlocked.has(form)) return null;
-  let stars = 0;
-  for (const slot of magazine) {
-    if (slot.gold || slot.mix !== undefined || slot.flavor !== first.flavor) return null;
-    stars += slot.charged ? 2 : 1;
+  const units = new Map<StarFlavor, number>();
+  const firstIndex = new Map<StarFlavor, number>();
+  magazine.forEach((slot, index) => {
+    // 金星與合成星不屬任何味系：不計入、亦不否決。
+    if (slot.gold || slot.mix !== undefined) return;
+    const form = FORM_BY_FLAVOR[slot.flavor];
+    if (!form) return;
+    if (unlocked && !unlocked.has(form)) return;
+    units.set(slot.flavor, (units.get(slot.flavor) ?? 0) + (slot.charged ? 2 : 1));
+    if (!firstIndex.has(slot.flavor)) firstIndex.set(slot.flavor, index);
+  });
+  let best: { flavor: StarFlavor; units: number; index: number } | null = null;
+  for (const [flavor, count] of units) {
+    if (count < TRANSFORM.requiredStars) continue;
+    const index = firstIndex.get(flavor) ?? 0;
+    if (best === null || count > best.units || (count === best.units && index < best.index)) {
+      best = { flavor, units: count, index };
+    }
   }
-  return stars >= TRANSFORM.requiredStars ? form : null;
+  return best ? (FORM_BY_FLAVOR[best.flavor] ?? null) : null;
 }
 
-// 變身消耗（#948）：修前 beginTransform 無條件清空整匣——門檻 3 星卻收走 5 槽，
-// 使「達標後續囤星」毫無理由；且變身期間必然零彈藥，B 又被形態技接管＝完全無星彈
-// 輸出，玩家因此感受為「變身只是無敵」。改為自底部（最舊）扣滿 requiredStars 個
-// 星單位即止，保留其餘——頂槽（下一發）優先留給玩家。強化槽計 2、不做部分消耗。
-export function consumeForTransform(magazine: readonly MagazineSlot[]): readonly MagazineSlot[] {
+// 變身消耗（#948／#953 改）：自底部（最舊）扣滿 requiredStars 個星單位即止，保留
+// 其餘——頂槽（下一發）優先留給玩家。強化槽計 2、不做部分消耗。
+//
+// #953：資格放寬後彈匣可含異味，故**只扣中選味系**的槽——修前無差別自底部扣，
+// 放寬後會扣掉與本次變身無關的星（例如 [果凍,迴旋,迴旋,迴旋] 變引力化會先吃掉果凍）。
+export function consumeForTransform(
+  magazine: readonly MagazineSlot[],
+  form: TransformForm,
+): readonly MagazineSlot[] {
+  const flavor = transformFlavor(form);
   let units = 0;
-  let cut = 0;
-  for (const slot of magazine) {
-    if (units >= TRANSFORM.requiredStars) break;
+  return magazine.filter((slot) => {
+    if (units >= TRANSFORM.requiredStars) return true;
+    if (slot.gold || slot.mix !== undefined || slot.flavor !== flavor) return true;
     units += slot.charged ? 2 : 1;
-    cut += 1;
-  }
-  return magazine.slice(cut);
+    return false;
+  });
 }
 
 export interface TransformState {

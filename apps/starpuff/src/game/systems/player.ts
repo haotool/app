@@ -484,7 +484,7 @@ export function createPlayer(
   const beginTransform = (form: TransformForm) => {
     transform = startTransform(form);
     // #948：只扣達標所需星單位，餘槽保留供變身期間射擊。
-    magazine = consumeForTransform(magazine);
+    magazine = consumeForTransform(magazine, form);
     deferredFire = false;
     prismArm = false;
     halfDamagePool = 0;
@@ -789,7 +789,6 @@ export function createPlayer(
           const command = resolveTransformPress({
             transformActive: transform.form !== null,
             eligible: spEligible !== null,
-            airborne: !onGround,
           });
           if (command === 'transform' && spEligible) beginTransform(spEligible);
           else if (command === 'dismiss') finishTransform();
@@ -1121,11 +1120,9 @@ export function createPlayer(
     },
     // TF 鍵呈現模式（#952）：地面判定就地取樣，與 resolveTransformPress 同一裁決。
     getTransformKeyMode() {
-      const body = sprite.body as Phaser.Physics.Arcade.Body;
       return resolveTransformMode({
         transformForm: transform.form,
         eligibleForm: eligibleForm(magazine, unlockedForms),
-        airborne: !(body.blocked.down || body.touching.down),
       });
     },
     isSlamming() {

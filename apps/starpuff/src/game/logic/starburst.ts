@@ -67,26 +67,25 @@ export function resolveSpMode(opts: { phase: StarburstPhase }): SpMode {
 
 // TF 鍵裁決（#952）：變身中 → 提前解除；否則資格成立即變身。與星暴完全無關——
 // 蓄能星存在與否不再影響本鍵，兩鍵各自單義。
+// #953：地面限制解除——空中亦可變身（起手限地面原為 §57 設計，已由需求取消）。
 export type TransformCommand = 'transform' | 'dismiss' | 'none';
 
 export function resolveTransformPress(opts: {
   transformActive: boolean;
   eligible: boolean;
-  airborne: boolean;
 }): TransformCommand {
   if (opts.transformActive) return 'dismiss';
-  return opts.eligible && !opts.airborne ? 'transform' : 'none';
+  return opts.eligible ? 'transform' : 'none';
 }
 
 // TF 鍵呈現（圖示即行為）：hidden 完全隱藏；形態名＝形態色圓徽（§119 七形態同制）；
-// dismiss 解除迴旋箭。
+// dismiss 解除迴旋箭。#953 起不再受地面限制，與 resolveTransformPress 同一裁決。
 export type TransformKeyMode = 'hidden' | TransformForm | 'dismiss';
 
 export function resolveTransformMode(opts: {
   transformForm: TransformForm | null;
   eligibleForm: TransformForm | null;
-  airborne: boolean;
 }): TransformKeyMode {
   if (opts.transformForm) return 'dismiss';
-  return opts.eligibleForm && !opts.airborne ? opts.eligibleForm : 'hidden';
+  return opts.eligibleForm ?? 'hidden';
 }
