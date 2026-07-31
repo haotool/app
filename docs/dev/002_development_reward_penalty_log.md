@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+318
+> 本次分數變化：-1（reward 0、penalty 1、neutral 1）｜累計總分：+317
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-08-01
+- ID：penalty-starpuff-modal-stacking-below-pause
+- 原因：設定頁與按鍵配置頁的 z-index（45／5）低於暫停覆層（50），自暫停開啟即被整片遮蔽——這既是「行動裝置設定被遮蔽」也是「暫停中無法改設定」兩個回報的共同根因；各層 z-index 為散落字面值且無序，缺少「模態必須最上層」的顯式契約
+- 解法：建立堆疊尺標（--z-controls/--z-pause/--z-modal）取代字面值，設定頁與配置頁提升至模態層並於暫停選單加入設定入口；新增 stacking.test.ts 直接讀 style.css 斷言尺標遞增與消費端，使「模態高於暫停」成為可執行契約而非靠人工記憶
+
+- 日期：2026-08-01
+- ID：neutral-starpuff-control-layout-v3
+- 原因：SP/TF 兩顆情境鍵位置由 B 鍵衍生且不可自訂，玩家無法依手型調整；TF 原為沿 SP 再往上堆疊一級，垂直空間吃緊且兩鍵難以並讀
+- 解法：schema 升 v3，sp/tf 為選用欄位——未自訂走衍生（保有旋轉態感知，固定比例在直持殼下會映射到不可及區），拖曳後才落盤；衍生改並排（結晶在右、變身在左，皆在 B 上方）。過程中發現恢復預設用 Object.assign 不刪既有鍵，拖曳過的情境鍵座標會殘留，一併修正
 
 - 日期：2026-08-01
 - ID：penalty-starpuff-e2e-contract-drift-merged-red

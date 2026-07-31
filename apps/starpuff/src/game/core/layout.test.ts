@@ -95,39 +95,34 @@ describe('spKeyPosition（§109 SP 鍵派生定位）', () => {
   });
 });
 
-describe('tfKeyPosition（#952 TF 變身鍵派生定位）', () => {
+describe('tfKeyPosition（#952 TF 變身鍵派生定位；#959 改並排）', () => {
   const LAYER_W = 820;
   const LAYER_H = 358;
   const TF_DIST = KEY_BASE_PX.sp / 2 + KEY_BASE_PX.tf / 2 + SP_GAP_PX;
 
-  it('橫持（none）：B → SP → TF 同軸依序外推，三鍵成一直線', () => {
-    // 層中央起算：避開邊界夾限，斷言純幾何外推量。
-    const b: KeyPosition = { cx: 0.8, cy: 0.85 };
-    const sp = spKeyPosition(b, 'none', LAYER_W, LAYER_H, 1);
+  it('橫持（none）：TF 與 SP 同高、位於其左側（結晶在右、變身在左）', () => {
+    const sp: KeyPosition = { cx: 0.6, cy: 0.5 };
     const tf = tfKeyPosition(sp, 'none', LAYER_W, LAYER_H, 1);
-    expect(tf.cx).toBeCloseTo(sp.cx, 5);
-    expect(tf.cy).toBeCloseTo(sp.cy - TF_DIST / LAYER_H, 5);
-    // 直線性：三鍵 cx 相同，cy 單調遞減（TF 最上）。
-    expect(sp.cx).toBeCloseTo(b.cx, 5);
-    expect(tf.cy).toBeLessThan(sp.cy);
-    expect(sp.cy).toBeLessThan(b.cy);
+    expect(tf.cy).toBeCloseTo(sp.cy, 5);
+    expect(tf.cx).toBeCloseTo(sp.cx - TF_DIST / LAYER_W, 5);
+    expect(tf.cx).toBeLessThan(sp.cx);
   });
 
-  it('直持 ccw／cw：沿 SP 同一軸向映射外推', () => {
-    const sp: KeyPosition = { cx: 0.4, cy: 0.6 };
-    expect(tfKeyPosition(sp, 'ccw', LAYER_W, LAYER_H, 1).cx).toBeCloseTo(
-      sp.cx + TF_DIST / LAYER_W,
+  it('直持 ccw／cw：裝置空間「左」映射至層空間的對應軸向', () => {
+    const sp: KeyPosition = { cx: 0.5, cy: 0.5 };
+    expect(tfKeyPosition(sp, 'ccw', LAYER_W, LAYER_H, 1).cy).toBeCloseTo(
+      sp.cy - TF_DIST / LAYER_H,
       5,
     );
-    expect(tfKeyPosition(sp, 'cw', LAYER_W, LAYER_H, 1).cx).toBeCloseTo(
-      sp.cx - TF_DIST / LAYER_W,
+    expect(tfKeyPosition(sp, 'cw', LAYER_W, LAYER_H, 1).cy).toBeCloseTo(
+      sp.cy + TF_DIST / LAYER_H,
       5,
     );
   });
 
-  it('SP 貼層頂時 TF 夾限於層內（不因外推一級而溢出）', () => {
-    const tf = tfKeyPosition({ cx: 0.92, cy: 0.06 }, 'none', LAYER_W, LAYER_H, 1);
-    expect(tf.cy * LAYER_H - KEY_BASE_PX.tf / 2 - KEY_EDGE_PAD_PX).toBeGreaterThanOrEqual(-1e-6);
+  it('SP 貼層左緣時 TF 夾限於層內（不因左推而溢出）', () => {
+    const tf = tfKeyPosition({ cx: 0.04, cy: 0.5 }, 'none', LAYER_W, LAYER_H, 1);
+    expect(tf.cx * LAYER_W - KEY_BASE_PX.tf / 2 - KEY_EDGE_PAD_PX).toBeGreaterThanOrEqual(-1e-6);
   });
 });
 
@@ -163,7 +158,7 @@ describe('parseLayout', () => {
     expect(parseLayout(future)).toEqual(DEFAULT_LAYOUT);
   });
 
-  it('v1 舊存檔（無 scale）migration：鍵位保留、scale 補預設、版本升 2（§89）', () => {
+  it('v1 舊存檔（無 scale）migration：鍵位保留、scale 補預設、版本升 3（§89／#959）', () => {
     // v9–v13 舊版寫入的 sp-key-layout 皆為 version 1 形狀。
     const legacy = JSON.stringify({
       version: 1,
@@ -171,7 +166,7 @@ describe('parseLayout', () => {
       b: { cx: 0.88, cy: 0.3 },
     });
     expect(parseLayout(legacy)).toEqual({
-      version: 2,
+      version: LAYOUT_SCHEMA_VERSION,
       a: { cx: 0.4, cy: 0.6 },
       b: { cx: 0.88, cy: 0.3 },
       scale: KEY_SCALE.default,
@@ -353,10 +348,58 @@ describe('parseLayout／loadLayout 旋轉感知回退（v16 D1）', () => {
       b: { cx: 0.88, cy: 0.3 },
     });
     expect(parseLayout(legacy, 'ccw')).toEqual({
-      version: 2,
+      version: LAYOUT_SCHEMA_VERSION,
       a: { cx: 0.4, cy: 0.6 },
       b: { cx: 0.88, cy: 0.3 },
       scale: KEY_SCALE.default,
     });
+  });
+});
+
+// #959：schema v3 為 SP／TF 加入**選用**座標欄位。選用而非必填，是為了讓未自訂者
+// 沿用旋轉態感知的衍生位置（固定比例預設在直持殼下會映射到不可及區）。
+describe('schema v3 情境鍵選用座標（#959）', () => {
+  it('v2 舊存檔升 v3：鍵位保留，sp/tf 維持未定義（走衍生）', () => {
+    const legacy = JSON.stringify({
+      version: 2,
+      a: { cx: 0.4, cy: 0.6 },
+      b: { cx: 0.88, cy: 0.3 },
+      scale: 1.1,
+    });
+    const parsed = parseLayout(legacy);
+    expect(parsed.version).toBe(LAYOUT_SCHEMA_VERSION);
+    expect(parsed.a).toEqual({ cx: 0.4, cy: 0.6 });
+    expect(parsed.sp).toBeUndefined();
+    expect(parsed.tf).toBeUndefined();
+  });
+
+  it('v3 自訂座標保留並夾限', () => {
+    const raw = JSON.stringify({
+      version: 3,
+      a: { cx: 0.5, cy: 0.5 },
+      b: { cx: 0.5, cy: 0.5 },
+      sp: { cx: 0.7, cy: 0.2 },
+      tf: { cx: 5, cy: -5 },
+      scale: 1,
+    });
+    const parsed = parseLayout(raw);
+    expect(parsed.sp).toEqual({ cx: 0.7, cy: 0.2 });
+    // 超界值夾限至 KEY_CLAMP 邊界，而非整份回退預設。
+    expect(parsed.tf).toEqual({ cx: KEY_CLAMP.maxX, cy: KEY_CLAMP.minY });
+  });
+
+  it('sp/tf 形狀損毀時僅該欄位忽略，不牽連 a/b', () => {
+    const raw = JSON.stringify({
+      version: 3,
+      a: { cx: 0.4, cy: 0.6 },
+      b: { cx: 0.88, cy: 0.3 },
+      sp: { cx: 'x' },
+      tf: null,
+      scale: 1,
+    });
+    const parsed = parseLayout(raw);
+    expect(parsed.a).toEqual({ cx: 0.4, cy: 0.6 });
+    expect(parsed.sp).toBeUndefined();
+    expect(parsed.tf).toBeUndefined();
   });
 });
