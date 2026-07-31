@@ -54,10 +54,13 @@ import {
   createStarburstState,
   resolveSpMode,
   resolveSpPress,
+  resolveTransformMode,
+  resolveTransformPress,
   shouldCrystallize,
   tickDetonation,
   type SpMode,
   type StarburstState,
+  type TransformKeyMode,
 } from '../logic/starburst';
 import {
   GALE_FLIGHT,
@@ -135,6 +138,7 @@ export interface PlayerHandle {
   grantStarburstCharge(): void;
   clearStarburst(): void;
   getSpMode(): SpMode;
+  getTransformKeyMode(): TransformKeyMode;
   isSlamming(): boolean;
   // 魔王頭頂命中（§58）：GameScene 結算後回彈玩家並結束本次下砸（進 CD）。
   onSlamBounce(): void;
@@ -181,7 +185,6 @@ const INHALE_FRAME_MS = 160;
 // 變身分鏡幀長（§124 W5a）：五幀約 450ms，僅顯示層演出（操作不鎖）。
 const MORPH_FRAME_MS = 90;
 // SP 長按門檻（#948）：沿 prism 的 B 長按語彙量級，短於形態技以免誤觸。
-const SP_HOLD_MS = 250;
 // 形態技長按門檻（#948）：與 SP 同量級；變身期有彈藥時 B 點按射星、長按出技。
 const FORM_SKILL_HOLD_MS = 220;
 // 魔王頭頂命中回彈初速（§58）。
@@ -272,7 +275,6 @@ export function createPlayer(
   let inhaleAnimMs = 0;
   // SP 長按分流狀態（#948）。
   // 點按／長按仲裁（#948，共用 logic/holdArbiter）。
-  let spHoldState = createHoldState();
   let formHoldState = createHoldState();
   let wasOnGround = false;
   // 走動手感（§45）：速度驅動步頻相位；bob/傾斜/落腳拍點皆由 walkFeel 純函式導出。
@@ -777,29 +779,19 @@ export function createPlayer(
           else if (command === 'defer') deferredFire = true;
         }
 
-        // SP 情境鍵（§109／#948）：點按＝解除／引爆／變身、長按＝優先變身；
-        // 僅兩義並存時延遲判讀，其餘按下緣即時結算。
+        // SP／TF 兩鍵（#952 拆鍵）：各自單義，按下緣即時結算——長按分流隨兩義消失
+        // 一併移除（holdArbiter 仍由稜化 B 鍵消費）。
         const spEligible = eligibleForm(magazine, unlockedForms);
-        const spArgs = {
-          phase: starburst.phase,
-          transformActive: transform.form !== null,
-          eligible: spEligible !== null,
-          airborne: !onGround,
-        };
-        const spTap = resolveSpPress({ ...spArgs, held: false });
-        const spHold = resolveSpPress({ ...spArgs, held: true });
-        const spStep = advanceHold(spHoldState, {
-          pressed: controls.spPressed,
-          held: controls.spHeld,
-          deltaMs,
-          thresholdMs: SP_HOLD_MS,
-          ambiguous: spTap !== spHold,
-        });
-        spHoldState = spStep.state;
-        if (spStep.outcome !== 'none') {
-          const command = spStep.outcome === 'hold' ? spHold : spTap;
-          if (command === 'detonate') startDetonation();
-          else if (command === 'transform' && spEligible) beginTransform(spEligible);
+        if (controls.spPressed && resolveSpPress({ phase: starburst.phase }) === 'detonate') {
+          startDetonation();
+        }
+        if (controls.transformPressed) {
+          const command = resolveTransformPress({
+            transformActive: transform.form !== null,
+            eligible: spEligible !== null,
+            airborne: !onGround,
+          });
+          if (command === 'transform' && spEligible) beginTransform(spEligible);
           else if (command === 'dismiss') finishTransform();
         }
       }
@@ -1125,9 +1117,12 @@ export function createPlayer(
     },
     // SP 鍵呈現模式（§109）：GameScene 逐幀同步至 controls；地面判定就地取樣。
     getSpMode() {
+      return resolveSpMode({ phase: starburst.phase });
+    },
+    // TF 鍵呈現模式（#952）：地面判定就地取樣，與 resolveTransformPress 同一裁決。
+    getTransformKeyMode() {
       const body = sprite.body as Phaser.Physics.Arcade.Body;
-      return resolveSpMode({
-        phase: starburst.phase,
+      return resolveTransformMode({
         transformForm: transform.form,
         eligibleForm: eligibleForm(magazine, unlockedForms),
         airborne: !(body.blocked.down || body.touching.down),

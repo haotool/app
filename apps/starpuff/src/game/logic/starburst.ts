@@ -45,56 +45,48 @@ export function tickDetonation(state: StarburstState, deltaMs: number): Detonati
   return { state: { phase: 'detonating', detonateMs }, detonated: false };
 }
 
-// SP 情境鍵點按裁決（§109 天然互斥）：蓄能星存在 → 引爆；無蓄能星且變身資格成立
-//（同系 ≥3、地面）→ 立即變身；變身中 → 提前解除。變身中優先於引爆——正常流程兩態
-// 不共存（變身起手要求無蓄能星、變身中吸入停用不結晶），僅彩蛋滿彈匣可造出重疊，
-// 此時裁決必須與 resolveSpMode 圖示一致（圖示即行為）。
-export type SpCommand = 'detonate' | 'transform' | 'dismiss' | 'none';
+// SP 鍵裁決（#952 拆鍵後專責星暴）：蓄能星存在 → 引爆；蓄爆中不可再操作。
+//
+// 拆鍵理由：修前單鍵承載四義（引爆／變身／解除／無事），唯一分流點是「有蓄能星時
+// 點按引爆、長按變身」，且需 resolveSpSecondary 疊小徽才能讓玩家得知長按還有第二
+// 語意——註解自陳「否則玩家無從得知」，屬補丁而非解法。變身條件放寬後兩態共存頻率
+// 上升會使歧義更嚴重，故改為 SP＝星暴、TF＝變身兩鍵各自單義；長按分流與 secondary
+// 徽記一併移除（不再有兩義可分）。
+export type SpCommand = 'detonate' | 'none';
 
-// held（#948）：意圖分流取代優先序。修前蓄能星存在時恆回 'detonate'，變身分支
-// 不可達——玩家滿匣結晶後即使再湊齊同系 ≥3 也無法變身。改為長按＝變身、點按＝
-// 引爆，兩者遂可並存（結晶維持滿 5 自動觸發，語彙不變）。
-export function resolveSpPress(opts: {
-  phase: StarburstPhase;
+export function resolveSpPress(opts: { phase: StarburstPhase }): SpCommand {
+  return opts.phase === 'charged' ? 'detonate' : 'none';
+}
+
+// SP 鍵呈現（§109 圖示即行為）：hidden 完全隱藏；detonate 金色大星。蓄爆中 → hidden。
+export type SpMode = 'hidden' | 'detonate';
+
+export function resolveSpMode(opts: { phase: StarburstPhase }): SpMode {
+  return opts.phase === 'charged' ? 'detonate' : 'hidden';
+}
+
+// TF 鍵裁決（#952）：變身中 → 提前解除；否則資格成立即變身。與星暴完全無關——
+// 蓄能星存在與否不再影響本鍵，兩鍵各自單義。
+export type TransformCommand = 'transform' | 'dismiss' | 'none';
+
+export function resolveTransformPress(opts: {
   transformActive: boolean;
   eligible: boolean;
   airborne: boolean;
-  held?: boolean;
-}): SpCommand {
+}): TransformCommand {
   if (opts.transformActive) return 'dismiss';
-  if (opts.phase === 'detonating') return 'none';
-  const canTransform = opts.eligible && !opts.airborne;
-  // 長按優先變身；無資格時長按沿點按語意（不讓長按變成啞鍵）。
-  if (opts.held === true && canTransform) return 'transform';
-  if (opts.phase === 'charged') return 'detonate';
-  return canTransform ? 'transform' : 'none';
+  return opts.eligible && !opts.airborne ? 'transform' : 'none';
 }
 
-// SP 鍵可用模式（§109 呈現契約）：hidden 完全隱藏；detonate 金色大星；
-// 形態名＝形態色圓徽（§119 七形態同制）；dismiss 解除迴旋箭。蓄爆中不可再操作 → hidden。
-export type SpMode = 'hidden' | 'detonate' | TransformForm | 'dismiss';
+// TF 鍵呈現（圖示即行為）：hidden 完全隱藏；形態名＝形態色圓徽（§119 七形態同制）；
+// dismiss 解除迴旋箭。
+export type TransformKeyMode = 'hidden' | TransformForm | 'dismiss';
 
-export function resolveSpMode(opts: {
-  phase: StarburstPhase;
+export function resolveTransformMode(opts: {
   transformForm: TransformForm | null;
   eligibleForm: TransformForm | null;
   airborne: boolean;
-}): SpMode {
+}): TransformKeyMode {
   if (opts.transformForm) return 'dismiss';
-  if (opts.phase === 'charged') return 'detonate';
-  if (opts.phase === 'detonating') return 'hidden';
   return opts.eligibleForm && !opts.airborne ? opts.eligibleForm : 'hidden';
-}
-
-// 次要可用性（#948 圖示即行為）：兩態並存時主圖示（resolveSpMode）顯示點按語意，
-// 本函式回傳長按語意供 HUD 疊加小徽——否則玩家無從得知還能變身。
-export function resolveSpSecondary(opts: {
-  phase: StarburstPhase;
-  transformForm: TransformForm | null;
-  eligibleForm: TransformForm | null;
-  airborne: boolean;
-}): TransformForm | null {
-  if (opts.transformForm) return null;
-  if (opts.phase !== 'charged') return null;
-  return opts.eligibleForm && !opts.airborne ? opts.eligibleForm : null;
 }

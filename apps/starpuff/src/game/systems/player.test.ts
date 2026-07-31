@@ -357,7 +357,7 @@ const IDLE: ControlsState = {
   actionPressed: false,
   actionHeld: false,
   spPressed: false,
-  spHeld: false,
+  transformPressed: false,
 };
 const PRESS: ControlsState = { ...IDLE, actionPressed: true, actionHeld: true };
 
@@ -434,11 +434,11 @@ describe('星彈池上限（#820）', () => {
       (player.getStars().getChildren() as unknown as FakeStar[]).filter((star) => star.active)
         .length;
     expect(activeCount()).toBe(STAR.maxAmmo * scatter);
-    // 清蓄能星使 SP 語意回到變身（detonate 優先序高於 transform）。
+    // #952 拆鍵後 TF 鍵與星暴相位無關，此處保留清除僅為與原案情境一致。
     player.clearStarburst();
-    // 疾風星 ×3（連吞升級佔 2 發）→ 風化資格成立，SP 點按地面即變身。
+    // 疾風星 ×3（連吞升級佔 2 發）→ 風化資格成立，TF 點按地面即變身。
     for (let i = 0; i < 3; i += 1) player.grantStar('floaty');
-    player.update({ ...IDLE, spPressed: true }, 16);
+    player.update({ ...IDLE, transformPressed: true }, 16);
     expect(player.getTransformState().form).toBe('gale');
     // 以發射 CD 節拍連發至理論同屏上界：每發都成功生成。
     for (let i = 0; i < MAX_CONCURRENT_WIND_BLADES; i += 1) {
@@ -517,7 +517,7 @@ describe('§119 焰彈 burn 標記池重用（PR #886 收斂）', () => {
     const { player } = makeHarness();
     // 重鑽味 ×3（連吞升級佔 2 發）→ 焰化資格成立，SP 點按地面即變身。
     for (let i = 0; i < 3; i += 1) player.grantStar('drilly');
-    player.update({ ...IDLE, spPressed: true }, 16);
+    player.update({ ...IDLE, transformPressed: true }, 16);
     expect(player.getTransformState().form).toBe('ember');
     // B 點按發焰彈：burn 標記為真。
     player.update(PRESS, 16);
@@ -527,7 +527,7 @@ describe('§119 焰彈 burn 標記池重用（PR #886 收斂）', () => {
     // 模擬回收（recycleStar 語意）→ 解除變身 → 一般星發射復用同一池物件。
     emberShot?.setActive(false);
     player.update(IDLE, 16);
-    player.update({ ...IDLE, spPressed: true }, 16);
+    player.update({ ...IDLE, transformPressed: true }, 16);
     expect(player.getTransformState().form).toBeNull();
     player.grantStar('jelly');
     player.update(PRESS, 16);
@@ -553,7 +553,7 @@ describe('§119 形態彈池瞬時旗標循環（PR #886 R3：launchShot 取出�
     pooled.setActive(false);
     // 焰化後 B 點按經 formSkills.launchShot 復用同一物件：旗標必須歸位。
     for (let i = 0; i < 3; i += 1) player.grantStar('drilly');
-    player.update({ ...IDLE, spPressed: true }, 16);
+    player.update({ ...IDLE, transformPressed: true }, 16);
     expect(player.getTransformState().form).toBe('ember');
     player.update(PRESS, 16);
     const reused = stars.find((star) => star.active);
@@ -609,7 +609,7 @@ describe('星彈四鍵必寫（launchStar/launchShot，PR #886 R5/R6）', () => 
     for (const key of FOUR_KEYS) pooled.setData(key, -999);
     pooled.setActive(false);
     for (let i = 0; i < 3; i += 1) player.grantStar('drilly');
-    player.update({ ...IDLE, spPressed: true }, 16);
+    player.update({ ...IDLE, transformPressed: true }, 16);
     expect(player.getTransformState().form).toBe('ember');
     player.update(PRESS, 16);
     const formShot = stars.find((star) => star.active);
@@ -658,7 +658,7 @@ describe('變身換裝尺寸解耦（PR #886 R7）', () => {
     expect(bodyWorldH(sprite)).toBeCloseTo(HURT_H);
     // 焰化：變身當幀先穿分鏡幀（§124 W5a，1024 源）——同鎖顯示尺寸恆定。
     for (let i = 0; i < 3; i += 1) player.grantStar('drilly');
-    player.update({ ...IDLE, spPressed: true }, 16);
+    player.update({ ...IDLE, transformPressed: true }, 16);
     expect(player.getTransformState().form).toBe('ember');
     player.update(IDLE, 16);
     expect(sprite.texture.key).toBe('hero-ember-morph-gather');
@@ -675,7 +675,7 @@ describe('變身換裝尺寸解耦（PR #886 R7）', () => {
     // 跨幀後恆定（R9）：漏 rebase 時此處 72（顯示）／54×57.6（判定箱）必紅。
     expectStableAcrossFrame(frame, sprite);
     // 解除返回姿勢立繪（512 源）：同樣恆為 48。
-    player.update({ ...IDLE, spPressed: true }, 16);
+    player.update({ ...IDLE, transformPressed: true }, 16);
     expect(player.getTransformState().form).toBeNull();
     player.update(IDLE, 16);
     expect(sprite.frame.realWidth).toBe(512);
@@ -688,7 +688,7 @@ describe('變身換裝尺寸解耦（PR #886 R7）', () => {
     const { player, frame } = makeHarness(true);
     const sprite = player.sprite as unknown as FakePlayerSprite;
     for (let i = 0; i < 3; i += 1) player.grantStar('spora');
-    player.update({ ...IDLE, spPressed: true }, 16);
+    player.update({ ...IDLE, transformPressed: true }, 16);
     expect(player.getTransformState().form).toBe('tide');
     // 分鏡播畢（§124）落形態立繪後斷言（分鏡幀恆 48 由焰化案鎖住）。
     player.update(IDLE, 500);
@@ -707,7 +707,7 @@ describe('變身換裝尺寸解耦（PR #886 R7）', () => {
     const { player, frame } = makeHarness(true);
     const sprite = player.sprite as unknown as FakePlayerSprite;
     for (let i = 0; i < 3; i += 1) player.grantStar('glowy');
-    player.update({ ...IDLE, spPressed: true }, 16);
+    player.update({ ...IDLE, transformPressed: true }, 16);
     expect(player.getTransformState().form).toBe('prism');
     player.update(IDLE, 500);
     expect(sprite.frame.realWidth).toBe(1254);
@@ -721,7 +721,7 @@ describe('變身換裝尺寸解耦（PR #886 R7）', () => {
     const { player, frame } = makeHarness(true);
     const sprite = player.sprite as unknown as FakePlayerSprite;
     for (let i = 0; i < 3; i += 1) player.grantStar('boomy');
-    player.update({ ...IDLE, spPressed: true }, 16);
+    player.update({ ...IDLE, transformPressed: true }, 16);
     expect(player.getTransformState().form).toBe('gravity');
     player.update(IDLE, 500);
     expect(sprite.frame.realWidth).toBe(1254);
@@ -736,7 +736,7 @@ describe('變身換裝尺寸解耦（PR #886 R7）', () => {
     const { player } = makeHarness(true);
     const sprite = player.sprite as unknown as FakePlayerSprite;
     for (let i = 0; i < 3; i += 1) player.grantStar('drilly');
-    player.update({ ...IDLE, spPressed: true }, 16);
+    player.update({ ...IDLE, transformPressed: true }, 16);
     expect(sprite.texture.key).toBe('hero-ember-morph-gather');
     const seen: string[] = [];
     for (let i = 0; i < 6; i += 1) {
@@ -748,7 +748,7 @@ describe('變身換裝尺寸解耦（PR #886 R7）', () => {
     expect(seen).toContain('hero-ember-morph-complete');
     expect(seen[seen.length - 1]).toBe('hero-ember');
     // 提前解除：分鏡序列清除、立即回姿勢貼圖（不殘留分鏡幀）。
-    player.update({ ...IDLE, spPressed: true }, 16);
+    player.update({ ...IDLE, transformPressed: true }, 16);
     expect(player.getTransformState().form).toBeNull();
     expect(sprite.texture.key).toBe('hero-idle');
   });
@@ -767,18 +767,18 @@ describe('變身換裝尺寸解耦（PR #886 R7）', () => {
     expect(sprite.body.height).toBeCloseTo(HURT_H);
     // 焰化（768 源）換裝當幀（未同步時 576×舊 _sx）。
     for (let i = 0; i < 3; i += 1) player.grantStar('drilly');
-    player.update({ ...IDLE, spPressed: true }, 16);
+    player.update({ ...IDLE, transformPressed: true }, 16);
     expect(player.getTransformState().form).toBe('ember');
     expect(sprite.body.width).toBeCloseTo(HURT_W);
     expect(sprite.body.height).toBeCloseTo(HURT_H);
     // 解除回姿勢立繪（512 源）當幀（未同步時暫縮）。
-    player.update({ ...IDLE, spPressed: true }, 16);
+    player.update({ ...IDLE, transformPressed: true }, 16);
     expect(player.getTransformState().form).toBeNull();
     player.update(IDLE, 16);
     expect(sprite.body.width).toBeCloseTo(HURT_W);
     // 潮化（1254 源）換裝當幀（未同步時 940.5×舊 _sx）。
     for (let i = 0; i < 3; i += 1) player.grantStar('spora');
-    player.update({ ...IDLE, spPressed: true }, 16);
+    player.update({ ...IDLE, transformPressed: true }, 16);
     expect(player.getTransformState().form).toBe('tide');
     expect(sprite.body.width).toBeCloseTo(HURT_W);
     expect(sprite.body.height).toBeCloseTo(HURT_H);

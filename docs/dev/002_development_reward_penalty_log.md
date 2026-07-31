@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+320
+> 本次分數變化：+0（reward 0、penalty 0、neutral 1）｜累計總分：+320
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-31
+- ID：neutral-starpuff-split-sp-transform-key
+- 原因：SP 單鍵承載四義（引爆／變身／解除／無事），唯一分流點是「有蓄能星時點按引爆、長按變身」，且需 resolveSpSecondary 疊小徽才能讓玩家得知第二語意——原註解自陳「否則玩家無從得知還能變身」，屬補丁而非解法；後續規劃放寬變身資格（同味計數取代整匣純度）會使兩態共存頻率上升，歧義只會更嚴重
+- 解法：拆為 SP（星暴引爆）與 TF（變身／解除）兩鍵各自單義，鍵盤 C／V、觸控新增第 4 顆按鈕（位置沿 B→SP→TF 同軸外推，夾限比照 SP）；長按分流與 secondary 徽記一併移除。三處 airborne 判定維持不變（屬後續獨立項），resolveTransformPress 不再讀 phase 即為「兩鍵互不影響」的結構保證，並以不變式測試釘住
 
 - 日期：2026-07-30
 - ID：penalty-starpuff-gravity-well-vertical-unreachable

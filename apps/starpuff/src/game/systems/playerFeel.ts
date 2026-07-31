@@ -52,6 +52,8 @@ export function createPlayerFeel(groundTop: number, hooks: PlayerFeelHooks): Pla
   function syncSpMode(): void {
     const spMode = hooks.player().getSpMode();
     hooks.controls().setSpMode(spMode);
+    // TF 鍵（#952）：與 SP 同幀同步，兩鍵呈現皆為「圖示即行為」。
+    hooks.controls().setTransformKeyMode(hooks.player().getTransformKeyMode());
     // 變身技能圖示（§124 W5a）：變身期 B 鍵換形態 skill 鍵帽，解除即還原。
     hooks.controls().setFormSkill(hooks.player().getTransformState().form);
     // SP 變身教學（§110/§119）：任一形態資格徽章首次浮現即教一次。

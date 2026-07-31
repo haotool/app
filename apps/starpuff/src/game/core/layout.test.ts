@@ -16,6 +16,7 @@ import {
   getDefaultLayout,
   parseLayout,
   spKeyPosition,
+  tfKeyPosition,
   type KeyPosition,
 } from './layout';
 import type { ShellRotation } from './rotation';
@@ -91,6 +92,42 @@ describe('spKeyPosition（§109 SP 鍵派生定位）', () => {
     const base = spKeyPosition(DEFAULT_LAYOUT.b, 'none', LAYER_W, LAYER_H, 1);
     const scaled = spKeyPosition(DEFAULT_LAYOUT.b, 'none', LAYER_W, LAYER_H, 1.3);
     expect(scaled.cy).toBeLessThan(base.cy);
+  });
+});
+
+describe('tfKeyPosition（#952 TF 變身鍵派生定位）', () => {
+  const LAYER_W = 820;
+  const LAYER_H = 358;
+  const TF_DIST = KEY_BASE_PX.sp / 2 + KEY_BASE_PX.tf / 2 + SP_GAP_PX;
+
+  it('橫持（none）：B → SP → TF 同軸依序外推，三鍵成一直線', () => {
+    // 層中央起算：避開邊界夾限，斷言純幾何外推量。
+    const b: KeyPosition = { cx: 0.8, cy: 0.85 };
+    const sp = spKeyPosition(b, 'none', LAYER_W, LAYER_H, 1);
+    const tf = tfKeyPosition(sp, 'none', LAYER_W, LAYER_H, 1);
+    expect(tf.cx).toBeCloseTo(sp.cx, 5);
+    expect(tf.cy).toBeCloseTo(sp.cy - TF_DIST / LAYER_H, 5);
+    // 直線性：三鍵 cx 相同，cy 單調遞減（TF 最上）。
+    expect(sp.cx).toBeCloseTo(b.cx, 5);
+    expect(tf.cy).toBeLessThan(sp.cy);
+    expect(sp.cy).toBeLessThan(b.cy);
+  });
+
+  it('直持 ccw／cw：沿 SP 同一軸向映射外推', () => {
+    const sp: KeyPosition = { cx: 0.4, cy: 0.6 };
+    expect(tfKeyPosition(sp, 'ccw', LAYER_W, LAYER_H, 1).cx).toBeCloseTo(
+      sp.cx + TF_DIST / LAYER_W,
+      5,
+    );
+    expect(tfKeyPosition(sp, 'cw', LAYER_W, LAYER_H, 1).cx).toBeCloseTo(
+      sp.cx - TF_DIST / LAYER_W,
+      5,
+    );
+  });
+
+  it('SP 貼層頂時 TF 夾限於層內（不因外推一級而溢出）', () => {
+    const tf = tfKeyPosition({ cx: 0.92, cy: 0.06 }, 'none', LAYER_W, LAYER_H, 1);
+    expect(tf.cy * LAYER_H - KEY_BASE_PX.tf / 2 - KEY_EDGE_PAD_PX).toBeGreaterThanOrEqual(-1e-6);
   });
 });
 

@@ -38,6 +38,7 @@ function makeHarness(): {
     startInhale: ReturnType<typeof vi.fn>;
     stopInhale: ReturnType<typeof vi.fn>;
     setSpMode: ReturnType<typeof vi.fn>;
+    setTransformKeyMode: ReturnType<typeof vi.fn>;
     flavor: ReturnType<typeof vi.fn>;
     noteInput: ReturnType<typeof vi.fn>;
     bodyReset: ReturnType<typeof vi.fn>;
@@ -59,6 +60,7 @@ function makeHarness(): {
   const startInhale = vi.fn();
   const stopInhale = vi.fn();
   const setSpMode = vi.fn();
+  const setTransformKeyMode = vi.fn();
   const flavor = vi.fn();
   const noteInput = vi.fn();
   const bodyReset = vi.fn();
@@ -88,6 +90,7 @@ function makeHarness(): {
     getFacing: () => state.facing,
     isInhaling: () => state.inhaling,
     getSpMode: () => state.spMode,
+    getTransformKeyMode: () => state.spMode,
     // 變身技能圖示同步（§124 W5a）：syncSpMode 逐幀讀當前形態。
     getTransformState: () => ({ form: null, remainingMs: 0, dischargeLeft: 0, tuckLeft: 0 }),
   } as unknown as PlayerHandle;
@@ -95,7 +98,12 @@ function makeHarness(): {
   const hooks: PlayerFeelHooks = {
     player: () => player,
     controls: () =>
-      ({ state: state.controlsState, setSpMode, setFormSkill }) as unknown as ControlsSystem,
+      ({
+        state: state.controlsState,
+        setSpMode,
+        setTransformKeyMode,
+        setFormSkill,
+      }) as unknown as ControlsSystem,
     fx: () => ({ startInhale, stopInhale }) as unknown as FxSystem,
     toasts: () => ({ flavor }) as unknown as ToastSystem,
     waves: () => ({ noteInput }) as unknown as WaveRunner,
@@ -104,7 +112,16 @@ function makeHarness(): {
   return {
     feel,
     state,
-    spies: { startInhale, stopInhale, setSpMode, flavor, noteInput, bodyReset, setVelocity },
+    spies: {
+      startInhale,
+      stopInhale,
+      setSpMode,
+      setTransformKeyMode,
+      flavor,
+      noteInput,
+      bodyReset,
+      setVelocity,
+    },
   };
 }
 

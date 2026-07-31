@@ -6,6 +6,8 @@ import {
   createStarburstState,
   resolveSpMode,
   resolveSpPress,
+  resolveTransformMode,
+  resolveTransformPress,
   shouldCrystallize,
   tickDetonation,
 } from './starburst';
@@ -57,90 +59,71 @@ describe('蓄爆狀態機（§109：0.3s 不可取消）', () => {
   });
 });
 
-describe('resolveSpPress（§109 SP 點按天然互斥；取代 resolveTransformHold 長按裁決）', () => {
-  it('蓄能星存在 → 引爆（空中/地面皆可）', () => {
-    expect(
-      resolveSpPress({ phase: 'charged', transformActive: false, eligible: false, airborne: true }),
-    ).toBe('detonate');
-    expect(
-      resolveSpPress({
-        phase: 'charged',
-        transformActive: false,
-        eligible: true,
-        airborne: false,
-      }),
-    ).toBe('detonate');
+describe('resolveSpPress（#952 拆鍵後專責星暴）', () => {
+  it('蓄能星存在 → 引爆', () => {
+    expect(resolveSpPress({ phase: 'charged' })).toBe('detonate');
   });
 
-  it('無蓄能星且資格成立（同系 ≥3、地面）→ 立即變身（0.6s 長按門檻廢除）', () => {
-    expect(
-      resolveSpPress({ phase: 'none', transformActive: false, eligible: true, airborne: false }),
-    ).toBe('transform');
-  });
-
-  it('空中不可變身（沿 §57 起手限地面）', () => {
-    expect(
-      resolveSpPress({ phase: 'none', transformActive: false, eligible: true, airborne: true }),
-    ).toBe('none');
-  });
-
-  it('變身中 → 提前解除（優先於引爆，圖示即行為）', () => {
-    expect(
-      resolveSpPress({ phase: 'none', transformActive: true, eligible: false, airborne: false }),
-    ).toBe('dismiss');
-    expect(
-      resolveSpPress({ phase: 'charged', transformActive: true, eligible: false, airborne: true }),
-    ).toBe('dismiss');
-  });
-
-  it('蓄爆中與無技能可用 → none', () => {
-    expect(
-      resolveSpPress({
-        phase: 'detonating',
-        transformActive: false,
-        eligible: false,
-        airborne: false,
-      }),
-    ).toBe('none');
-    expect(
-      resolveSpPress({ phase: 'none', transformActive: false, eligible: false, airborne: false }),
-    ).toBe('none');
+  it('蓄爆中與無蓄能星 → none', () => {
+    expect(resolveSpPress({ phase: 'detonating' })).toBe('none');
+    expect(resolveSpPress({ phase: 'none' })).toBe('none');
   });
 });
 
-describe('resolveSpMode（§109 SP 鍵呈現：圖示與裁決一致）', () => {
-  it('變身中 → dismiss 解除迴旋箭', () => {
+describe('resolveSpMode（#952 呈現：圖示即行為）', () => {
+  it('蓄能星存在 → detonate 金色大星；其餘 hidden', () => {
+    expect(resolveSpMode({ phase: 'charged' })).toBe('detonate');
+    expect(resolveSpMode({ phase: 'detonating' })).toBe('hidden');
+    expect(resolveSpMode({ phase: 'none' })).toBe('hidden');
+  });
+});
+
+describe('resolveTransformPress（#952 拆鍵後專責變身）', () => {
+  it('資格成立且地面 → 變身', () => {
+    expect(resolveTransformPress({ transformActive: false, eligible: true, airborne: false })).toBe(
+      'transform',
+    );
+  });
+
+  it('空中不可變身（沿 §57 起手限地面）', () => {
+    expect(resolveTransformPress({ transformActive: false, eligible: true, airborne: true })).toBe(
+      'none',
+    );
+  });
+
+  it('變身中 → 提前解除（空中亦可）', () => {
+    expect(resolveTransformPress({ transformActive: true, eligible: false, airborne: true })).toBe(
+      'dismiss',
+    );
+  });
+
+  it('無資格 → none', () => {
     expect(
-      resolveSpMode({ phase: 'none', transformForm: 'volt', eligibleForm: null, airborne: false }),
+      resolveTransformPress({ transformActive: false, eligible: false, airborne: false }),
+    ).toBe('none');
+  });
+
+  // 拆鍵不變式：蓄能相位不再是本鍵的輸入——兩鍵各自單義的結構保證。
+  it('星暴相位不影響變身鍵（拆鍵不變式）', () => {
+    expect(resolveTransformPress({ transformActive: false, eligible: true, airborne: false })).toBe(
+      'transform',
+    );
+  });
+});
+
+describe('resolveTransformMode（#952 TF 鍵呈現）', () => {
+  it('變身中 → dismiss；資格成立且地面 → 形態色圓徽；空中或無資格 → hidden', () => {
+    expect(
+      resolveTransformMode({ transformForm: 'volt', eligibleForm: null, airborne: false }),
     ).toBe('dismiss');
-  });
-
-  it('蓄能星存在 → detonate 金色大星', () => {
     expect(
-      resolveSpMode({ phase: 'charged', transformForm: null, eligibleForm: null, airborne: true }),
-    ).toBe('detonate');
-  });
-
-  it('資格成立且地面 → 形態色圓徽；空中隱藏', () => {
-    expect(
-      resolveSpMode({ phase: 'none', transformForm: null, eligibleForm: 'gale', airborne: false }),
+      resolveTransformMode({ transformForm: null, eligibleForm: 'gale', airborne: false }),
     ).toBe('gale');
     expect(
-      resolveSpMode({ phase: 'none', transformForm: null, eligibleForm: 'gale', airborne: true }),
+      resolveTransformMode({ transformForm: null, eligibleForm: 'gale', airborne: true }),
     ).toBe('hidden');
-  });
-
-  it('蓄爆中與無技能 → hidden 完全隱藏', () => {
-    expect(
-      resolveSpMode({
-        phase: 'detonating',
-        transformForm: null,
-        eligibleForm: null,
-        airborne: false,
-      }),
-    ).toBe('hidden');
-    expect(
-      resolveSpMode({ phase: 'none', transformForm: null, eligibleForm: null, airborne: false }),
-    ).toBe('hidden');
+    expect(resolveTransformMode({ transformForm: null, eligibleForm: null, airborne: false })).toBe(
+      'hidden',
+    );
   });
 });
