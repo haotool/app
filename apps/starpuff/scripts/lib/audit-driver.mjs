@@ -32,7 +32,8 @@ export function installAuditDriver(opts) {
     window.__audit.stop = true;
     clearInterval(window.__audit.interval);
   }
-  const KEY = { left: 37, right: 39, jump: 90, shoot: 88, sp: 67 };
+  // #952 拆鍵：sp=C（星暴結晶／引爆）、tf=V（變身／解除）。
+  const KEY = { left: 37, right: 39, jump: 90, shoot: 88, sp: 67, tf: 86 };
   const INHALABLE = new Set(inhalableKinds);
   const HARMFUL = new Set(contactKinds);
   const HUNT = new Set(huntKinds);
@@ -116,6 +117,8 @@ export function installAuditDriver(opts) {
     lastShotAt: 0,
     lastGrantAt: 0,
     lastSpAt: 0,
+    // #952：TF 鍵節流獨立於 SP——兩鍵互不影響，共用節流會互相吃掉觸發。
+    lastTfAt: 0,
     lastX: 0,
     lastMoveAt: 0,
     // 滿拍翅跳序列（W1.5）：hopUntil 內鎖定航向 hopDir；inhaleHold＝鏡界窗持吸中；
@@ -364,10 +367,12 @@ export function installAuditDriver(opts) {
       tap(KEY.shoot, 55);
     };
 
-    // 星暴 2.0（§109）：持蓄能星時擇機引爆（SP=C 鍵）——模擬玩家主動運用；
-    // 走動關同屏敵 ≥2 或飢荒即用，魔王關戰鬥中即用；3s 節流防連點。
+    // 星暴 2.0（§109／#954 手動結晶）：滿匣先按 SP 結晶，持蓄能星再按 SP 引爆
+    // ——模擬玩家主動運用；走動關同屏敵 ≥2 或飢荒即用，魔王關戰鬥中即用；3s 節流。
+    // 修前結晶為自動觸發，bot 只需引爆；改手動後不補結晶會使 bot 永不使用星暴。
     const starburstPhase = window.__sp.starburst ? window.__sp.starburst().phase : 'none';
     const spReady = starburstPhase === 'charged' && now - d.lastSpAt >= 3000;
+    const crystallizeReady = starburstPhase === 'none' && s.ammo >= 5 && now - d.lastSpAt >= 600;
 
     if (kind === 'boss') {
       const sp = window.__sp;
@@ -376,12 +381,12 @@ export function installAuditDriver(opts) {
         release(KEY.shoot);
         return;
       }
-      if (spReady) {
+      if (spReady || crystallizeReady) {
         d.lastSpAt = now;
         tap(KEY.sp, 90);
       }
-      // 變身優勢 hook（#816 W2）：無形態時集齊優勢味 ×3（正式 swallow 管線）→ 按 SP
-      // 立即變身（空中裁決為 none，逐 tick 重試至落地）；變身中 B 即形態技，照常 tap。
+      // 變身優勢 hook（#816 W2／#952 改按 TF 鍵）：無形態時集齊優勢味 ×3（正式
+      // swallow 管線）→ 按變身鍵立即變身（#953 起不限地面）；變身中 B 即形態技。
       const tf = sp.transform ? sp.transform() : { form: null };
       if (tf.form && d.prevForm === null) {
         d.m.transforms += 1;
@@ -400,13 +405,13 @@ export function installAuditDriver(opts) {
             /* 轉場窗忽略 */
           }
         }
-        // 資格門用 transform eligibility 而非槽數（#848 審查修復）：空中裁決 none
-        // 由 SP tap 逐 tick 重試至落地，holdFire 持續護匣防射空。
+        // 資格門用 transform eligibility 而非槽數（#848 審查修復）。#952 起走 TF 鍵，
+        // 節流獨立於 SP（兩鍵互不影響）；#953 起空中亦成立，無須重試至落地。
         if (s.tfReady) {
           d.holdFire = true;
-          if (now - d.lastSpAt >= 600) {
-            d.lastSpAt = now;
-            tap(KEY.sp, 90);
+          if (now - d.lastTfAt >= 600) {
+            d.lastTfAt = now;
+            tap(KEY.tf, 90);
           }
         }
       }
@@ -864,7 +869,10 @@ export function installAuditDriver(opts) {
       if (now - d.lastJumpAt >= 800) jump();
       return;
     }
-    if (spReady && (s.alive.total >= 2 || (s.ammo === 0 && s.alive.inhalable === 0))) {
+    if (crystallizeReady) {
+      d.lastSpAt = now;
+      tap(KEY.sp, 90);
+    } else if (spReady && (s.alive.total >= 2 || (s.ammo === 0 && s.alive.inhalable === 0))) {
       d.lastSpAt = now;
       tap(KEY.sp, 90);
     }
