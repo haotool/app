@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-2（reward 0、penalty 2、neutral 4）｜累計總分：+319
+> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+318
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-08-01
+- ID：penalty-starpuff-e2e-contract-drift-merged-red
+- 原因：#953 改動輸入契約（SP 拆兩鍵）與結晶機制（自動改手動），只更新單元測試而未掃 e2e，致 10 個 e2e 編碼舊契約而失效（按鈕數 3、按 C 變身、滿匣自動結晶）；更嚴重的是啟用 auto-merge 時 E2E job 仍在執行，而該 job 非 required check，遂在未驗證下合併並發版 0.29.0，main 轉紅
+- 解法：10 案全數對齊新契約——grantChargedStar 補按 SP 結晶（連帶解 4 案）、新增 tapTfUntil 走 V 鍵、SP 三態改寫為兩鍵各自單義並加互不牽動斷言；滿載下的按鍵錯拍一律改輪詢重按。根因是「契約變更的同步清單漏了 e2e」與「auto-merge 只等 required checks」兩件事疊加，後者應把 E2E 列為 required 或改為等全綠再合
 
 - 日期：2026-07-31
 - ID：penalty-starpuff-audit-transform-policy-loop

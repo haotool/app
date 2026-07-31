@@ -44,21 +44,34 @@ async function startGame(page: Page): Promise<void> {
 }
 
 // 混味五槽注入（jelly/shelly 交錯：無配方、無同系變身資格）→ 滿匣自動結晶。
+// #954：結晶改手動——滿匣後需按 SP 才結晶（修前為滿匣自動）。
 async function grantChargedStar(page: Page): Promise<void> {
   for (const flavor of ['jelly', 'shelly', 'jelly', 'shelly', 'jelly']) {
     await page.evaluate((kind) => window.__sp.grantStar(kind), flavor);
   }
-  await expect
-    .poll(() => page.evaluate(() => window.__sp.starburst().phase), { timeout: 8000 })
-    .toBe('charged');
+  await expect.poll(() => page.evaluate(() => window.__sp.ammo().ammo), { timeout: 8000 }).toBe(5);
+  await tapSpUntil(page, () => page.evaluate(() => window.__sp.starburst().phase === 'charged'));
   expect(await page.evaluate(() => window.__sp.ammo().ammo)).toBe(0);
 }
 
 // SP 點按（鍵盤 C）：headless 幀取樣錯拍防護——週期重按直到觀測到預期條件。
 async function tapSpUntil(page: Page, predicate: () => Promise<boolean>): Promise<void> {
+  await tapKeyUntil(page, 'C', predicate);
+}
+
+// TF 點按（鍵盤 V，#952 拆鍵）：變身／解除專用鍵。
+async function tapTfUntil(page: Page, predicate: () => Promise<boolean>): Promise<void> {
+  await tapKeyUntil(page, 'V', predicate);
+}
+
+async function tapKeyUntil(
+  page: Page,
+  key: string,
+  predicate: () => Promise<boolean>,
+): Promise<void> {
   const deadline = Date.now() + 8000;
   while (Date.now() < deadline) {
-    await page.keyboard.press('C', { delay: 120 });
+    await page.keyboard.press(key, { delay: 120 });
     await page.waitForTimeout(250);
     if (await predicate()) return;
   }
@@ -103,26 +116,26 @@ test.describe('行動觸控情境', () => {
     '觸控情境於 Mobile Chrome project 執行',
   );
 
-  test('SP 三態與隱藏條件（§109）：無技能隱藏→變身徽→解除箭→引爆星→蓄爆後隱藏', async ({
-    page,
-  }) => {
+  test('SP／TF 兩鍵呈現（§109／#952 拆鍵）：各自單義，隱藏與浮現互不牽動', async ({ page }) => {
     test.setTimeout(120_000);
     const errors = collectErrors(page);
     await startGame(page);
     await page.evaluate(() => window.__sp.fillQuota());
     const spBtn = page.locator('[data-btn="sp"]');
-    // 無技能可用：SP 完全隱藏。
+    const tfBtn = page.locator('[data-btn="tf"]');
+    // 無技能可用：兩鍵皆隱藏。
     await expect(spBtn).not.toHaveClass(/is-sp-on/);
-    // 同系 x3（地面）：變身資格成立 → SP 浮現（形態色圓徽）。
+    await expect(tfBtn).not.toHaveClass(/is-sp-on/);
+    // 同系 x3：變身資格成立 → 只有 TF 浮現（形態色圓徽），SP 不受影響。
     for (let i = 0; i < 3; i += 1) await page.evaluate(() => window.__sp.grantStar('zappy'));
-    await expect(spBtn).toHaveClass(/is-sp-on/, { timeout: 8000 });
-    // SP 點按 → 立即變身；變身中 SP 仍可用（解除迴旋箭）。
-    await tapSpUntil(page, () => page.evaluate(() => window.__sp.transform().form === 'volt'));
-    await expect(spBtn).toHaveClass(/is-sp-on/);
-    // 再按 SP 提前解除；彈匣已空（變身消耗）→ 無技能 → SP 隱藏。
-    await tapSpUntil(page, () => page.evaluate(() => window.__sp.transform().form === null));
-    await expect(spBtn).not.toHaveClass(/is-sp-on/, { timeout: 8000 });
-    // 蓄能星存在 → SP 浮現（金色大星）；引爆完成後無技能 → 隱藏。
+    await expect(tfBtn).toHaveClass(/is-sp-on/, { timeout: 8000 });
+    await expect(spBtn).not.toHaveClass(/is-sp-on/);
+    // TF 點按 → 立即變身；變身中 TF 仍可用（解除迴旋箭）。
+    await tapTfUntil(page, () => page.evaluate(() => window.__sp.transform().form === 'volt'));
+    await expect(tfBtn).toHaveClass(/is-sp-on/);
+    // 再按 TF 提前解除；#953 起只扣 3 星單位，餘槽保留故資格可能仍成立。
+    await tapTfUntil(page, () => page.evaluate(() => window.__sp.transform().form === null));
+    // 蓄能星路線：滿匣 → SP 顯示結晶 → 按 SP 結晶 → 續顯示引爆 → 引爆後隱藏。
     await grantChargedStar(page);
     await expect(spBtn).toHaveClass(/is-sp-on/, { timeout: 8000 });
     await tapSpUntil(page, () => page.evaluate(() => window.__sp.starburst().phase === 'none'));
@@ -231,14 +244,14 @@ test.describe('鍵盤 C 桌機映射（§109）', () => {
     '桌機情境需寬視口 project（Desktop Chrome）',
   );
 
-  test('桌機：同系 x3 按 C 立即變身、再按 C 解除', async ({ page }) => {
+  test('桌機：同系 x3 按 V 立即變身、再按 V 解除（#952 拆鍵）', async ({ page }) => {
     test.setTimeout(120_000);
     const errors = collectErrors(page);
     await startGame(page);
     await page.evaluate(() => window.__sp.fillQuota());
     for (let i = 0; i < 3; i += 1) await page.evaluate(() => window.__sp.grantStar('floaty'));
-    await tapSpUntil(page, () => page.evaluate(() => window.__sp.transform().form === 'gale'));
-    await tapSpUntil(page, () => page.evaluate(() => window.__sp.transform().form === null));
+    await tapTfUntil(page, () => page.evaluate(() => window.__sp.transform().form === 'gale'));
+    await tapTfUntil(page, () => page.evaluate(() => window.__sp.transform().form === null));
     await page.waitForTimeout(400);
     expect(errors).toEqual([]);
   });
