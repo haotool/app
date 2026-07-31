@@ -69,12 +69,15 @@ test('點開始進入 GameScene：遊戲運行且 HUD 狀態就緒', async ({ pa
   await startGame(page);
   // HUD 由 PLAYER_DAMAGED/AMMO_CHANGED 事件驅動；初始狀態以 debug hook 驗證。
   await expect.poll(() => page.evaluate(() => window.__sp.playerHp())).toBe(5);
-  // 橫式手柄：左搖桿區 + 右側 A/B 兩圓鍵 + SP 情境鍵（§109，預設隱藏；全數無文字節點）。
+  // 橫式手柄：左搖桿區 + 右側 A/B 兩圓鍵 + SP 情境鍵 + TF 變身鍵（#952 拆鍵，
+  // 兩情境鍵預設隱藏；全數無文字節點）。
   await expect(page.locator('#joy-zone')).toBeVisible();
   const buttons = page.locator('[data-btn]');
-  await expect(buttons).toHaveCount(3);
-  for (let i = 0; i < 3; i += 1) await expect(buttons.nth(i)).toHaveText('');
+  const CONTROL_BUTTON_COUNT = 4;
+  await expect(buttons).toHaveCount(CONTROL_BUTTON_COUNT);
+  for (let i = 0; i < CONTROL_BUTTON_COUNT; i += 1) await expect(buttons.nth(i)).toHaveText('');
   await expect(page.locator('[data-btn="sp"]')).not.toHaveClass(/is-sp-on/);
+  await expect(page.locator('[data-btn="tf"]')).not.toHaveClass(/is-sp-on/);
   await page.waitForTimeout(1500);
   expect(errors).toEqual([]);
 });
@@ -205,7 +208,7 @@ test('跳關直達第四關魔王，強制勝利結算總用時', async ({ page 
 
 // 舊語意（§23）：滿三槽長按 B 0.8s 觸發星暴 → 新語意（§109）：滿五槽自動結晶成
 // 蓄能星（彈匣清空），按 SP（鍵盤 C）點按引爆——B 長按不再觸發星暴（#812 誤放歸零）。
-test('星暴 2.0：吞滿五槽自動結晶，SP 點按引爆清場（§109）', async ({ page }) => {
+test('星暴 2.0：滿匣按 SP 結晶、再按 SP 引爆清場（§109／#954 手動結晶）', async ({ page }) => {
   const errors = collectErrors(page);
   await startGame(page);
   // 長按吸入期間依序餵怪吞滿五槽；jelly/zappy 交錯避開 §46 配方與同系連吞升級。
@@ -218,18 +221,21 @@ test('星暴 2.0：吞滿五槽自動結晶，SP 點按引爆清場（§109）',
       .poll(() => page.evaluate(() => window.__sp.ammo().ammo), { timeout: 8000 })
       .toBe(i + 1);
   }
-  // 第五槽入匣瞬間自動結晶：彈匣清空、蓄能星生成（不觸發星暴、場上不清場）。
+  // 第五槽入匣：#954 起滿匣**不再自動結晶**——彈匣維持滿匣成為穩定狀態。
   await page.evaluate(() => window.__sp.spawn('jelly', 188, 340));
-  await expect
-    .poll(() => page.evaluate(() => window.__sp.starburst().phase), { timeout: 8000 })
-    .toBe('charged');
-  expect(await page.evaluate(() => window.__sp.ammo().ammo)).toBe(0);
+  await expect.poll(() => page.evaluate(() => window.__sp.ammo().ammo), { timeout: 8000 }).toBe(5);
+  expect(await page.evaluate(() => window.__sp.starburst().phase)).toBe('none');
   await page.keyboard.up('X');
-  // SP（鍵盤 C）點按 → 0.3s 蓄爆 → 引爆清場；蓄能星消失。
-  await page.keyboard.press('C', { delay: 120 });
-  await expect
-    .poll(() => page.evaluate(() => window.__sp.starburst().phase), { timeout: 8000 })
-    .toBe('none');
+  // SP（鍵盤 C）點按＝結晶 → 再點按＝引爆。headless 低幀率下單次 press 可能落在
+  // 幀縫而被丟棄，故一律輪詢重按至觀測到目標相位（沿 t3/v9 的 tapKeyUntil 慣例）。
+  const pressCUntil = async (phase: string): Promise<boolean> => {
+    await page.keyboard.press('C', { delay: 120 });
+    await page.waitForTimeout(250);
+    return page.evaluate((p) => window.__sp.starburst().phase === p, phase);
+  };
+  await expect.poll(() => pressCUntil('charged'), { timeout: 12_000 }).toBe(true);
+  expect(await page.evaluate(() => window.__sp.ammo().ammo)).toBe(0);
+  await expect.poll(() => pressCUntil('none'), { timeout: 12_000 }).toBe(true);
   await page.waitForTimeout(800);
   expect(errors).toEqual([]);
 });

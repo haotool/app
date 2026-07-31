@@ -63,10 +63,11 @@ async function gotoLevel(page: Page, levelId: number): Promise<void> {
 
 // SP 點按（§109 取代星化長按）：headless 低幀率下單次 keydown 的按下緣可能與
 // 幀取樣錯拍——週期重按（每拍跨至少一遊戲幀）直到觀測到目標形態（行為守門）。
+// #952 拆鍵：變身／解除移至 TF 鍵（鍵盤 V），SP 專責星暴。
 async function tapSpUntil(page: Page, expected: string | null): Promise<void> {
   const deadline = Date.now() + 8000;
   while (Date.now() < deadline) {
-    await page.keyboard.press('C', { delay: 120 });
+    await page.keyboard.press('V', { delay: 120 });
     await page.waitForTimeout(250);
     if ((await page.evaluate(() => window.__sp.transform().form)) === expected) return;
   }
@@ -117,12 +118,14 @@ async function seedClearedSave(page: Page, ids: readonly number[]): Promise<void
 
 // 舊語意（§57）：同系 x3 地面長按 0.6s 變身、變身中長按解除 → 新語意（§109）：
 // 同系 ≥3 地面 SP（鍵盤 C）點按立即變身、變身中 SP 點按提前解除。
-test('星化三形態（§109）：同系 x3 按 SP 變身、B 鍵改役、再按 SP 提前解除', async ({ page }) => {
+test('星化三形態（§109／#952）：同系 x3 按 TF 變身、B 鍵改役、再按 TF 提前解除', async ({
+  page,
+}) => {
   test.setTimeout(120_000);
   const errors = collectErrors(page);
   await startGame(page);
   await page.evaluate(() => window.__sp.fillQuota());
-  // 雷化：zappy x3 → SP 點按即時變身、彈匣清空。
+  // 雷化：zappy x3 → TF 點按即時變身；#953 起只扣 3 星單位。
   for (let i = 0; i < 3; i += 1) await page.evaluate(() => window.__sp.grantStar('zappy'));
   await tapSpUntil(page, 'volt');
   expect((await page.evaluate(() => window.__sp.ammo())).ammo).toBe(0);
@@ -139,7 +142,7 @@ test('星化三形態（§109）：同系 x3 按 SP 變身、B 鍵改役、再�
   await expect
     .poll(() => page.evaluate(() => window.__sp.alive().total), { timeout: 6000 })
     .toBe(0);
-  // 再按 SP 提前解除（不返彈）。
+  // 再按 TF 提前解除（不返彈）。
   await tapSpUntil(page, null);
   expect((await page.evaluate(() => window.__sp.ammo())).ammo).toBe(0);
   // 風化與殼化資格觸發。
@@ -296,14 +299,17 @@ test('慈悲補血（§62）：低血久戰觸發愛心生成，拾取後 HP +1'
   // L3 迴避 L1 reach-x 彩蛋（走左緣 +1 HP 會污染斷言）。
   await gotoLevel(page, 3);
   await page.evaluate(() => window.__sp.fillQuota());
-  // 清場護航（§109）：混味五槽（無配方、無同系資格）滿匣自動結晶 → SP 引爆清空
-  // 場上小怪；gate 已開不再補生，低血走位不被殘敵干擾（防死亡重試污染斷言）。
+  // 清場護航（§109／#954）：混味五槽（無配方、無同系資格）滿匣後按 SP 結晶
+  // → 再按 SP 引爆清空場上小怪；gate 已開不再補生，低血走位不被殘敵干擾。
   for (const flavor of ['jelly', 'shelly', 'jelly', 'shelly', 'jelly']) {
     await page.evaluate((kind) => window.__sp.grantStar(kind), flavor);
   }
-  await expect
-    .poll(() => page.evaluate(() => window.__sp.starburst().phase), { timeout: 8000 })
-    .toBe('charged');
+  const charged = async (): Promise<boolean> => {
+    await page.keyboard.press('C', { delay: 120 });
+    await page.waitForTimeout(250);
+    return page.evaluate(() => window.__sp.starburst().phase === 'charged');
+  };
+  await expect.poll(charged, { timeout: 10_000 }).toBe(true);
   const detonated = async (): Promise<boolean> => {
     await page.keyboard.press('C', { delay: 120 });
     await page.waitForTimeout(250);
@@ -435,13 +441,17 @@ test('星暴無敵（§64/§109）：引爆即 5s 無敵、期間零傷害、到
   const errors = collectErrors(page);
   await startGame(page);
   await page.evaluate(() => window.__sp.fillQuota());
-  // 異系五槽（jelly/zappy 交錯無配方、不同系不觸變身資格）→ 滿匣自動結晶。
+  // 異系五槽（jelly/zappy 交錯無配方）→ #954 起需按 SP 手動結晶。
   for (const flavor of ['jelly', 'zappy', 'jelly', 'zappy', 'jelly']) {
     await page.evaluate((kind) => window.__sp.grantStar(kind), flavor);
   }
-  await expect
-    .poll(() => page.evaluate(() => window.__sp.starburst().phase), { timeout: 8000 })
-    .toBe('charged');
+  await expect.poll(() => page.evaluate(() => window.__sp.ammo().ammo), { timeout: 8000 }).toBe(5);
+  const crystallized = async (): Promise<boolean> => {
+    await page.keyboard.press('C', { delay: 120 });
+    await page.waitForTimeout(250);
+    return page.evaluate(() => window.__sp.starburst().phase === 'charged');
+  };
+  await expect.poll(crystallized, { timeout: 10_000 }).toBe(true);
   expect((await page.evaluate(() => window.__sp.ammo())).ammo).toBe(0);
   // SP 點按 → 0.3s 蓄爆 → 引爆開 5s 無敵窗。
   const detonated = async (): Promise<boolean> => {
