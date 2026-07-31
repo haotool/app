@@ -1,7 +1,6 @@
 import type Phaser from 'phaser';
 import {
   SLAM,
-  STARSTORM,
   STAR_FLAVORS,
   getMix,
   type MixId,
@@ -76,7 +75,7 @@ export interface StarCombat {
     exclude: Phaser.GameObjects.GameObject | null,
   ): void;
   freezeField(x: number, y: number, mix: StarMixSpec): void;
-  resolveStarstorm(): void;
+  resolveStarstorm(bossDamage: number): void;
   resolveSlamImpact(x: number, y: number): void;
   resolveShieldCounter(x: number, y: number, facing: 1 | -1): void;
   resolveVoltBeam(x: number, y: number, facing: 1 | -1): void;
@@ -235,7 +234,7 @@ export function createStarCombat(scene: Phaser.Scene, hooks: StarCombatHooks): S
   }
 
   // 星暴（§23）：白閃 + 震屏 + 視野內星雨連爆；清場全小怪、魔王固定 12 傷。
-  function resolveStarstorm(): void {
+  function resolveStarstorm(bossDamage: number): void {
     scene.cameras.main.flash(280, 255, 255, 255);
     hooks.fx().shake(12);
     const view = scene.cameras.main.worldView;
@@ -256,7 +255,8 @@ export function createStarCombat(scene: Phaser.Scene, hooks: StarCombatHooks): S
       // 多本體（§68）：星暴固定傷結算至玩家最近的存活本體；星彈歸因（§113），
       // 缺 source 會在滿盾＋虹吸窗下被護盾層吸收為 0 傷。
       const sprite = hooks.player().sprite;
-      hooks.damageBossAt(STARSTORM.bossDamage, sprite.x, sprite.y, 'star');
+      // #954：傷害由結晶時封存的投入星值決定，非固定常數。
+      hooks.damageBossAt(bossDamage, sprite.x, sprite.y, 'star');
     }
   }
 

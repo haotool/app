@@ -385,11 +385,12 @@ describe('星彈池上限（#820）', () => {
     const { player, groups } = makeHarness();
     // 星彈池以派生上限建池（非硬編 8）。
     expect(groups[0]?.maxSize).toBe(STAR_POOL_MAX);
-    // 先以 jelly 填滿觸發自動結晶（§109）：彈匣清空、蓄能星生成——之後滿匣狀態
-    // 才可持續（不疊加），供本測試建立滿匣散射情境。
-    for (let i = 0; i < 12 && player.getStarburst().phase === 'none'; i += 1) {
+    // 先以 jelly 填滿並按 SP 手動結晶（§109／#954）：彈匣清空、蓄能星生成——
+    // 之後滿匣狀態才可持續（不疊加），供本測試建立滿匣散射情境。
+    for (let i = 0; i < 12 && player.getAmmoState().ammo < STAR.maxAmmo; i += 1) {
       player.grantStar('jelly');
     }
+    player.update({ ...IDLE, spPressed: true }, 16);
     expect(player.getStarburst().phase).toBe('charged');
     expect(player.getAmmoState().ammo).toBe(0);
     // 吞入 殼盾星+鑽頭星 ×5 → 五槽碎鑽星（scatterCount 3）滿匣。
@@ -417,10 +418,11 @@ describe('星彈池上限（#820）', () => {
   // 每發風刃都必須成功生成——共用池不得讓風刃因池滿靜默消失（輸出必有回饋）。
   it('滿匣散射在飛＋風化連發：風刃全數生成不因池滿靜默失敗', () => {
     const { player } = makeHarness();
-    // 先結晶消耗（§109）再滿匣碎鑽星，發射 5 輪 → 15 發在飛。
-    for (let i = 0; i < 12 && player.getStarburst().phase === 'none'; i += 1) {
+    // 先手動結晶清匣（§109／#954）再滿匣碎鑽星，發射 5 輪 → 15 發在飛。
+    for (let i = 0; i < 12 && player.getAmmoState().ammo < STAR.maxAmmo; i += 1) {
       player.grantStar('jelly');
     }
+    player.update({ ...IDLE, spPressed: true }, 16);
     for (let i = 0; i < STAR.maxAmmo; i += 1) {
       player.grantStar('shelly');
       player.grantStar('drilly');
@@ -452,10 +454,12 @@ describe('星彈池上限（#820）', () => {
 
 describe('星暴 2.0 蓄爆生命週期（§109 回歸鎖）', () => {
   // jelly 連授至滿匣結晶（連吞升級佔 2 發，10 發內必達 5 槽）。
+  // #954：結晶改手動——填滿彈匣後按 SP 才結晶。
   const chargeUp = (player: ReturnType<typeof createPlayer>): void => {
-    for (let i = 0; i < 12 && player.getStarburst().phase === 'none'; i += 1) {
+    for (let i = 0; i < 12 && player.getAmmoState().ammo < STAR.maxAmmo; i += 1) {
       player.grantStar('jelly');
     }
+    player.update({ ...IDLE, spPressed: true }, 16);
     expect(player.getStarburst().phase).toBe('charged');
   };
   const SP_TAP: ControlsState = { ...IDLE, spPressed: true };

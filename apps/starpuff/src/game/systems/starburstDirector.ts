@@ -9,6 +9,8 @@ import type { ToastSystem } from './toasts';
 
 // 跨關持有旗標：通關瞬間快照玩家蓄能相位，下一關 create 時授回。
 let carryCharged = false;
+// #954：跨關授回必須連同結晶當下封存的投入星值，否則持有星會退回保底傷害。
+let carryDamage = 0;
 // 首次教學浮字（每 session 一次）：結晶引爆教學與跨關持有告知。
 let taughtCrystallize = false;
 let taughtCarry = false;
@@ -29,8 +31,10 @@ export function createStarburstDirector(
   hooks: StarburstDirectorHooks,
 ): StarburstDirector {
   // EX 進場清除（§8.4 EX 純度）：進場即棄置持有星，session 旗標一併歸零。
-  if (hooks.exMode) carryCharged = false;
-  else if (carryCharged) hooks.player().grantStarburstCharge();
+  if (hooks.exMode) {
+    carryCharged = false;
+    carryDamage = 0;
+  } else if (carryCharged) hooks.player().grantStarburstCharge(carryDamage);
 
   // 首次結晶教學（§3.3）：浮字一次；跨關授回同走此事件，session 旗標防重複。
   const onStarburst = ({ phase }: { phase: string }): void => {
@@ -41,6 +45,7 @@ export function createStarburstDirector(
   // 死亡清除（§3.1）：卡點重生不重建 player，必須顯式清除蓄能星。
   const onDied = (): void => {
     carryCharged = false;
+    carryDamage = 0;
     hooks.player().clearStarburst();
   };
   const onBossDown = (): void => noteClear();
@@ -48,7 +53,9 @@ export function createStarburstDirector(
   function noteClear(): void {
     // 已知行為（設計取捨）：detonating 相位過關（0.3s 蓄爆窄窗撞入門）不持有也不結算
     // ——引爆承諾隨場景凍結靜默丟棄；窄窗機率極低且與 charged 持有語意天然互斥。
-    carryCharged = hooks.player().getStarburst().phase === 'charged';
+    const snapshot = hooks.player().getStarburst();
+    carryCharged = snapshot.phase === 'charged';
+    carryDamage = carryCharged ? snapshot.bossDamage : 0;
     if (!carryCharged || taughtCarry) return;
     taughtCarry = true;
     hooks.toasts().flavor('蓄能星會跟你到下一關');
@@ -70,6 +77,7 @@ export function createStarburstDirector(
 // 測試重置鉤子：session 模組狀態在 vitest 間隔離。
 export function resetStarburstSession(): void {
   carryCharged = false;
+  carryDamage = 0;
   taughtCrystallize = false;
   taughtCarry = false;
 }

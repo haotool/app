@@ -62,7 +62,8 @@ export interface GameEventPayloads {
     flavor: StarFlavor;
     pitch: number;
   };
-  [GameEvents.SKILL_STARSTORM]: { x: number; y: number };
+  // bossDamage（#954）：結晶當下封存的投入星值——引爆時彈匣已空，故隨事件帶出。
+  [GameEvents.SKILL_STARSTORM]: { x: number; y: number; bossDamage: number };
   [GameEvents.STARBURST_CHANGED]: { phase: StarburstPhase };
   [GameEvents.SKILL_SLAM_LANDED]: { x: number; y: number };
   [GameEvents.SKILL_SHIELD_BLOCK]: { x: number; y: number; facing: 1 | -1 };

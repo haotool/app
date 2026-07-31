@@ -127,6 +127,25 @@ export function drawSpGlyph(
     ctx.fill();
     return;
   }
+  if (mode === 'crystallize') {
+    // 結晶菱形（#954）：滿匣可兌換——與 detonate 的金色大星區辨為「尚未成星」。
+    ctx.fillStyle = 'rgba(255, 201, 60, 0.18)';
+    ctx.beginPath();
+    ctx.arc(cx, cy, size * 0.42, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+    ctx.fillStyle = 'rgba(255, 233, 168, 0.85)';
+    ctx.lineWidth = size * 0.045;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - size * 0.3);
+    ctx.lineTo(cx + size * 0.22, cy);
+    ctx.lineTo(cx, cy + size * 0.3);
+    ctx.lineTo(cx - size * 0.22, cy);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    return;
+  }
   // 形態色圓徽：形態 tint 圓盤＋白描邊（色即語意，SSOT 取 TRANSFORM_FORMS）。
   ctx.fillStyle = cssColor(TRANSFORM_FORMS[mode].tint);
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
@@ -395,7 +414,7 @@ export function createControls(scene: Phaser.Scene): ControlsSystem {
       spBtn.setAttribute('aria-hidden', visible ? 'false' : 'true');
       if (!visible) return;
       // aria-label 隨模式同步（圖示即行為，讀屏同權）。
-      spBtn.setAttribute('aria-label', '引爆星暴');
+      spBtn.setAttribute('aria-label', mode === 'crystallize' ? '結晶星力' : '引爆星暴');
       const ctx = spCanvas?.getContext('2d');
       if (ctx && spCanvas) drawSpGlyph(ctx, spCanvas.width, mode);
       // 浮現輕震一次（§91／v19 卡 11）：模式切換不震，僅隱藏→浮現邊緣；

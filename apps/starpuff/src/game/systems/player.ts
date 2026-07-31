@@ -50,13 +50,14 @@ import {
 } from '../logic/skills';
 import {
   beginDetonation,
+  canCrystallize,
   chargeStarburst,
   createStarburstState,
   resolveSpMode,
   resolveSpPress,
   resolveTransformMode,
   resolveTransformPress,
-  shouldCrystallize,
+  starstormBossDamage,
   tickDetonation,
   type SpMode,
   type StarburstState,
@@ -135,7 +136,7 @@ export interface PlayerHandle {
   isShellCharging(): boolean;
   // 星暴 2.0（§109）：蓄能相位觀測、跨關授星、死亡/EX 清除與 SP 鍵呈現模式。
   getStarburst(): StarburstState;
-  grantStarburstCharge(): void;
+  grantStarburstCharge(bossDamage: number): void;
   clearStarburst(): void;
   getSpMode(): SpMode;
   getTransformKeyMode(): TransformKeyMode;
@@ -430,13 +431,17 @@ export function createPlayer(
 
   // 滿匣自動結晶（§109）：彈匣滿 5 槽瞬間清空並生成蓄能星；蓄能星存在時不疊加。
   // 結晶後立即可繼續吸怪（anti-softlock：吸怪循環即時可用）。
-  const maybeCrystallize = () => {
-    if (!shouldCrystallize(magazine.length, starburst.phase)) return;
+  // 結晶（§109／#954 改手動）：SP 鍵觸發，非滿匣自動。投入星值於此封存進相位——
+  // 彈匣隨即清空，引爆時已無從回讀。
+  const crystallize = () => {
+    if (!canCrystallize(magazine.length, starburst.phase)) return;
+    const bossDamage = starstormBossDamage(magazine);
     magazine = [];
-    starburst = chargeStarburst();
+    starburst = chargeStarburst(bossDamage);
     playSfx('charge');
     burstSmall(scene, sprite.x, sprite.y - 46, CHARGED_STAR.tint);
     emitStarburst();
+    emitAmmo();
   };
 
   // SP 引爆（§109）：0.3s 蓄爆不可取消，期滿於 update 內結算星暴。
@@ -782,8 +787,10 @@ export function createPlayer(
         // SP／TF 兩鍵（#952 拆鍵）：各自單義，按下緣即時結算——長按分流隨兩義消失
         // 一併移除（holdArbiter 仍由稜化 B 鍵消費）。
         const spEligible = eligibleForm(magazine, unlockedForms);
-        if (controls.spPressed && resolveSpPress({ phase: starburst.phase }) === 'detonate') {
-          startDetonation();
+        if (controls.spPressed) {
+          const spCommand = resolveSpPress({ phase: starburst.phase, ammo: magazine.length });
+          if (spCommand === 'detonate') startDetonation();
+          else if (spCommand === 'crystallize') crystallize();
         }
         if (controls.transformPressed) {
           const command = resolveTransformPress({
@@ -821,7 +828,11 @@ export function createPlayer(
       if (detonation.detonated) {
         stormInvulnMs = STARSTORM.invulnMs;
         playSfx('starstorm');
-        emitGameEvent(scene.events, GameEvents.SKILL_STARSTORM, { x: sprite.x, y: sprite.y });
+        emitGameEvent(scene.events, GameEvents.SKILL_STARSTORM, {
+          x: sprite.x,
+          y: sprite.y,
+          bossDamage: starburst.bossDamage,
+        });
         emitStarburst();
       }
       chargedStar.update(sprite.x, sprite.y, deltaMs, starburst.phase);
@@ -1033,7 +1044,6 @@ export function createPlayer(
       // 可視性優先（回退 §124 W5a 吞入衝擊圈）：吞噬確認緊接下一次吸入，嘴前殘留
       // 220~260ms 的 shock/trail 會蓋住下一個待吸目標——確認回饋沿既有音效與彈匣 HUD。
       emitGameEvent(scene.events, GameEvents.ENEMY_INHALED, { kind });
-      maybeCrystallize();
       emitAmmo();
       return true;
     },
@@ -1063,12 +1073,10 @@ export function createPlayer(
     },
     grantFullMagazine() {
       magazine = fillMagazine(magazine);
-      maybeCrystallize();
       emitAmmo();
     },
     grantGoldStar() {
       magazine = pushGoldStar(magazine);
-      maybeCrystallize();
       emitAmmo();
     },
     // 星光虹吸被抽（§113）：頂槽出匣不發射；HUD ammo 事件同步。
@@ -1084,7 +1092,6 @@ export function createPlayer(
     grantStar(flavor: StarFlavor) {
       magazine = swallowIntoMagazine(magazine, flavor).magazine;
       lastFlavor = flavor;
-      maybeCrystallize();
       emitAmmo();
     },
     isShieldRaised() {
@@ -1103,9 +1110,9 @@ export function createPlayer(
       return starburst;
     },
     // 跨關授星（§109）：director 於 create 依 session 持有旗標呼叫；蓄爆中不覆蓋。
-    grantStarburstCharge() {
+    grantStarburstCharge(bossDamage: number) {
       if (starburst.phase !== 'none') return;
-      starburst = chargeStarburst();
+      starburst = chargeStarburst(bossDamage);
       emitStarburst();
     },
     // 死亡/EX 進場清除（§109）：蓄能星與蓄爆一併取消，視覺隨相位隱藏。
@@ -1116,7 +1123,7 @@ export function createPlayer(
     },
     // SP 鍵呈現模式（§109）：GameScene 逐幀同步至 controls；地面判定就地取樣。
     getSpMode() {
-      return resolveSpMode({ phase: starburst.phase });
+      return resolveSpMode({ phase: starburst.phase, ammo: magazine.length });
     },
     // TF 鍵呈現模式（#952）：地面判定就地取樣，與 resolveTransformPress 同一裁決。
     getTransformKeyMode() {

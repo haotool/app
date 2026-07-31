@@ -24,6 +24,7 @@ interface HarnessState {
   facing: 1 | -1;
   inhaling: boolean;
   spMode: string;
+  tfMode: string;
   vy: number;
   bodyTop: number;
   bodyBottom: number;
@@ -51,6 +52,7 @@ function makeHarness(): {
     facing: 1,
     inhaling: false,
     spMode: 'hidden',
+    tfMode: 'hidden',
     vy: 0,
     bodyTop: 260,
     bodyBottom: 300,
@@ -90,7 +92,7 @@ function makeHarness(): {
     getFacing: () => state.facing,
     isInhaling: () => state.inhaling,
     getSpMode: () => state.spMode,
-    getTransformKeyMode: () => state.spMode,
+    getTransformKeyMode: () => state.tfMode,
     // 變身技能圖示同步（§124 W5a）：syncSpMode 逐幀讀當前形態。
     getTransformState: () => ({ form: null, remainingMs: 0, dischargeLeft: 0, tuckLeft: 0 }),
   } as unknown as PlayerHandle;
@@ -215,24 +217,27 @@ describe('playerFeel 沉地防護（§45）', () => {
   });
 });
 
-describe('playerFeel SP 變身教學（§110/§119）', () => {
-  it('每幀同步 spMode 至 controls；形態資格首次浮現教一次（session 旗標）', () => {
+describe('playerFeel 變身教學（§110/§119；#952 拆鍵後改讀 TF 鍵）', () => {
+  it('每幀同步兩鍵模式至 controls；形態資格首次浮現教一次（session 旗標）', () => {
     const h = makeHarness();
     h.feel.syncSpMode();
     expect(h.spies.setSpMode).toHaveBeenCalledWith('hidden');
+    expect(h.spies.setTransformKeyMode).toHaveBeenCalledWith('hidden');
     expect(h.spies.flavor).not.toHaveBeenCalled();
-    h.state.spMode = 'volt';
+    h.state.tfMode = 'volt';
     h.feel.syncSpMode();
-    expect(h.spies.flavor).toHaveBeenCalledWith('同系星彈 ×3！按 SP 鍵立即變身');
+    expect(h.spies.flavor).toHaveBeenCalledWith('同系星彈 ×3！按變身鍵立即變身');
     h.feel.syncSpMode();
     expect(h.spies.flavor).toHaveBeenCalledTimes(1);
   });
 
-  it('detonate/dismiss 語意鍵不觸發教學', () => {
+  it('SP 側語意（crystallize/detonate）與 TF dismiss 皆不觸發變身教學', () => {
     const h = makeHarness();
+    h.state.spMode = 'crystallize';
+    h.feel.syncSpMode();
     h.state.spMode = 'detonate';
     h.feel.syncSpMode();
-    h.state.spMode = 'dismiss';
+    h.state.tfMode = 'dismiss';
     h.feel.syncSpMode();
     expect(h.spies.flavor).not.toHaveBeenCalled();
   });
