@@ -180,7 +180,12 @@ export class GameScene extends Phaser.Scene {
     // 每次 create 必須顯式重設（防前關/Voidra P3 注入殘留）。
     this.physics.world.gravity.y = GRAVITY_Y * (this.level.gravityScale ?? 1);
     this.background = createParallaxBackground(this, this.level);
-    const { ground, platforms } = createTerrain(this, this.level, this.worldWidth());
+    const { ground, platforms } = createTerrain(
+      this,
+      this.level,
+      this.worldWidth(),
+      this.level.boss ? { left: this.arenaLeft(), width: this.scale.width } : null,
+    );
     this.terrainGround = ground;
     this.terrainPlatforms = platforms;
     // v4 平台元素與佈景（§29/§32）：緊接地形建立，維持 平台 < 佈景/元素 < 玩家 繪製序；

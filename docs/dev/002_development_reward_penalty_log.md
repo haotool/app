@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+318
+> 本次分數變化：+0（reward 0、penalty 0、neutral 1）｜累計總分：+318
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-08-01
+- ID：neutral-starpuff-arena-relative-platforms
+- 原因：L30 劉董體高 150（占 y 250–400），玩家單跳僅 98px，越到另一側需耗 2 次拍翅，走位受限；而魔王 arena 的世界寬＝前室+動態視寬，靜態 platforms 座標在 854 置中者於 1200 下偏左 173px——這正是七個魔王關 platforms 恆為空的實務原因，直接補靜態座標會製造視寬相依的不公平
+- 解法：新增 ArenaPlatformSpec（xRatio 相對定位）由 createTerrain 解析為世界座標，重用既有單向平台機制；L30 置兩塊側翼平台（xRatio 0.25/0.75、y 305、w 120）。刻意不放魔王正上方——頭頂平台會成為 K 線柱（頂端 280）打不到的安全棲身點，側翼則仍暴露於箭雨與空頭雷射。守門測試釘住三視寬對稱性、與魔王體寬不重疊、單跳可上、自平台可越頂，並附「地面直跳越不過」反證
 
 - 日期：2026-08-01
 - ID：penalty-starpuff-e2e-contract-drift-merged-red

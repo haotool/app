@@ -516,6 +516,8 @@ export function createTerrain(
   scene: Phaser.Scene,
   level: LevelSpec,
   worldWidth: number,
+  // arena 幾何（#960）：魔王關 arena 相對平台的解析基準；走動關傳 null。
+  arena: { left: number; width: number } | null = null,
 ): { ground: Phaser.GameObjects.Rectangle; platforms: Phaser.GameObjects.Rectangle[] } {
   const ground = scene.add.rectangle(
     worldWidth / 2,
@@ -526,7 +528,14 @@ export function createTerrain(
     0.9,
   );
   scene.physics.add.existing(ground, true);
-  const platforms = level.platforms.map((spec) => {
+  // arena 相對平台展開為世界座標（#960）：靜態 x 在動態 arena 下會隨視寬偏移，
+  // 故以 arena 寬比例定位；缺 arena 幾何（走動關）時忽略。
+  const arenaResolved = (level.arenaPlatforms ?? []).map((spec) => ({
+    x: (arena?.left ?? 0) + (arena?.width ?? 0) * spec.xRatio,
+    y: spec.y,
+    w: spec.w,
+  }));
+  const platforms = [...level.platforms, ...(arena ? arenaResolved : [])].map((spec) => {
     const platform = scene.add.rectangle(spec.x, spec.y, spec.w, PLATFORM_H, 0xffd1e0, 0.95);
     scene.physics.add.existing(platform, true);
     // 單向平台：僅上方著地，起跳穿越不撞頭。
