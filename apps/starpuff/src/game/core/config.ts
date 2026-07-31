@@ -390,10 +390,13 @@ export const CHARGED_STAR = {
   tint: 0xffc93c,
 } as const;
 
-// 星暴（§109 取代 §23 長按觸發）：SP 點按引爆蓄能星——0.3s 蓄爆（不可取消）後
-// 清場全小怪 + 魔王 12 傷；發動附 5s 無敵窗（與受擊 i-frame 取較大值生效，不疊加）。
+// 星暴（§109 取代 §23 長按觸發）：滿匣按 SP 結晶、再按 SP 引爆蓄能星——0.3s 蓄爆
+//（不可取消）後清場全小怪 + 魔王傷；發動附 5s 無敵窗（與受擊 i-frame 取較大值
+// 生效，不疊加）。
 export const STARSTORM = {
   chargeMs: 300,
+  // 魔王傷保底（#954）：實際傷害由結晶時的投入星值決定（starstormBossDamage），
+  // 本值僅作下限——低星值彈匣不致回歸為 0。非固定傷害。
   bossDamage: 12,
   invulnMs: 5000,
 } as const;

@@ -119,6 +119,8 @@ export function installAuditDriver(opts) {
     lastSpAt: 0,
     // #952：TF 鍵節流獨立於 SP——兩鍵互不影響，共用節流會互相吃掉觸發。
     lastTfAt: 0,
+    // #956：形態落幕時間戳——再變身冷卻的基準。
+    lastFormEndAt: 0,
     lastX: 0,
     lastMoveAt: 0,
     // 滿拍翅跳序列（W1.5）：hopUntil 內鎖定航向 hopDir；inhaleHold＝鏡界窗持吸中；
@@ -385,29 +387,40 @@ export function installAuditDriver(opts) {
         d.lastSpAt = now;
         tap(KEY.sp, 90);
       }
-      // 變身優勢 hook（#816 W2／#952 改按 TF 鍵）：無形態時集齊優勢味 ×3（正式
-      // swallow 管線）→ 按變身鍵立即變身（#953 起不限地面）；變身中 B 即形態技。
+      // 變身優勢 hook（#816 W2／#952 改按 TF 鍵／#956 策略修正）。
+      //
+      // 修前策略在 #947/#953 後退化為死迴圈：空匣才補星、只補剛好 3 顆、資格成立
+      // 即無條件變身，而變身正好扣 3 顆——補 3 → 變身 → 扣光 → 空匣 → 再補 3，
+      // 形態 uptime 逼近 100%（實測 56 次/600s，形態長 10s）。引力化無遠程手段，
+      // bot 遂全程零輸出：L28 六輪全 timeout、TTK 從未達成，量測失去意義。
+      //
+      // 修正三點：（1）補到滿匣而非剛好 3 顆——變身扣 3 後仍留彈藥，據以驗證
+      // #947「變身期 B 點按可射星」；（2）形態結束後設冷卻，uptime 不再貼滿；
+      // （3）持有彈藥時不主動變身——不把輸出資源換成純防禦。
       const tf = sp.transform ? sp.transform() : { form: null };
       if (tf.form && d.prevForm === null) {
         d.m.transforms += 1;
         if (d.m.firstTransformMs < 0) d.m.firstTransformMs = Math.round(d.m.elapsedMs);
       }
+      // 形態落幕時間戳：據以施加再變身冷卻。
+      if (tf.form === null && d.prevForm !== null) d.lastFormEndAt = now;
       d.prevForm = tf.form;
       d.holdFire = false;
       if (transformFlavor && tf.form === null) {
+        // 補星補到滿匣：變身扣 3 後仍有餘彈可射，避免「變身＝棄械」。
         if (s.ammo === 0 && now - d.lastGrantAt >= 1200) {
           d.lastGrantAt = now;
           try {
-            sp.grantStar(transformFlavor);
-            sp.grantStar(transformFlavor);
-            sp.grantStar(transformFlavor);
+            for (let i = 0; i < 5; i += 1) sp.grantStar(transformFlavor);
           } catch {
             /* 轉場窗忽略 */
           }
         }
         // 資格門用 transform eligibility 而非槽數（#848 審查修復）。#952 起走 TF 鍵，
-        // 節流獨立於 SP（兩鍵互不影響）；#953 起空中亦成立，無須重試至落地。
-        if (s.tfReady) {
+        // 節流獨立於 SP；#953 起空中亦成立，無須重試至落地。
+        // #956：加再變身冷卻（形態長 10s，冷卻 6s ⇒ uptime ≈ 62% 而非貼滿）。
+        const formCooldownOk = now - d.lastFormEndAt >= 6000;
+        if (s.tfReady && formCooldownOk) {
           d.holdFire = true;
           if (now - d.lastTfAt >= 600) {
             d.lastTfAt = now;
