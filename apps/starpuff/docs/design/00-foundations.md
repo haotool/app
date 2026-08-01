@@ -51,7 +51,7 @@ src/game/logic/    combat.ts bossFsm.ts levels.ts    ← pure TS，vitest 對象
 - 測試：logic/ 模組 vitest 全綠；playwright 手機視窗 smoke（載入→開始→canvas 運行→無錯誤）。
 - 每 commit 過 repo hooks（lint-staged、typecheck、format、commitlint）。
 
-### 12.1 量測工具屬玩法契約的一等消費端（#962）
+### 12.1 量測工具屬玩法契約的一等消費端（#961）
 
 `scripts/lib/audit-driver.mjs` 以 `page.evaluate` 注入瀏覽器操作遊戲，是 `level-audit`
 全部難度數據的來源。它消費玩法契約（按鍵映射、技能觸發條件、資源取得節奏），卻**不受

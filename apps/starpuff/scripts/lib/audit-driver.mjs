@@ -116,7 +116,7 @@ export function installAuditDriver(opts) {
     lastJumpAt: 0,
     lastShotAt: 0,
     lastGrantAt: 0,
-    // #962：結晶與引爆各自節流——共用時間戳會讓結晶把引爆的冷卻一併重置。
+    // #961：結晶與引爆各自節流——共用時間戳會讓結晶把引爆的冷卻一併重置。
     lastCrystallizeAt: 0,
     lastDetonateAt: 0,
     // #952：TF 鍵節流獨立於 SP——兩鍵互不影響，共用節流會互相吃掉觸發。
@@ -373,7 +373,7 @@ export function installAuditDriver(opts) {
 
     // 星暴 2.0（§109／#954 手動結晶）：滿匣先按 SP 結晶，持蓄能星再按 SP 引爆。
     //
-    // #962 節流分離：修前兩者共用 lastSpAt——結晶會重置引爆的 3s 冷卻，每次星暴
+    // #961 節流分離：修前兩者共用 lastSpAt——結晶會重置引爆的 3s 冷卻，每次星暴
     // 平白多出 3 秒死窗。自動結晶時代結晶不碰時間戳故可即刻引爆，#954 改手動後
     // 這個共用就成了隱性懲罰，使量測低估 bot 的星暴吞吐（星暴＝全屏清場＋5s 無敵，
     // 直接反映在死亡數）。兩者語意不同——結晶節流防連點、引爆節流防洗版，應各自獨立。
@@ -944,7 +944,7 @@ export function installAuditDriver(opts) {
       d.prevForm = tfWalk.form;
       if (!tfWalk.form) {
         // 資格成立：停吸定身按變身鍵。
-        // #962：修前此處仍按 SP——#952 拆鍵只修了魔王關的變身鉤子，走動關這條漏掉，
+        // #961：修前此處仍按 SP——#952 拆鍵只修了魔王關的變身鉤子，走動關這條漏掉，
         // 導致走動關 bot 按 SP 卻觸發不到變身（SP 已改專責星暴），變身量測恆為零。
         if (window.__sp.transformEligible && window.__sp.transformEligible()) {
           d.branch = 'eligible';
