@@ -75,7 +75,16 @@ test('點開始進入 GameScene：遊戲運行且 HUD 狀態就緒', async ({ pa
   const buttons = page.locator('[data-btn]');
   const CONTROL_BUTTON_COUNT = 4;
   await expect(buttons).toHaveCount(CONTROL_BUTTON_COUNT);
-  for (let i = 0; i < CONTROL_BUTTON_COUNT; i += 1) await expect(buttons.nth(i)).toHaveText('');
+  // 禁文字鍵帽（§109 既有契約）：鍵帽本體不得有文字，語意一律由 canvas glyph 表達。
+  // #959 的結晶提示是**鍵外標籤**（.sp-hint，置於鍵下方），不屬鍵帽，故排除後再斷言。
+  for (let i = 0; i < CONTROL_BUTTON_COUNT; i += 1) {
+    const keycapText = await buttons.nth(i).evaluate((el) => {
+      const clone = el.cloneNode(true) as HTMLElement;
+      clone.querySelectorAll('.sp-hint').forEach((n) => n.remove());
+      return (clone.textContent ?? '').trim();
+    });
+    expect(keycapText).toBe('');
+  }
   await expect(page.locator('[data-btn="sp"]')).not.toHaveClass(/is-sp-on/);
   await expect(page.locator('[data-btn="tf"]')).not.toHaveClass(/is-sp-on/);
   await page.waitForTimeout(1500);

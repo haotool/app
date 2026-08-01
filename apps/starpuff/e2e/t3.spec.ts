@@ -256,3 +256,49 @@ test.describe('鍵盤 C 桌機映射（§109）', () => {
     expect(errors).toEqual([]);
   });
 });
+
+// #959：暫停中改設定。修前設定頁 z-index（45）低於暫停覆層（50），自暫停開啟會被
+// 整片遮蔽——這既是「行動裝置設定被遮蔽」也是「暫停中無法改設定」的共同根因。
+test.describe('暫停中設定入口（#959）', () => {
+  test('暫停 → 設定：面板可見且疊在暫停覆層之上；關閉後仍維持暫停', async ({ page }) => {
+    test.setTimeout(120_000);
+    const errors = collectErrors(page);
+    await startGame(page);
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.pause-overlay')).toBeVisible();
+
+    await page.locator('[data-pause="settings"]').dispatchEvent('pointerdown', {
+      pointerId: 5,
+      isPrimary: true,
+    });
+    const settings = page.locator('.settings-overlay');
+    await expect(settings).toBeVisible();
+
+    // 疊序契約：設定頁的實際堆疊值必須高於暫停覆層，否則視覺上被蓋住。
+    const order = await page.evaluate(() => {
+      const z = (sel: string): number => {
+        const el = document.querySelector(sel);
+        return el ? Number(getComputedStyle(el).zIndex) : Number.NaN;
+      };
+      return { pause: z('.pause-overlay'), settings: z('.settings-overlay') };
+    });
+    expect(order.settings).toBeGreaterThan(order.pause);
+
+    // 設定卡片中心點的命中測試：真的可點到，而非被覆層攔截。
+    const hit = await page.evaluate(() => {
+      const card = document.querySelector('.settings-card') as HTMLElement | null;
+      if (!card) return null;
+      const r = card.getBoundingClientRect();
+      const top = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+      return card.contains(top);
+    });
+    expect(hit).toBe(true);
+
+    // 關閉設定回到暫停態（不自動 resume）。
+    await page.keyboard.press('Escape');
+    await expect(settings).toBeHidden();
+    await expect(page.locator('.pause-overlay')).toBeVisible();
+    expect(await page.evaluate(() => window.__sp.scenePaused())).toBe(true);
+    expect(errors).toEqual([]);
+  });
+});

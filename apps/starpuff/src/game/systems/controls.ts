@@ -65,6 +65,8 @@ const ENGAGED_CLASS = 'is-engaged';
 const DROP_READY_CLASS = 'is-drop-ready';
 // SP 情境鍵可用態（§109）：opacity 淡入 150ms 由 CSS transition 承擔。
 const SP_ON_CLASS = 'is-sp-on';
+// 結晶可用態（#959）：驅動文字提示與閃爍。
+const CRYSTALLIZE_CLASS = 'is-crystallize';
 // 變身技能圖示態（§124 W5a）：B 鍵套形態 skill 素材、停用星形鍵帽。
 const FORM_SKILL_CLASS = 'is-form-skill';
 // SP 浮現輕震（§91 觸覺管線）：尊重靜音偏好，一次 15ms。
@@ -348,6 +350,7 @@ export function createControls(scene: Phaser.Scene): ControlsSystem {
   cleanups.push(() => {
     spMode = 'hidden';
     spBtn?.classList.remove(SP_ON_CLASS);
+    spBtn?.classList.remove(CRYSTALLIZE_CLASS);
     spBtn?.setAttribute('aria-hidden', 'true');
   });
 
@@ -415,6 +418,8 @@ export function createControls(scene: Phaser.Scene): ControlsSystem {
       if (!visible) return;
       // aria-label 隨模式同步（圖示即行為，讀屏同權）。
       spBtn.setAttribute('aria-label', mode === 'crystallize' ? '結晶星力' : '引爆星暴');
+      // 結晶提示（#959）：文字標籤與呼吸閃爍僅在可兌換窗出現，引爆態不閃以免搶注意。
+      spBtn.classList.toggle(CRYSTALLIZE_CLASS, mode === 'crystallize');
       const ctx = spCanvas?.getContext('2d');
       if (ctx && spCanvas) drawSpGlyph(ctx, spCanvas.width, mode);
       // 浮現輕震一次（§91／v19 卡 11）：模式切換不震，僅隱藏→浮現邊緣；

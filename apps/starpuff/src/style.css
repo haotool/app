@@ -1,4 +1,12 @@
 :root {
+  /* 堆疊尺標（#959 SSOT）：修前各層 z-index 散落且無序，設定頁（45）低於暫停選單
+     （50），從暫停開設定會被整片遮蔽——既是行動裝置遮蔽問題的根因，也使「暫停時
+     改設定」無法成立。模態一律高於暫停覆層。 */
+  --z-controls: 10;
+  --z-scene-fallback: 20;
+  --z-shell-card: 45;
+  --z-pause: 50;
+  --z-modal: 60;
   --sp-bg: #fdeff6;
   --sp-btn: rgba(255, 255, 255, 0.35);
   --sp-btn-border: rgba(255, 255, 255, 0.55);
@@ -277,10 +285,63 @@ html.sp-desktop #controls.is-active {
   content: none;
 }
 
+/* #959：配置頁強制顯示情境鍵——平時僅技能可用時浮現，配置時看不到就拖不到。 */
+#controls.is-config .ctl-btn-tf,
+#controls.is-config .ctl-btn-sp {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 .ctl-btn-tf.is-sp-on,
 .ctl-btn-sp.is-sp-on {
   opacity: 1;
   pointer-events: auto;
+}
+
+/* 結晶可用提示（#959）：文字標籤 + 呼吸閃爍。結晶是「限時可兌換」的機會窗，
+   單靠圖示不足以讓玩家察覺；文字置於鍵下方避免遮蔽 glyph。
+   prefers-reduced-motion 下停用動畫，僅保留靜態高亮（無障礙）。 */
+.ctl-btn-sp .sp-hint {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: rgba(58, 42, 16, 0.72);
+  color: #ffe9a8;
+  font:
+    700 11px/1.4 system-ui,
+    sans-serif;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease-out;
+}
+
+.ctl-btn-sp.is-crystallize .sp-hint {
+  opacity: 1;
+}
+
+.ctl-btn-sp.is-crystallize {
+  animation: sp-crystallize-pulse 1.1s ease-in-out infinite;
+}
+
+@keyframes sp-crystallize-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 214, 120, 0.75);
+  }
+  50% {
+    box-shadow: 0 0 0 7px rgba(255, 214, 120, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ctl-btn-sp.is-crystallize {
+    animation: none;
+    box-shadow: 0 0 0 3px rgba(255, 214, 120, 0.6);
+  }
 }
 
 .ctl-btn-tf .sp-glyph,
@@ -385,7 +446,7 @@ html.sp-desktop #controls.is-active {
 .pause-overlay {
   position: absolute;
   inset: 0;
-  z-index: 50;
+  z-index: var(--z-pause);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -440,9 +501,11 @@ html.sp-desktop #controls.is-active {
    可拖曳；操作列固定殼頂中央（殼頂在直橫持皆遠離瀏海與 home indicator）。
    遮罩加深＋輕模糊：主選單文字退為背景，消除「哪層可互動」的視覺競爭。 */
 .cfg-overlay {
+  /* #959：按鍵配置為模態專頁，同樣需高於暫停覆層（自暫停轉入時才不被遮蔽）；
+     半透明底襯仍低於虛擬鍵本體，維持「鍵浮於襯上可拖曳」的既有語彙。 */
   position: absolute;
   inset: 0;
-  z-index: 5;
+  z-index: var(--z-modal);
   background: rgba(58, 58, 74, 0.62);
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
@@ -522,7 +585,7 @@ html.sp-desktop #controls.is-active {
 .install-overlay {
   position: absolute;
   inset: 0;
-  z-index: 45;
+  z-index: var(--z-shell-card);
   pointer-events: none;
 }
 
@@ -596,6 +659,8 @@ html.sp-desktop #controls.is-active {
 /* 設定頁（v19 #819 卡 4）：置中模態偏好面板，沿殼卡視覺語彙；覆蓋殼卡的
    左上非模態定位並加遮罩擋底層誤觸（殼卡本體維持非模態不受影響）。 */
 .settings-overlay {
+  /* #959：模態層——必須高於暫停覆層，否則自暫停開啟時被整片遮蔽。 */
+  z-index: var(--z-modal);
   pointer-events: auto;
   background: rgba(58, 58, 74, 0.45);
 }

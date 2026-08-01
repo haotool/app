@@ -291,7 +291,8 @@ test('按鈕配置（§34）：拖曳 B 鍵、儲存 localStorage、重載後套
   expect(stored).not.toBeNull();
   const layout = stored as { version: number; b: { cx: number } };
   // keyLayout 已升 schema v2（§89 v14 縮放欄位）：儲存恆為當前版。
-  expect(layout.version).toBe(2);
+  // #959：schema 升 v3（SP/TF 選用座標）。
+  expect(layout.version).toBe(3);
   expect(layout.b.cx).toBeLessThan(0.9);
   // 重載後布局持久化套用至按鍵 style（瀏覽器會去掉百分比尾零，取數值比較）。
   await page.reload();

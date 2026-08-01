@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+317
+> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+316
 
 ## 新增模板（4 行）
 
@@ -17,6 +17,14 @@
 - ID：penalty-ci-playwright-deps-no-retry
 - 原因：setup-playwright 對「瀏覽器下載」給了 timeout＋3 次退避重試，卻對「OS 相依套件安裝」只給 timeout 而無重試——保護不對稱。apt lock 或鏡像站暫時性緩慢即使整個 E2E job 以 exit 124 死亡，且測試根本沒開始跑（Build／preview／test 全 skipped），外觀與真實測試失敗難以區分，實測 main 連續三次 E2E Full shard 失敗皆止於此步而同 run 另一 shard 成功
 - 解法：OS deps 安裝改為與瀏覽器下載同構的 3 次退避重試。診斷關鍵是先看 job 的**步驟層級**結論而非只看 log 尾端——步驟清單顯示測試步驟為 skipped，立即排除「測試失敗」的假設；exit 124 亦直接指向 timeout 而非斷言失敗
+- ID：penalty-starpuff-modal-stacking-below-pause
+- 原因：設定頁與按鍵配置頁的 z-index（45／5）低於暫停覆層（50），自暫停開啟即被整片遮蔽——這既是「行動裝置設定被遮蔽」也是「暫停中無法改設定」兩個回報的共同根因；各層 z-index 為散落字面值且無序，缺少「模態必須最上層」的顯式契約
+- 解法：建立堆疊尺標（--z-controls/--z-pause/--z-modal）取代字面值，設定頁與配置頁提升至模態層並於暫停選單加入設定入口；新增 stacking.test.ts 直接讀 style.css 斷言尺標遞增與消費端，使「模態高於暫停」成為可執行契約而非靠人工記憶
+
+- 日期：2026-08-01
+- ID：neutral-starpuff-control-layout-v3
+- 原因：SP/TF 兩顆情境鍵位置由 B 鍵衍生且不可自訂，玩家無法依手型調整；TF 原為沿 SP 再往上堆疊一級，垂直空間吃緊且兩鍵難以並讀
+- 解法：schema 升 v3，sp/tf 為選用欄位——未自訂走衍生（保有旋轉態感知，固定比例在直持殼下會映射到不可及區），拖曳後才落盤；衍生改並排（結晶在右、變身在左，皆在 B 上方）。過程中發現恢復預設用 Object.assign 不刪既有鍵，拖曳過的情境鍵座標會殘留，一併修正
 
 - 日期：2026-08-01
 - ID：penalty-starpuff-e2e-contract-drift-merged-red

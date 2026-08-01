@@ -13,10 +13,16 @@ export interface ControlLayout {
   version: number;
   a: KeyPosition;
   b: KeyPosition;
+  // SP／TF 情境鍵（#959 v3）：**選用**——未自訂時為 undefined，位置由 B 鍵衍生
+  // （spKeyPosition／tfKeyPosition），既有使用者零影響；一經拖曳即落盤為顯式座標。
+  // 以選用欄位而非固定比例預設，是為了讓「衍生」保有旋轉態感知（見 §87 軸向映射），
+  // 固定比例在直持殼下會映射到不可及區。
+  sp?: KeyPosition;
+  tf?: KeyPosition;
   scale: number;
 }
 
-export const LAYOUT_SCHEMA_VERSION = 2;
+export const LAYOUT_SCHEMA_VERSION = 3;
 
 // 縮放範圍（§89）：0.8–1.3；最小鍵 B 72px×0.8=57.6px 仍高於 44px 觸控下限（守門單測）。
 export const KEY_SCALE = {
@@ -127,14 +133,25 @@ export function parseLayoutValue(value: unknown, rotation: ShellRotation = 'none
   if (typeof value !== 'object' || value === null) return defaultLayoutFor(rotation);
   const data = value as Record<string, unknown>;
   const version = data['version'];
-  if (version !== 1 && version !== LAYOUT_SCHEMA_VERSION) return defaultLayoutFor(rotation);
+  // v1（無 scale）／v2（無 sp/tf）／v3 皆可讀：缺欄位就地補齊，既有自訂鍵位不丟失。
+  if (version !== 1 && version !== 2 && version !== LAYOUT_SCHEMA_VERSION) {
+    return defaultLayoutFor(rotation);
+  }
   if (!isValidPosition(data['a']) || !isValidPosition(data['b'])) {
     return defaultLayoutFor(rotation);
   }
+  const optional = (key: string): KeyPosition | undefined => {
+    const raw = data[key];
+    return isValidPosition(raw) ? clampKeyPosition(raw.cx, raw.cy) : undefined;
+  };
+  const sp = optional('sp');
+  const tf = optional('tf');
   return {
     version: LAYOUT_SCHEMA_VERSION,
     a: clampKeyPosition(data['a'].cx, data['a'].cy),
     b: clampKeyPosition(data['b'].cx, data['b'].cy),
+    ...(sp ? { sp } : {}),
+    ...(tf ? { tf } : {}),
     scale: version === 1 ? KEY_SCALE.default : clampKeyScale(Number(data['scale'])),
   };
 }
@@ -218,8 +235,10 @@ export function spKeyPosition(
   return clampKeyPositionForLayer(raw.cx, raw.cy, layerW, layerH, KEY_BASE_PX.sp * scale);
 }
 
-// TF 變身鍵位置（#952）：沿 SP 同軸再外推一級——SP 由 B 派生，TF 由 SP 派生，
-// 三鍵成一直線（直持為垂直、旋轉為水平），不讀自訂 schema。
+// TF 變身鍵衍生位置（#952；#959 改並排）：與 SP 同高、位於其**裝置空間左側**——
+// 需求定案為「結晶在右、變身在左，皆在吸入鍵上方一點點」。修前為沿 SP 再往上堆疊
+// 一級，三鍵成一直線，垂直空間吃緊且兩情境鍵難以並讀。
+// 只向左延伸不向右：B 預設已貼近右緣（cx 0.92），向右會立即被夾限而與 SP 疊合。
 export function tfKeyPosition(
   sp: KeyPosition,
   rotation: ShellRotation,
@@ -228,12 +247,13 @@ export function tfKeyPosition(
   scale: number,
 ): KeyPosition {
   const distancePx = (KEY_BASE_PX.sp * scale) / 2 + (KEY_BASE_PX.tf * scale) / 2 + SP_GAP_PX;
+  // 裝置空間「左」在各旋轉態下的層空間方向（§87 軸向映射的逆向）。
   const raw =
     rotation === 'none'
-      ? { cx: sp.cx, cy: sp.cy - distancePx / layerH }
+      ? { cx: sp.cx - distancePx / layerW, cy: sp.cy }
       : rotation === 'ccw'
-        ? { cx: sp.cx + distancePx / layerW, cy: sp.cy }
-        : { cx: sp.cx - distancePx / layerW, cy: sp.cy };
+        ? { cx: sp.cx, cy: sp.cy - distancePx / layerH }
+        : { cx: sp.cx, cy: sp.cy + distancePx / layerH };
   return clampKeyPositionForLayer(raw.cx, raw.cy, layerW, layerH, KEY_BASE_PX.tf * scale);
 }
 
@@ -274,25 +294,35 @@ export function applyLayoutToDom(root: ParentNode, layout: ControlLayout): void 
   sp.style.setProperty('--sp-key-scale', String(layout.scale));
   const layer = sp.parentElement;
   if (layer === null || layer.clientWidth <= 0 || layer.clientHeight <= 0) return;
+  // #959：自訂座標優先，缺省才走 B 鍵衍生（既有使用者零影響）。
+  const custom = (stored: KeyPosition | undefined, keyPx: number): KeyPosition | null =>
+    stored
+      ? clampKeyPositionForLayer(stored.cx, stored.cy, layer.clientWidth, layer.clientHeight, keyPx)
+      : null;
   let rotation: ShellRotation = 'none';
   try {
     rotation = getShellRotation();
   } catch {
     /* 非瀏覽器環境退橫持。 */
   }
-  const pos = spKeyPosition(
+  const derivedSp = spKeyPosition(
     resolvedB,
     rotation,
     layer.clientWidth,
     layer.clientHeight,
     layout.scale,
   );
+  const pos = custom(layout.sp, KEY_BASE_PX.sp * layout.scale) ?? derivedSp;
   sp.style.left = toPercent(pos.cx);
   sp.style.top = toPercent(pos.cy);
   const tf = root.querySelector<HTMLElement>('[data-btn="tf"]');
   if (!tf) return;
   tf.style.setProperty('--sp-key-scale', String(layout.scale));
-  const tfPos = tfKeyPosition(pos, rotation, layer.clientWidth, layer.clientHeight, layout.scale);
+  // TF 衍生自「衍生的 SP」而非自訂 SP：兩鍵各自可拖曳，衍生鏈不應被另一鍵的
+  // 自訂位置牽動（否則移動 SP 會連帶推走未自訂的 TF，違反直覺）。
+  const tfPos =
+    custom(layout.tf, KEY_BASE_PX.tf * layout.scale) ??
+    tfKeyPosition(derivedSp, rotation, layer.clientWidth, layer.clientHeight, layout.scale);
   tf.style.left = toPercent(tfPos.cx);
   tf.style.top = toPercent(tfPos.cy);
 }
