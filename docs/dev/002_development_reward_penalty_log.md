@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-1（reward 0、penalty 1、neutral 1）｜累計總分：+317
+> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+316
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-08-01
+- ID：penalty-starpuff-audit-driver-contract-drift-thrice
+- 原因：audit driver 消費玩法契約卻不受型別檢查守門，契約改了只會安靜產出假數據。同一根因連續三次失誤——#952 拆鍵後仍按舊鍵；補上後暴露補星與變身互鎖的死迴圈使形態 uptime 逼近 100%；再修後又發現結晶與引爆共用 lastSpAt（結晶重置引爆冷卻，每次星暴多 3 秒死窗）且走動關變身鉤子仍按 SP（走動關變身量測自拆鍵起恆為零）。其中「自動改手動」最易漏：driver 裡原本沒有對應程式碼，需新增而非修改，無既存呼叫點可循
+- 解法：節流拆為 lastCrystallizeAt／lastDetonateAt 各自獨立、走動關變身改按 TF 鍵；並將「量測工具屬玩法契約一等消費端」寫入 00-foundations.md §12.1 與 AGENTS.md 同步規則，附判讀紀律——難度數據出現「行為完全消失」型訊號（計數歸零、命中率驟降、TTK 從未達成）時先驗證工具一致性再談平衡。此前曾據未修正的 driver 數據判定 L30 有回歸，屬工具誤導
 
 - 日期：2026-08-01
 - ID：penalty-starpuff-modal-stacking-below-pause
