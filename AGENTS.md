@@ -445,7 +445,7 @@ ls -la
 - `security-headers` worker 部署見下方「security-headers Worker 部署 SOP」
 - Zeabur 服務層 `spec.source.dockerfile` 非空時**完全覆蓋** repo `Dockerfile`（不合併、不自動同步）；排障期間貼入的臨時覆寫收工時**必須**以 `updateDockerfile(serviceID, dockerfile: "")` 清空恢復 repo SSOT 後 redeploy；部署顯示 success 但新路徑 404 時，必須以 `rg "pnpm build:" Dockerfile` 對照 Zeabur build log 建置鏈。詳見 `docs/DEPLOYMENT.md` § Zeabur 服務層 Dockerfile 覆寫治理
 
-### 量測工具同步（#962）
+### 量測工具同步（#961）
 
 - 變更玩法契約（按鍵映射、技能觸發條件、資源取得節奏）時，**量測工具與文件、e2e 同級**必須同批更新
 - 量測工具不受型別檢查守門，契約脫節不會編譯失敗、只會安靜產出假數據，而假數據會被當成調整依據
