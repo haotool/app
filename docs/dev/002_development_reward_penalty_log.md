@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+0（reward 0、penalty 0、neutral 1）｜累計總分：+314
+> 本次分數變化：-2（reward 0、penalty 2、neutral 0）｜累計總分：+312
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-08-01
+- ID：penalty-starpuff-starburst-damage-lost-on-detonate
+- 原因：tickDetonation 引爆完成時回傳 createStarburstState（bossDamage 歸 0），而 player 於 starburst 覆寫**之後**才讀該值傳給事件，星暴對魔王傷害遂恆為 0；#954 起上線未被發現，因既有星暴測試只斷言「有無發出 SKILL_STARSTORM」從不檢視 payload——計算端（starstormBossDamage）與結算端（resolveStarstorm）各自有測，唯獨兩者之間的傳遞接縫無人守
+- 解法：覆寫前取出 pendingBossDamage；補兩案守門（引爆事件必須帶出封存值、封存值須隨投入星值變動），並以還原錯誤寫法確認測試轉紅。教訓：事件驅動架構下「有沒有發事件」與「發了什麼」是兩件事，只斷言前者等於沒守
+
+- 日期：2026-08-01
+- ID：penalty-starpuff-l30-platform-horizontal-range-unverified
+- 原因：L30 越場平台初版僅驗算垂直（單跳可上、頂點越過魔王頭頂）卻未驗算**水平射程**——兩塊側台以 xRatio 0.25/0.75 定位，於 854 視寬相距 427px、1200 相距 600px，而單跳射程僅 205px，玩家跳得高卻飛不到對面，實測完全無效。比例定位使間距隨視寬膨脹，而跳躍射程是固定像素，兩者單位不一致
+- 解法：改 offsetPx 固定像素定位並重設計為三段踏腳石鏈（地面 400 → 側台 315 → 中央台 240），每段皆在單跳射程與頂點內；測試補「相鄰水平間隙須小於單跳射程」與修前配置的反證。教訓：可達性驗算必須涵蓋全部維度，垂直可及不等於路徑可行
 
 - 日期：2026-08-01
 - ID：neutral-starpuff-arena-relative-platforms
