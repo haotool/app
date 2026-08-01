@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+316
+> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+315
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-08-01
+- ID：penalty-ci-playwright-deps-no-retry
+- 原因：setup-playwright 對「瀏覽器下載」給了 timeout＋3 次退避重試，卻對「OS 相依套件安裝」只給 timeout 而無重試——保護不對稱。apt lock 或鏡像站暫時性緩慢即使整個 E2E job 以 exit 124 死亡，且測試根本沒開始跑（Build／preview／test 全 skipped），外觀與真實測試失敗難以區分，實測 main 連續三次 E2E Full shard 失敗皆止於此步而同 run 另一 shard 成功
+- 解法：OS deps 安裝改為與瀏覽器下載同構的 3 次退避重試。診斷關鍵是先看 job 的**步驟層級**結論而非只看 log 尾端——步驟清單顯示測試步驟為 skipped，立即排除「測試失敗」的假設；exit 124 亦直接指向 timeout 而非斷言失敗
 
 - 日期：2026-08-01
 - ID：penalty-starpuff-audit-driver-contract-drift-thrice

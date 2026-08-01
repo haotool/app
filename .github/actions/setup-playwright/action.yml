@@ -57,8 +57,23 @@ runs:
 
     # OS 相依套件不在 cache 內，cache hit/miss 皆需安裝。
     # 與瀏覽器下載拆開並加 timeout，避免 apt lock/網路問題無限掛起。
+    #
+    # #961：修前僅有 timeout 而無重試，保護與上方瀏覽器下載不對稱——apt lock 或
+    # 鏡像站暫時性緩慢會使整個 E2E job 直接死亡（exit 124），且測試根本沒開始跑。
+    # 實測 main 連續三次 E2E Full shard 失敗皆止於本步，而同 run 的另一 shard 成功，
+    # 確認為基礎設施偶發而非程式碼問題。改為與瀏覽器下載同構的退避重試。
     - name: Install Playwright system deps
       shell: bash
       env:
         DEBIAN_FRONTEND: noninteractive
-      run: timeout 300 pnpm --filter "${{ inputs.app-filter }}" exec playwright install-deps ${{ inputs.browsers }}
+      run: |
+        for attempt in 1 2 3; do
+          if timeout 300 pnpm --filter "${{ inputs.app-filter }}" exec playwright install-deps ${{ inputs.browsers }}; then
+            echo "✅ OS 相依套件安裝成功（第 ${attempt} 次嘗試）"
+            exit 0
+          fi
+          echo "⚠️ 第 ${attempt} 次安裝逾時/失敗，退避 $((attempt * 10))s 後重試"
+          sleep "$((attempt * 10))"
+        done
+        echo "❌ OS 相依套件重試 3 次仍失敗"
+        exit 1
