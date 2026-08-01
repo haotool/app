@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+316
+> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+315
 
 ## 新增模板（4 行）
 
@@ -17,6 +17,11 @@
 - ID：penalty-ci-playwright-deps-no-retry
 - 原因：setup-playwright 對「瀏覽器下載」給了 timeout＋3 次退避重試，卻對「OS 相依套件安裝」只給 timeout 而無重試——保護不對稱。apt lock 或鏡像站暫時性緩慢即使整個 E2E job 以 exit 124 死亡，且測試根本沒開始跑（Build／preview／test 全 skipped），外觀與真實測試失敗難以區分，實測 main 連續三次 E2E Full shard 失敗皆止於此步而同 run 另一 shard 成功
 - 解法：OS deps 安裝改為與瀏覽器下載同構的 3 次退避重試。診斷關鍵是先看 job 的**步驟層級**結論而非只看 log 尾端——步驟清單顯示測試步驟為 skipped，立即排除「測試失敗」的假設；exit 124 亦直接指向 timeout 而非斷言失敗
+
+- 日期：2026-08-01
+- ID：penalty-starpuff-audit-driver-contract-drift-thrice
+- 原因：audit driver 消費玩法契約卻不受型別檢查守門，契約改了只會安靜產出假數據。同一根因連續三次失誤——#952 拆鍵後仍按舊鍵；補上後暴露補星與變身互鎖的死迴圈使形態 uptime 逼近 100%；再修後又發現結晶與引爆共用 lastSpAt（結晶重置引爆冷卻，每次星暴多 3 秒死窗）且走動關變身鉤子仍按 SP（走動關變身量測自拆鍵起恆為零）。其中「自動改手動」最易漏：driver 裡原本沒有對應程式碼，需新增而非修改，無既存呼叫點可循
+- 解法：節流拆為 lastCrystallizeAt／lastDetonateAt 各自獨立、走動關變身改按 TF 鍵；並將「量測工具屬玩法契約一等消費端」寫入 00-foundations.md §12.1 與 AGENTS.md 同步規則，附判讀紀律——難度數據出現「行為完全消失」型訊號（計數歸零、命中率驟降、TTK 從未達成）時先驗證工具一致性再談平衡。此前曾據未修正的 driver 數據判定 L30 有回歸，屬工具誤導
 
 - 日期：2026-08-01
 - ID：penalty-starpuff-modal-stacking-below-pause
