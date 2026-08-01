@@ -23,6 +23,16 @@ export interface PlatformSpec {
   w: number;
 }
 
+// arena 相對平台（#960）：魔王 arena 的世界寬＝前室 + **動態視寬**，故靜態 x 在不同
+// 視窗下會偏移（854 視寬置中者，1200 下偏左 173px）——這正是七個魔王關 platforms
+// 恆為空的實務原因。本型別以 arena 寬比例定位，由 createTerrain 於建立時解析為世界座標。
+export interface ArenaPlatformSpec {
+  // arena 內的水平比例（0–1），0.5 為 arena 正中。
+  xRatio: number;
+  y: number;
+  w: number;
+}
+
 // v4 平台元素（§29）：data-driven 進關卡資料，由 systems/stage.ts 建立與更新。
 // oneway/moving 座標同 PlatformSpec 中心點制；moving 的 range 為 tween 目標軸向位移（可負）。
 // v8 上升氣流柱（§51）：zone 型非碰撞，x 為柱心、topY 為升力終止高、w 為柱寬。
@@ -107,6 +117,8 @@ export interface LevelSpec {
   safeZoneTailPx: number;
   enemyMix: readonly EnemyMixEntry[];
   platforms: readonly PlatformSpec[];
+  // arena 相對平台（#960）：僅魔王關適用（需 arenaLeft/視寬解析）；缺省無。
+  arenaPlatforms?: readonly ArenaPlatformSpec[];
   elements: readonly StageElementSpec[];
   decor: readonly DecorSpec[];
   easterEggs: readonly EasterEggSpec[];
@@ -2121,6 +2133,15 @@ export const LEVELS: readonly LevelSpec[] = [
       { kind: 'boomy', weight: 0.25 },
     ],
     platforms: [],
+    // 越場側翼平台（#960）：劉董體高 150（占 y 250–400），單跳 98px 不足以越過，
+    // 現況需耗 2 次拍翅才過得去。兩塊側翼平台使「單跳上台 → 起跳越過」成立
+    //（自 y=305 起跳頂點 207，遠高於魔王頭頂 250），把成本降到 0–1 拍翅。
+    // 刻意不放在魔王頭頂：正上方平台會成為地面招式（K 線柱頂端 280）打不到的
+    // 安全棲身點；側翼則仍暴露於箭雨、空頭雷射與全屏彈幕。
+    arenaPlatforms: [
+      { xRatio: 0.25, y: 305, w: 120 },
+      { xRatio: 0.75, y: 305, w: 120 },
+    ],
     elements: [],
     decor: [
       { key: 'prop-market-1', x: 110 },
