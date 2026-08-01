@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+0（reward 0、penalty 0、neutral 1）｜累計總分：+318
+> 本次分數變化：+0（reward 0、penalty 0、neutral 1）｜累計總分：+314
 
 ## 新增模板（4 行）
 
@@ -17,6 +17,31 @@
 - ID：neutral-starpuff-arena-relative-platforms
 - 原因：L30 劉董體高 150（占 y 250–400），玩家單跳僅 98px，越到另一側需耗 2 次拍翅，走位受限；而魔王 arena 的世界寬＝前室+動態視寬，靜態 platforms 座標在 854 置中者於 1200 下偏左 173px——這正是七個魔王關 platforms 恆為空的實務原因，直接補靜態座標會製造視寬相依的不公平
 - 解法：新增 ArenaPlatformSpec（xRatio 相對定位）由 createTerrain 解析為世界座標，重用既有單向平台機制；L30 置兩塊側翼平台（xRatio 0.25/0.75、y 305、w 120）。刻意不放魔王正上方——頭頂平台會成為 K 線柱（頂端 280）打不到的安全棲身點，側翼則仍暴露於箭雨與空頭雷射。守門測試釘住三視寬對稱性、與魔王體寬不重疊、單跳可上、自平台可越頂，並附「地面直跳越不過」反證
+
+- 日期：2026-08-01
+- ID：penalty-starpuff-walkthrough-baseline-incomparable
+- 原因：WALKTHROUGH 各關「實測」欄以當時世代 audit driver 量測，該 driver 其後多次變更行為模型（按鍵映射、技能觸發策略、節流），數值與現行量測不可比，但文件未標示此限制；決定性 A/B 證實 L30 在固定 driver 下改動前後皆 0-20% 通關、18 死，與記載的 71%／8.57 死落差全部來自工具世代
+- 解法：WALKTHROUGH 開頭加入基準過期警示與使用紀律（僅可用於同一次量測內的相對比較，跨版本須自行重測基準組），並順帶同步 952/953/954/959 未更新的操作說明；追蹤重測全關卡於 #962。根本解為報告輸出內嵌 driver 版本識別，使不可比性由工具自動揭露而非依賴人記憶。此缺陷曾致連續四次錯誤歸因，每次都導向錯誤修復方向——過期基準比沒有基準更危險，它提供了看似權威的比較點
+
+- 日期：2026-08-01
+- ID：penalty-ci-playwright-deps-no-retry
+- 原因：setup-playwright 對「瀏覽器下載」給了 timeout＋3 次退避重試，卻對「OS 相依套件安裝」只給 timeout 而無重試——保護不對稱。apt lock 或鏡像站暫時性緩慢即使整個 E2E job 以 exit 124 死亡，且測試根本沒開始跑（Build／preview／test 全 skipped），外觀與真實測試失敗難以區分，實測 main 連續三次 E2E Full shard 失敗皆止於此步而同 run 另一 shard 成功
+- 解法：OS deps 安裝改為與瀏覽器下載同構的 3 次退避重試。診斷關鍵是先看 job 的**步驟層級**結論而非只看 log 尾端——步驟清單顯示測試步驟為 skipped，立即排除「測試失敗」的假設；exit 124 亦直接指向 timeout 而非斷言失敗
+
+- 日期：2026-08-01
+- ID：penalty-starpuff-audit-driver-contract-drift-thrice
+- 原因：audit driver 消費玩法契約卻不受型別檢查守門，契約改了只會安靜產出假數據。同一根因連續三次失誤——#952 拆鍵後仍按舊鍵；補上後暴露補星與變身互鎖的死迴圈使形態 uptime 逼近 100%；再修後又發現結晶與引爆共用 lastSpAt（結晶重置引爆冷卻，每次星暴多 3 秒死窗）且走動關變身鉤子仍按 SP（走動關變身量測自拆鍵起恆為零）。其中「自動改手動」最易漏：driver 裡原本沒有對應程式碼，需新增而非修改，無既存呼叫點可循
+- 解法：節流拆為 lastCrystallizeAt／lastDetonateAt 各自獨立、走動關變身改按 TF 鍵；並將「量測工具屬玩法契約一等消費端」寫入 00-foundations.md §12.1 與 AGENTS.md 同步規則，附判讀紀律——難度數據出現「行為完全消失」型訊號（計數歸零、命中率驟降、TTK 從未達成）時先驗證工具一致性再談平衡。此前曾據未修正的 driver 數據判定 L30 有回歸，屬工具誤導
+
+- 日期：2026-08-01
+- ID：penalty-starpuff-modal-stacking-below-pause
+- 原因：設定頁與按鍵配置頁的 z-index（45／5）低於暫停覆層（50），自暫停開啟即被整片遮蔽——這既是「行動裝置設定被遮蔽」也是「暫停中無法改設定」兩個回報的共同根因；各層 z-index 為散落字面值且無序，缺少「模態必須最上層」的顯式契約
+- 解法：建立堆疊尺標（--z-controls/--z-pause/--z-modal）取代字面值，設定頁與配置頁提升至模態層並於暫停選單加入設定入口；新增 stacking.test.ts 直接讀 style.css 斷言尺標遞增與消費端，使「模態高於暫停」成為可執行契約而非靠人工記憶
+
+- 日期：2026-08-01
+- ID：neutral-starpuff-control-layout-v3
+- 原因：SP/TF 兩顆情境鍵位置由 B 鍵衍生且不可自訂，玩家無法依手型調整；TF 原為沿 SP 再往上堆疊一級，垂直空間吃緊且兩鍵難以並讀
+- 解法：schema 升 v3，sp/tf 為選用欄位——未自訂走衍生（保有旋轉態感知，固定比例在直持殼下會映射到不可及區），拖曳後才落盤；衍生改並排（結晶在右、變身在左，皆在 B 上方）。過程中發現恢復預設用 Object.assign 不刪既有鍵，拖曳過的情境鍵座標會殘留，一併修正
 
 - 日期：2026-08-01
 - ID：penalty-starpuff-e2e-contract-drift-merged-red

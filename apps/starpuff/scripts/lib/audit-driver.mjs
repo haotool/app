@@ -116,7 +116,9 @@ export function installAuditDriver(opts) {
     lastJumpAt: 0,
     lastShotAt: 0,
     lastGrantAt: 0,
-    lastSpAt: 0,
+    // #961：結晶與引爆各自節流——共用時間戳會讓結晶把引爆的冷卻一併重置。
+    lastCrystallizeAt: 0,
+    lastDetonateAt: 0,
     // #952：TF 鍵節流獨立於 SP——兩鍵互不影響，共用節流會互相吃掉觸發。
     lastTfAt: 0,
     // #956：形態落幕時間戳——再變身冷卻的基準。
@@ -369,12 +371,16 @@ export function installAuditDriver(opts) {
       tap(KEY.shoot, 55);
     };
 
-    // 星暴 2.0（§109／#954 手動結晶）：滿匣先按 SP 結晶，持蓄能星再按 SP 引爆
-    // ——模擬玩家主動運用；走動關同屏敵 ≥2 或飢荒即用，魔王關戰鬥中即用；3s 節流。
-    // 修前結晶為自動觸發，bot 只需引爆；改手動後不補結晶會使 bot 永不使用星暴。
+    // 星暴 2.0（§109／#954 手動結晶）：滿匣先按 SP 結晶，持蓄能星再按 SP 引爆。
+    //
+    // #961 節流分離：修前兩者共用 lastSpAt——結晶會重置引爆的 3s 冷卻，每次星暴
+    // 平白多出 3 秒死窗。自動結晶時代結晶不碰時間戳故可即刻引爆，#954 改手動後
+    // 這個共用就成了隱性懲罰，使量測低估 bot 的星暴吞吐（星暴＝全屏清場＋5s 無敵，
+    // 直接反映在死亡數）。兩者語意不同——結晶節流防連點、引爆節流防洗版，應各自獨立。
     const starburstPhase = window.__sp.starburst ? window.__sp.starburst().phase : 'none';
-    const spReady = starburstPhase === 'charged' && now - d.lastSpAt >= 3000;
-    const crystallizeReady = starburstPhase === 'none' && s.ammo >= 5 && now - d.lastSpAt >= 600;
+    const spReady = starburstPhase === 'charged' && now - d.lastDetonateAt >= 3000;
+    const crystallizeReady =
+      starburstPhase === 'none' && s.ammo >= 5 && now - d.lastCrystallizeAt >= 600;
 
     if (kind === 'boss') {
       const sp = window.__sp;
@@ -384,7 +390,8 @@ export function installAuditDriver(opts) {
         return;
       }
       if (spReady || crystallizeReady) {
-        d.lastSpAt = now;
+        if (spReady) d.lastDetonateAt = now;
+        else d.lastCrystallizeAt = now;
         tap(KEY.sp, 90);
       }
       // 變身優勢 hook（#816 W2／#952 改按 TF 鍵／#956 策略修正）。
@@ -883,10 +890,10 @@ export function installAuditDriver(opts) {
       return;
     }
     if (crystallizeReady) {
-      d.lastSpAt = now;
+      d.lastCrystallizeAt = now;
       tap(KEY.sp, 90);
     } else if (spReady && (s.alive.total >= 2 || (s.ammo === 0 && s.alive.inhalable === 0))) {
-      d.lastSpAt = now;
+      d.lastDetonateAt = now;
       tap(KEY.sp, 90);
     }
     // 滿潮避難（dodge 分級）：地面帶導航至最近平台＋節奏跳。
@@ -936,14 +943,16 @@ export function installAuditDriver(opts) {
       }
       d.prevForm = tfWalk.form;
       if (!tfWalk.form) {
-        // 資格成立：停吸定身按 SP（空中裁決 none 由 300ms 節流重試至落地）。
+        // 資格成立：停吸定身按變身鍵。
+        // #961：修前此處仍按 SP——#952 拆鍵只修了魔王關的變身鉤子，走動關這條漏掉，
+        // 導致走動關 bot 按 SP 卻觸發不到變身（SP 已改專責星暴），變身量測恆為零。
         if (window.__sp.transformEligible && window.__sp.transformEligible()) {
           d.branch = 'eligible';
           release(KEY.shoot);
           face(0);
-          if (now - d.lastSpAt >= 300) {
-            d.lastSpAt = now;
-            tap(KEY.sp, 90);
+          if (now - d.lastTfAt >= 300) {
+            d.lastTfAt = now;
+            tap(KEY.tf, 90);
           }
           return;
         }
