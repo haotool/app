@@ -823,6 +823,11 @@ export function createPlayer(
 
       // 蓄爆推進（§109）：0.3s 不可取消，期滿結算星暴——清場委派 GameScene/starCombat，
       // 無敵窗沿 §64 取 max 不疊加。
+      // #964：封存傷害必須在覆寫相位**之前**取出——tickDetonation 引爆完成時回傳
+      // createStarburstState()（bossDamage 歸 0），修前於覆寫後才讀，星暴對魔王
+      // 傷害遂恆為 0。單元測試未涵蓋此接縫：計算（starstormBossDamage）與結算
+      // （resolveStarstorm）各自有測，唯獨「封存值有無傳到引爆」無人守。
+      const pendingBossDamage = starburst.bossDamage;
       const detonation = tickDetonation(starburst, deltaMs);
       starburst = detonation.state;
       if (detonation.detonated) {
@@ -831,7 +836,7 @@ export function createPlayer(
         emitGameEvent(scene.events, GameEvents.SKILL_STARSTORM, {
           x: sprite.x,
           y: sprite.y,
-          bossDamage: starburst.bossDamage,
+          bossDamage: pendingBossDamage,
         });
         emitStarburst();
       }

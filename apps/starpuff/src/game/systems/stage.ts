@@ -531,7 +531,8 @@ export function createTerrain(
   // arena 相對平台展開為世界座標（#960）：靜態 x 在動態 arena 下會隨視寬偏移，
   // 故以 arena 寬比例定位；缺 arena 幾何（走動關）時忽略。
   const arenaResolved = (level.arenaPlatforms ?? []).map((spec) => ({
-    x: (arena?.left ?? 0) + (arena?.width ?? 0) * spec.xRatio,
+    // #964：自 arena 中心以固定像素偏移展開——跳躍射程為固定像素，幾何須同單位。
+    x: (arena?.left ?? 0) + (arena?.width ?? 0) / 2 + spec.offsetPx,
     y: spec.y,
     w: spec.w,
   }));

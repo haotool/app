@@ -1,72 +1,73 @@
 import { describe, expect, it } from 'vitest';
-import { VIEW } from '../core/config';
+import { GRAVITY_Y, PLAYER, VIEW } from '../core/config';
 import { getLevel } from './levels';
 
-// arena 相對平台（#960）。魔王 arena 的世界寬＝前室 + **動態視寬**，靜態 x 在不同
-// 視窗下會偏移（854 視寬置中者於 1200 下偏左 173px）——這是七個魔王關 platforms
-// 恆為空的實務原因。本組釘住「以比例定位者在所有視寬皆落在預期位置」。
+// L30 越場踏腳石鏈（#960／#964 重設計）。
+//
+// #964 教訓：初版僅驗算「跳得上」與「越得過魔王頭頂」，**漏了水平射程**——兩塊側台
+// 相距 427–600px 而單跳只飛 205px，玩家實測跨不過去。且原以 xRatio 比例定位，使間距
+// 隨視寬膨脹；跳躍射程是固定像素，幾何必須同單位，故改 offsetPx。
 
-// createTerrain 的解析式（同一條算式，於此以純函式形式驗證幾何契約）。
-function resolveX(arenaLeft: number, arenaWidth: number, xRatio: number): number {
-  return arenaLeft + arenaWidth * xRatio;
-}
-
-const ANTEROOM_PX = 400;
 const GROUND_TOP = VIEW.height - 80;
-// 劉董體型（liudong.ts 鏡像）：體高 150 → 頭頂 y = GROUND_TOP - 150。
+// 劉董體型（liudong.ts 鏡像）。
 const BOSS_BODY_W = 170;
 const BOSS_BODY_H = 150;
-// 玩家跳躍（config 鏡像）：v²/2g。
-const JUMP_APEX_PX = (420 * 420) / (2 * 900);
+const BOSS_TOP_Y = GROUND_TOP - BOSS_BODY_H;
 
-describe('L30 越場側翼平台（#960）', () => {
-  const level = getLevel(30);
-  const platforms = level.arenaPlatforms ?? [];
+// 單跳能力：頂點 v²/2g、滯空 2v/g、水平射程 speed × 滯空。
+const JUMP_APEX_PX = (PLAYER.jumpVelocity * PLAYER.jumpVelocity) / (2 * GRAVITY_Y);
+const JUMP_AIRTIME_S = (2 * Math.abs(PLAYER.jumpVelocity)) / GRAVITY_Y;
+const JUMP_RANGE_PX = PLAYER.moveSpeed * JUMP_AIRTIME_S;
 
-  it('L30 定義了 arena 相對平台（非靜態 platforms）', () => {
-    expect(level.platforms).toEqual([]);
-    expect(platforms.length).toBeGreaterThan(0);
+const level = getLevel(30);
+const platforms = [...(level.arenaPlatforms ?? [])].sort((a, b) => a.offsetPx - b.offsetPx);
+
+describe('L30 越場踏腳石鏈（#964）', () => {
+  it('左右對稱，且含一塊位於 arena 正中的中央台', () => {
+    const offsets = platforms.map((p) => p.offsetPx);
+    expect(offsets.length).toBeGreaterThanOrEqual(3);
+    expect(offsets[0]).toBe(-(offsets[offsets.length - 1] ?? 0));
+    expect(offsets).toContain(0);
   });
 
-  it('在支援視寬全域皆相對 arena 對稱——不因視窗變寬而偏移', () => {
-    for (const viewW of [VIEW.minWidth, 1000, VIEW.maxWidth]) {
-      const arenaCx = resolveX(ANTEROOM_PX, viewW, 0.5);
-      const xs = platforms.map((p) => resolveX(ANTEROOM_PX, viewW, p.xRatio));
-      const offsets = xs.map((x) => x - arenaCx).sort((a, b) => a - b);
-      // 左右對稱：最左與最右的偏移量互為相反數（tsconfig target 未含 Array#at）。
-      const first = offsets[0] ?? 0;
-      const last = offsets[offsets.length - 1] ?? 0;
-      expect(first, `viewW=${viewW}`).toBeCloseTo(-last, 5);
+  it('地面可單跳踏上最低階', () => {
+    const lowest = platforms.reduce((a, b) => (a.y > b.y ? a : b));
+    expect(GROUND_TOP - lowest.y).toBeLessThan(JUMP_APEX_PX);
+  });
+
+  // 本次核心回歸點：修前只驗高度不驗水平，遂完全跨不過去。
+  it('相鄰平台的水平間隙皆在單跳射程內', () => {
+    for (let i = 1; i < platforms.length; i += 1) {
+      const prev = platforms[i - 1]!;
+      const cur = platforms[i]!;
+      const gap = cur.offsetPx - cur.w / 2 - (prev.offsetPx + prev.w / 2);
+      expect(gap, `間隙 ${i}`).toBeLessThan(JUMP_RANGE_PX);
     }
   });
 
-  it('平台位於魔王體寬之外——不與其重疊、不成為頭頂棲身點', () => {
-    for (const viewW of [VIEW.minWidth, VIEW.maxWidth]) {
-      const arenaCx = resolveX(ANTEROOM_PX, viewW, 0.5);
-      for (const p of platforms) {
-        const x = resolveX(ANTEROOM_PX, viewW, p.xRatio);
-        const gapFromBossEdge = Math.abs(x - arenaCx) - BOSS_BODY_W / 2 - p.w / 2;
-        expect(gapFromBossEdge, `viewW=${viewW} xRatio=${p.xRatio}`).toBeGreaterThan(0);
-      }
+  it('相鄰平台的高低差皆在單跳頂點內', () => {
+    for (let i = 1; i < platforms.length; i += 1) {
+      const rise = Math.abs((platforms[i - 1]?.y ?? 0) - (platforms[i]?.y ?? 0));
+      expect(rise, `高低差 ${i}`).toBeLessThan(JUMP_APEX_PX);
     }
   });
 
-  it('平台高度單跳可及（自地面）', () => {
+  it('中央台高於魔王頭頂，不與其體積重疊', () => {
+    const mid = platforms.find((p) => p.offsetPx === 0);
+    expect(mid).toBeDefined();
+    expect(mid?.y ?? 0).toBeLessThan(BOSS_TOP_Y);
+  });
+
+  it('側台位於魔王體寬之外', () => {
     for (const p of platforms) {
-      expect(GROUND_TOP - p.y).toBeLessThan(JUMP_APEX_PX);
+      if (p.offsetPx === 0) continue;
+      expect(Math.abs(p.offsetPx) - p.w / 2).toBeGreaterThan(BOSS_BODY_W / 2);
     }
   });
 
-  it('自平台起跳可越過魔王頭頂——這是本次改動的目的', () => {
-    const bossTopY = GROUND_TOP - BOSS_BODY_H;
-    for (const p of platforms) {
-      // 自平台面起跳的頂點高度，需高於魔王頭頂（y 越小越高）。
-      expect(p.y - JUMP_APEX_PX).toBeLessThan(bossTopY);
-    }
-  });
-
-  it('反證：自地面直接起跳無法越過魔王頭頂（故平台有其必要）', () => {
-    const bossTopY = GROUND_TOP - BOSS_BODY_H;
-    expect(GROUND_TOP - JUMP_APEX_PX).toBeGreaterThan(bossTopY);
+  it('反證：修前兩側配置（無中央台）水平間隙超出射程', () => {
+    // xRatio 0.25/0.75 於最小視寬即相距 0.5 × 854 = 427px，扣掉兩側各半個平台寬仍超標。
+    const legacyGap = 0.5 * VIEW.minWidth - 120;
+    expect(legacyGap).toBeGreaterThan(JUMP_RANGE_PX);
   });
 });

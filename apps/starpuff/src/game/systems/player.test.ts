@@ -466,6 +466,37 @@ describe('星暴 2.0 蓄爆生命週期（§109 回歸鎖）', () => {
   // 蓄爆窗全程覆蓋（含餘裕）的 update tick 數。
   const DETONATE_TICKS = Math.ceil(STARSTORM.chargeMs / 50) + 3;
 
+  // #964：既有星暴測試只斷言「有無發出事件」，從不檢視 payload——故
+  // 「封存傷害於相位覆寫後才讀、恆傳 0」的缺陷得以溜過全部守門並上線。
+  it('引爆事件必須帶出結晶當下封存的魔王傷害（非 0）', () => {
+    const { player, emit } = makeHarness();
+    chargeUp(player);
+    const stored = player.getStarburst().bossDamage;
+    expect(stored).toBeGreaterThan(0);
+    player.update(SP_TAP, 16);
+    emit.mockClear();
+    for (let i = 0; i < DETONATE_TICKS; i += 1) player.update(IDLE, 50);
+    expect(emit).toHaveBeenCalledWith(
+      GameEvents.SKILL_STARSTORM,
+      expect.objectContaining({ bossDamage: stored }),
+    );
+  });
+
+  it('封存傷害隨投入星值變動——不得退化為固定值', () => {
+    const weak = makeHarness();
+    chargeUp(weak.player);
+    const weakDamage = weak.player.getStarburst().bossDamage;
+
+    const strong = makeHarness();
+    // 強化星（連吞同味）使投入星值提高，封存傷害應隨之提高。
+    for (let i = 0; i < 12 && strong.player.getAmmoState().ammo < STAR.maxAmmo; i += 1) {
+      strong.player.grantStar('jelly');
+      strong.player.grantStar('jelly');
+    }
+    strong.player.update({ ...IDLE, spPressed: true }, 16);
+    expect(strong.player.getStarburst().bossDamage).toBeGreaterThan(weakDamage);
+  });
+
   it('蓄爆中死亡清除（clearStarburst）：取消引爆——期滿不發 SKILL_STARSTORM、相位歸 none', () => {
     const { player, emit } = makeHarness();
     chargeUp(player);
