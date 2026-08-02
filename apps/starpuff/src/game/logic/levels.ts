@@ -37,11 +37,11 @@ export interface ArenaPlatformSpec {
   w: number;
 }
 
-// L30 幾何 SSOT：只保留一塊較低的中央單向平台；地面是主要通關路線，平台是
+// L30 幾何 SSOT：只保留一塊更低的中央單向平台；地面是主要通關路線，平台是
 // 讀招後的換位/越王輔助，不再用左右踏腳石把玩家導向固定跳鏈。y 是平台中心，
-// top=240，仍比劉董物理箱頂（約 259）高出安全間隙；w 只覆蓋中央輸出區。
+// top=248，讓站台高度貼近劉董頭頂但仍保留玩家身體的讀招距離；w 只覆蓋中央輸出區。
 export const L30_ARENA_PLATFORMS = [
-  { offsetPx: 0, y: 248, w: 280 },
+  { offsetPx: 0, y: 256, w: 280 },
 ] as const satisfies readonly ArenaPlatformSpec[];
 
 // v4 平台元素（§29）：data-driven 進關卡資料，由 systems/stage.ts 建立與更新。

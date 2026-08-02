@@ -1,12 +1,14 @@
 // 新怪時序狀態機純邏輯（GAME_DESIGN §30，不 import phaser），vitest 對象。
 // 時序常數依 bossFsm 慣例由本模組持有（§30 SSOT）；呈現層速度/著色留在 enemies.ts。
 
-// 殼殼 Shelly 三態：巡邏 walk →（首發受擊）→ 縮殼旋轉 spin 1.5s（無敵）→ 暈眩 stun 1.6s
-// （可吸/可擊殺）→ 復原 walk。
-// #811：暈眩窗 1.0s→1.6s——正確時機吞食成功率 11% 遠低於門檻 60%，執行窗過短為根因。
+// 殼殼 Shelly 三態：巡邏 walk →（首發受擊）→ 縮殼旋轉 spin 0.9s（無敵）→ 暈眩 stun 2.2s
+// （可吸/可擊殺）→ 復原 walk。縮短衝刺、降低水平速率並延長暴露窗，讓「打中首發
+// 讀到縮殼 → 調位 → 長按吸入」成為穩定可練習的反制，不靠反應硬吃高速橫移。
 export const SHELLY_FSM = {
-  spinMs: 1500,
-  stunMs: 1600,
+  walkSpeedPxPerSec: 48,
+  spinSpeedPxPerSec: 190,
+  spinMs: 900,
+  stunMs: 2200,
 } as const;
 
 export type ShellyState = 'walk' | 'spin' | 'stun';

@@ -201,7 +201,7 @@ export class TitleScene extends Phaser.Scene {
       startBgm();
       const challenge = currentChallenge(loadSave());
       if (challenge === null) this.scene.start(SceneKeys.Map, {});
-      else this.scene.start(SceneKeys.Game, { levelId: challenge, deaths: 0 });
+      else this.scene.start(SceneKeys.Game, { levelId: challenge, deaths: 0, newSession: true });
     };
     // 持續監聽（審查修復 #718）：once 會被配置面板開啟時的無效 Enter 消耗，
     // 導致關閉面板後快捷鍵失效；start 內部已以 isKeyConfigOpen 擋無效觸發。

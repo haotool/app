@@ -26,7 +26,12 @@ export function closeSettingsPage(): void {
   dismiss?.();
 }
 
-type BooleanPref = 'audioMuted' | 'hapticsEnabled' | 'wakeLockEnabled' | 'reducedMotion';
+type BooleanPref =
+  | 'audioMuted'
+  | 'hapticsEnabled'
+  | 'wakeLockEnabled'
+  | 'reducedMotion'
+  | 'controlHintsEnabled';
 
 interface ToggleSpec {
   key: BooleanPref;
@@ -42,6 +47,7 @@ const TOGGLES: ToggleSpec[] = [
   { key: 'hapticsEnabled', label: '震動回饋', onChange: (on) => on && vibratePattern(15) },
   { key: 'wakeLockEnabled', label: '遊戲中螢幕常亮' },
   { key: 'reducedMotion', label: '減少動態效果' },
+  { key: 'controlHintsEnabled', label: '操作提示（前五場）' },
 ];
 
 const SHAKE_OPTIONS: { value: ScreenShakePref; label: string }[] = [
@@ -170,17 +176,21 @@ export function openSettingsPage(onClose?: () => void): void {
   for (const spec of TOGGLES) addToggleRow(card, spec);
   addShakeRow(card);
 
+  // 操作列固定在卡片底部（§34）：內容可滾動，但配置與完成永遠留在可視區。
+  const actions = document.createElement('div');
+  actions.className = 'settings-actions';
+
   // 按鈕配置轉入口（§34）：鍵位/持向/縮放維持 keyConfig 專頁；先收設定頁再開啟。
   const configButton = document.createElement('button');
   configButton.type = 'button';
   configButton.className = 'install-btn';
   configButton.dataset['setting'] = 'key-config';
-  configButton.textContent = '按鈕配置（鍵位與持向）';
+  configButton.textContent = '按鈕配置（位置與持向）';
   bindButtonActivation(configButton, () => {
     close();
     openKeyConfig();
   });
-  card.appendChild(configButton);
+  actions.appendChild(configButton);
 
   const closeButton = document.createElement('button');
   closeButton.type = 'button';
@@ -188,7 +198,8 @@ export function openSettingsPage(onClose?: () => void): void {
   closeButton.dataset['setting'] = 'close';
   closeButton.textContent = '完成';
   bindButtonActivation(closeButton, close);
-  card.appendChild(closeButton);
+  actions.appendChild(closeButton);
+  card.appendChild(actions);
 
   overlay.appendChild(card);
   modalRoot.appendChild(overlay);

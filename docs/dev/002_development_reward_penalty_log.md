@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+0（reward 0、penalty 0、neutral 2）｜累計總分：+312
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+313
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-08-02
+- ID：reward-starpuff-l30-controls-onboarding
+- 原因：L30 與手機新手操作流程仍有可玩性、可見性與方向提示缺口
+- 解法：收斂 L30 與殼殼 SSOT、修復設定／觸控／旋轉／PWA 引導並完成瀏覽器與難度量測
 
 - 日期：2026-08-02
 - ID：neutral-starpuff-settings-viewport-release-followup

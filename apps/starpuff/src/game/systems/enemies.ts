@@ -595,7 +595,8 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     emitGameEvent(scene.events, GameEvents.ENEMY_KILLED, { kind, x, y });
   }
 
-  // 縮殼旋轉衝刺（§30）：朝玩家側 1.5s 高速滾動，期間無敵、碰牆由 bounce 反彈。
+  // 縮殼旋轉衝刺（§30）：朝玩家側短衝，期間無敵、碰牆由 bounce 反彈；速度與時序
+  // 由 logic/enemyFsm.ts SSOT 消費，避免生成入口與逐幀更新入口漂移。
   function enterShellySpin(sprite: Phaser.Physics.Arcade.Sprite): void {
     playSfx('shell-spin');
     sprite.setData('state', 'spin');

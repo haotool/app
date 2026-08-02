@@ -14,6 +14,9 @@ export interface UserSettings {
   hapticsEnabled: boolean;
   wakeLockEnabled: boolean;
   reducedMotion: boolean;
+  // 新手操作提示：預設開啟，前五次「開始一場新遊戲」各顯示一次；可由設定永久關閉。
+  controlHintsEnabled: boolean;
+  controlHintsPlayCount: number;
   screenShake: ScreenShakePref;
   // null＝從未選擇（rotationNotice 依此判定是否需一次性告知）。
   shellRotation: ShellRotationSetting | null;
@@ -24,6 +27,7 @@ export interface UserSettings {
 
 export const SETTINGS_STORAGE_KEY = 'sp-settings';
 export const SETTINGS_SCHEMA_VERSION = 1;
+export const CONTROL_HINT_MAX_SESSIONS = 5;
 
 // legacy 散鍵（v19 前世代 migration 來源；字面值即歷史 SSOT，不得改動）。
 const LEGACY_MUTE_KEY = 'sp-muted';
@@ -46,6 +50,8 @@ export function createDefaultSettings(): UserSettings {
     hapticsEnabled: true,
     wakeLockEnabled: true,
     reducedMotion: prefersReducedMotion(),
+    controlHintsEnabled: true,
+    controlHintsPlayCount: 0,
     screenShake: 'full',
     shellRotation: null,
     keyLayout: null,
@@ -54,6 +60,12 @@ export function createDefaultSettings(): UserSettings {
 
 function asBoolean(value: unknown, fallback: boolean): boolean {
   return typeof value === 'boolean' ? value : fallback;
+}
+
+function asControlHintsPlayCount(value: unknown, fallback: number): number {
+  if (typeof value !== 'number' || !Number.isFinite(value) || !Number.isInteger(value))
+    return fallback;
+  return Math.min(CONTROL_HINT_MAX_SESSIONS, Math.max(0, value));
 }
 
 function asScreenShake(value: unknown): ScreenShakePref {
@@ -82,6 +94,11 @@ export function parseSettings(raw: string): UserSettings | null {
     hapticsEnabled: asBoolean(data['hapticsEnabled'], defaults.hapticsEnabled),
     wakeLockEnabled: asBoolean(data['wakeLockEnabled'], defaults.wakeLockEnabled),
     reducedMotion: asBoolean(data['reducedMotion'], defaults.reducedMotion),
+    controlHintsEnabled: asBoolean(data['controlHintsEnabled'], defaults.controlHintsEnabled),
+    controlHintsPlayCount: asControlHintsPlayCount(
+      data['controlHintsPlayCount'],
+      defaults.controlHintsPlayCount,
+    ),
     screenShake: asScreenShake(data['screenShake']),
     shellRotation: asShellRotation(data['shellRotation']),
     keyLayout:
@@ -179,6 +196,8 @@ export function updateSettings(patch: Partial<Omit<UserSettings, 'schemaVersion'
     ...patch,
     schemaVersion: SETTINGS_SCHEMA_VERSION,
   };
+  next.controlHintsEnabled = asBoolean(next.controlHintsEnabled, true);
+  next.controlHintsPlayCount = asControlHintsPlayCount(next.controlHintsPlayCount, 0);
   cached = next;
   persist(next);
   listeners.forEach((listener) => listener(next));

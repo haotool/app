@@ -44,6 +44,8 @@ describe('loadSettings（v19 卡 4：預設與 migration）', () => {
       hapticsEnabled: true,
       wakeLockEnabled: true,
       reducedMotion: false,
+      controlHintsEnabled: true,
+      controlHintsPlayCount: 0,
       screenShake: 'full',
       shellRotation: null,
       keyLayout: null,
@@ -149,6 +151,8 @@ describe('loadSettings（v19 卡 4：預設與 migration）', () => {
         hapticsEnabled: false,
         wakeLockEnabled: true,
         reducedMotion: true,
+        controlHintsEnabled: 'yes',
+        controlHintsPlayCount: 99.5,
         screenShake: 'extreme',
         shellRotation: 'ccw',
         keyLayout: null,
@@ -159,8 +163,22 @@ describe('loadSettings（v19 卡 4：預設與 migration）', () => {
     expect(settings.audioMuted).toBe(false);
     expect(settings.hapticsEnabled).toBe(false);
     expect(settings.reducedMotion).toBe(true);
+    expect(settings.controlHintsEnabled).toBe(true);
+    expect(settings.controlHintsPlayCount).toBe(0);
     expect(settings.screenShake).toBe('full');
     expect(settings.shellRotation).toBe('ccw');
+  });
+
+  it('新手提示場次計數夾在 0..5，舊版 sp-settings 缺欄位回預設', async () => {
+    store.set(
+      'sp-settings',
+      JSON.stringify({ schemaVersion: 1, controlHintsEnabled: false, controlHintsPlayCount: 8 }),
+    );
+    const { loadSettings, updateSettings } = await loadSettingsModule();
+    expect(loadSettings().controlHintsEnabled).toBe(false);
+    expect(loadSettings().controlHintsPlayCount).toBe(5);
+    updateSettings({ controlHintsPlayCount: -4 });
+    expect(loadSettings().controlHintsPlayCount).toBe(0);
   });
 
   it('localStorage 不可用：回預設不拋錯，updateSettings 仍更新記憶體快取', async () => {

@@ -42,7 +42,8 @@ describe('Liudong 三階段加權表（§126）', () => {
     expect(LIUDONG.bodyHitboxWidthRatio).toBeLessThan(0.65);
     expect(LIUDONG.paceAnchorRatio).toBe(0.68);
     expect(LIUDONG.approachSpeedPxPerSec).toBe(125);
-    expect(LIUDONG.safeLaneCount).toBe(5);
+    expect(LIUDONG.safeLaneCount).toBe(1);
+    expect(LIUDONG.arrowrainSafeLaneCount).toBe(2);
     expect(liudongMoveTable('p1', false).map((m) => m.action)).toEqual([
       'usstock',
       'crypto',

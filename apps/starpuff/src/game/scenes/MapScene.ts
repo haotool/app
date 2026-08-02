@@ -448,7 +448,7 @@ export class MapScene extends Phaser.Scene {
     // 地圖進關同步啟動 BGM（審查修復 #724）：startBgm 冪等，重複呼叫不疊音軌。
     startBgm();
     playSfx('pop');
-    this.scene.start(SceneKeys.Game, { levelId, deaths: 0, ex });
+    this.scene.start(SceneKeys.Game, { levelId, deaths: 0, ex, newSession: true });
   }
 
   private addBackButton(): void {

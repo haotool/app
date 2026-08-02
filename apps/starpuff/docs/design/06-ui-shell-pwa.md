@@ -68,9 +68,20 @@
   （display-mode standalone＋navigator.standalone）。
 - 指引卡（§92 殼層卡片）：iOS 分享→加入主畫面步驟；Android
   beforeinstallprompt 一鍵安裝＋選單步驟 fallback；in-app 引導外部瀏覽器開啟。
+- 卡片共用 imagegen 生成的 StarPuff 風格教學插圖（`src/assets/ui/pwa-install-onboarding.webp`），
+  以輕微漂浮動畫示範「瀏覽器 → 加入主畫面」；插圖是殼層資產，不進關卡 manifest。
 - 出現邏輯：已安裝／已忽略（localStorage `sp-install-dismissed`，不進 save
   schema）／桌面不打擾；首次到站延遲 2.5s 且僅 Title 安靜時刻顯示；
   appinstalled 自動收卡並記憶。
+
+### 90.1 觸控新手操作提示（首次五場）
+
+- GameScene 僅在 Title／世界地圖開啟一場新遊戲時消費一次 `sp-settings.controlHintsPlayCount`；
+  前五場顯示可關閉的教學卡，死亡重試、同一輪換關與桌機鍵盤遊玩不重複攔截。
+- 教學單一文案提示：左手大拇指操控搖桿左右、右手大拇指按 A 跳躍、右手食指按住
+  B 吸入（放開或短按吐出），B 長按可連續吸取多隻；設定可永久關閉並轉入按鈕配置調整位置。
+- 教學插圖（`src/assets/ui/control-hints-onboarding.webp`）沿用 StarPuff 可愛角色與怪物語彙，
+  以 CSS 輕微漂浮呈現，不改變 Phaser 關卡資產載入。
 
 ## 91. v14 觸覺回饋與螢幕常亮（調研加碼，ROI 閘通過二項）
 
@@ -80,8 +91,8 @@
   不震；iOS 無 Vibration API 靜默降級。
 - 螢幕常亮（wakeLock.ts）：Screen Wake Lock 生命週期跟隨 `#controls.is-active`
   （遊戲進行中取得、離場釋放、回前景重取）；不支援或被拒（省電模式）靜默降級。
-- 落選（backlog）：安裝後首啟引導（感知低）、豎屏提示動畫（與免轉向定位矛盾）、
-  fullscreen API（iOS 不支援且與 standalone 重疊）。
+- 落選（backlog）：fullscreen API（iOS 不支援且與 standalone 重疊）；安裝後首啟引導與
+  觸控教學已由 §90／§90.1 落地。
 
 ## 92. v14 殼層卡片基建（shellCards.ts）
 
@@ -90,7 +101,7 @@
   pause-overlay／既有卡）時顯示——杜絕戰鬥中彈窗攔截操作。
 - 非模態頂緣左卡：overlay `pointer-events:none`、卡本體 `min(300px, 34%)` 寬、
   `max-height 72%`——不遮罩、不擋開始鈕與底部選單（320–844 五視口 AABB 零重疊
-  矩陣驗證）；`aria-modal` 對話框語意＋Escape 關閉。
+  矩陣驗證）；支援可選教學插圖、`aria-modal` 對話框語意＋Escape 關閉。
 - 開玩自動收卡：MutationObserver 監聽 `#controls.is-active`，進遊戲即收
   （不記憶忽略，下次回 Title 再顯示）。
 

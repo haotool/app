@@ -3,6 +3,7 @@
 // （與 pwa.ts 同層，不進 Phaser Scene）。純偵測函式供 vitest node 環境驗證。
 
 import { showShellCard, whenShellIdle, type ShellCardButton } from './shellCards';
+import { PWA_INSTALL_ILLUSTRATION_URL } from './onboardingAssets';
 
 export type PwaInstallPlatform = 'ios' | 'android' | 'desktop' | 'unknown';
 
@@ -210,6 +211,10 @@ export function initInstallGuide(): void {
     closeCard = showShellCard({
       title: copy.title,
       description: copy.description,
+      illustration: {
+        src: PWA_INSTALL_ILLUSTRATION_URL,
+        alt: '噗噗示範在手機瀏覽器加入主畫面',
+      },
       steps: copy.steps,
       buttons,
     });

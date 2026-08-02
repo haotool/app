@@ -11,6 +11,10 @@ export interface ShellCardButton {
 export interface ShellCardOptions {
   title: string;
   description: string;
+  illustration?: {
+    src: string;
+    alt: string;
+  };
   steps?: string[];
   buttons: ShellCardButton[];
 }
@@ -97,6 +101,16 @@ export function showShellCard(options: ShellCardOptions, onClose?: () => void): 
   description.className = 'install-desc';
   description.textContent = options.description;
   card.appendChild(description);
+
+  if (options.illustration) {
+    const illustration = document.createElement('img');
+    illustration.className = 'install-illustration';
+    illustration.src = options.illustration.src;
+    illustration.alt = options.illustration.alt;
+    illustration.loading = 'lazy';
+    illustration.decoding = 'async';
+    card.appendChild(illustration);
+  }
 
   if (options.steps && options.steps.length > 0) {
     const list = document.createElement('ol');

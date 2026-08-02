@@ -8,6 +8,7 @@ import { LIUDONG } from './liudongFsm';
 // 地面永遠保留完整通路，且平台以固定像素 offset 解析，不受視窗寬度改變可玩性。
 const GROUND_TOP = VIEW.height - 80;
 const PLATFORM_H = 16;
+const PLATFORM_BOSS_CLEARANCE_PX = 8;
 // 劉董體型與物理箱（liudong.ts 鏡像）：視覺高 150，物理高 88%。
 const BOSS_BODY_H = 150;
 const BOSS_PHYS_TOP_Y =
@@ -24,16 +25,18 @@ describe('L30 中央平台幾何（#964）', () => {
     expect(offsets).toEqual([0]);
   });
 
-  it('平台比舊版中央台低，但仍在滿拍翅可達高度內', () => {
+  it('平台比舊版中央台再低，仍在滿拍翅可達高度內', () => {
     const [mid] = platforms;
-    expect(mid?.y ?? 0).toBeGreaterThan(240);
+    expect(mid?.y ?? 0).toBeGreaterThan(248);
     const platformTop = (mid?.y ?? GROUND_TOP) - PLATFORM_H / 2;
     expect(GROUND_TOP - platformTop).toBeLessThanOrEqual(maxJumpClearancePx());
   });
 
-  it('中央平台不侵入劉董物理箱，並保留足夠水平承接空間', () => {
+  it('中央平台上緣與劉董物理箱保留玩家站立安全距離，並保留足夠水平承接空間', () => {
     const [mid] = platforms;
-    expect((mid?.y ?? GROUND_TOP) + PLATFORM_H / 2).toBeLessThan(BOSS_PHYS_TOP_Y);
+    expect((mid?.y ?? GROUND_TOP) - PLATFORM_H / 2).toBeLessThanOrEqual(
+      BOSS_PHYS_TOP_Y - PLATFORM_BOSS_CLEARANCE_PX,
+    );
     expect(Math.abs(mid?.offsetPx ?? Infinity)).toBe(0);
     expect(mid?.w ?? 0).toBeGreaterThanOrEqual(PLAYER.moveSpeed * 1.2);
   });

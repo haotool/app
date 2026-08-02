@@ -300,7 +300,11 @@ function collectWebp(page: Page): string[] {
   const requested: string[] = [];
   page.on('request', (req) => {
     const name = req.url().split('/').pop() ?? '';
-    if (name.endsWith('.webp')) requested.push(name);
+    // UI 引導插圖不是 Phaser 關卡資產，可能在 Title 安靜時刻載入；此探針只量測
+    // 分階段載入的遊戲 manifest。
+    const isOnboardingAsset =
+      name === 'control-hints-onboarding.webp' || name === 'pwa-install-onboarding.webp';
+    if (name.endsWith('.webp') && !isOnboardingAsset) requested.push(name);
   });
   return requested;
 }

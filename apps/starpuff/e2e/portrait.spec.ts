@@ -271,6 +271,23 @@ test('直持設定：面板完整可見、短視窗可垂直滾動、按鈕配�
     card.scrollTop = card.scrollHeight;
   });
   expect(await settingsCard.evaluate((card) => card.scrollTop)).toBeGreaterThan(0);
+  const shortButtonMetrics = await page.evaluate(() => {
+    const card = document.querySelector<HTMLElement>('.settings-card');
+    const button = document.querySelector<HTMLElement>('[data-setting="close"]');
+    if (!card || !button) throw new Error('設定完成鈕不存在');
+    const cardRect = card.getBoundingClientRect();
+    const buttonRect = button.getBoundingClientRect();
+    return {
+      cardTop: cardRect.top,
+      cardBottom: cardRect.bottom,
+      buttonTop: buttonRect.top,
+      buttonBottom: buttonRect.bottom,
+    };
+  });
+  expect(shortButtonMetrics.cardTop).toBeGreaterThanOrEqual(0);
+  expect(shortButtonMetrics.cardBottom).toBeLessThanOrEqual(360);
+  expect(shortButtonMetrics.buttonTop).toBeGreaterThanOrEqual(0);
+  expect(shortButtonMetrics.buttonBottom).toBeLessThanOrEqual(360);
   await page.locator('[data-setting="close"]').click();
   await expect(settingsCard).toHaveCount(0);
 
@@ -312,5 +329,88 @@ test('直持設定：面板完整可見、短視窗可垂直滾動、按鈕配�
     pointerId: 9,
     isPrimary: true,
   });
+  expect(errors).toEqual([]);
+});
+
+test('旋轉偵測：直持提示會在使用者轉橫後收起並記憶', async ({ page }) => {
+  const errors = collectErrors(page);
+  await page.addInitScript(() => {
+    localStorage.setItem('sp-install-dismissed', '1');
+    localStorage.removeItem('sp-orientation-hint');
+  });
+  await page.goto('/');
+  await expect(page.locator('#app canvas')).toBeVisible();
+  const orientationCard = page.locator('.install-card', { hasText: '橫持遊玩體驗更佳' });
+  await expect(orientationCard).toBeVisible({ timeout: 7000 });
+
+  await page.setViewportSize({ width: 844, height: 390 });
+  await expect(orientationCard).toHaveCount(0);
+  expect(await page.evaluate(() => localStorage.getItem('sp-orientation-hint'))).toBe('1');
+  expect(errors).toEqual([]);
+});
+
+test('觸控新手提示：前五場顯示、第五場後停止，設定可永久關閉', async ({ page }) => {
+  const errors = collectErrors(page);
+  await page.addInitScript(() => {
+    localStorage.setItem('sp-install-dismissed', '1');
+    localStorage.setItem('sp-orientation-hint', '1');
+    localStorage.setItem('sp-desktop-keys', '1');
+  });
+
+  for (let play = 1; play <= 6; play += 1) {
+    await page.goto('/');
+    await expect(page.locator('#app canvas')).toBeVisible();
+    await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Title');
+    await page.locator('[data-menu="start"]').dispatchEvent('pointerdown', {
+      pointerId: play,
+      isPrimary: true,
+    });
+    await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Game');
+    const hint = page.locator('[data-control-hints="card"]');
+    if (play <= 5) {
+      await expect(hint).toBeVisible();
+      await expect(hint).toContainText('左手大拇指');
+      await expect(hint).toContainText('右手食指');
+      await expect(hint).toContainText('長按可以連續吸取多隻');
+      await hint.locator('[data-control-hints="close"]').dispatchEvent('pointerdown', {
+        pointerId: play + 10,
+        isPrimary: true,
+      });
+      await expect(hint).toHaveCount(0);
+    } else {
+      await expect(hint).toHaveCount(0);
+    }
+    expect(
+      await page.evaluate(
+        () =>
+          (
+            JSON.parse(localStorage.getItem('sp-settings') ?? '{}') as {
+              controlHintsPlayCount?: number;
+            }
+          ).controlHintsPlayCount,
+      ),
+    ).toBe(Math.min(play, 5));
+  }
+
+  await page.locator('[data-menu="pause"]').dispatchEvent('pointerdown', {
+    pointerId: 99,
+    isPrimary: true,
+  });
+  await page.locator('[data-pause="settings"]').dispatchEvent('pointerdown', {
+    pointerId: 100,
+    isPrimary: true,
+  });
+  await expect(page.locator('.settings-card')).toBeVisible();
+  await page.locator('[data-setting="controlHintsEnabled"]').click();
+  expect(
+    await page.evaluate(
+      () =>
+        (
+          JSON.parse(localStorage.getItem('sp-settings') ?? '{}') as {
+            controlHintsEnabled?: boolean;
+          }
+        ).controlHintsEnabled,
+    ),
+  ).toBe(false);
   expect(errors).toEqual([]);
 });

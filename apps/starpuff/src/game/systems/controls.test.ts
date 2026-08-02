@@ -51,10 +51,10 @@ describe('advanceDownBuffer（§85 drop-intent 緩衝窗）', () => {
     expect(advanceDownBuffer(0, false, 50)).toBe(0);
   });
 
-  it('窗長 300ms：flick（滑完抬指）後 300ms 內按跳仍屬下跳意圖', () => {
-    expect(DOWN_BUFFER_MS).toBe(300);
+  it('窗長 450ms：flick（滑完抬指）後 450ms 內按跳仍屬下跳意圖', () => {
+    expect(DOWN_BUFFER_MS).toBe(450);
     let buffer = advanceDownBuffer(0, true, 16);
-    buffer = advanceDownBuffer(buffer, false, 290);
+    buffer = advanceDownBuffer(buffer, false, 440);
     expect(buffer).toBeGreaterThan(0);
     buffer = advanceDownBuffer(buffer, false, 20);
     expect(buffer).toBe(0);

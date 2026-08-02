@@ -359,12 +359,12 @@ export async function runTelegraphProbe(
 // 注入（SHELLY_FSM.stunMs SSOT），避免窗長調參後被舊硬編上限截斷。
 export async function runSwallowProbe(
   page,
-  { runs = 100, spinRuns = 30, capMs = 900_000, stunWindowMs = 1000 },
+  { runs = 100, spinRuns = 30, capMs = 900_000, stunWindowMs = 1000, spinWindowMs = 1500 },
 ) {
   const levelId = 1;
   const attemptOnce = async (arm) =>
     page.evaluate(
-      async ({ mode, windowCapMs }) => {
+      async ({ mode, windowCapMs, spinWindowMs: spinCapMs }) => {
         const sp = window.__sp;
         const dispatch = (type, keyCode) => {
           const ev = new KeyboardEvent(type, { bubbles: true, cancelable: true });
@@ -406,22 +406,39 @@ export async function runSwallowProbe(
           };
           sp.spawn('shelly', px + 150, 330);
           await wait(320);
-          // 面向右、單發命中 → walk 首發轉縮殼（spin 無敵 1.5s → stun 可吸 1.6s）。
+          // 面向右、單發命中 → walk 首發轉縮殼（spin／stun 時序由 SHELLY_FSM 注入）。
           await tap(39, 70);
           const fireAt = performance.now();
           await tap(88, 55);
           if (mode === 'spin') {
             // 衝刺（縮殼旋轉）期吸食：預期 0 成功。
-            await wait(360);
+            // 不用固定 lead/hold：首發星彈命中延遲會讓固定時間跨進 stun，將
+            // 「旋轉期不可吸」誤計為成功。先等真實 state 進 spin，再取短窗，
+            // 若短窗內自然轉入 stun，該次不歸因為旋轉期吸入。
+            const spinWaitCapMs = Math.max(1200, spinCapMs + 300);
+            let spinSeen = false;
+            while (performance.now() - fireAt < spinWaitCapMs) {
+              if (nearestShelly()?.state === 'spin') {
+                spinSeen = true;
+                break;
+              }
+              await wait(15);
+            }
+            if (!spinSeen) {
+              if (sp.ammo().ammo === 0) sp.grantStar('jelly');
+              return { arm: 'spin', swallowed: false, windowSeen: false };
+            }
             const ammoBefore = sp.ammo().ammo;
             dispatch('keydown', 88);
-            await wait(800);
+            const holdMs = Math.max(80, Math.min(180, Math.round(spinCapMs * 0.2)));
+            await wait(holdMs);
+            const stateAtRelease = nearestShelly()?.state ?? null;
             dispatch('keyup', 88);
-            const swallowed = sp.ammo().ammo > ammoBefore;
+            const swallowed = stateAtRelease === 'spin' && sp.ammo().ammo > ammoBefore;
             // 殘局：等 stun 窗過（不吸），殼殼回 walk 漫遊（保 1 彈防救援污染）。
-            await wait(1600);
+            await wait(Math.max(1600, windowCapMs + 200));
             if (sp.ammo().ammo === 0) sp.grantStar('jelly');
-            return { arm: 'spin', swallowed, windowSeen: true };
+            return { arm: 'spin', swallowed, windowSeen: true, stateAtRelease };
           }
           // 正確時機：等可吸轉移 0→1（凍結場上唯一可吸＝殼殼 stun 邊界）。
           // 衝刺期跟隨（保距 110px）：真人「趁暈眩吸入」的前提是追著看它暈——
@@ -494,7 +511,7 @@ export async function runSwallowProbe(
           return { arm: mode, swallowed: false, windowSeen: false, error: true };
         }
       },
-      { mode: arm, windowCapMs: stunWindowMs },
+      { mode: arm, windowCapMs: stunWindowMs, spinWindowMs },
     );
 
   const resetField = async () => {
