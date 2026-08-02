@@ -1,7 +1,8 @@
 // 新手觸控操作提示（GAME_DESIGN §90）：只在「開始一場新遊戲」時消費一次場次，
-// 前五場顯示非模態教學卡；設定可永久關閉，遊戲內仍可直接操作。場次與開關落在
+// 前五場顯示可捲動模態教學卡；設定可永久關閉，關閉後恢復遊戲操作。場次與開關落在
 // UserSettings SSOT，DOM 與 Phaser 場景責任分離。
 import { bindButtonActivation } from './game/core/domButton';
+import { createFocusTrap, type FocusTrap } from './game/core/focusTrap';
 import {
   CONTROL_HINT_MAX_SESSIONS,
   loadSettings,
@@ -61,7 +62,8 @@ function consumeSession(): boolean {
 
 export function showControlHintsForSession(): () => void {
   const shell = document.getElementById('game-shell');
-  if (!shell || document.querySelector('.control-hints-card')) return noop;
+  const modalRoot = document.body ?? shell;
+  if (!shell || !modalRoot || document.querySelector('.control-hints-card')) return noop;
   if (!consumeSession()) return noop;
 
   const overlay = document.createElement('div');
@@ -72,7 +74,10 @@ export function showControlHintsForSession(): () => void {
   card.className = 'control-hints-card';
   card.dataset['controlHints'] = 'card';
   card.setAttribute('role', 'dialog');
+  card.setAttribute('aria-modal', 'true');
   card.setAttribute('aria-label', '觸控操作小提示');
+
+  let focusTrap: FocusTrap | null = null;
 
   const art = document.createElement('img');
   art.className = 'control-hints-art';
@@ -112,13 +117,15 @@ export function showControlHintsForSession(): () => void {
   const close = (): void => {
     if (closed) return;
     closed = true;
-    document.removeEventListener('keydown', onKeyDown);
+    card.removeEventListener('keydown', onKeyDown);
+    focusTrap?.release();
+    focusTrap = null;
     overlay.remove();
   };
   const onKeyDown = (event: KeyboardEvent): void => {
     if (event.key === 'Escape') close();
   };
-  document.addEventListener('keydown', onKeyDown);
+  card.addEventListener('keydown', onKeyDown);
   bindButtonActivation(closeButton, close);
   bindButtonActivation(disableButton, () => {
     updateSettings({ controlHintsEnabled: false });
@@ -126,7 +133,12 @@ export function showControlHintsForSession(): () => void {
   });
 
   overlay.appendChild(card);
-  shell.appendChild(overlay);
+  // 與設定頁一致掛在 viewport root；若留在旋轉殼內，直持時教學文字會跟著殼
+  // 旋轉，且卡片內捲動方向與玩家看到的上下方向相反。
+  modalRoot.appendChild(overlay);
+  // aria-modal 必須與實際互動一致：教學卡可在矮橫式視窗內捲動，但未按「開始玩」前
+  // 不讓搖桿／按鍵穿透卡片，避免玩家一邊讀提示一邊誤觸遊戲；焦點也限制在卡內。
+  focusTrap = createFocusTrap(card);
   return close;
 }
 

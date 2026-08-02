@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import { dismissControlHints } from './testHelpers';
+
 declare global {
   interface Window {
     __sp: {
@@ -31,6 +33,7 @@ async function startGame(page: Page): Promise<void> {
     .locator('[data-menu="start"]')
     .dispatchEvent('pointerdown', { pointerId: 9, isPrimary: true });
   await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Game');
+  await dismissControlHints(page);
 }
 
 // #809：魔王前室反制提示卡——首遇顯示、入 arena 記憶、再訪不重複打擾。
@@ -182,19 +185,21 @@ test.describe('#839 觸控筆電雙模並存', () => {
   });
 });
 
-// #817（直持情境於 Portrait project 執行）：未解鎖方向提示一次性；橫持不誤觸。
+// #817（直持情境於 Portrait project 執行）：未轉橫持續提示；真正轉橫後才記憶。
 test.describe('#817 直持方向解鎖引導', () => {
   test.skip(
     ({ viewport }) => (viewport?.height ?? 0) <= (viewport?.width ?? 0),
     '直持情境需 portrait project',
   );
 
-  test('直持：一次性方向解鎖提示卡、記憶後不重複', async ({ page }) => {
+  test('直持：未轉橫再次提示、轉橫後記憶不重複', async ({ page }) => {
     const errors = collectErrors(page);
     // 隔離其他卡片：旋轉告知與安裝指引先記憶（同殼層卡片管線會排隊搶佔安靜時刻）。
     await page.addInitScript(() => {
       localStorage.setItem('sp-rotation-notice', '1');
       localStorage.setItem('sp-install-dismissed', '1');
+      localStorage.removeItem('sp-orientation-landscape-seen');
+      localStorage.removeItem('sp-orientation-hint');
     });
     await page.goto('/');
     await expect(page.locator('#app canvas')).toBeVisible();
@@ -211,13 +216,23 @@ test.describe('#817 直持方向解鎖引導', () => {
       .locator('button', { hasText: '知道了' })
       .dispatchEvent('pointerdown', { pointerId: 5, isPrimary: true });
     await expect(card).toHaveCount(0);
-    expect(await page.evaluate(() => localStorage.getItem('sp-orientation-hint'))).toBe('1');
+    expect(await page.evaluate(() => localStorage.getItem('sp-orientation-landscape-seen'))).toBe(
+      null,
+    );
 
-    // 再訪不重複。
+    // 尚未轉橫：再次進站仍需提示。
     await page.reload();
     await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Title');
-    await page.waitForTimeout(4000);
+    await expect(page.locator('.install-card', { hasText: '橫持遊玩體驗更佳' })).toBeVisible({
+      timeout: 10000,
+    });
+
+    // 真正轉橫：收卡並寫入「已觀測 landscape」記憶。
+    await page.setViewportSize({ width: 844, height: 390 });
     await expect(page.locator('.install-card', { hasText: '橫持遊玩體驗更佳' })).toHaveCount(0);
+    expect(await page.evaluate(() => localStorage.getItem('sp-orientation-landscape-seen'))).toBe(
+      '1',
+    );
     expect(errors).toEqual([]);
   });
 });
@@ -231,6 +246,7 @@ test('#817 橫持：無方向解鎖提示、無桌機鍵位卡（互不誤觸）
   await page.addInitScript(() => {
     localStorage.setItem('sp-rotation-notice', '1');
     localStorage.setItem('sp-install-dismissed', '1');
+    localStorage.setItem('sp-orientation-landscape-seen', '1');
   });
   await page.goto('/');
   await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Title');
@@ -239,6 +255,9 @@ test('#817 橫持：無方向解鎖提示、無桌機鍵位卡（互不誤觸）
   );
   await page.waitForTimeout(4000);
   await expect(page.locator('.install-card')).toHaveCount(0);
+  expect(await page.evaluate(() => localStorage.getItem('sp-orientation-landscape-seen'))).toBe(
+    '1',
+  );
   expect(await page.evaluate(() => localStorage.getItem('sp-orientation-hint'))).toBeNull();
   expect(await page.evaluate(() => localStorage.getItem('sp-desktop-keys'))).toBeNull();
 });

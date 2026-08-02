@@ -23,7 +23,8 @@ export default defineConfig({
       name: 'Mobile Chrome',
       // iPhone 13 橫持視窗（844×390）跑 chromium：CI 免額外下載 webkit。
       use: { ...devices['iPhone 13 landscape'], browserName: 'chromium' },
-      testMatch: /(smoke|v5|v6|v7|v8|v9|v10|v11|v12|v13|v15|v16|hotfix|t2|t3|t7)\.spec\.ts/,
+      testMatch:
+        /(smoke|v5|v6|v7|v8|v9|v10|v11|v12|v13|v15|v16|hotfix|modal-landscape|t2|t3|t7)\.spec\.ts/,
     },
     {
       name: 'Mobile Chrome Portrait',
@@ -34,7 +35,7 @@ export default defineConfig({
         browserName: 'chromium',
         viewport: { width: 390, height: 844 },
       },
-      testMatch: /(portrait|t2)\.spec\.ts/,
+      testMatch: /(modal-landscape|portrait|t2)\.spec\.ts/,
     },
     {
       name: 'Desktop Chrome',

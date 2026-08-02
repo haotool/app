@@ -210,8 +210,9 @@
 - **drop-intent 緩衝窗**：`advanceDownBuffer` 純函式維護 450ms 窗——down 釋放後
   窗內 `downBuffered` 仍真；stage 下穿裁決（`shouldDropThrough`）與跳鍵琥珀指示
   （`isDropReady`）改吃 `downBuffered`，flick 後按跳仍判下跳。450ms 是為真機觸控事件、
-  幀對齊與第二指命中保留餘裕；空中下砸（`resolveJumpPress`）維持即時 down，不吃
-  緩衝窗防誤觸。
+  幀對齊與第二指命中保留餘裕；搖桿已達下向扇區後即使 `pointerup` 先於下一個遊戲幀，
+  仍由事件邊緣保留一次 drop intent 才啟動緩衝，不把真實 flick 變成普通跳。空中下砸
+  （`resolveJumpPress`）維持即時 down，不吃緩衝窗防誤觸。
 - **蹲下鉗水平**：地面 down 成立即 `moveTarget=0`（平台遊戲蹲下靜止慣例），
   斜下滑不再把玩家帶出平台；空中不鉗，保留下砸前橫向微調。
 
@@ -267,12 +268,14 @@
 - 桌機模式：方向恆正（`getShellRotation()` 恆 none＋CSS 旋轉殼旁路）、虛擬鍵隱藏
   （鍵盤唯一操作面）、首次鍵位卡（← → 移動／Z 跳／X 吸射，記憶 `sp-desktop-keys`）、
   Title 常駐「操作說明」入口（`data-menu="keys"`）隨時重看。
-- 直持引導：初次直持時以 shellCard「橫持遊玩體驗更佳（鏡頭朝右）」建議解除方向鎖定；
+- 直持引導：尚未觀測到橫持時以 shellCard「橫持遊玩體驗更佳（鏡頭朝右）」建議解除方向鎖定；
   runtime 監聽 resize／orientationchange／MediaQuery orientation，使用者實際轉橫即收卡並
-  記憶 `sp-orientation-hint`，不重複打擾；遊戲不強制鎖定方向，直持仍保留 CSS 旋轉殼；
+  記憶 `sp-orientation-landscape-seen`；按掉卡片但仍直持時，重新進站仍提示。舊
+  `sp-orientation-hint` 僅清理、不再抑制流程；遊戲不強制鎖定方向，直持仍保留 CSS 旋轉殼；
   觸控裝置（含觸控筆電）恆不進桌機模式，旋轉殼語意保留。
 - e2e（t2.spec.ts 三情境 × 三 project）：桌機（殼 transform none、#controls 隱藏、
-  鍵位卡一次性、鍵盤可操作）／直持未解鎖（提示卡一次性）／橫持（雙卡皆不誤觸）。
+  鍵位卡一次性、鍵盤可操作）／直持未轉橫再次提示／橫持（雙卡皆不誤觸）；模態 AABB
+  與截圖驗收另見 `modal-landscape.spec.ts`。
 
 ## 88. v14 按鈕配置頁操作列直欄化與標籤單行（取代 §34 操作列）
 

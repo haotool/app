@@ -99,7 +99,8 @@
   靜默覆蓋；置 `wasSettingsRecoveredFromCorruption` 旗標，main.ts 於 Title 安靜時刻
   以殼卡（§92）明確告知。
 - 一次性記憶鍵（`sp-rotation-notice`／`sp-install-dismissed`／`sp-desktop-keys`／
-  `sp-orientation-hint` 等）非偏好，**不入本 schema**。
+  `sp-orientation-landscape-seen` 等）非偏好，**不入本 schema**；舊
+  `sp-orientation-hint` 僅供清理，不再作方向提示的抑制條件。
 - 已知限制：偏好經記憶體快取、無 storage event 跨分頁同步——多分頁併發寫入為
   last-writer-wins（單分頁互動情境，接受此限制）。
 

@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import { dismissControlHints } from './testHelpers';
+
 declare global {
   interface Window {
     __sp: {
@@ -46,6 +48,7 @@ async function startGame(page: Page): Promise<void> {
     isPrimary: true,
   });
   await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Game');
+  await dismissControlHints(page);
   await expect.poll(() => page.evaluate(() => window.__sp.playerHp())).toBe(5);
 }
 

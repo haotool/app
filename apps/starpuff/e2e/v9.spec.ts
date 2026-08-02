@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import { dismissControlHints } from './testHelpers';
+
 declare global {
   interface Window {
     __sp: {
@@ -51,6 +53,7 @@ async function startGame(page: Page): Promise<void> {
     isPrimary: true,
   });
   await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Game');
+  await dismissControlHints(page);
   await expect.poll(() => page.evaluate(() => window.__sp.playerHp())).toBe(5);
 }
 
@@ -185,6 +188,7 @@ test('EX 挑戰（§58）：通關魔王節點見 EX 入口，EX 果凍王 HP 90
     isPrimary: true,
   });
   await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Game');
+  await dismissControlHints(page);
   // 前室 retrofit（§86）＋EX 血量 x1.5：走過廊道入 arena 後血條 90。
   await page.keyboard.down('ArrowRight');
   await expect.poll(() => page.evaluate(() => window.__sp.bossHp()), { timeout: 30000 }).toBe(90);

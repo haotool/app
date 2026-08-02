@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import { dismissControlHints } from './testHelpers';
+
 declare global {
   interface Window {
     __sp: {
@@ -7,6 +9,7 @@ declare global {
       stage: () => number;
       playerHp: () => number;
       bossHp: () => number;
+      lose: () => void;
       fillQuota: () => void;
       gotoLevel: (levelId: number) => void;
       damageBoss: (amount: number) => void;
@@ -44,6 +47,7 @@ async function startGame(page: Page): Promise<void> {
     isPrimary: true,
   });
   await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Game');
+  await dismissControlHints(page);
   await expect.poll(() => page.evaluate(() => window.__sp.playerHp())).toBe(5);
 }
 
@@ -207,7 +211,9 @@ test('L15 卡點二（§67 沿用）：越過 checkpoint 後死亡自 1900 重�
   expect(reached).toBeGreaterThanOrEqual(1950);
   const beforeQuota = await page.evaluate(() => window.__sp.quota());
   await page.waitForTimeout(1600);
-  await page.evaluate(() => window.__sp.hurtPlayer(5));
+  // 這一案驗證 checkpoint 分支；用既有 forceLose 鉤子隔離場上敵害的 i-frame 時序，
+  // 正式受擊管線另由 L11／T3 驗證，避免把環境碰撞 flake 誤報成 checkpoint 回歸。
+  await page.evaluate(() => window.__sp.lose());
   await expect.poll(() => page.evaluate(() => window.__sp.playerHp()), { timeout: 8000 }).toBe(5);
   const probe = await page.evaluate(() => window.__sp.probe());
   expect(Math.abs(probe.x - 1900)).toBeLessThanOrEqual(30);

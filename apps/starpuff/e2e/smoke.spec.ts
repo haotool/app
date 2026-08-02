@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import { dismissControlHints } from './testHelpers';
+
 declare global {
   interface Window {
     __sp: {
@@ -50,9 +52,11 @@ async function startGame(page: Page): Promise<void> {
   await page.goto('/');
   await expect(page.locator('#app canvas')).toBeVisible();
   await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Title');
-  // 開始按鈕位於畫布 66% 高度（TitleScene 佈局）。
-  await clickCanvas(page, 0.5, 0.66);
+  // 開始鈕的唯一指標命中 SSOT 是透明 DOM data-menu 命中盒；用真實瀏覽器點擊
+  // 避免以 canvas 比例猜測在 resize／低幀時序下落到視覺文字而漏觸發。
+  await page.locator('[data-menu="start"]').click();
   await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Game');
+  await dismissControlHints(page);
 }
 
 test('載入 Title：canvas 顯示且零 console error', async ({ page }) => {

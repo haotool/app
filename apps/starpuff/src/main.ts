@@ -40,7 +40,7 @@ applyDesktopModeClass();
 initRotationNotice();
 // 方向解鎖引導＋桌機鍵位卡（#817）：與其他殼層卡片同走安靜時刻管線依序顯示。
 initOrientationGuide();
-// PWA 安裝指引（§90）：已安裝／已忽略／不支援平台不打擾；殼內 overlay 不進 Phaser Scene。
+// PWA 安裝指引（§90）：已安裝／已忽略／不支援平台不打擾；viewport-level overlay 不進 Phaser Scene。
 initInstallGuide();
 // 螢幕常亮（§91）：遊戲進行中取得、離開釋放；不支援或被拒靜默降級。
 initWakeLock();

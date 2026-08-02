@@ -18,7 +18,7 @@
 | 2   | standalone 邊到邊需 `apple-mobile-web-app-status-bar-style: black-translucent`           | v5 補上該 meta                                                                                                   |
 | 3   | 橫持瀏海機頂緣存在 phantom 觸控死區（inset 回報 0 仍吃事件），建議頂緣 ≥20px 緩衝        | `#keys-layer` top 取 `max(20px, env(top))`；joy-zone 既有 20px 緩衝維持                                          |
 | 4   | `env()` 值冷啟動/轉向可能為 0 或 stale，須設 `max(Npx, env(...))` 地板                   | keys-layer 四向皆 `max()` 地板（20/12px）                                                                        |
-| 5   | iOS standalone 冷啟動 `100dvh` 不可靠                                                    | 維持 v4 `100vh` 決策（複查，未重工）                                                                             |
+| 5   | iOS standalone 冷啟動 `100dvh` 可能不可靠；模態又需跟隨實際可視區                        | 遊戲殼保留 `100vh` fallback；viewport-level modal 以 `100dvh`＋`100svh` 安全距呈現（2026-08-03 QA）              |
 | 6   | iOS 切 app/背景後 AudioContext 進非標準 `interrupted` 態，`resume()` 須於手勢堆疊內呼叫  | sfx.ts `resumeAudio()`（`state !== 'running'` 即 resume）＋全域 pointerdown 復聲保險＋暫停選單「繼續」手勢內恢復 |
 | 7   | 觸控目標 ≥44pt（Apple HIG）；拇指自然熱區在底部/下側緣，食指可達區在裝置上緣（雙手橫持） | 全按鍵 ≥44px（A 76 / B 72 / 暫停與靜音 hit 48 / 選單鈕 ≥52）；布局見 §34                                         |
 | 8   | 長按 loupe/選字/callout/雙擊縮放攔截                                                     | v3/v4 已滅（touch-callout/user-select/touch-action/gesturestart 全鏈，複查通過，未重工）                         |
@@ -77,11 +77,15 @@
 ### 90.1 觸控新手操作提示（首次五場）
 
 - GameScene 僅在 Title／世界地圖開啟一場新遊戲時消費一次 `sp-settings.controlHintsPlayCount`；
-  前五場顯示可關閉的教學卡，死亡重試、同一輪換關與桌機鍵盤遊玩不重複攔截。
+  前五場顯示可捲動、可關閉的模態教學卡，玩家按「開始玩」後才恢復搖桿／按鍵操作，死亡重試、
+  同一輪換關與桌機鍵盤遊玩不重複攔截。
 - 教學單一文案提示：左手大拇指操控搖桿左右、右手大拇指按 A 跳躍、右手食指按住
   B 吸入（放開或短按吐出），B 長按可連續吸取多隻；設定可永久關閉並轉入按鈕配置調整位置。
 - 教學插圖（`src/assets/ui/control-hints-onboarding.webp`）沿用 StarPuff 可愛角色與怪物語彙，
   以 CSS 輕微漂浮呈現，不改變 Phaser 關卡資產載入。
+- 行動裝置橫持時採 viewport-level 卡片與自適應雙欄，優先讓五項提示與操作列一次完整呈現；
+  極矮視窗保留卡片內垂直捲動。直持時卡片保持正向可讀，且模態開啟期間不讓卡片下方的搖桿／A／B
+  觸控誤觸，關閉後才恢復遊戲操作。
 
 ## 91. v14 觸覺回饋與螢幕常亮（調研加碼，ROI 閘通過二項）
 
@@ -99,11 +103,29 @@
 - 安裝指引與方向告知共用：`whenShellIdle`（1s 輪詢）僅在 Title
   （data-menu="start" 存在）且殼層安靜（無 controls is-active／is-configuring／
   pause-overlay／既有卡）時顯示——杜絕戰鬥中彈窗攔截操作。
-- 非模態頂緣左卡：overlay `pointer-events:none`、卡本體 `min(300px, 34%)` 寬、
-  `max-height 72%`——不遮罩、不擋開始鈕與底部選單（320–844 五視口 AABB 零重疊
-  矩陣驗證）；支援可選教學插圖、`aria-modal` 對話框語意＋Escape 關閉。
+- viewport-level 卡片：overlay 掛在 `document.body`，以 `position:fixed`、`100dvh`、
+  safe-area padding 對齊玩家實際看到的視口；不進旋轉遊戲殼，避免直持祖先 `rotate(±90deg)`
+  讓文字與捲動軸轉向。PWA／方向／恢復卡仍是非模態殼卡；操作提示與設定是可捲動模態，
+  由焦點鎖與 overlay hit-test 保護操作邊界。
+- 橫持 844×390 實測：PWA／方向／設定修復／儲存不可用卡片與操作提示、暫停、設定、按鈕配置
+  均以 AABB 檢查卡片與每顆按鈕完全落在 viewport；設定與操作提示在極矮視窗可內捲，操作列 sticky。
+  殼層卡支援可選教學插圖、`aria-modal=false` 對話框語意＋Escape 關閉；操作提示／設定卡
+  另支援 `aria-modal=true`、焦點鎖與模態 hit-test。
 - 開玩自動收卡：MutationObserver 監聽 `#controls.is-active`，進遊戲即收
   （不記憶忽略，下次回 Title 再顯示）。
+
+> **已廢止**（2026-08-03）：舊版將 shell card／操作提示掛在旋轉 `#game-shell` 內，並以左上
+> 固定卡與 `max-height:72%` 假設所有手機高度足夠；真實 844×390 橫持測試曾出現 PWA 按鈕、
+> 操作提示項目與設定列被裁切，故改採本節 viewport-level SSOT。
+
+### 92.1 方向提示與模態截圖驗收
+
+- 直持且尚未觀測到橫持時顯示「橫持遊玩體驗更佳」；按「知道了」不寫入完成記憶，
+  重新進入直持仍提示。只有實際偵測到 landscape 才寫入 `sp-orientation-landscape-seen=1`
+  並收起卡片；舊 `sp-orientation-hint` 只做清理，不再阻擋新流程。
+- Playwright `e2e/modal-landscape.spec.ts` 以 Mobile Chrome（844×390）與 Mobile Chrome Portrait
+  （390×844）實測並截圖 `screenshots/modal-landscape/`：PWA、方向、操作提示、暫停、設定、
+  按鈕配置、回訪方向更新、設定損毀修復、儲存不可用共九類卡片／模態；console error 必須為 0。
 
 ## 93. v14 殼局部 safe-area 量測（canvas 內 HUD 避讓預備）
 

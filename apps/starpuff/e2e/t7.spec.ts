@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import { dismissControlHints } from './testHelpers';
+
 // T7-A 運行時收斂守門（#819 卡 4/7/8）：PWA 更新時機閘、存檔備援恢復、統一設定頁。
 
 declare global {
@@ -30,12 +32,6 @@ function collectErrors(page: Page): string[] {
   return errors;
 }
 
-async function clickCanvas(page: Page, ratioX: number, ratioY: number): Promise<void> {
-  const box = await page.locator('#app canvas').boundingBox();
-  if (!box) throw new Error('canvas 不存在');
-  await page.mouse.click(box.x + box.width * ratioX, box.y + box.height * ratioY);
-}
-
 async function gotoTitle(page: Page): Promise<void> {
   await page.goto('/');
   await expect(page.locator('#app canvas')).toBeVisible();
@@ -44,9 +40,11 @@ async function gotoTitle(page: Page): Promise<void> {
 
 async function startGame(page: Page): Promise<void> {
   await gotoTitle(page);
-  // 開始按鈕位於畫布 66% 高度（TitleScene 佈局）。
-  await clickCanvas(page, 0.5, 0.66);
+  // 開始鈕的唯一指標命中 SSOT 是透明 DOM data-menu 命中盒；以真實瀏覽器點擊
+  // 避免 canvas 比例在 resize／低幀時序下落到視覺文字而漏觸發。
+  await page.locator('[data-menu="start"]').click();
   await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Game');
+  await dismissControlHints(page);
 }
 
 test('PWA 更新時機閘（卡 8）：遊戲中只標記 pending 絕不套用，Result 場景才自動套用', async ({
