@@ -611,6 +611,10 @@ export class GameScene extends Phaser.Scene {
   }
 
   // e2e 觀測點（§83）：魔王 FSM 階段/招式（品種未實作回 null）。
+  bossIsActive(): boolean {
+    return this.boss.isActive();
+  }
+
   bossDebugState(): { phase: string; state: string } | null {
     return this.boss.getDebugState?.() ?? null;
   }

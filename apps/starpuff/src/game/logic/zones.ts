@@ -1,9 +1,9 @@
 import type { LevelSpec } from './levels';
 
-// 五區分頁資料 SSOT（GAME_DESIGN §78，主計畫 §2.2，不 import phaser），vitest 對象。
+// 十區分頁資料 SSOT（GAME_DESIGN §78／§121，不 import phaser），vitest 對象。
 // 分區分頁地圖：每區一頁＋頁籤導航；區解鎖＝區首關解鎖（前區魔王擊破）。
 // 節點清單由 LEVELS 實際條目推導（區間過濾），關卡逐列車擴充時分頁零改動。
-// 區間端點取 number：LevelId 聯集隨列車逐步擴充，分區表先行涵蓋全 20 關藍圖。
+// 區間端點取 number，現行完整涵蓋 L1-L30。
 
 export interface ZoneSpec {
   id: number;
@@ -26,14 +26,14 @@ export const ZONES: readonly ZoneSpec[] = [
   { id: 10, nameZh: '崩盤終章', firstLevelId: 29, lastLevelId: 30 },
 ] as const;
 
-// 關卡所屬區：L1-L20 全數落於五區之一；未涵蓋 id 視為資料錯誤即擲錯。
+// 關卡所屬區：L1-L30 全數落於十區之一；未涵蓋 id 視為資料錯誤即擲錯。
 export function zoneOf(levelId: number): ZoneSpec {
   const zone = ZONES.find((z) => levelId >= z.firstLevelId && levelId <= z.lastLevelId);
   if (!zone) throw new Error(`未定義分區的關卡 id：${levelId}`);
   return zone;
 }
 
-// 區內節點：由 LEVELS 實際條目推導（列車過渡期末區可能未滿編，分頁自然收斂）。
+// 區內節點：由 LEVELS 實際條目推導，避免地圖與關卡 SSOT 分裂。
 export function levelsInZone(zone: ZoneSpec, levels: readonly LevelSpec[]): LevelSpec[] {
   return levels.filter((l) => l.id >= zone.firstLevelId && l.id <= zone.lastLevelId);
 }

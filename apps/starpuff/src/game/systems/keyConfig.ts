@@ -61,7 +61,8 @@ export function openKeyConfig(onClose?: () => void): void {
   const shell = document.getElementById('game-shell');
   const controls = document.getElementById('controls');
   const layer = document.getElementById('keys-layer');
-  if (!shell || !controls || !layer) return;
+  const modalRoot = document.body;
+  if (!shell || !controls || !layer || !modalRoot) return;
   open = true;
 
   // snapshot 供「取消」還原；先掛顯示 class 再套布局，使動態夾限可量測層尺寸。
@@ -256,6 +257,8 @@ export function openKeyConfig(onClose?: () => void): void {
     });
   }
 
-  shell.appendChild(backdrop);
-  shell.appendChild(bar);
+  // 配置列與遮罩同設定頁移至 viewport 層；遊戲殼仍保留旋轉，供真正的虛擬鍵
+  // 預覽與 pointerToLocal 依殼局部座標運作，但操作列不再被祖先 rotate 破壞排版。
+  modalRoot.appendChild(backdrop);
+  modalRoot.appendChild(bar);
 }

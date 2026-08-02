@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-2（reward 0、penalty 2、neutral 0）｜累計總分：+312
+> 本次分數變化：+0（reward 0、penalty 0、neutral 1）｜累計總分：+312
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-08-02
+- ID：neutral-starpuff-l30-gameplay-mobile-ssot-convergence
+- 原因：L30 的場地、威脅責任、形態優勢與設定覆層仍有多處分散契約，導致平台配置、補給小怪傷害、手機模態可視性與關卡可通關性只能靠人工記憶維持
+- 解法：以 L30 平台與劉董 FSM 作為玩法 SSOT，收斂補給／召喚威脅、safe-lane、命中框與入場保護，將設定與按鍵配置移至 body 並支援窄視窗捲動；補齊單元／E2E／真實瀏覽器與 audit 探針，並同步 30 關文件與產出物
 
 - 日期：2026-08-01
 - ID：penalty-starpuff-starburst-damage-lost-on-detonate

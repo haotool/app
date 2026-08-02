@@ -33,10 +33,16 @@ const collectAttacks = (fsm: Fsm, count: number): LiudongCommand[] => {
 };
 
 describe('Liudong 三階段加權表（§126）', () => {
-  it('HP 148 為全魔王頂點（>Gravion 124）；三階段招池對表', () => {
+  it('L30 安全幾何與召喚量收斂於同一 SSOT；三階段招池對表', () => {
     const fsm = createLiudongFsm();
     expect(fsm.maxHp).toBe(148);
     expect(LIUDONG.maxHp).toBeGreaterThan(124);
+    expect(LIUDONG.maxArenaMinions).toBe(1);
+    expect(LIUDONG.bodyHitboxWidthRatio).toBeGreaterThanOrEqual(0.6);
+    expect(LIUDONG.bodyHitboxWidthRatio).toBeLessThan(0.65);
+    expect(LIUDONG.paceAnchorRatio).toBe(0.68);
+    expect(LIUDONG.approachSpeedPxPerSec).toBe(125);
+    expect(LIUDONG.safeLaneCount).toBe(5);
     expect(liudongMoveTable('p1', false).map((m) => m.action)).toEqual([
       'usstock',
       'crypto',
@@ -296,6 +302,8 @@ describe('可讀性與 EX 差分紅線', () => {
     for (const ms of telegraphs) {
       expect(ms).toBeGreaterThanOrEqual(AUDIT_THRESHOLDS.telegraphMinMs);
     }
+    expect(LIUDONG.liquidationNoticeCount).toBe(8);
+    expect(LIUDONG.liquidationSpacingMs).toBeGreaterThanOrEqual(500);
   });
 
   it('EX 差分：HP ×1.5（222）；脆弱窗與生存窗時長不縮（只增體不縮窗）', () => {

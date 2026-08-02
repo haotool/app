@@ -884,7 +884,8 @@ export async function runFormStrikeProbe(
       async ({ flavor, settle }) => {
         const sp = window.__sp;
         const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-        const KEY = { left: 37, right: 39, action: 88, sp: 67 };
+        // controls.ts SSOT：C 是 SP 星暴，V 才是 TF 變身；形態技 probe 必須按 TF。
+        const KEY = { left: 37, right: 39, action: 88, tf: 86 };
         const send = (type, keyCode) => {
           const ev = new KeyboardEvent(type, { bubbles: true, cancelable: true });
           Object.defineProperty(ev, 'keyCode', { get: () => keyCode });
@@ -900,7 +901,7 @@ export async function runFormStrikeProbe(
         // trial 間狀態清理（探針可靠度）：前一輪的形態未退場、或彈匣殘留異味星，
         // 都會使 eligibleForm（要求全數同味）不成立——首輪成功、後續全敗的假象。
         if (sp.transform().form) {
-          await tap(KEY.sp, 90); // 解除變身
+          await tap(KEY.tf, 90); // 解除變身
           await sleep(200);
         }
         let guard = 0;
@@ -913,7 +914,7 @@ export async function runFormStrikeProbe(
         // probe 負責，此處消除該階段噪音。
         for (let n = 0; n < 3; n += 1) sp.grantStar(flavor);
         if (!sp.transformEligible()) return { ok: false, reason: 'not-eligible' };
-        await tap(KEY.sp, 90);
+        await tap(KEY.tf, 90);
         await sleep(200);
         if (!sp.transform().form) return { ok: false, reason: 'transform-failed' };
         // 入域：形態技多為近身（引力井 130px、水引 200px），先走到魔王側邊。

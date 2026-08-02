@@ -399,13 +399,14 @@ export const TRANSFORM_ADVANTAGE: readonly TransformAdvantageSpec[] = [
     supplyFlavor: 'zappy',
     scenarioZh: '雷化斷召線：鏈電命中蓄勢中的 Noctra 立即中斷召喚（§58 interruptSummon）',
   },
-  // §126 劉董（七形態優勢矩陣見 GAME_DESIGN §126；bot 可量測線取雷化）。
+  // §126 劉董（七形態優勢矩陣見 GAME_DESIGN §126）：L30 以引力化作為終局防守
+  // 優勢，讓玩家能用三次星體護衛＋黑洞免疫穿過終盤，而非把輸出變身當唯一解。
   {
     boss: 'liudong',
     levelId: 30,
-    form: 'volt',
-    supplyFlavor: 'zappy',
-    scenarioZh: '雷化清熊線：鏈電波及速清牛熊怪與小熊市群（PRD §6.6 反制），奪回輸出窗',
+    form: 'gravity',
+    supplyFlavor: 'boomy',
+    scenarioZh: '引力化護體線：三次星體護衛承受失誤，並免疫最後轉帳黑洞牽引，換取穩定輸出窗',
   },
   // §123 引力侯爵：L28 的 bossApplies 早已宣告 gravity-form，量化線於此補齊。
   // 供給面 levels.ts 已鋪好——boomy 0.3 ＋ gravitybub 0.25 ＝ 迴旋味 0.55 雙供給。

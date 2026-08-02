@@ -121,8 +121,12 @@ function addShakeRow(card: HTMLElement): void {
 
 export function openSettingsPage(onClose?: () => void): void {
   if (open) return;
-  const shell = document.getElementById('game-shell');
-  if (!shell) return;
+  // 模態不放進旋轉遊戲殼：直持手機時 #game-shell 會 rotate(±90deg)，
+  // 若把設定卡掛在殼內，flex/overflow 的 layout 軸會跟著旋轉，按鈕會被
+  // 排到畫面外且垂直滾動不再對應玩家看到的上下方向。模態 UI 一律掛 body，
+  // 以 viewport 座標呈現；遊戲殼仍只承載 canvas、虛擬鍵與非模態殼卡。
+  const modalRoot = document.body;
+  if (!modalRoot) return;
   open = true;
 
   const overlay = document.createElement('div');
@@ -187,7 +191,7 @@ export function openSettingsPage(onClose?: () => void): void {
   card.appendChild(closeButton);
 
   overlay.appendChild(card);
-  shell.appendChild(overlay);
+  modalRoot.appendChild(overlay);
   // 需在 append 進文件後才建立：未接上文件的節點無法取得焦點。
   focusTrap = createFocusTrap(card);
 }

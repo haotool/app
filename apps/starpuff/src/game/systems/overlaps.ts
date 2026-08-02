@@ -259,6 +259,9 @@ export function wireCombatOverlaps(scene: Phaser.Scene, hooks: CombatOverlapHook
     ) {
       return;
     }
+    // 魔王前室可吸補給怪是資源交付，不是敵方傷害源；仍由上方吞入管線與
+    // 變身接觸互動處理，僅跳過一般玩家接觸傷害。
+    if (target.getData('safeSupply') === true) return;
     // 吸入接觸豁免（§77）：被吸入中（拉力豁免窗內）的怪貼身不傷——涵蓋轉向/
     // 鬆開瞬間與出錐殘餘飛行；窗過期即恢復傷害性，未被吸的其他怪照常結算。
     if (isContactHarmless(hooks.now(), (target.getData('inhaleGraceUntil') as number) ?? 0)) {

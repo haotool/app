@@ -47,8 +47,8 @@ describe('seo-metadata SSOT', () => {
     expect(emojiPattern.test(buildSeoBody())).toBe(false);
   });
 
-  it('七區與七魔王對照完整（§122 星海終局篇六/七區入編）', () => {
-    expect(WORLD_ZONES).toHaveLength(7);
+  it('十區與十魔王對照完整（星海終局篇 L21-L30 全數入編）', () => {
+    expect(WORLD_ZONES).toHaveLength(10);
     const bosses = WORLD_ZONES.map((z) => z.boss).join('');
     for (const name of [
       '果凍王',
@@ -58,10 +58,13 @@ describe('seo-metadata SSOT', () => {
       '蝕星魔核',
       '關稅巨獸',
       '潮汐女王',
+      '鏡界館長',
+      '引力侯爵',
+      '劉董',
     ]) {
       expect(bosses).toContain(name);
     }
-    expect(WORLD_ZONES[WORLD_ZONES.length - 1]?.levels).toBe('L23-L24');
+    expect(WORLD_ZONES[WORLD_ZONES.length - 1]?.levels).toBe('L29-L30');
   });
 });
 

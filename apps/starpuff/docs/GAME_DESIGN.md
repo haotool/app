@@ -12,7 +12,7 @@
 - **手上有章號**（程式註解常見 `// …（GAME_DESIGN §62）`）→ 用下方「章號對照表」查它在哪一檔。
 - **不確定某段還算不算數** → 看 [`design/99-superseded.md`](design/99-superseded.md)
   的取代對照表，它逐條列出被取代的敘述與現行規則位置。
-- **要玩／要驗收** → 全 20 關實測攻略見 [`WALKTHROUGH.md`](WALKTHROUGH.md)。
+- **要玩／要驗收** → 全 30 關實測攻略見 [`WALKTHROUGH.md`](WALKTHROUGH.md)。
 
 ### 主句紀律（MUST）
 
@@ -34,8 +34,8 @@
 | [`00-foundations.md`](design/00-foundations.md)       | 產品定位、場景流程、技術架構與事件契約、品質門檻、版本號、跨系統架構級契約     |
 | [`01-controls-input.md`](design/01-controls-input.md) | 搖桿與 A/B/SP 鍵語意、輸入矩陣、觸控判定、移動手感、旋轉殼、虛擬鍵布局與配置頁 |
 | [`02-combat-star.md`](design/02-combat-star.md)       | 戰鬥數值、九系星味與混合星、殼盾與雷鏈、星化三形態與教學矩陣                   |
-| [`03-enemies-bosses.md`](design/03-enemies-bosses.md) | 主角與小怪 FSM、精英系統、七座魔王階段與招式、EX 變體與 P4 第二血條            |
-| [`04-levels-world.md`](design/04-levels-world.md)     | 20 關資料與節奏、五區分頁世界地圖、彩蛋、平台與環境機制、魔王關前室與增益      |
+| [`03-enemies-bosses.md`](design/03-enemies-bosses.md) | 主角與小怪 FSM、精英系統、十座魔王階段與招式、EX 變體與 P4 第二血條            |
+| [`04-levels-world.md`](design/04-levels-world.md)     | 30 關資料與節奏、十區分頁世界地圖、彩蛋、平台與環境機制、魔王關前室與增益      |
 | [`05-save-settings.md`](design/05-save-settings.md)   | 存檔 schema 與備援、重置語意、成就系統、使用者偏好 SSOT 與設定頁、PWA 更新閘   |
 | [`06-ui-shell-pwa.md`](design/06-ui-shell-pwa.md)     | 主選單與圖鑑分頁、暫停系統、HUD 命中層、結算動線、殼層卡片、PWA 安裝指引       |
 | [`07-art-audio-fx.md`](design/07-art-audio-fx.md)     | 美術資產批次與風格關鍵詞、背景視差與裝飾密度、Juice 清單、zzfx 音效表          |

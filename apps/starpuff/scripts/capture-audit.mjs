@@ -38,7 +38,9 @@ for (const vp of VIEWPORTS) {
   await page.waitForTimeout(1200);
   await shot('title');
 
-  await press('.dom-btn >> nth=0');
+  // DOM 按鈕順序會隨旋轉殼／選單入口演進，固定用 data-menu 避免 nth=0 誤點到
+  // 設定或圖鑑而讓截圖稽核在 Title→Game 間逾時。
+  await press('[data-menu="start"]');
   await waitScene('Game');
   await page.waitForTimeout(1800);
   await shot('game');
@@ -52,7 +54,11 @@ for (const vp of VIEWPORTS) {
   }
 
   await page.evaluate(() => window.__sp.skipToBoss());
-  await page.waitForFunction(() => window.__sp.bossHp() > 0, undefined, { timeout: 20000 });
+  // skipToBoss 目前語意是重啟至第一個魔王關（L4），仍須沿正式前室路徑進 arena；
+  // 明確送入場輸入，避免把測試鉤子名稱誤當成已完成入場。
+  await page.keyboard.down('ArrowRight');
+  await page.waitForFunction(() => window.__sp.bossHp() > 0, undefined, { timeout: 30000 });
+  await page.keyboard.up('ArrowRight');
   // 等入場運鏡（pan+zoom+三段落座+吼叫）結束，取戰鬥穩定幀稽核 HUD 與 boss 條。
   await page.waitForTimeout(4500);
   await shot('boss');

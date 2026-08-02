@@ -57,6 +57,8 @@ export interface EnemyUpdateContext {
   vscale: VisualScaleChannel;
   readonly target: EnemyTarget | null;
   readonly elapsedMs: number;
+  // 魔王 arena 補給個體：保留走位與吸入互動，但不啟動遠程攻擊。
+  readonly safeSupply?: boolean;
   viewCenterX(): number;
   pulseRing(x: number, y: number, radius: number, strokeTint: number): void;
   spawnBite(chompy: Phaser.Physics.Arcade.Sprite): void;
@@ -88,6 +90,15 @@ export function updateEnemyKind(
   deltaMs: number,
 ): void {
   const body = sprite.body as Phaser.Physics.Arcade.Body;
+  // 補給怪是玩家的資源路徑，不應在玩家靠近取彈時同時開啟隱形放電／迴旋刃。
+  // 只對 L30 waves/BossRoom 注入的 safeSupply 生效；FSM 召喚體未帶標記，仍保留完整攻擊。
+  if (ctx.safeSupply === true && (kind === 'zappy' || kind === 'boomy')) {
+    const direction = ctx.target ? (ctx.target.x < sprite.x ? -1 : 1) : 0;
+    body.setVelocityX(direction * (kind === 'zappy' ? 45 : 35));
+    body.setVelocityY(0);
+    sprite.setData('state', 'supply');
+    return;
+  }
   switch (kind) {
     case 'jelly': {
       if (!body.blocked.down) break;

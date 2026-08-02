@@ -74,22 +74,35 @@ function makeLevel(overrides: Partial<LevelSpec>): LevelSpec {
 interface EnemiesStub {
   system: EnemySystem;
   spawned: { kind: string; x: number; y: number }[];
-  setAlive(entries: { kind: string; active?: boolean }[]): void;
+  safeSupplyKinds: string[];
+  setAlive(entries: { kind: string; active?: boolean; x?: number }[]): void;
   aliveTotal: number;
 }
 
 function makeEnemies(): EnemiesStub {
   const spawned: { kind: string; x: number; y: number }[] = [];
-  let children: { kind: string; active: boolean }[] = [];
+  const safeSupplyKinds: string[] = [];
+  let children: { kind: string; active: boolean; x: number }[] = [];
   const stub: EnemiesStub = {
     spawned,
+    safeSupplyKinds,
     aliveTotal: 0,
     setAlive(entries) {
-      children = entries.map((entry) => ({ kind: entry.kind, active: entry.active ?? true }));
+      children = entries.map((entry) => ({
+        kind: entry.kind,
+        active: entry.active ?? true,
+        x: entry.x ?? 0,
+      }));
     },
     system: {
       spawn: (kind: string, x: number, y: number) => {
         spawned.push({ kind, x, y });
+        return {
+          setData: (key: string, value: unknown) => {
+            if (key === 'safeSupply' && value === true) safeSupplyKinds.push(kind);
+            return undefined;
+          },
+        };
       },
       aliveCount: () => stub.aliveTotal,
       getGroup: () => ({ getChildren: () => children }),
@@ -227,6 +240,56 @@ describe('spawnBossMinion 補給節奏（每損 10 HP 掉補給）', () => {
     );
     kit.spawnBossMinion();
     expect(enemies.spawned).toEqual([]);
+  });
+
+  it('L30 召喚與每 10 HP 補給共用 arena 總量上限（不形成接觸牆）', () => {
+    const enemies = makeEnemies();
+    enemies.setAlive([
+      { kind: 'jelly', x: 80 },
+      { kind: 'floaty', x: 360 },
+      { kind: 'boomy', x: 720 },
+    ]);
+    const { hooks } = makeHooks(enemies);
+    const kit = createBossKit(
+      makeScene().scene,
+      makeLevel({
+        boss: 'liudong',
+        enemyMix: [
+          { kind: 'jelly', weight: 1 },
+          { kind: 'floaty', weight: 1 },
+        ] as LevelSpec['enemyMix'],
+      }),
+      GROUND_TOP,
+      hooks,
+    );
+    kit.spawnBossMinion();
+    const liudongHooks = vi.mocked(createLiudong).mock.calls[0]?.[1] as {
+      summonMinion(kind: string, cap: number): void;
+    };
+    liudongHooks.summonMinion('jelly', 3);
+    expect(enemies.spawned).toEqual([]);
+  });
+
+  it('每 10 HP 補給小怪標記為非接觸傷害資源，召喚攻擊體不共用該標記', () => {
+    const enemies = makeEnemies();
+    const { hooks } = makeHooks(enemies);
+    const kit = createBossKit(
+      makeScene().scene,
+      makeLevel({
+        boss: 'liudong',
+        enemyMix: [{ kind: 'jelly', weight: 1 }],
+      }),
+      GROUND_TOP,
+      hooks,
+    );
+    kit.spawnBossMinion();
+    expect(enemies.safeSupplyKinds).toEqual(['jelly']);
+
+    const liudongHooks = vi.mocked(createLiudong).mock.calls[0]?.[1] as {
+      summonMinion(kind: string, cap: number): void;
+    };
+    liudongHooks.summonMinion('bearmarket', 1);
+    expect(enemies.safeSupplyKinds).toEqual(['jelly']);
   });
 });
 

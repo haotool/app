@@ -14,13 +14,28 @@ import { distanceBandOf, pickMove, type WeightedMove } from './moveTable';
 export const LIUDONG = {
   // 魔王 HP 階梯（終局章接續 §123 遞增）：Gravion 124 → Liudong 148（全遊戲頂點；
   // 落地持機型全程可傷，血池補償 free-hit 面——156 實測 high bot 攻堅不達 P3、
-  // 132 實測 26.7s 融化，公平性修正（雙車道缺口/雷射貼地豁免）後收斂 148）。
+  // 132 實測 26.7s 融化，公平性修正（安全車道/雷射貼地豁免）後收斂 148）。
   maxHp: 148,
-  bodyDamage: 1,
+  // L30 本體接觸是可跳越的失誤懲罰，不應比市場招式更快耗盡 5 格生命；
+  // 半心傷害保留貼身壓力，也讓玩家有時間讀下一個 telegraph 再撤離。
+  bodyDamage: 0.5,
+  // L30 arena 反壓上限：召喚體是可讀的個別解題，不得堆成接觸牆。
+  maxArenaMinions: 1,
+  // 全屏車道招式的安全帶寬度：五車道讓玩家用小步走位即可追上讀招，
+  // 只保留一條危險車道作為讀招與輸出取捨；系統層不得各自另立缺口數。
+  safeLaneCount: 5,
+  // 呈現層物理箱比例（相對 170×150 視覺框）：保留貼身威脅但給玩家明確
+  // 的撤離容錯；這個比例由此 SSOT 消費，禁止 systems/liudong.ts 另立數值。
+  bodyHitboxWidthRatio: 0.62,
+  bodyHitboxHeightRatio: 0.88,
+  approachSpeedPxPerSec: 125,
+  paceFrequency: 0.0005,
+  paceAmplitudeRatio: 0.1,
+  paceAnchorRatio: 0.68,
   // 階段轉換閾值（PRD §6.6）：P2 ≤70%、P3 ≤35%。
   p2HpRatio: 0.7,
   p3HpRatio: 0.35,
-  enrageSpeedMultiplier: 1.15,
+  enrageSpeedMultiplier: 1.1,
   // 補給節奏（§26 飢荒保證律）：每損 10 HP 掉補給小怪。
   minionSpawnHpStep: 10,
   // 最後轉帳（P3 一次性）：HP 閾值與黑洞牽引窗（18%——低於此值脆弱窗融血
@@ -66,7 +81,9 @@ export const LIUDONG = {
   fakeoutTelegraphMs: 700,
   doomarrowTelegraphMs: 900,
   bearcoreTelegraphMs: 700,
-  liquidationTelegraphMs: 700,
+  liquidationTelegraphMs: 850,
+  liquidationNoticeCount: 8,
+  liquidationSpacingMs: 520,
   circuitbreakerTelegraphMs: 800,
   finaltransferTelegraphMs: 1000,
   // 熔斷倒數（P3）：倒數撐過後接長脆弱窗（受擊 ×2；窗長實測回調防融血跳段）。
