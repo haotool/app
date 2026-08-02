@@ -1,5 +1,11 @@
 # @app/starpuff
 
+## 0.31.3
+
+### Patch Changes
+
+- e9d67ef: 修正部分行動 Chromium 在窄視窗調整後設定面板無法垂直捲動的情況，確保手機使用者能看見並操作完整設定內容。
+
 ## 0.31.2
 
 ### Patch Changes
