@@ -8,8 +8,8 @@ import { startBgm } from '../audio/bgm';
 import { playSfx, unlockAudio } from '../audio/sfx';
 import { createMenuBackdrop, type BackgroundHandle } from '../systems/background';
 import { addDomButton, addMuteButton, bindMenuRelayout } from '../systems/hud';
-import { closeKeyConfig, isKeyConfigOpen } from '../systems/keyConfig';
-import { closeSettingsPage, isSettingsPageOpen, openSettingsPage } from '../systems/settingsPage';
+import { isKeyConfigOpen } from '../systems/keyConfig';
+import { isSettingsPageOpen, openSettingsPage } from '../systems/settingsPage';
 
 const TITLE_GLOW_TEX = 'title-glow';
 
@@ -43,8 +43,6 @@ export class TitleScene extends Phaser.Scene {
     });
     this.events.once('shutdown', () => {
       this.backdrop?.destroy();
-      closeKeyConfig();
-      closeSettingsPage();
     });
     addMuteButton(this);
     bindMenuRelayout(this);

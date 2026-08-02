@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+0（reward 0、penalty 0、neutral 1）｜累計總分：+312
+> 本次分數變化：+0（reward 0、penalty 0、neutral 2）｜累計總分：+312
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-08-02
+- ID：neutral-starpuff-settings-viewport-release-followup
+- 原因：窄視窗設定卡修補需在既有 L30 發版後獨立發布，否則已合併主支仍可能保留 CI 揭露的手機捲動回歸
+- 解法：以獨立 patch changeset 與最小修補 PR 發布穩定 viewport 高度限制，並重新接受完整 pre-push 與手機 E2E CI 閘門
+
+- 日期：2026-08-02
+- ID：neutral-starpuff-settings-viewport-ci-regression
+- 原因：CI 真實手機 E2E 顯示設定卡在窄視窗可能沿用舊 dynamic viewport 高度，導致內容被誤判為不需捲動
+- 解法：設定卡改以穩定 viewport 高度扣除上下安全距限制最大高度，並將 body-level modal 的清理改由真正進入非 Title 場景時統一處理，避免 Phaser resize 暫態 shutdown 誤關設定；補跑 3 次手機瀏覽器案例
 
 - 日期：2026-08-02
 - ID：neutral-starpuff-l30-gameplay-mobile-ssot-convergence
