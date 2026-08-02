@@ -14,6 +14,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-08-02
+- ID：neutral-starpuff-settings-viewport-release-followup
+- 原因：窄視窗設定卡修補需在既有 L30 發版後獨立發布，否則已合併主支仍可能保留 CI 揭露的手機捲動回歸
+- 解法：以獨立 patch changeset 與最小修補 PR 發布穩定 viewport 高度限制，並重新接受完整 pre-push 與手機 E2E CI 閘門
+
+- 日期：2026-08-02
 - ID：neutral-starpuff-settings-viewport-ci-regression
 - 原因：CI 真實手機 E2E 顯示設定卡在窄視窗可能沿用舊 dynamic viewport 高度，導致內容被誤判為不需捲動
 - 解法：設定卡改以穩定 viewport 高度扣除上下安全距限制最大高度，保留窄視窗內捲並補跑 3 次手機瀏覽器案例
