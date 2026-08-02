@@ -14,6 +14,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-08-02
+- ID：neutral-starpuff-settings-viewport-ci-regression
+- 原因：CI 真實手機 E2E 顯示設定卡在窄視窗可能沿用舊 dynamic viewport 高度，導致內容被誤判為不需捲動
+- 解法：設定卡改以穩定 viewport 高度扣除上下安全距限制最大高度，保留窄視窗內捲並補跑 3 次手機瀏覽器案例
+
+- 日期：2026-08-02
 - ID：neutral-starpuff-l30-gameplay-mobile-ssot-convergence
 - 原因：L30 的場地、威脅責任、形態優勢與設定覆層仍有多處分散契約，導致平台配置、補給小怪傷害、手機模態可視性與關卡可通關性只能靠人工記憶維持
 - 解法：以 L30 平台與劉董 FSM 作為玩法 SSOT，收斂補給／召喚威脅、safe-lane、命中框與入場保護，將設定與按鍵配置移至 body 並支援窄視窗捲動；補齊單元／E2E／真實瀏覽器與 audit 探針，並同步 30 關文件與產出物
