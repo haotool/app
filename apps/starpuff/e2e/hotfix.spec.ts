@@ -316,7 +316,7 @@ test('真實觸控：斜下 45 度滑動＝蹲住不被帶出平台，點跳穿�
   expect(errors).toEqual([]);
 });
 
-// #844 反向側貼身吸入（不轉向）：暈眩殼殼停在玩家背後 ≤60px（#811 邏輯層豁免
+// #844 反向側貼身吸入（不轉向）：暈眩殼殼停在玩家背後 ≤68px（殼殼專屬 #811 邏輯層豁免
 // face-agnostic），候選 zone 未鋪反向側時 overlap 永不標記 inhalePull——本案紅燈。
 // 佈局（逐幀驗屍實測）：單發命中前方殼殼 → 縮殼旋轉 1.5s 以 ~310px/s 向左衝刺穿身
 //（受控無敵消除擊退），發射後立即向左追擊；入暈眩（fillQuota 凍結生怪，場上唯一
@@ -342,7 +342,7 @@ test('反向側貼身暈眩殼殼：不轉向按住吸入可吞下（#844）', a
   await page.keyboard.down('X');
   await page.waitForTimeout(60);
   await page.keyboard.up('X');
-  // 衝刺期沿路向左追擊（1.5s × 220px/s ≈ 330px，入窗時玩家已在殼殼近旁）。
+  // 衝刺期沿路向左追擊（新版 0.9s 短衝＋較慢水平速率，入窗後由玩家完整走位貼近）。
   // 入窗偵測用殼殼專屬「位置連續穩定」：場上若有殘留散怪，全域 inhalable 會提前
   // 觸發而誤讀衝刺中位置（stun 進場即停速，walk/spin 恆移動）。
   await page.keyboard.down('ArrowLeft');
@@ -365,33 +365,30 @@ test('反向側貼身暈眩殼殼：不轉向按住吸入可吞下（#844）', a
   expect(shellyX).toBeGreaterThan(0);
   // 主動煞車：放鍵滑行實測 27-60px 變異（60px 豁免半徑的 flake 源），反向短點
   // 吃掉動量後就地定位——追擊至入窗時玩家已在殼殼近旁，毋須再走位。
-  // 暈眩窗僅 1.6s：以下每步等待皆壓到最短，pull 必須在窗內啟動。
+  // 暈眩窗 2.2s：速度調低後仍保留足夠時間讓玩家主動走位貼近，再從背側吸入。
   await page.keyboard.up('ArrowLeft');
-  await page.keyboard.down('ArrowRight');
-  await page.waitForTimeout(50);
-  await page.keyboard.up('ArrowRight');
-  await page.waitForTimeout(160);
   const gapOf = async () => (await page.evaluate(() => window.__sp.probe())).x - shellyX;
-  // 距離超出豁免半徑時單次向內修正（往殼殼側短點；尚未按吸入，短暫朝向無妨）。
+  // 距離超出豁免半徑時持續向內修正（新版較慢巡邏/短衝不應靠敵人高速把玩家拉到位）。
   const g0 = await gapOf();
-  if (Math.abs(g0) > 55) {
+  if (Math.abs(g0) > 68) {
     const inKey = g0 > 0 ? 'ArrowLeft' : 'ArrowRight';
     await page.keyboard.down(inKey);
-    await page.waitForTimeout(60);
+    await expect
+      .poll(async () => Math.abs(await gapOf()), { timeout: 1000, polling: 25 })
+      .toBeLessThanOrEqual(68);
     await page.keyboard.up(inKey);
-    await page.waitForTimeout(180);
   }
   // 面向鎖定「遠離側」：最後一次移動方向＝面向——殼殼必落在反向側。
   const side = Math.sign((await gapOf()) || 1);
   const awayKey = side > 0 ? 'ArrowRight' : 'ArrowLeft';
   await page.keyboard.down(awayKey);
-  await page.waitForTimeout(40);
+  await page.waitForTimeout(5);
   await page.keyboard.up(awayKey);
-  await page.waitForTimeout(120);
+  await page.waitForTimeout(30);
   // 停位斷言：殼殼在背後（反向側）且位於貼身豁免半徑內。
   const finalGap = await gapOf();
   expect(Math.sign(finalGap)).toBe(side);
-  expect(Math.abs(finalGap)).toBeLessThanOrEqual(60);
+  expect(Math.abs(finalGap)).toBeLessThanOrEqual(68);
   // 不回頭按住吸入：反向豁免生效——拉入吞下（殼殼僅吞下一途會消失；殘留散怪
   // 不影響殼殼計數斷言）。
   await page.keyboard.down('X');

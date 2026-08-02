@@ -21,9 +21,11 @@ export const LIUDONG = {
   bodyDamage: 0.5,
   // L30 arena 反壓上限：召喚體是可讀的個別解題，不得堆成接觸牆。
   maxArenaMinions: 1,
-  // 全屏車道招式的安全帶寬度：五車道讓玩家用小步走位即可追上讀招，
-  // 只保留一條危險車道作為讀招與輸出取捨；系統層不得各自另立缺口數。
-  safeLaneCount: 5,
+  // 全屏車道招式的預設安全帶：恢復舊版單車道缺口，讀招後必須真的走位；
+  // 系統層不得各自另立缺口數。箭雨是唯一保留雙車道的招式，因為第二批快箭
+  // 需要一條相鄰換位緩衝，仍由同一份 SSOT 明確標示，而不是散落常數。
+  safeLaneCount: 1,
+  arrowrainSafeLaneCount: 2,
   // 呈現層物理箱比例（相對 170×150 視覺框）：保留貼身威脅但給玩家明確
   // 的撤離容錯；這個比例由此 SSOT 消費，禁止 systems/liudong.ts 另立數值。
   bodyHitboxWidthRatio: 0.62,

@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import {
   BUBBLA_FSM,
+  SHELLY_FSM,
   SPLATTA_FSM,
   SPORA_FSM,
   bubblaLeapOffsetY,
@@ -32,10 +33,10 @@ const CHOMPY_TRIGGER_PX = 120;
 const CHOMPY_WINDUP_MS = 400;
 export const CHOMPY_BITE_MS = 300;
 const CHOMPY_COOL_MS = 1200;
-// shelly：巡邏走動；首發受擊 → 縮殼旋轉衝刺 1.5s（無敵、碰牆反彈）→ 暈眩 1.6s 可吸可殺（§30/#811）。
-// 三態時序由 logic/enemyFsm.ts 決策；此處僅保留呈現層速度/縮放/擺動參數。
-export const SHELLY_WALK_SPEED = 60;
-export const SHELLY_SPIN_SPEED = 320;
+// shelly：巡邏走動；首發受擊 → 縮殼旋轉衝刺 0.9s（無敵、碰牆反彈）→ 暈眩 2.2s 可吸可殺。
+// 速度與三態時序皆由 logic/enemyFsm.ts 決策；此處只保留相容性別名與呈現層參數。
+export const SHELLY_WALK_SPEED = SHELLY_FSM.walkSpeedPxPerSec;
+export const SHELLY_SPIN_SPEED = SHELLY_FSM.spinSpeedPxPerSec;
 const SHELLY_SPIN_OMEGA = 0.02;
 export const SHELLY_SHELL_SCALE = 0.82;
 const SHELLY_WADDLE_OMEGA = 0.008;
@@ -131,7 +132,7 @@ export function updateShelly(
       break;
     }
     case 'stun': {
-      // 暈眩 1.6s（可吸/可擊殺）：昏沉搖擺＋閃白脈動＋眩星繞頭公轉（#811）。
+      // 暈眩 2.2s（可吸/可擊殺）：昏沉搖擺＋閃白脈動＋眩星繞頭公轉。
       sprite.setRotation(Math.sin(tick.stateMs * 0.02) * 0.25);
       const bright = Math.floor(tick.stateMs / SHELLY_STUN_FLASH_MS) % 2 === 0;
       sprite.setTintMode(bright ? Phaser.TintModes.FILL : Phaser.TintModes.MULTIPLY);

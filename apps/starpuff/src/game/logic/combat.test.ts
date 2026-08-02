@@ -93,6 +93,7 @@ describe('combat', () => {
     // 超出近身圈且錐外：不可拉。
     expect(isInInhalePullRange(0, 0, 1, 30, 70, 140)).toBe(false);
     expect(INHALE_NEAR_PX).toBe(60);
+    expect(isInInhalePullRange(0, 0, 1, 65, 0, 140, 68)).toBe(true);
   });
 
   it('resolveHit 正常受擊：扣血並啟動 i-frame', () => {

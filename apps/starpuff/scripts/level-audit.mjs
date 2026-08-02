@@ -407,6 +407,8 @@ async function runProbe(page, name, level, overrides = {}) {
       spinRuns: overrides.spinRuns ?? Number(opt('spin-runs', '30')),
       // 吸入窗上限跟隨 FSM SSOT：暈眩窗調參不得被儀器舊硬編上限截斷。
       stunWindowMs: SHELLY_FSM.stunMs,
+      // 旋轉期反制探針同樣跟隨 FSM；縮短 spin 時不能讓固定 800ms 長按跨進 stun。
+      spinWindowMs: SHELLY_FSM.spinMs,
     });
     return {
       probe: 'swallow',

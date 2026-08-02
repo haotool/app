@@ -55,6 +55,7 @@ import { createWaveRunner, type WaveRunner } from '../systems/waves';
 import { playMarketOpenVignette } from '../systems/liudongCinematics';
 import { bindSfxToEvents, playSfx, stopSfx } from '../audio/sfx';
 import { notifySaveUnavailable } from '../../shellCards';
+import { showControlHintsForSession } from '../../controlHints';
 
 const GROUND_TOP = VIEW.height - GROUND_HEIGHT;
 // 魔王死亡演出：慢動作 0.5s + 星爆 0.9s 後進勝利流程。
@@ -62,9 +63,17 @@ const WIN_DELAY_MS = 1500;
 // 死亡重試：噗滅演出後 ≤400ms 回到可操作（§15.1 M-09）。
 const RETRY_DELAY_MS = 350;
 
+// Phaser 的 Loader 是每個 Scene 一份、Texture Manager 卻是全 Game 共用；快速換關時，
+// 舊 Scene 尚未完成的 deferred 載入若被新 Scene 再排一次，會觸發 duplicate texture key。
+// 以 key 做跨 Scene 的 pending SSOT，等該批 Loader complete 後釋放，避免 audit／快速重試
+// 產生假 console error，也保留失敗後下一關可重試的語意。
+const pendingDeferredAssetKeys = new Set<string>();
+
 interface GameSceneData {
   levelId?: LevelId;
   deaths?: number;
+  // Title／地圖開啟的新一輪遊玩才顯示新手提示；死亡重試與同輪換關不重複打斷。
+  newSession?: boolean;
   // EX 變體挑戰（§58）：已通關魔王節點的第二入口。
   ex?: boolean;
   // 教學關死亡配額結轉（§105 D5）：僅 retryLevel 傳入，值由 carryKillsOnDeath 夾限。
@@ -87,6 +96,7 @@ export class GameScene extends Phaser.Scene {
   private deaths = 0;
   // EX 變體模式（§58）：魔王工廠與通關記錄依此分流。
   private exMode = false;
+  private newSession = false;
   // 教學關死亡配額結轉（§105 D5）：retryLevel 帶入、waves runner 以此為種子。
   private carryKills = 0;
   // 慈悲補血（§62）：評估與生成錨點委派 systems/mercyDirector（create 重建即歸零）。
@@ -125,6 +135,7 @@ export class GameScene extends Phaser.Scene {
   private terrainPlatforms: Phaser.GameObjects.Rectangle[] = [];
   private background!: BackgroundHandle;
   private controls!: ControlsSystem;
+  private closeControlHints: (() => void) | null = null;
   private player!: PlayerHandle;
   private enemies!: EnemySystem;
   private waves!: WaveRunner;
@@ -153,6 +164,7 @@ export class GameScene extends Phaser.Scene {
     this.currentLevelId = data.levelId ?? 1;
     this.deaths = data.deaths ?? 0;
     this.exMode = data.ex === true;
+    this.newSession = data.newSession === true;
     this.carryKills = data.carryKills ?? 0;
   }
 
@@ -461,6 +473,8 @@ export class GameScene extends Phaser.Scene {
     // shutdown 清理 Phaser 不接管的資源（scene.events/DOM 監聽、音訊迴圈）；fx/hud
     // 自掛自清，enemies/boss 的 group/timer/tween 由 Phaser 先行銷毀，不得重複呼叫。
     this.events.once('shutdown', () => {
+      this.closeControlHints?.();
+      this.closeControlHints = null;
       this.unbinders.forEach((off) => off());
       this.unbinders.length = 0;
       unbindSfx();
@@ -479,15 +493,27 @@ export class GameScene extends Phaser.Scene {
     });
 
     this.waves.start();
+    this.closeControlHints?.();
+    this.closeControlHints = this.newSession ? showControlHintsForSession() : null;
     // 前室魔王關（§69）：入場運鏡延至玩家走入 arena 才啟動（onEnterArena）。
     if (this.level.boss && !this.bossRoom) this.boss.spawn();
 
     // §124 W5a：變身演出級資產背景補載（分鏡／光環／徽章／形態技特效）——不入
     // 進場關鍵路徑，開戰數秒內就緒；未載齊時變身直落立繪（運行期安全回退）。
     const deferred = deferredEntriesForLevel(this.level).filter(
-      (entry) => !this.textures.exists(entry.key),
+      (entry) =>
+        !this.textures.exists(entry.key) &&
+        !pendingDeferredAssetKeys.has(entry.key) &&
+        ![this.load.list, this.load.inflight, this.load.queue].some((files) =>
+          [...files].some((file) => file.key === entry.key),
+        ),
     );
     if (deferred.length > 0) {
+      const queuedKeys = deferred.map(({ key }) => key);
+      queuedKeys.forEach((key) => pendingDeferredAssetKeys.add(key));
+      this.load.once('complete', () => {
+        queuedKeys.forEach((key) => pendingDeferredAssetKeys.delete(key));
+      });
       for (const { key, url } of deferred) this.load.image(key, url);
       this.load.start();
     }

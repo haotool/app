@@ -55,16 +55,41 @@ export function initOrientationGuide(): void {
     }, SHOW_DELAY_MS);
     return;
   }
-  // 直持：卡片顯示當下仍為 portrait（延遲期間未曾轉橫＝方向鎖定啟發式）才提示。
+
+  // 直持：記錄真實旋轉事件。使用者已經轉過橫向時，代表他知道如何遊玩，
+  // 後續不再用方向卡打斷；若卡片已出現，轉橫即收卡。
+  let observedLandscape = !isPortrait();
+  let closeCard: (() => void) | null = null;
+  const onOrientationChange = (): void => {
+    if (isPortrait()) return;
+    observedLandscape = true;
+    remember(ORIENTATION_HINT_KEY);
+    closeCard?.();
+    closeCard = null;
+  };
+  window.addEventListener('resize', onOrientationChange, { passive: true });
+  window.addEventListener('orientationchange', onOrientationChange, { passive: true });
+  const orientationMedia = window.matchMedia('(orientation: portrait)');
+  if (typeof orientationMedia.addEventListener === 'function') {
+    orientationMedia.addEventListener('change', onOrientationChange);
+  } else {
+    orientationMedia.addListener(onOrientationChange);
+  }
+
   if (!isPortrait() || hasSeen(ORIENTATION_HINT_KEY)) return;
   whenShellIdle(() => {
-    if (!isPortrait()) return;
+    if (!isPortrait() || observedLandscape) return;
     remember(ORIENTATION_HINT_KEY);
-    showShellCard({
-      title: '橫持遊玩體驗更佳',
-      description:
-        '建議開啟手機的方向解鎖（關閉直向鎖定），將手機轉橫遊玩——鏡頭朝右即正立。直持也能玩，畫面會自動轉向。',
-      buttons: [{ label: '知道了', primary: true, onPress: (close) => close() }],
-    });
+    closeCard = showShellCard(
+      {
+        title: '橫持遊玩體驗更佳',
+        description:
+          '建議解除方向鎖定（關閉直向鎖定），將手機轉橫遊玩——鏡頭朝右即正立。遊戲不會強制鎖定方向，直持時也會保留提示並自動轉向。',
+        buttons: [{ label: '知道了', primary: true, onPress: (close) => close() }],
+      },
+      () => {
+        closeCard = null;
+      },
+    );
   }, SHOW_DELAY_MS);
 }

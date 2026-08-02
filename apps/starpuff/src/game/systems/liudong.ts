@@ -212,8 +212,8 @@ export function createLiudong(
 
   // 全屏招式共用的安全帶：以玩家近旁車道為錨，連續保留 LIUDONG SSOT 指定的
   // 車道數。邊界時向場內夾限，避免「安全帶」被推到場外而形成假解。
-  const safeLanesNear = (laneCount: number): number[] => {
-    const count = Phaser.Math.Clamp(LIUDONG.safeLaneCount, 1, laneCount - 1);
+  const safeLanesNear = (laneCount: number, requestedCount = Number(LIUDONG.safeLaneCount)) => {
+    const count = Phaser.Math.Clamp(requestedCount, 1, laneCount - 1);
     const anchor = gapLaneNear(laneCount);
     const start = Phaser.Math.Clamp(anchor - Math.floor(count / 2), 0, laneCount - count);
     return Array.from({ length: count }, (_, index) => start + index);
@@ -444,7 +444,7 @@ export function createLiudong(
       delay(at, () => {
         // 缺口逐批取樣（玩家近旁）：批啟動當下錨定、寬度由 LIUDONG SSOT 控制（PRD ≥1 路線的
         // 超集——單車道 142px 對追打中的走位裕度實測不足）。
-        const safeLanes = safeLanesNear(ARROW_LANES);
+        const safeLanes = safeLanesNear(ARROW_LANES, LIUDONG.arrowrainSafeLaneCount);
         if (dying) return;
         playSfx('reveal', 0.7);
         for (let lane = 0; lane < ARROW_LANES; lane += 1) {

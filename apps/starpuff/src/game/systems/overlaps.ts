@@ -7,6 +7,7 @@ import {
   isContactHarmless,
   isInInhalePullRange,
   isInInhaleRange,
+  SHELLY_INHALE_NEAR_PX,
 } from '../logic/combat';
 import { FOAMY_FSM } from '../logic/enemyFsm';
 import { SHELL_CHARGE, SHELL_REFLECT, TRANSFORM_FORMS } from '../logic/transform';
@@ -82,7 +83,17 @@ export function applyInhalePull(
     const { x, y } = player.sprite;
     const facing = player.getFacing();
     // 錐形收斂＋貼身近域豁免（#811 → #841 泛化全可吸品種）：貼腳停位不再是死角。
-    if (!isInInhalePullRange(x, y, facing, enemy.x, enemy.y, inhaleRangePx(kind, INHALE.rangePx))) {
+    if (
+      !isInInhalePullRange(
+        x,
+        y,
+        facing,
+        enemy.x,
+        enemy.y,
+        inhaleRangePx(kind, INHALE.rangePx),
+        kind === 'shelly' ? SHELLY_INHALE_NEAR_PX : undefined,
+      )
+    ) {
       continue;
     }
     if (!enemies.isInhalable(enemy)) {

@@ -91,7 +91,7 @@ describe('Shelly 三態時序（§30）', () => {
     expect(resolveShellyHit('stun')).toBe('vulnerable');
   });
 
-  it('縮殼旋轉 1.5s：期內維持 spin（無敵窗），期滿當 tick 轉暈眩', () => {
+  it('縮殼旋轉 0.9s：期內維持 spin（無敵窗），期滿當 tick 轉暈眩', () => {
     expect(tickShelly('spin', SHELLY_FSM.spinMs - 17, 16).state).toBe('spin');
     expect(resolveShellyHit(tickShelly('spin', SHELLY_FSM.spinMs - 17, 16).state)).toBe('immune');
     expect(tickShelly('spin', SHELLY_FSM.spinMs - 16, 16)).toEqual({
@@ -101,8 +101,8 @@ describe('Shelly 三態時序（§30）', () => {
     });
   });
 
-  it('暈眩 1.6s（#811）：窗長定值 1600ms，期內可吸可殺（vulnerable），期滿復原巡邏', () => {
-    expect(SHELLY_FSM.stunMs).toBe(1600);
+  it('暈眩 2.2s：延長可吸可殺窗，期滿復原巡邏', () => {
+    expect(SHELLY_FSM.stunMs).toBe(2200);
     expect(tickShelly('stun', SHELLY_FSM.stunMs - 17, 16).state).toBe('stun');
     expect(resolveShellyHit('stun')).toBe('vulnerable');
     expect(tickShelly('stun', SHELLY_FSM.stunMs - 16, 16)).toEqual({
@@ -112,7 +112,7 @@ describe('Shelly 三態時序（§30）', () => {
     });
   });
 
-  it('全旅程步進：巡邏受擊 → 縮殼 1.5s → 暈眩 1.6s → 復原巡邏', () => {
+  it('全旅程步進：巡邏受擊 → 縮殼 0.9s → 暈眩 2.2s → 復原巡邏', () => {
     expect(resolveShellyHit('walk')).toBe('enter-spin');
     let state: ShellyState = 'spin';
     let stateMs = 0;
@@ -123,9 +123,9 @@ describe('Shelly 三態時序（§30）', () => {
       stateMs = tick.stateMs;
       trace.push(state);
     }
-    // 100ms 步進：第 15 步（1.5s）轉 stun、第 31 步（再 1.6s）復原 walk。
-    expect(trace[13]).toBe('spin');
-    expect(trace[14]).toBe('stun');
+    // 100ms 步進：第 9 步（0.9s）轉 stun、第 31 步（再 2.2s）復原 walk。
+    expect(trace[7]).toBe('spin');
+    expect(trace[8]).toBe('stun');
     expect(trace[29]).toBe('stun');
     expect(trace[30]).toBe('walk');
   });

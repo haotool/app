@@ -117,6 +117,7 @@ export function pickInRadius<T extends RadiusCandidate>(
 // 執行門檻；「找時機」技巧性由 canInhale 的暴露窗把關（衝刺期恆不可吸）。
 const SHELLY_INHALE_RANGE_MUL = 1.2;
 const SHELLY_INHALE_PULL_MUL = 1.5;
+export const SHELLY_INHALE_NEAR_PX = 68;
 
 export function inhaleRangePx(kind: EnemyKind, basePx: number): number {
   return kind === 'shelly' ? basePx * SHELLY_INHALE_RANGE_MUL : basePx;
@@ -152,9 +153,10 @@ export function isInInhalePullRange(
   targetX: number,
   targetY: number,
   rangePx: number,
+  nearPx = INHALE_NEAR_PX,
 ): boolean {
   if (isInInhaleRange(playerX, playerY, facingX, targetX, targetY, rangePx)) return true;
-  return (targetX - playerX) ** 2 + (targetY - playerY) ** 2 <= INHALE_NEAR_PX * INHALE_NEAR_PX;
+  return (targetX - playerX) ** 2 + (targetY - playerY) ** 2 <= nearPx * nearPx;
 }
 
 // 吸入接觸豁免（§77）：被吸入中的怪對玩家無接觸傷害——拉力逐幀刷新豁免窗，

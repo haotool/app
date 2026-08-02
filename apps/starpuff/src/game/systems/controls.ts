@@ -170,9 +170,10 @@ export function isJoyDown(dx: number, dy: number): boolean {
 }
 
 // drop-intent 緩衝窗（§85）：flick 手勢（滑完即抬指）與跳鍵按下相隔數十至數百 ms，
-// down 釋放後保留 300ms 意圖窗——實測人為停頓 150ms 經觸控事件與幀對齊後間隔達
-// ~270ms，250ms 窗臨界抖動；窗內按跳仍判下跳，下砸（空中）不吃此窗防誤觸。
-export const DOWN_BUFFER_MS = 300;
+// down 釋放後保留 450ms 意圖窗——實測人為停頓 150ms 再加觸控事件／幀對齊與按鍵命中
+// 往返可超過 300ms；擴大餘裕避免 flick 在真機上回到普通跳。窗內按跳仍判下跳，
+// 下砸（空中）不吃此窗防誤觸。
+export const DOWN_BUFFER_MS = 450;
 
 export function advanceDownBuffer(bufferMs: number, down: boolean, deltaMs: number): number {
   return down ? DOWN_BUFFER_MS : Math.max(0, bufferMs - deltaMs);
