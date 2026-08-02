@@ -1,5 +1,11 @@
 # @app/starpuff
 
+## 0.31.4
+
+### Patch Changes
+
+- 4f789f1: 改善 L30 反制與安全走位，並補齊手機操作提示、方向偵測、設定可視性與 PWA 安裝教學。
+
 ## 0.31.3
 
 ### Patch Changes
