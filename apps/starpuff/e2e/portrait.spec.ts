@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import { dismissControlHints } from './testHelpers';
+
 declare global {
   interface Window {
     __sp: {
@@ -41,6 +43,7 @@ test('直持 390×844：旋轉殼進場、搖桿與按鍵可操作、走星星�
   await startButton.dispatchEvent('pointerdown', { pointerId: 9, isPrimary: true });
   await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Game');
   await expect.poll(() => page.evaluate(() => window.__sp.playerHp())).toBe(5);
+  await dismissControlHints(page);
 
   // 搖桿重映射（§87 ccw 新預設）：portrait 裝置座標「往上」對應遊戲「往右」；
   // 位移以殼局部空間計算。
@@ -105,6 +108,7 @@ test('直持 390×844（sp-rotation=cw 舊方向）：殼與搖桿語意跟隨�
     .locator('[data-menu="start"]')
     .dispatchEvent('pointerdown', { pointerId: 9, isPrimary: true });
   await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Game');
+  await dismissControlHints(page);
 
   const joyZone = page.locator('#joy-zone');
   const before = await page.evaluate(() => window.__sp.probe());
@@ -160,6 +164,7 @@ test('直持 390×844（D1/D2）：預設 A/B 在右下拇指帶、真觸控點 
     .locator('[data-menu="start"]')
     .dispatchEvent('pointerdown', { pointerId: 9, isPrimary: true });
   await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Game');
+  await dismissControlHints(page);
 
   // 幾何斷言：A 中心於裝置比例（fx ≥ 0.72、fy 0.78–0.95）、B 於其上方拇指弧帶。
   const boxA = await page.locator('[data-btn="a"]').boundingBox();
@@ -336,6 +341,7 @@ test('旋轉偵測：直持提示會在使用者轉橫後收起並記憶', async
   const errors = collectErrors(page);
   await page.addInitScript(() => {
     localStorage.setItem('sp-install-dismissed', '1');
+    localStorage.removeItem('sp-orientation-landscape-seen');
     localStorage.removeItem('sp-orientation-hint');
   });
   await page.goto('/');
@@ -345,7 +351,9 @@ test('旋轉偵測：直持提示會在使用者轉橫後收起並記憶', async
 
   await page.setViewportSize({ width: 844, height: 390 });
   await expect(orientationCard).toHaveCount(0);
-  expect(await page.evaluate(() => localStorage.getItem('sp-orientation-hint'))).toBe('1');
+  expect(await page.evaluate(() => localStorage.getItem('sp-orientation-landscape-seen'))).toBe(
+    '1',
+  );
   expect(errors).toEqual([]);
 });
 
@@ -353,7 +361,7 @@ test('觸控新手提示：前五場顯示、第五場後停止，設定可永�
   const errors = collectErrors(page);
   await page.addInitScript(() => {
     localStorage.setItem('sp-install-dismissed', '1');
-    localStorage.setItem('sp-orientation-hint', '1');
+    localStorage.setItem('sp-orientation-landscape-seen', '1');
     localStorage.setItem('sp-desktop-keys', '1');
   });
 

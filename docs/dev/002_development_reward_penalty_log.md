@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+313
+> 本次分數變化：+5（reward 5、penalty 0、neutral 0）｜累計總分：+318
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,31 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-08-03
+- ID：reward-starpuff-modal-aria-contract
+- 原因：非模態殼層提示卻宣告 aria-modal=true，與實際可穿透操作及焦點行為不一致
+- 解法：殼層卡明確標示 aria-modal=false，模態教學／設定維持焦點鎖與 true 語意
+
+- 日期：2026-08-03
+- ID：reward-starpuff-checkpoint-test-determinism
+- 原因：L15 checkpoint E2E 以場上敵害致死，會被受擊無敵窗時序誤報為重生回歸
+- 解法：以既有 forceLose 驗證 checkpoint 分支，將正式受擊交由專責案例覆蓋
+
+- 日期：2026-08-03
+- ID：reward-starpuff-flick-edge-buffer
+- 原因：真實 flick 在 pointerup 早於遊戲幀時會遺失下向意圖，導致穿落退化為普通跳
+- 解法：以搖桿事件邊緣保留一次下向 intent，讓下一幀正確啟動 450ms 下穿緩衝窗
+
+- 日期：2026-08-03
+- ID：reward-starpuff-control-hint-touch-modal
+- 原因：橫式操作提示為可捲動卡片卻覆蓋真實搖桿 hit-test，導致下穿手勢在提示未關閉時失效
+- 解法：將操作提示收斂為有焦點鎖的真正模態，補齊測試先關閉 onboarding 再驗證真實多指輸入
+
+- 日期：2026-08-03
+- ID：reward-starpuff-modal-landscape-viewport-qa
+- 原因：真實 iPhone 13 橫式 844×390 測試發現 PWA／操作提示／設定內容與直式方向卡存在裁切或旋轉可讀性風險
+- 解法：將提示卡改為 body-level viewport modal、加入橫式自適應與卡內捲動、實際轉橫才記憶方向，並補齊九類模態截圖與零 console error 守門
 
 - 日期：2026-08-02
 - ID：reward-starpuff-l30-controls-onboarding

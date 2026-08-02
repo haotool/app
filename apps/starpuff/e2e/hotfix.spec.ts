@@ -1,5 +1,7 @@
 import { expect, test, type CDPSession, type Page } from '@playwright/test';
 
+import { dismissControlHints } from './testHelpers';
+
 // §77 熱修驗收：站台下＋跳穿落（雙平台型×雙輸入路）、蹲姿與跳鍵下跳指示、
 // 下砸僅真空中觸發、吸入中怪物接觸豁免（中斷後恢復傷害性）。
 // §85 真實手勢級守門：CDP dispatchTouchEvent 走真實觸控合成路徑（hit-testing＋
@@ -57,6 +59,7 @@ async function startGame(page: Page): Promise<void> {
     isPrimary: true,
   });
   await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Game');
+  await dismissControlHints(page);
   await page.evaluate(() => window.__sp.fillQuota());
 }
 

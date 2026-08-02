@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import { dismissControlHints } from './testHelpers';
+
 declare global {
   interface Window {
     __sp: {
@@ -36,6 +38,7 @@ async function startGame(page: Page): Promise<void> {
     .locator('[data-menu="start"]')
     .dispatchEvent('pointerdown', { pointerId: 9, isPrimary: true });
   await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Game');
+  await dismissControlHints(page);
 }
 
 // v16 D3：勝利結算主 CTA「下一關」——魔王關擊破後零折返接續下一區首關。

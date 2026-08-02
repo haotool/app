@@ -1,4 +1,4 @@
-// 殼層一次性卡片基建（GAME_DESIGN §90/§92）：安裝指引與方向變更告知共用。
+// 殼層卡片基建（GAME_DESIGN §90/§92）：安裝、方向、恢復與儲存狀態提示共用。
 // 卡片僅在「殼層安靜時刻」顯示——遊戲進行中／配置中／暫停選單開啟／已有他卡時延後，
 // 杜絕戰鬥中彈窗攔截操作（審查 B1 根修）。
 
@@ -53,14 +53,16 @@ export function whenShellIdle(callback: () => void, delayMs: number): void {
   setTimeout(attempt, delayMs);
 }
 
-// 建立殼內置頂卡片：aria-modal 對話框、Escape 可關閉；回傳 close 供外部收卡。
+// 建立非模態殼層提示卡：保留 dialog landmark、Escape 可關閉，但不鎖焦點或攔截底層
+// 開始鈕；真正會阻擋遊戲操作的提示／設定卡由各自的 modal focus trap 負責。
 // 遊戲開始（controls is-active）即自動收卡（不記憶忽略，下次回 Title 再顯示），
 // 防 e2e 直發事件或時序邊角讓卡片殘留到遊戲中。
 const noop = (): void => undefined;
 
 export function showShellCard(options: ShellCardOptions, onClose?: () => void): () => void {
   const shell = document.getElementById('game-shell');
-  if (!shell) return noop;
+  const modalRoot = document.body ?? shell;
+  if (!shell || !modalRoot) return noop;
 
   const overlay = document.createElement('div');
   overlay.className = 'install-overlay';
@@ -68,7 +70,7 @@ export function showShellCard(options: ShellCardOptions, onClose?: () => void): 
   const card = document.createElement('div');
   card.className = 'install-card';
   card.setAttribute('role', 'dialog');
-  card.setAttribute('aria-modal', 'true');
+  card.setAttribute('aria-modal', 'false');
   card.setAttribute('aria-label', options.title);
 
   let gameStartWatcher: MutationObserver | null = null;
@@ -136,7 +138,10 @@ export function showShellCard(options: ShellCardOptions, onClose?: () => void): 
   }
 
   overlay.appendChild(card);
-  shell.appendChild(overlay);
+  // 方向、PWA 與錯誤提示不能掛在旋轉殼內：直持時祖先 rotate 會把文字與捲動軸
+  // 一起轉 90 度。改掛 body 仍保留殼層安靜時刻與 controls watcher，但座標永遠以
+  // 使用者實際看到的 viewport 為準；單測若沒有 body 則回退到 shell。
+  modalRoot.appendChild(overlay);
   return close;
 }
 

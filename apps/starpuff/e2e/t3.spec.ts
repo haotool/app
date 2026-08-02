@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import { dismissControlHints } from './testHelpers';
+
 // T3 星暴 2.0＋SP 情境鍵驗收（#815，連動 #812 輸入面）：
 // SP 三態（引爆/變身/解除）＋隱藏條件、B 長按誤放歸零、蓄能星跨關持有/死亡清除/
 // EX 進場清除/不疊加、鍵盤 C 桌機映射。
@@ -40,6 +42,7 @@ async function startGame(page: Page): Promise<void> {
     .locator('[data-menu="start"]')
     .dispatchEvent('pointerdown', { pointerId: 9, isPrimary: true });
   await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Game');
+  await dismissControlHints(page);
   await expect.poll(() => page.evaluate(() => window.__sp.playerHp())).toBe(5);
 }
 
@@ -167,8 +170,13 @@ test.describe('行動觸控情境', () => {
     await page.keyboard.up('X');
     expect(await page.evaluate(() => window.__sp.starburst().phase)).toBe('charged');
     expect(await page.evaluate(() => window.__sp.ammo().ammo)).toBe(4);
-    // B 點按發射語意不變：再點按續射一發。
-    await page.keyboard.press('X', { delay: 120 });
+    // B 點按發射語意不變：先讓 release 被遊戲幀採樣，再以跨幀短按續射一發。
+    // headless Chromium 在長按剛結束時若同幀收到下一個 keydown，可能只留下 ammo=4，
+    // 這是測試事件時序，不是要放寬產品的點按語意。
+    await page.waitForTimeout(100);
+    await page.keyboard.down('X');
+    await page.waitForTimeout(120);
+    await page.keyboard.up('X');
     await expect
       .poll(() => page.evaluate(() => window.__sp.ammo().ammo), { timeout: 8000 })
       .toBe(3);

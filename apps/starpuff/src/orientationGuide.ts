@@ -1,12 +1,15 @@
 // 方向解鎖引導＋桌機操作提示（GAME_DESIGN §87／#817）：
-// (a) 直持（旋轉殼態）一次性建議開啟系統方向解鎖、橫持遊玩（鏡頭朝右）；
+// (a) 直持（旋轉殼態）在尚未觀測到橫持的造訪中建議開啟系統方向解鎖、橫持遊玩（鏡頭朝右）；
 // (b) 桌機（旋轉殼旁路）首次顯示鍵盤鍵位卡；Title「操作說明」入口可隨時重看。
-// 兩卡皆走 shellCards 殼層安靜時刻管線，記憶不重複打擾。
+// 兩卡皆走 shellCards 殼層安靜時刻管線；桌機鍵位卡一次性，方向卡直到真實轉橫才停止。
 
 import { isDesktopMode, isHybridKeyboardEnvironment, isPortrait } from './game/core/rotation';
 import { showShellCard, whenShellIdle } from './shellCards';
 
-export const ORIENTATION_HINT_KEY = 'sp-orientation-hint';
+// 舊版此鍵在卡片「顯示」時就寫入，無法證明玩家真的轉過橫向；新鍵只代表已觀測到
+// landscape。舊鍵不再作為免打擾依據，避免既有玩家被錯誤永久抑制方向提示。
+export const ORIENTATION_HINT_KEY = 'sp-orientation-landscape-seen';
+const LEGACY_ORIENTATION_HINT_KEY = 'sp-orientation-hint';
 export const DESKTOP_KEYS_KEY = 'sp-desktop-keys';
 const SHOW_DELAY_MS = 2000;
 
@@ -21,6 +24,14 @@ function hasSeen(key: string): boolean {
 function remember(key: string): void {
   try {
     localStorage.setItem(key, '1');
+  } catch {
+    /* noop */
+  }
+}
+
+function forgetLegacyOrientationHint(): void {
+  try {
+    localStorage.removeItem(LEGACY_ORIENTATION_HINT_KEY);
   } catch {
     /* noop */
   }
@@ -77,9 +88,11 @@ export function initOrientationGuide(): void {
   }
 
   if (!isPortrait() || hasSeen(ORIENTATION_HINT_KEY)) return;
+  // 舊版值只代表「曾看過提示」，不是「曾轉過橫向」；清掉後讓本次直持造訪
+  // 重新收到一次可讀的方向建議。真正轉橫才會寫入新鍵並停止後續提示。
+  forgetLegacyOrientationHint();
   whenShellIdle(() => {
     if (!isPortrait() || observedLandscape) return;
-    remember(ORIENTATION_HINT_KEY);
     closeCard = showShellCard(
       {
         title: '橫持遊玩體驗更佳',

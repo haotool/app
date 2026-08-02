@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import { dismissControlHints } from './testHelpers';
+
 declare global {
   interface Window {
     __sp: {
@@ -38,6 +40,7 @@ async function startGame(page: Page): Promise<void> {
     isPrimary: true,
   });
   await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Game');
+  await dismissControlHints(page);
 }
 
 // 存檔種子（§86）：exIds 指定 EX 已制霸的魔王關（additive 欄位、schema v1 不升版）。
@@ -134,6 +137,7 @@ test('L12 Prismix EX（§86）：地圖 EX 徽鈕入場 HP 120、磨破寫 exCle
     isPrimary: true,
   });
   await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Game');
+  await dismissControlHints(page);
   // EX_MODS ×1.5：80 → 120；前室 retrofit 前提下走廊道入場。
   await walkIntoArena(page, 120);
   // 入場演出完成後以正式傷害管線磨破（分裂/掙扎/合體全走 FSM，內部時序由單測把關）。

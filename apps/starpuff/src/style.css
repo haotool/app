@@ -65,9 +65,8 @@ body,
   -webkit-tap-highlight-color: transparent;
 }
 
-/* 遊戲殼與控制層禁止瀏覽器手勢；body 保留給 viewport-level modal 的垂直
-   scroll container。若 body 也鎖 none，設定卡即使有 overflow-y:auto 仍可能
-   被行動瀏覽器的 ancestor touch-action 交集規則攔掉。 */
+/* 遊戲殼與控制層禁止瀏覽器手勢；body 不鎖 touch-action，讓掛在 body 的
+   viewport-level modal 自己成為垂直 scroll container。 */
 #game-shell,
 #app,
 #app canvas,
@@ -84,11 +83,12 @@ body,
   touch-action: none;
 }
 
-/* PWA 高度用 100vh（recon A.2）：standalone 冷啟動禁 100dvh。 */
+/* 遊戲殼保留 100vh fallback；viewport-level modal 另以 100dvh 對齊行動瀏覽器可視區。 */
 html,
 body {
   width: 100%;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   background: var(--sp-bg);
   overscroll-behavior: none;
@@ -477,6 +477,10 @@ html.sp-desktop #controls.is-active {
   flex-direction: column;
   align-items: center;
   gap: 12px;
+  max-width: calc(100vw - 24px);
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 20px 30px;
   border-radius: 20px;
   border: 2px solid rgba(122, 95, 184, 0.35);
@@ -547,6 +551,9 @@ html.sp-desktop #controls.is-active {
   gap: 10px;
   width: max-content;
   max-width: calc(100vw - 24px);
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   pointer-events: auto;
 }
 
@@ -600,27 +607,37 @@ html.sp-desktop #controls.is-active {
   box-shadow: 0 0 0 4px rgba(255, 217, 102, 0.45);
 }
 
-/* 殼層卡片（§90/§92 安裝指引與方向告知共用）：非模態左側卡——不遮罩、不擋
-   開始鈕與選單（真用戶可無視卡片直接開玩），z 45 介於配置列（40）與暫停選單
-   （50）之間；隨旋轉殼轉向，視覺沿 pause-card 語彙。 */
+/* 殼層卡片（§90/§92 安裝指引、方向告知與恢復提示共用）：viewport-level
+   非模態卡——不遮罩、不擋開始鈕與選單（真用戶可無視卡片直接開玩），z 45
+   介於配置列（40）與暫停選單（50）之間；不進旋轉殼，避免祖先 rotate 破壞閱讀軸。 */
 .install-overlay {
-  position: absolute;
+  position: fixed;
   inset: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 100svh;
   z-index: var(--z-shell-card);
   pointer-events: none;
 }
 
 .install-card {
   position: absolute;
-  top: max(14px, env(safe-area-inset-top, 0px));
-  left: max(16px, env(safe-area-inset-left, 0px));
+  top: max(12px, env(safe-area-inset-top, 0px));
+  left: max(12px, env(safe-area-inset-left, 0px));
   display: flex;
   flex-direction: column;
   gap: 8px;
-  width: min(300px, 34%);
-  /* 高度避開殼底部選單帶（Title 選單列於底緣 ~15%）：極矮殼卡片內捲不壓鈕。 */
-  max-height: calc(72% - 14px);
+  width: min(
+    380px,
+    calc(100vw - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px))
+  );
+  max-width: calc(100vw - 24px);
+  max-height: calc(
+    100dvh - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)
+  );
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 14px 18px;
   border-radius: 20px;
   border: 2px solid rgba(122, 95, 184, 0.35);
@@ -686,28 +703,37 @@ html.sp-desktop #controls.is-active {
   transform: scale(0.96);
 }
 
-/* 首次五場操作提示：掛在遊戲殼內、跟著旋轉殼保持橫向閱讀；插圖只做輕微漂浮，
-   不把提示變成會干擾讀招的全螢幕特效。 */
+/* 首次五場操作提示：viewport-level modal，直持保持正向可讀、橫持依可視高度收斂；
+   插圖只做輕微漂浮，不把提示變成會干擾讀招的全螢幕特效。 */
 .control-hints-overlay {
-  position: absolute;
+  position: fixed;
   inset: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 100svh;
   z-index: var(--z-modal);
   display: grid;
   place-items: center;
-  padding: 14px;
+  padding: max(12px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px))
+    max(12px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
   background: rgba(58, 58, 74, 0.18);
-  /* 教學可讀但不攔截場內觸控：搖桿／A／B 在卡片以外仍可照常操作，
-     只有卡片自己的按鈕接收指標事件。 */
-  pointer-events: none;
+  /* 教學是可捲動的真正模態：按「開始玩」前攔截場內觸控，避免提示卡覆蓋搖桿／按鍵
+     時出現「看得到但 hit-test 送不到」的半模態狀態。 */
+  pointer-events: auto;
 }
 
 .control-hints-card {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  width: min(430px, 100%);
-  max-height: calc(100% - 12px);
+  width: min(560px, 100%);
+  max-width: calc(100vw - 24px);
+  max-height: calc(
+    100dvh - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)
+  );
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 16px 18px;
   border: 2px solid rgba(122, 95, 184, 0.35);
   border-radius: 22px;
@@ -715,10 +741,6 @@ html.sp-desktop #controls.is-active {
   box-shadow: 0 8px 28px rgba(58, 58, 74, 0.28);
   color: #3a3a4a;
   touch-action: pan-y;
-  pointer-events: none;
-}
-
-.control-hints-card button {
   pointer-events: auto;
 }
 
@@ -812,6 +834,7 @@ html.sp-desktop #controls.is-active {
   inset: 0;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   min-height: 100svh;
   display: grid;
   place-items: center;
@@ -833,7 +856,10 @@ html.sp-desktop #controls.is-active {
   max-width: 100%;
   /* 短視窗保留明確上下安全距，避免部分行動 Chromium 在 resize 後暫時沿用
      舊的 dynamic viewport 高度，讓內容誤判為完全可見而失去內捲。 */
-  max-height: min(420px, calc(100vh - 48px));
+  max-height: min(
+    560px,
+    calc(100dvh - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))
+  );
   gap: 10px;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -894,4 +920,127 @@ html.sp-desktop #controls.is-active {
 
 .settings-btn:active {
   transform: scale(0.96);
+}
+
+/* 橫式手機優先讓提示一次讀完：寬版卡片、操作提示雙欄、設定兩欄；極矮裝置仍保留
+   卡片內捲動，不讓按鈕離開 viewport。這些規則只作用於 viewport-level modal，
+   不改變遊戲殼與虛擬鍵的旋轉座標。 */
+@media (orientation: landscape) {
+  .install-card:not(.settings-card) {
+    width: min(
+      390px,
+      calc(100vw - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px))
+    );
+    gap: 6px;
+    padding: 12px 16px;
+  }
+
+  .install-card:not(.settings-card) .install-title {
+    font-size: 18px;
+  }
+
+  .install-card:not(.settings-card) .install-desc {
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  .install-card:not(.settings-card) .install-illustration {
+    max-height: 92px;
+  }
+
+  .install-card:not(.settings-card) .install-steps {
+    gap: 2px;
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  .control-hints-card {
+    gap: 7px;
+    padding: 12px 16px;
+  }
+
+  .control-hints-art {
+    width: min(100%, 150px);
+    max-height: 96px;
+  }
+
+  .control-hints-title {
+    font-size: 20px;
+  }
+
+  .control-hints-desc,
+  .control-hints-list {
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  .control-hints-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 16px;
+  }
+
+  .pause-card {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: min(520px, calc(100vw - 24px));
+    padding: 16px 20px;
+    gap: 8px 12px;
+  }
+
+  .pause-title {
+    grid-column: 1 / -1;
+  }
+
+  .pause-btn {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .settings-card {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    width: min(
+      650px,
+      calc(100vw - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px))
+    );
+    gap: 8px 14px;
+    padding: 14px 18px;
+  }
+
+  .settings-card > .install-title,
+  .settings-card > .settings-actions {
+    grid-column: 1 / -1;
+  }
+
+  .settings-card .settings-label {
+    white-space: normal;
+  }
+
+  .settings-card .settings-actions {
+    margin-bottom: -14px;
+  }
+}
+
+@media (orientation: portrait) {
+  /* 方向提示在直持時仍須保持可讀，不能跟著遊戲殼旋轉；所有殼層卡現在是 body-level。 */
+  .install-overlay {
+    display: grid;
+    place-items: center;
+    padding: max(12px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px))
+      max(12px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
+  }
+
+  .install-card {
+    position: relative;
+    inset: auto;
+    width: min(
+      360px,
+      calc(100vw - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px))
+    );
+    max-width: 100%;
+    max-height: calc(
+      100dvh - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)
+    );
+  }
 }

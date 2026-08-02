@@ -208,6 +208,9 @@ export function createControls(scene: Phaser.Scene): ControlsSystem {
   const held: Record<ButtonName, boolean> = { a: false, b: false, sp: false, tf: false };
   const joy = { id: null as number | null, dx: 0, dy: 0 };
   const cleanups: (() => void)[] = [];
+  // 事件與遊戲幀可能交錯：flick 的 pointerup 若早於下一幀，不能只靠 update() 讀到
+  // 一次 down。先記住已達下向扇區，交給下一幀啟動 drop-intent 緩衝窗。
+  let releasedDownIntent = false;
 
   // 虛擬手柄僅遊戲場景顯示：controls 系統生命週期即 GameScene 生命週期。
   const controlsRoot = document.getElementById('controls');
@@ -261,6 +264,7 @@ export function createControls(scene: Phaser.Scene): ControlsSystem {
   const thumb = zone?.querySelector<HTMLElement>('.joy-thumb') ?? null;
   if (zone && ring && thumb) {
     const center = { x: 0, y: 0 };
+    let downGestureSeen = false;
     const place = (el: HTMLElement, x: number, y: number) => {
       el.style.transform = `translate(${x - el.offsetWidth / 2}px, ${y - el.offsetHeight / 2}px)`;
     };
@@ -268,6 +272,7 @@ export function createControls(scene: Phaser.Scene): ControlsSystem {
       joy.id = null;
       joy.dx = 0;
       joy.dy = 0;
+      downGestureSeen = false;
       zone.classList.remove(ENGAGED_CLASS);
     };
     on(zone, 'pointerdown', (event) => {
@@ -292,13 +297,19 @@ export function createControls(scene: Phaser.Scene): ControlsSystem {
       const clamp = len > JOY_RADIUS ? JOY_RADIUS / len : 1;
       joy.dx = dx * clamp;
       joy.dy = dy * clamp;
+      if (isJoyDown(joy.dx, joy.dy)) downGestureSeen = true;
       place(thumb, center.x + joy.dx, center.y + joy.dy);
     });
     const release = (event: PointerEvent) => {
+      if (event.pointerId !== joy.id) return;
+      if (downGestureSeen || isJoyDown(joy.dx, joy.dy)) releasedDownIntent = true;
+      reset();
+    };
+    const cancel = (event: PointerEvent) => {
       if (event.pointerId === joy.id) reset();
     };
     on(zone, 'pointerup', release);
-    on(zone, 'pointercancel', release);
+    on(zone, 'pointercancel', cancel);
     cleanups.push(reset);
   }
 
@@ -380,7 +391,9 @@ export function createControls(scene: Phaser.Scene): ControlsSystem {
       state.left = joy.dx < -JOY_DEADZONE || keys?.LEFT.isDown === true;
       state.right = joy.dx > JOY_DEADZONE || keys?.RIGHT.isDown === true;
       state.down = isJoyDown(joy.dx, joy.dy) || keys?.DOWN.isDown === true;
-      downBufferMs = advanceDownBuffer(downBufferMs, state.down, deltaMs);
+      const downIntent = state.down || releasedDownIntent;
+      releasedDownIntent = false;
+      downBufferMs = advanceDownBuffer(downBufferMs, downIntent, deltaMs);
       state.downBuffered = downBufferMs > 0;
 
       const jumpHeld = held.a || keys?.Z.isDown === true;
