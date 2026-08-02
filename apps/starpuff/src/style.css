@@ -704,7 +704,9 @@ html.sp-desktop #controls.is-active {
   transform: none;
   width: min(420px, 100%);
   max-width: 100%;
-  max-height: calc(100dvh - 24px);
+  /* 短視窗保留明確上下安全距，避免部分行動 Chromium 在 resize 後暫時沿用
+     舊的 dynamic viewport 高度，讓內容誤判為完全可見而失去內捲。 */
+  max-height: min(420px, calc(100vh - 48px));
   gap: 10px;
   overflow-y: auto;
   overscroll-behavior: contain;
