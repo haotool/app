@@ -15,6 +15,8 @@ import { awardAchievements } from './game/logic/achievements';
 import { LEVELS } from './game/logic/levels';
 import { initShellLayout, initialShellWidth } from './game/core/shellLayout';
 import { markActiveScene } from './game/core/sceneSignal';
+import { closeKeyConfig } from './game/systems/keyConfig';
+import { closeSettingsPage } from './game/systems/settingsPage';
 import { SceneKeys, type EnemyKind, type LevelId, type SceneKey } from './game/core/types';
 import type { EnemySystem } from './game/systems/enemies';
 import type { PlayerHandle } from './game/systems/player';
@@ -131,7 +133,17 @@ initShellLayout(game);
 // 立即遍歷會得到空陣列而靜默失效（實測 data-scene 恆為 null）。
 game.events.once(Phaser.Core.Events.READY, () => {
   for (const scene of game.scene.scenes) {
-    scene.events.on(Phaser.Scenes.Events.START, () => markActiveScene(scene.scene.key as SceneKey));
+    scene.events.on(Phaser.Scenes.Events.START, () => {
+      const sceneKey = scene.scene.key as SceneKey;
+      markActiveScene(sceneKey);
+      // 設定與按鈕配置是 body-level modal；Phaser 在 resize/setGameSize 時可能短暫
+      // shutdown 再重啟 Title，不能把 transient shutdown 誤當離開主選單而關閉 modal。
+      // 真正進入其他場景時才統一清理，避免 modal 殘留到地圖／遊戲畫面。
+      if (sceneKey !== SceneKeys.Title) {
+        closeKeyConfig();
+        closeSettingsPage();
+      }
+    });
   }
   // READY 當下 Boot 已啟動，其 START 已錯過——補標一次，避免首個訊號要等到
   // 下一次場景切換才出現（PWA 更新閘在此之前會 fail-closed 而延後套用）。

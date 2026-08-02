@@ -21,7 +21,7 @@
 - 日期：2026-08-02
 - ID：neutral-starpuff-settings-viewport-ci-regression
 - 原因：CI 真實手機 E2E 顯示設定卡在窄視窗可能沿用舊 dynamic viewport 高度，導致內容被誤判為不需捲動
-- 解法：設定卡改以穩定 viewport 高度扣除上下安全距限制最大高度，保留窄視窗內捲並補跑 3 次手機瀏覽器案例
+- 解法：設定卡改以穩定 viewport 高度扣除上下安全距限制最大高度，並將 body-level modal 的清理改由真正進入非 Title 場景時統一處理，避免 Phaser resize 暫態 shutdown 誤關設定；補跑 3 次手機瀏覽器案例
 
 - 日期：2026-08-02
 - ID：neutral-starpuff-l30-gameplay-mobile-ssot-convergence
