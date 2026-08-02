@@ -619,6 +619,9 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     get elapsedMs() {
       return elapsedMs;
     },
+    get safeSupply() {
+      return false;
+    },
     viewCenterX,
     pulseRing,
     spawnBite,
@@ -670,6 +673,8 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     sprite.clearTint();
     sprite.setTintMode(Phaser.TintModes.MULTIPLY);
     sprite.setData('kind', kind);
+    // 前室安全補給標記由 bossRoom 在 spawn 後注入；池重用回一般敵人時必須清除。
+    sprite.setData('safeSupply', false);
     sprite.setData('hopMs', 0);
     // 週期計時（zappy 放電／glowy 脈衝／spora 噴發共用單計時器欄位）。
     sprite.setData('cycleMs', 0);
@@ -1045,7 +1050,15 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
           continue;
         }
         const kind = sprite.getData('kind') as EnemyKind;
-        updateEnemyKind(updateCtx, sprite, kind, deltaMs);
+        updateEnemyKind(
+          {
+            ...updateCtx,
+            safeSupply: sprite.getData('safeSupply') === true,
+          },
+          sprite,
+          kind,
+          deltaMs,
+        );
         // 孢子緩速（§53）：AI 寫速後統一封頂水平速度＋週期輕持續傷；期滿復色。
         const slowMs = (sprite.getData('slowMs') as number) ?? 0;
         if (slowMs > 0 && sprite.active) {

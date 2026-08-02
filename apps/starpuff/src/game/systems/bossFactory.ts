@@ -71,12 +71,24 @@ export function createBossKit(
   hooks: BossFactoryHooks,
 ): BossKit {
   let minionDropCount = 0;
+  const arenaMinionLimit = level.boss === 'liudong' ? LIUDONG.maxArenaMinions : Infinity;
+
+  const countArenaMinions = () =>
+    hooks
+      .enemies()
+      .getGroup()
+      .getChildren()
+      .filter(
+        (child) => child.active && (child as Phaser.Physics.Arcade.Sprite).x >= hooks.arenaLeft(),
+      ).length;
 
   // 魔王每損 10 HP 補生可吸小怪（供彈藥），arena 左右邊緣交替入場；品種輪替讀關卡 enemyMix。
   // 場上上限（§82 審查根修）：爆發傷害連觸多次掉落時夾限累積（waves 上限 +2 供給裕度），
   // 防補給怪堆積形成接觸傷害牆；彈藥保證由飢荒立即補生承擔（§26）。
   function spawnBossMinion(): void {
-    if (hooks.enemies().aliveCount() >= level.maxOnScreen + 2) return;
+    const alive = level.boss === 'liudong' ? countArenaMinions() : hooks.enemies().aliveCount();
+    const limit = level.boss === 'liudong' ? arenaMinionLimit : level.maxOnScreen + 2;
+    if (alive >= limit) return;
     const kinds = level.enemyMix.map((entry) => entry.kind);
     const kind = kinds[minionDropCount % kinds.length] ?? 'jelly';
     const x =
@@ -84,19 +96,27 @@ export function createBossKit(
         ? hooks.arenaLeft() + SPAWN_EDGE_X
         : hooks.worldWidth() - SPAWN_EDGE_X;
     minionDropCount += 1;
-    hooks
+    const supply = hooks
       .enemies()
       .spawn(kind, x, kind === 'floaty' || kind === 'gusty' ? SPAWN_AIR_Y : SPAWN_DROP_Y);
+    // 每 10 HP 的 enemyMix 生成物是「補給小怪」而非召喚攻擊體：仍保留正式
+    // spawn／吸入／變身素材，但不啟動遠程招式或以本體接觸傷害懲罰玩家。L30
+    // 的單一 arena cap 只限制召喚數，不應把供彈路徑變成貼身傷害牆。
+    supply?.setData('safeSupply', true);
   }
 
   // 魔王召喚小怪（§54 P2 floaty／§68 P2 mirri／§74 P2 bubbla）：依場上現量夾限至 cap，
   // 走正式 spawn 管線；召喚路徑同套潮汐生成調整（交叉不變式 13/17，審查修復）。
   function summonMinion(kind: EnemyKind, cap: number): void {
+    // L30 召喚體總量上限（liudongFsm SSOT）：各種小怪各自 cap 仍保留，
+    // 但不得讓 bearlet＋bullrun＋bearmarket 疊成無法走位的接觸牆。
+    const aliveTotal = countArenaMinions();
+    if (aliveTotal >= arenaMinionLimit) return;
     let alive = 0;
     for (const child of hooks.enemies().getGroup().getChildren()) {
       if (child.active && hooks.enemies().kindOf(child) === kind) alive += 1;
     }
-    for (let i = 0; i < cap - alive; i += 1) {
+    for (let i = 0; i < cap - alive && aliveTotal + i < arenaMinionLimit; i += 1) {
       const x = i % 2 === 0 ? hooks.arenaLeft() + SPAWN_EDGE_X : hooks.worldWidth() - SPAWN_EDGE_X;
       const defaultY = kind === 'floaty' ? SPAWN_AIR_Y : SPAWN_DROP_Y;
       const tide = hooks.tide();

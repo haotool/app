@@ -62,8 +62,26 @@ body,
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
-  touch-action: none;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* 遊戲殼與控制層禁止瀏覽器手勢；body 保留給 viewport-level modal 的垂直
+   scroll container。若 body 也鎖 none，設定卡即使有 overflow-y:auto 仍可能
+   被行動瀏覽器的 ancestor touch-action 交集規則攔掉。 */
+#game-shell,
+#app,
+#app canvas,
+#controls,
+#joy-zone,
+#keys-layer,
+.ctl-btn,
+.dom-btn,
+.pause-overlay,
+.pause-btn,
+.cfg-overlay,
+.cfg-bar,
+.cfg-btn {
+  touch-action: none;
 }
 
 /* PWA 高度用 100vh（recon A.2）：standalone 冷啟動禁 100dvh。 */
@@ -503,8 +521,11 @@ html.sp-desktop #controls.is-active {
 .cfg-overlay {
   /* #959：按鍵配置為模態專頁，同樣需高於暫停覆層（自暫停轉入時才不被遮蔽）；
      半透明底襯仍低於虛擬鍵本體，維持「鍵浮於襯上可拖曳」的既有語彙。 */
-  position: absolute;
+  position: fixed;
   inset: 0;
+  width: 100vw;
+  height: 100vh;
+  min-height: 100svh;
   z-index: var(--z-modal);
   background: rgba(58, 58, 74, 0.62);
   backdrop-filter: blur(2px);
@@ -515,9 +536,9 @@ html.sp-desktop #controls.is-active {
 /* 直欄結構（§88）：hint 與操作列分列；操作列空間不足時整鈕換列，
    nowrap＋flex-shrink:0 保證鈕內文字恆單行（禁字內斷行與截斷）。 */
 .cfg-bar {
-  position: absolute;
-  z-index: 40;
-  top: 16px;
+  position: fixed;
+  z-index: calc(var(--z-modal) + 1);
+  top: max(16px, env(safe-area-inset-top, 0px));
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -525,7 +546,7 @@ html.sp-desktop #controls.is-active {
   align-items: center;
   gap: 10px;
   width: max-content;
-  max-width: calc(100% - 24px);
+  max-width: calc(100vw - 24px);
   pointer-events: auto;
 }
 
@@ -656,22 +677,38 @@ html.sp-desktop #controls.is-active {
   transform: scale(0.96);
 }
 
-/* 設定頁（v19 #819 卡 4）：置中模態偏好面板，沿殼卡視覺語彙；覆蓋殼卡的
-   左上非模態定位並加遮罩擋底層誤觸（殼卡本體維持非模態不受影響）。 */
+/* 設定頁（v19 #819 卡 4）：viewport-level 置中模態偏好面板，沿殼卡視覺語彙；
+   不進旋轉遊戲殼，避免直持手機的祖先 rotate 破壞 flex 軸、命中區與滾動方向。 */
 .settings-overlay {
   /* #959：模態層——必須高於暫停覆層，否則自暫停開啟時被整片遮蔽。 */
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
   z-index: var(--z-modal);
   pointer-events: auto;
   background: rgba(58, 58, 74, 0.45);
+  padding: max(12px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px))
+    max(12px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
+  touch-action: pan-y;
 }
 
 .settings-card {
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: min(420px, 88%);
-  max-height: 86%;
+  position: relative;
+  top: auto;
+  left: auto;
+  transform: none;
+  width: min(420px, 100%);
+  max-width: 100%;
+  max-height: calc(100dvh - 24px);
   gap: 10px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
 }
 
 .settings-row {

@@ -24,8 +24,8 @@ export interface PlatformSpec {
 }
 
 // arena 相對平台（#960）：魔王 arena 的世界寬＝前室 + **動態視寬**，故靜態 x 在不同
-// 視窗下會偏移（854 視寬置中者，1200 下偏左 173px）——這正是七個魔王關 platforms
-// 恆為空的實務原因。本型別以 arena 寬比例定位，由 createTerrain 於建立時解析為世界座標。
+// 視窗下會偏移；本型別以 arena 中心的固定像素 offset 定位，由 createTerrain 於建立時
+// 解析為世界座標。固定像素與玩家跳躍射程使用同一單位，避免窄/寬視窗改變可玩性。
 export interface ArenaPlatformSpec {
   // 距 arena 中心的水平像素偏移（負為左、正為右）。
   //
@@ -36,6 +36,13 @@ export interface ArenaPlatformSpec {
   y: number;
   w: number;
 }
+
+// L30 幾何 SSOT：只保留一塊較低的中央單向平台；地面是主要通關路線，平台是
+// 讀招後的換位/越王輔助，不再用左右踏腳石把玩家導向固定跳鏈。y 是平台中心，
+// top=240，仍比劉董物理箱頂（約 259）高出安全間隙；w 只覆蓋中央輸出區。
+export const L30_ARENA_PLATFORMS = [
+  { offsetPx: 0, y: 248, w: 280 },
+] as const satisfies readonly ArenaPlatformSpec[];
 
 // v4 平台元素（§29）：data-driven 進關卡資料，由 systems/stage.ts 建立與更新。
 // oneway/moving 座標同 PlatformSpec 中心點制；moving 的 range 為 tween 目標軸向位移（可負）。
@@ -138,6 +145,9 @@ export interface LevelSpec {
   // v10 魔王關體系（§69）：anteroomPx 為前室廊道寬（runtime 世界寬＝前室＋動態視寬）；
   // anteroomBuffs 為前室二選一台座、arenaBuff 為高風險位投放（EX 不投放）。
   anteroomPx?: number;
+  // 關門鎖定後的入場讀招保護窗：涵蓋相機切換、入場演出與第一個可讀攻擊；
+  // 由 BossRoom 在鎖門當幀注入，避免玩家在責任交接期間先吃到不可讀傷害。
+  arenaEntryGraceMs?: number;
   anteroomBuffs?: readonly BuffId[];
   arenaBuff?: BuffId;
   // v12（§82）：arena 增益投放階段（缺省 P2；Voidra P2 為生存段改 P3 投放）。
@@ -2127,31 +2137,20 @@ export const LEVELS: readonly LevelSpec[] = [
     spawnIntervalMs: 2800,
     maxOnScreen: 2,
     safeZoneTailPx: 0,
-    // 補生全可吸（§26）；zappy 列首位＝補給輪替恆含雷味（雷化清熊線的星味保證
-    // ——minionDrop 依陣列序輪替，權重僅影響常態補生；zappy 常態權重壓低防
-    // 放電環成為 arena 隱形 chip 源，實測回調）。
+    // 補生全可吸（§26）；zappy 列首位保留雷味輸出，並加入 shelly 作為可讀的
+    // 防守變身供給。五種供給等量輪替，權重僅影響常態補生；minionDrop 依陣列序
+    // 輪替，讓玩家能在不同嘗試用攻擊或殼化防守解題。
     enemyMix: [
       { kind: 'zappy', weight: 0.2 },
-      { kind: 'jelly', weight: 0.3 },
-      { kind: 'floaty', weight: 0.25 },
-      { kind: 'boomy', weight: 0.25 },
+      { kind: 'shelly', weight: 0.2 },
+      { kind: 'jelly', weight: 0.2 },
+      { kind: 'floaty', weight: 0.2 },
+      { kind: 'boomy', weight: 0.2 },
     ],
     platforms: [],
-    // 越場側翼平台（#960）：劉董體高 150（占 y 250–400），單跳 98px 不足以越過，
-    // 現況需耗 2 次拍翅才過得去。兩塊側翼平台使「單跳上台 → 起跳越過」成立
-    //（自 y=305 起跳頂點 207，遠高於魔王頭頂 250），把成本降到 0–1 拍翅。
-    // 刻意不放在魔王頭頂：正上方平台會成為地面招式（K 線柱頂端 280）打不到的
-    // 安全棲身點；側翼則仍暴露於箭雨、空頭雷射與全屏彈幕。
-    // 越場踏腳石鏈（#960／#964 重設計）：三段皆在單跳射程內——
-    //   地面 400 ─上升 85→ 側台 315 ─上升 75、水平 10→ 中央台 240 ─→ 對側
-    // 修前僅兩塊側台（相距 427–600px），玩家跳得高卻飛不遠，實測跨不過去。
-    // 中央台 y=240 高於魔王頭頂 250 故無重疊；雖位於正上方，仍完整暴露於箭雨、
-    // 空頭雷射（瞄準高度夾限 140–330 涵蓋之）與全屏彈幕，非無敵棲身點。
-    arenaPlatforms: [
-      { offsetPx: -230, y: 315, w: 140 },
-      { offsetPx: 0, y: 240, w: 300 },
-      { offsetPx: 230, y: 315, w: 140 },
-    ],
+    // L30 收斂幾何：只留一塊較低中央台；左右平台移除，保留「地面走位＋中央台
+    // 讀招換位」兩條可理解路線。平台不作無敵點，箭雨/市場招仍會迫使玩家離台。
+    arenaPlatforms: L30_ARENA_PLATFORMS,
     elements: [],
     decor: [
       { key: 'prop-market-1', x: 110 },
@@ -2165,10 +2164,13 @@ export const LEVELS: readonly LevelSpec[] = [
     boss: 'liudong',
     tutorial: false,
     // §110 魔王驗收：七形態變身各有優勢情境（§126.4 對應表）。
-    bossApplies: ['transform'],
-    // 魔王關體系（§69 沿用）：前室 400px＋星力/疾風二選一；P2 高風險位刷護盾泡。
+    bossApplies: ['gravity-form', 'transform'],
+    // 魔王關體系（§69 沿用）：前室 400px＋護盾/星力二選一；P2 高風險位再刷護盾泡，
+    // 玩家可依熟悉度選擇一次性容錯或輸出，P3 仍保留變身與技巧通關空間。
     anteroomPx: 400,
-    anteroomBuffs: ['power', 'swift'],
+    // 入場演出與第一個市場招式必須先可讀再可傷；數值屬 L30 關卡流程 SSOT。
+    arenaEntryGraceMs: 7000,
+    anteroomBuffs: ['shield', 'power'],
     arenaBuff: 'shield',
   },
 ];

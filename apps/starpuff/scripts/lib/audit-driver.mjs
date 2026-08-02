@@ -167,7 +167,7 @@ export function installAuditDriver(opts) {
         snap.bodies = sp.bossBodies();
         snap.fsm = sp.bossState();
         snap.shots = sp.bossShots();
-        snap.hazards = sp.bossHazards();
+        snap.hazards = [...sp.bossHazards(), ...(sp.enemyHazards?.() ?? [])];
         snap.view = sp.view().width;
         // 變身資格真值（#848 審查修復）：連吞合成使槽數塌縮（3 發同系＝2 槽），
         // slot count 門檻永不成立——改讀 eligibleForm SSOT 觀測點。
@@ -210,7 +210,20 @@ export function installAuditDriver(opts) {
           const bods = snap.bodies && snap.bodies.length > 0 ? snap.bodies : [snap.boss];
           const dist = (px, py) => Math.round(Math.hypot(px - snap.px, py - snap.py));
           ev.nb = Math.min(...bods.map((b) => dist(b.x, b.y)));
-          ev.ne = snap.enemies.length ? Math.min(...snap.enemies.map((e) => dist(e.x, e.y))) : null;
+          if (snap.enemies.length) {
+            const nearestEnemy = snap.enemies.reduce((nearest, enemy) =>
+              dist(enemy.x, enemy.y) < dist(nearest.x, nearest.y) ? enemy : nearest,
+            );
+            ev.ne = dist(nearestEnemy.x, nearestEnemy.y);
+            ev.neKind = nearestEnemy.kind;
+            ev.neState = nearestEnemy.state ?? null;
+            ev.neSafeSupply = nearestEnemy.safeSupply === true;
+          } else {
+            ev.ne = null;
+            ev.neKind = null;
+            ev.neState = null;
+            ev.neSafeSupply = null;
+          }
           ev.ns = snap.shots.length ? Math.min(...snap.shots.map((sh) => dist(sh.x, sh.y))) : null;
           ev.nh = snap.hazards.length
             ? Math.min(
@@ -414,11 +427,23 @@ export function installAuditDriver(opts) {
       d.prevForm = tf.form;
       d.holdFire = false;
       if (transformFlavor && tf.form === null) {
-        // 補星補到滿匣：變身扣 3 後仍有餘彈可射，避免「變身＝棄械」。
+        // 補星裝成「3 顆同味資格＋2 顆保留輸出」：同味連吞會自動合成/強化，
+        // 連續 grant 5 顆並不等於 5 個槽；交錯排列避免把彈匣規則誤量成
+        //「變身＝棄械」。
         if (s.ammo === 0 && now - d.lastGrantAt >= 1200) {
           d.lastGrantAt = now;
           try {
-            for (let i = 0; i < 5; i += 1) sp.grantStar(transformFlavor);
+            const loadout =
+              transformFlavor === 'jelly'
+                ? [
+                    transformFlavor,
+                    transformFlavor,
+                    transformFlavor,
+                    transformFlavor,
+                    transformFlavor,
+                  ]
+                : ['jelly', transformFlavor, 'jelly', transformFlavor, transformFlavor];
+            for (const flavor of loadout) sp.grantStar(flavor);
           } catch {
             /* 轉場窗忽略 */
           }
@@ -467,6 +492,15 @@ export function installAuditDriver(opts) {
       const bodies = s.bodies && s.bodies.length > 0 ? s.bodies : [s.boss];
       const nearest = bodies.reduce(
         (best, b) => (Math.abs(b.x - s.px) < Math.abs(best.x - s.px) ? b : best),
+        bodies[0],
+      );
+      // 本體接觸是「玩家當下位置」的硬安全邊界，不應再延遲一個 reactionMs。
+      // 人類雖然會延遲讀招，但能從角色當下所在位置感知自己是否已貼到魔王；
+      // 只用 s.px 會在中階 bot 的感知窗內把玩家送進本體，測到的是 driver
+      // 的座標延遲漏洞而不是可學習的閃避技巧。遠端招式仍沿用 s（讀招延遲），
+      // 只把接觸保命邊界收斂到即時真值。
+      const liveNearest = bodies.reduce(
+        (best, b) => (Math.abs(b.x - snap.px) < Math.abs(best.x - snap.px) ? b : best),
         bodies[0],
       );
       // 跨越本體（W1.5 距離自適應垂直延遲）：可跨窗＝腳底 >139px（本體物理箱
@@ -649,15 +683,16 @@ export function installAuditDriver(opts) {
         }
         return;
       }
-      // 貼身接觸傷迴避（全分級保命反射，但吃感知延遲）：120px 內反向撤離，
+      // 貼身接觸傷迴避（全分級保命反射）：即時真位 180px 內反向撤離，
       // 真被釘牆（90px 內）才朝魔王方向跨越換邊（W1.5：高階滿拍翅——T2 §86
       // 實證淨高 211px > 本體高；跨越有接觸稅，寬鬆角落判定 160px 會造成
       // 常態性跨越、每次 1 hit 累積至死，故收斂為真釘牆才跨）。
-      if (Math.abs(nearest.x - s.px) < 120) {
-        const escapeDir = s.px >= nearest.x ? 1 : -1;
+      const liveBossGap = Math.abs(liveNearest.x - snap.px);
+      if (liveBossGap < 180) {
+        const escapeDir = snap.px >= liveNearest.x ? 1 : -1;
         const cornered =
-          (escapeDir < 0 && s.px < arenaLeft + 90) ||
-          (escapeDir > 0 && s.px > arenaLeft + view - 90);
+          (escapeDir < 0 && snap.px < arenaLeft + 90) ||
+          (escapeDir > 0 && snap.px > arenaLeft + view - 90);
         if (cornered && flap) {
           crossHop(-escapeDir);
           return;
@@ -873,7 +908,11 @@ export function installAuditDriver(opts) {
       }
       // 基礎輸出（低/中階）：面向魔王節流點射；無彈時遠離保距。
       if (s.ammo > 0) {
-        face(Math.sign(s.boss.x - s.px || 1));
+        // 面向與水平移動是同一組鍵：只要一直面向本體就會把玩家推進
+        // 接觸箱。保留 320px 輸出距離，讓中階也能用「停步點射」完成
+        // 可學習的安全循環；高階另有 kite 錨點，不受此基礎分支限制。
+        const outputGap = Math.abs((s.boss?.x ?? s.px) - snap.px);
+        face(outputGap < 320 ? 0 : Math.sign(s.boss.x - s.px || 1));
         if (levelId === 20 && now - d.lastJumpAt >= 900) jump();
         if (now - d.lastShotAt >= 340) shoot();
       } else {

@@ -1,73 +1,49 @@
 import { describe, expect, it } from 'vitest';
 import { GRAVITY_Y, PLAYER, VIEW } from '../core/config';
-import { getLevel } from './levels';
+import { maxJumpClearancePx } from './difficulty';
+import { L30_ARENA_PLATFORMS, getLevel } from './levels';
+import { LIUDONG } from './liudongFsm';
 
-// L30 越場踏腳石鏈（#960／#964 重設計）。
-//
-// #964 教訓：初版僅驗算「跳得上」與「越得過魔王頭頂」，**漏了水平射程**——兩塊側台
-// 相距 427–600px 而單跳只飛 205px，玩家實測跨不過去。且原以 xRatio 比例定位，使間距
-// 隨視寬膨脹；跳躍射程是固定像素，幾何必須同單位，故改 offsetPx。
-
+// L30 中央平台幾何（#960／#964）：平台不是固定跳鏈，而是讀招後的換位工具；
+// 地面永遠保留完整通路，且平台以固定像素 offset 解析，不受視窗寬度改變可玩性。
 const GROUND_TOP = VIEW.height - 80;
-// 劉董體型（liudong.ts 鏡像）。
-const BOSS_BODY_W = 170;
+const PLATFORM_H = 16;
+// 劉董體型與物理箱（liudong.ts 鏡像）：視覺高 150，物理高 88%。
 const BOSS_BODY_H = 150;
-const BOSS_TOP_Y = GROUND_TOP - BOSS_BODY_H;
-
-// 單跳能力：頂點 v²/2g、滯空 2v/g、水平射程 speed × 滯空。
-const JUMP_APEX_PX = (PLAYER.jumpVelocity * PLAYER.jumpVelocity) / (2 * GRAVITY_Y);
-const JUMP_AIRTIME_S = (2 * Math.abs(PLAYER.jumpVelocity)) / GRAVITY_Y;
-const JUMP_RANGE_PX = PLAYER.moveSpeed * JUMP_AIRTIME_S;
+const BOSS_PHYS_TOP_Y =
+  GROUND_TOP - BOSS_BODY_H / 2 - (BOSS_BODY_H * LIUDONG.bodyHitboxHeightRatio) / 2;
 
 const level = getLevel(30);
 const platforms = [...(level.arenaPlatforms ?? [])].sort((a, b) => a.offsetPx - b.offsetPx);
 
-describe('L30 越場踏腳石鏈（#964）', () => {
-  it('左右對稱，且含一塊位於 arena 正中的中央台', () => {
+describe('L30 中央平台幾何（#964）', () => {
+  it('只保留一塊位於 arena 正中的平台，左右側台已移除', () => {
     const offsets = platforms.map((p) => p.offsetPx);
-    expect(offsets.length).toBeGreaterThanOrEqual(3);
-    expect(offsets[0]).toBe(-(offsets[offsets.length - 1] ?? 0));
-    expect(offsets).toContain(0);
+    expect(platforms).toHaveLength(1);
+    expect(platforms).toEqual([...L30_ARENA_PLATFORMS]);
+    expect(offsets).toEqual([0]);
   });
 
-  it('地面可單跳踏上最低階', () => {
-    const lowest = platforms.reduce((a, b) => (a.y > b.y ? a : b));
-    expect(GROUND_TOP - lowest.y).toBeLessThan(JUMP_APEX_PX);
+  it('平台比舊版中央台低，但仍在滿拍翅可達高度內', () => {
+    const [mid] = platforms;
+    expect(mid?.y ?? 0).toBeGreaterThan(240);
+    const platformTop = (mid?.y ?? GROUND_TOP) - PLATFORM_H / 2;
+    expect(GROUND_TOP - platformTop).toBeLessThanOrEqual(maxJumpClearancePx());
   });
 
-  // 本次核心回歸點：修前只驗高度不驗水平，遂完全跨不過去。
-  it('相鄰平台的水平間隙皆在單跳射程內', () => {
-    for (let i = 1; i < platforms.length; i += 1) {
-      const prev = platforms[i - 1]!;
-      const cur = platforms[i]!;
-      const gap = cur.offsetPx - cur.w / 2 - (prev.offsetPx + prev.w / 2);
-      expect(gap, `間隙 ${i}`).toBeLessThan(JUMP_RANGE_PX);
-    }
+  it('中央平台不侵入劉董物理箱，並保留足夠水平承接空間', () => {
+    const [mid] = platforms;
+    expect((mid?.y ?? GROUND_TOP) + PLATFORM_H / 2).toBeLessThan(BOSS_PHYS_TOP_Y);
+    expect(Math.abs(mid?.offsetPx ?? Infinity)).toBe(0);
+    expect(mid?.w ?? 0).toBeGreaterThanOrEqual(PLAYER.moveSpeed * 1.2);
   });
 
-  it('相鄰平台的高低差皆在單跳頂點內', () => {
-    for (let i = 1; i < platforms.length; i += 1) {
-      const rise = Math.abs((platforms[i - 1]?.y ?? 0) - (platforms[i]?.y ?? 0));
-      expect(rise, `高低差 ${i}`).toBeLessThan(JUMP_APEX_PX);
-    }
-  });
-
-  it('中央台高於魔王頭頂，不與其體積重疊', () => {
-    const mid = platforms.find((p) => p.offsetPx === 0);
-    expect(mid).toBeDefined();
-    expect(mid?.y ?? 0).toBeLessThan(BOSS_TOP_Y);
-  });
-
-  it('側台位於魔王體寬之外', () => {
-    for (const p of platforms) {
-      if (p.offsetPx === 0) continue;
-      expect(Math.abs(p.offsetPx) - p.w / 2).toBeGreaterThan(BOSS_BODY_W / 2);
-    }
-  });
-
-  it('反證：修前兩側配置（無中央台）水平間隙超出射程', () => {
-    // xRatio 0.25/0.75 於最小視寬即相距 0.5 × 854 = 427px，扣掉兩側各半個平台寬仍超標。
+  it('固定像素 offset 不因寬視窗改變，避免再次引入跨距陷阱', () => {
+    const [mid] = platforms;
+    expect(mid?.offsetPx).toBe(0);
+    // 修前兩側 xRatio 平台在最小視寬的間隙已超過單跳水平射程；現在不再存在該路線。
     const legacyGap = 0.5 * VIEW.minWidth - 120;
-    expect(legacyGap).toBeGreaterThan(JUMP_RANGE_PX);
+    const jumpRangePx = PLAYER.moveSpeed * ((2 * Math.abs(PLAYER.jumpVelocity)) / GRAVITY_Y);
+    expect(legacyGap).toBeGreaterThan(jumpRangePx);
   });
 });

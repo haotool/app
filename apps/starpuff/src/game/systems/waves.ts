@@ -235,7 +235,10 @@ export function createWaveRunner(
     }
     // 潮汐關生成調整（§71 交叉不變式 13/17）：漲潮期品種替換與落點上收。
     const adjusted = hooks.adjustSpawn?.(kind, SPAWN_Y[kind]) ?? { kind, y: SPAWN_Y[kind] };
-    enemies.spawn(adjusted.kind, x, adjusted.y);
+    const supply = enemies.spawn(adjusted.kind, x, adjusted.y);
+    // 魔王 arena 的 waves spawn 是飢荒保證供給，不是額外攻擊波；正式 spawn、吸入／
+    // 變身互動保留，但補給個體不啟動遠程攻擊或本體接觸傷害。
+    supply?.setData('safeSupply', level.boss !== null);
   }
 
   function showTutorial(text: string, fontSize = '24px'): void {

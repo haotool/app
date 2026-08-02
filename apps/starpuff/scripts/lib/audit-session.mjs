@@ -56,11 +56,14 @@ export async function gotoLevel(page, levelId, ex = false) {
   await sleep(500);
 }
 
-// 魔王前室直走（純標準星紀律：不拾增益）：至 bossHp>0 表示入場運鏡完成。
+// 魔王前室直走（純標準星紀律：不拾增益）：等待 Boss 真正 active；bossHp 會在
+// 入場演出開始時先建立，不能把「已建立血量」誤當成「已進入可傷狀態」。
 export async function enterArena(page) {
   await page.keyboard.down('ArrowRight');
   const entered = await page
-    .waitForFunction(() => window.__sp.bossHp() > 0, null, { timeout: 30000 })
+    .waitForFunction(() => window.__sp.bossHp() > 0 && window.__sp.bossActive?.() === true, null, {
+      timeout: 30000,
+    })
     .then(() => true)
     .catch(() => false);
   await page.keyboard.up('ArrowRight');

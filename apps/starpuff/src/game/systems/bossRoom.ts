@@ -100,7 +100,7 @@ function ensureBuffTextures(scene: Phaser.Scene): void {
 export interface BossRoomHooks {
   player(): PlayerHandle;
   playerHp(): number;
-  spawnSupply(kind: EnemyKind, x: number, y: number): void;
+  spawnSupply(kind: EnemyKind, x: number, y: number): Phaser.Physics.Arcade.Sprite | null;
   onPickBuff(id: BuffId): void;
   // 進 arena 單向門鎖閉當幀觸發一次：GameScene 據此停跟隨、對齊相機並啟動魔王入場。
   onEnterArena(): void;
@@ -158,7 +158,10 @@ export function createBossRoom(
   // 可吸補給怪 ×3（進場即可滿匣）：取補給混編前三種，走正式 spawn 管線。
   const kinds: EnemyKind[] = level.enemyMix.map((entry) => entry.kind);
   SUPPLY_XS.forEach((x, index) => {
-    hooks.spawnSupply(kinds[index % kinds.length] ?? 'jelly', x, GROUND_TOP - 60);
+    const supply = hooks.spawnSupply(kinds[index % kinds.length] ?? 'jelly', x, GROUND_TOP - 60);
+    // 前室個體的責任是補匣，不是再加一層接觸傷害；仍保留正式 spawn、可吸入與
+    // 變身互動，僅在 overlap 傷害單點標記為安全補給。標記會在池重用時重置。
+    supply?.setData('safeSupply', true);
   });
 
   function spawnFloatingBuff(
@@ -292,6 +295,10 @@ export function createBossRoom(
     objects.push(door);
     playSfx('break');
     burstSmall(scene, anteroomPx, GROUND_TOP - 80, 0xc5a8e8);
+    // 關門、相機切換與 Boss 入場是同一個責任交接區段：由關卡 SSOT 提供
+    // 一次性保護，讓玩家先讀完入場演出與第一個招式，再承擔正常碰撞傷害。
+    const entryGraceMs = level.arenaEntryGraceMs ?? 0;
+    if (entryGraceMs > 0) hooks.player().grantInvulnerability(entryGraceMs);
     hooks.onEnterArena();
   }
 

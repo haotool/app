@@ -218,3 +218,99 @@ test('直持 390×844（D1/D2）：預設 A/B 在右下拇指帶、真觸控點 
   await page.waitForTimeout(400);
   expect(errors).toEqual([]);
 });
+
+// L30-UX：設定與按鈕配置是 viewport-level modal，不能被直持旋轉殼改變 layout 軸；
+// 短視窗則必須保留可操作的垂直 scroll container，避免完成/取消鈕落出畫面。
+test('直持設定：面板完整可見、短視窗可垂直滾動、按鈕配置不被旋轉殼擠出', async ({ page }) => {
+  const errors = collectErrors(page);
+  await page.goto('/');
+  await expect(page.locator('#app canvas')).toBeVisible();
+  await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Title');
+
+  await page.locator('[data-menu="settings"]').click();
+  const settingsCard = page.locator('.settings-card');
+  await expect(settingsCard).toBeVisible();
+  const fullMetrics = await page.evaluate(() => {
+    const card = document.querySelector<HTMLElement>('.settings-card');
+    const overlay = document.querySelector<HTMLElement>('.settings-overlay');
+    if (!card || !overlay) throw new Error('設定模態不存在');
+    const cardRect = card.getBoundingClientRect();
+    const buttonRects = Array.from(card.querySelectorAll('button')).map((button) => {
+      const rect = button.getBoundingClientRect();
+      return { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right };
+    });
+    return {
+      parent: overlay.parentElement?.tagName,
+      card: {
+        top: cardRect.top,
+        bottom: cardRect.bottom,
+        left: cardRect.left,
+        right: cardRect.right,
+      },
+      buttons: buttonRects,
+      touchAction: getComputedStyle(card).touchAction,
+    };
+  });
+  expect(fullMetrics.parent).toBe('BODY');
+  expect(fullMetrics.card.top).toBeGreaterThanOrEqual(0);
+  expect(fullMetrics.card.bottom).toBeLessThanOrEqual(844);
+  for (const button of fullMetrics.buttons) {
+    expect(button.top).toBeGreaterThanOrEqual(0);
+    expect(button.bottom).toBeLessThanOrEqual(844);
+    expect(button.left).toBeGreaterThanOrEqual(0);
+    expect(button.right).toBeLessThanOrEqual(390);
+  }
+  expect(fullMetrics.touchAction).toBe('pan-y');
+
+  // 壓低 viewport 模擬手機瀏覽器可視區不足：內容超出時 scrollTop 必須真的可前進。
+  await page.setViewportSize({ width: 390, height: 360 });
+  await expect
+    .poll(() => settingsCard.evaluate((card) => card.scrollHeight > card.clientHeight))
+    .toBe(true);
+  await settingsCard.evaluate((card) => {
+    card.scrollTop = card.scrollHeight;
+  });
+  expect(await settingsCard.evaluate((card) => card.scrollTop)).toBeGreaterThan(0);
+  await page.locator('[data-setting="close"]').click();
+  await expect(settingsCard).toHaveCount(0);
+
+  // 同一條直持路徑進入配置專頁：操作列也必須留在 viewport 內。
+  await page.locator('[data-menu="settings"]').click();
+  await page.locator('[data-setting="key-config"]').click();
+  const configMetrics = await page.evaluate(() => {
+    const bar = document.querySelector<HTMLElement>('.cfg-bar');
+    if (!bar) throw new Error('按鈕配置列不存在');
+    const rect = bar.getBoundingClientRect();
+    const buttons = Array.from(bar.querySelectorAll('button')).map((button) => {
+      const buttonRect = button.getBoundingClientRect();
+      return {
+        top: buttonRect.top,
+        bottom: buttonRect.bottom,
+        left: buttonRect.left,
+        right: buttonRect.right,
+      };
+    });
+    return {
+      parent: bar.parentElement?.tagName,
+      rect: { top: rect.top, bottom: rect.bottom },
+      buttons,
+    };
+  });
+  expect(configMetrics.parent).toBe('BODY');
+  expect(configMetrics.rect.top).toBeGreaterThanOrEqual(0);
+  expect(configMetrics.rect.bottom).toBeLessThanOrEqual(360);
+  for (const button of configMetrics.buttons) {
+    expect(button.top).toBeGreaterThanOrEqual(0);
+    expect(button.bottom).toBeLessThanOrEqual(360);
+    expect(button.left).toBeGreaterThanOrEqual(0);
+    expect(button.right).toBeLessThanOrEqual(390);
+  }
+  // 配置按鈕沿 domButton 的 pointerdown 即時觸發，handler 會同步移除操作列；
+  // 用真實 pointerdown 驗證觸控路徑，避免 Playwright click 在 pointerdown 後等待
+  // 已被 teardown 的節點而誤判為 detached。
+  await page.locator('[data-cfg="cancel"]').dispatchEvent('pointerdown', {
+    pointerId: 9,
+    isPrimary: true,
+  });
+  expect(errors).toEqual([]);
+});

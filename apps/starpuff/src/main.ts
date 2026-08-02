@@ -184,6 +184,7 @@ declare global {
       bossBodies: () => { x: number; y: number }[];
       bossShots: () => { x: number; y: number }[];
       bossHazards: () => { x: number; y: number; w: number; h: number }[];
+      enemyHazards: () => { x: number; y: number; w: number; h: number; kind: string }[];
       enemyPositions: () => { x: number; y: number }[];
       ammo: () => { ammo: number; flavor: string; mix: string | null };
       playerStars: () => { x: number; y: number }[];
@@ -198,7 +199,14 @@ declare global {
       gateOpen: () => boolean;
       quota: () => { killCount: number; killQuota: number };
       listeners: (event: string) => number;
-      enemies: () => { kind: string; x: number; y: number; elite: boolean }[];
+      enemies: () => {
+        kind: string;
+        x: number;
+        y: number;
+        elite: boolean;
+        state: string | null;
+        safeSupply: boolean;
+      }[];
       view: () => { width: number; height: number };
       paused: () => boolean;
       scenePaused: () => boolean;
@@ -208,6 +216,7 @@ declare global {
       tide: () => { waterY: number; phase: string } | null;
       meteor: () => { falling: number; embers: number; telegraphs: number } | null;
       damageBossAt: (amount: number, x: number, y: number) => void;
+      bossActive: () => boolean;
       bossState: () => { phase: string; state: string } | null;
       bossHint: () => string;
       grantInvuln: (ms: number) => void;
@@ -229,6 +238,9 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
     // （Key 物件於 create 才建立，載入期按住的鍵不會被看見）或呼叫 isActive 守衛的鉤子。
     stage: () => (gameScene().scene.isActive() ? gameScene().currentLevelId : 0),
     bossHp: () => gameScene().bossHp,
+    // audit 等待真正可傷狀態，而不是只等待 Boss FSM 先建立 HP；入場演出期間
+    // bossHp 已有值但 boss.isActive() 仍為 false，兩者語義不可混用。
+    bossActive: () => gameScene().bossIsActive(),
     // 與 stage() 同一套就緒語意：載入期回 -1（沿 bossHp 的「不存在」慣例），
     // 避免回報 class 預設值 5 被誤讀為新關卡已就緒且滿血。
     playerHp: () => (gameScene().scene.isActive() ? gameScene().playerHp : -1),
@@ -325,6 +337,32 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
       }
       return hazards;
     },
+    // W4 觀測點（§126）：攻擊召喚體的 enemy hazards 併入稽核迴避視野；L30
+    // safeSupply 補給個體已由 enemyUpdates 停用遠程攻擊，避免資源路徑與攻擊體混責。
+    enemyHazards: () => {
+      const hazards: { x: number; y: number; w: number; h: number; kind: string }[] = [];
+      try {
+        for (const child of internals().enemies.getHazards().getChildren()) {
+          if (!child.active) continue;
+          const hazard = child as unknown as {
+            x: number;
+            y: number;
+            displayWidth: number;
+            displayHeight: number;
+          };
+          hazards.push({
+            x: Math.round(hazard.x),
+            y: Math.round(hazard.y),
+            w: Math.round(hazard.displayWidth),
+            h: Math.round(hazard.displayHeight),
+            kind: (child.getData('hazardKind') as string | undefined) ?? 'unknown',
+          });
+        }
+      } catch {
+        return hazards;
+      }
+      return hazards;
+    },
     ammo: () => internals().player.getAmmoState(),
     // W3 觀測點（§54 bot 取樣）：場上飛行星彈座標——登頂命中流幾何驗證。
     playerStars: () => {
@@ -404,7 +442,14 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
       };
     },
     enemies: () => {
-      const list: { kind: string; x: number; y: number; elite: boolean }[] = [];
+      const list: {
+        kind: string;
+        x: number;
+        y: number;
+        elite: boolean;
+        state: string | null;
+        safeSupply: boolean;
+      }[] = [];
       // 場景轉換瞬間（Result/restart）內部系統短暫不可用：防禦回空（審查修復）。
       try {
         for (const child of internals().enemies.getGroup().getChildren()) {
@@ -417,6 +462,8 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
             x: Math.round(sprite.x),
             y: Math.round(sprite.y),
             elite: child.getData('elite') === true,
+            state: (child.getData('state') as string | undefined) ?? null,
+            safeSupply: child.getData('safeSupply') === true,
           });
         }
       } catch {

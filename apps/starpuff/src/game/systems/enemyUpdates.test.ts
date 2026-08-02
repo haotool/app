@@ -57,5 +57,57 @@ describe('shelly 視覺朝向每幀同步（walk/spin）', () => {
   });
 });
 
+describe('魔王關補給個體安全責任', () => {
+  it('safeSupply 不啟動 zappy 放電或 boomy 迴旋刃，仍向玩家緩慢靠近', () => {
+    const pulseRing = vi.fn();
+    const spawnBoomerang = vi.fn();
+    const makeSprite = (kind: 'zappy' | 'boomy') => {
+      const data: Record<string, unknown> = {
+        state: 'idle',
+        safeSupply: true,
+        phase: 0,
+        eliteMul: 1,
+      };
+      const velocity = { x: 0, y: 0 };
+      const body = {
+        velocity,
+        setVelocityX(vx: number) {
+          velocity.x = vx;
+        },
+        setVelocityY(vy: number) {
+          velocity.y = vy;
+        },
+      };
+      const sprite = {
+        x: 200,
+        y: 100,
+        body,
+        getData: (key: string) => data[key],
+        setData(key: string, value: unknown) {
+          data[key] = value;
+          return sprite;
+        },
+      } as unknown as Phaser.Physics.Arcade.Sprite;
+      updateEnemyKind(
+        {
+          target: { x: 100, y: 100 },
+          safeSupply: true,
+          pulseRing,
+          spawnBoomerang,
+        } as unknown as EnemyUpdateContext,
+        sprite,
+        kind,
+        16,
+      );
+      return { data, velocity };
+    };
+
+    expect(makeSprite('zappy').velocity.x).toBe(-45);
+    expect(makeSprite('boomy').velocity.x).toBe(-35);
+    expect(pulseRing).not.toHaveBeenCalled();
+    expect(spawnBoomerang).not.toHaveBeenCalled();
+  });
+});
+
 // 方向性品種面向同步的表驅動守門（含 drilly/boomy/mirri/gusty/cargo/foamy 等）
 // 已上收至 enemyFacing.test.ts，遍歷 DIRECTIONAL_ENEMY_KINDS 全表。

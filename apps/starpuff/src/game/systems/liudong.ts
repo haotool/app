@@ -22,7 +22,8 @@ import { getVisualScale } from './visualScale';
 // 直寫），威脅來自三市場攻擊（思考泡泡預告即機制）、全屏下跌箭頭（≥1 通行路線
 // 恆開）、牛熊召喚與 P3 終局招；入場/思考/下單/轉段/死亡演出委派
 // liudongCinematics.ts（幀數遠超既有魔王，§106 strangler 紀律）。phase truth 由
-// logic/liudongFsm.ts 持有。arena 幾何全數依動態視寬比例佈建（§28 禁硬編 854）。
+// logic/liudongFsm.ts 持有。arena 招式以動態視寬推導車道，平台幾何則由 levels.ts
+// 的固定像素 offset SSOT 解析，兩者不混用。
 // 迷因安全（PRD §1.5）：全虛構圖像與代號、零真實品牌/人物/股票代號；
 // 「本關純屬虛構迷因，非投資建議」角標由本模組常駐顯示。
 
@@ -32,10 +33,6 @@ const BODY_H = 150;
 // 踱步速率與擺幅（TTK 實測回調）：落地持機型以中幅橫移換取 miss 率——
 // 全程可傷但非站樁靶；速率/擺幅壓在「有走位感但不衝撞」帶（idle 窗本體
 // 接觸傷實測為隱形傷害源，降幅回調）。
-const APPROACH_SPEED = 180;
-const PACE_FREQ = 0.0005;
-const PACE_AMP_RATIO = 0.1;
-const PACE_ANCHOR_RATIO = 0.64;
 // 彈體速度。
 const COIN_FALL_SPEED = 230;
 const ARROW_FALL_SPEED_BIG = 210;
@@ -139,7 +136,10 @@ export function createLiudong(
   const physBody = body.body as Phaser.Physics.Arcade.Body;
   physBody.setAllowGravity(false);
   physBody.setImmovable(true);
-  physBody.setSize(body.width * 0.82, body.height * 0.88);
+  physBody.setSize(
+    body.width * LIUDONG.bodyHitboxWidthRatio,
+    body.height * LIUDONG.bodyHitboxHeightRatio,
+  );
 
   // 動畫組背景補載（§125 載入契約，四王同拍）：createBossKit 於 create 期建構——
   // 前室廊道即補載窗口；缺圖由 cinematics setFrame 防衛降級（base 立繪）。
@@ -208,6 +208,15 @@ export function createLiudong(
       : Math.floor(laneCount / 2);
     const offset = Math.floor(Math.random() * 3) - 1;
     return Phaser.Math.Clamp(playerLane + offset, 0, laneCount - 1);
+  };
+
+  // 全屏招式共用的安全帶：以玩家近旁車道為錨，連續保留 LIUDONG SSOT 指定的
+  // 車道數。邊界時向場內夾限，避免「安全帶」被推到場外而形成假解。
+  const safeLanesNear = (laneCount: number): number[] => {
+    const count = Phaser.Math.Clamp(LIUDONG.safeLaneCount, 1, laneCount - 1);
+    const anchor = gapLaneNear(laneCount);
+    const start = Phaser.Math.Clamp(anchor - Math.floor(count / 2), 0, laneCount - count);
+    return Array.from({ length: count }, (_, index) => start + index);
   };
 
   // ===== 三市場攻擊（PRD §6.4）=====
@@ -326,17 +335,18 @@ export function createLiudong(
     });
   };
 
-  // 台股・熔斷牆：紅箭雨＋左右紅電路牆（留缺口——白輪廓標記＋牌價尾數提示，
+  // 台股・熔斷牆：紅箭雨＋左右紅電路牆（留安全車道缺口——白輪廓標記＋牌價尾數提示，
   // 0.8s 警示，PRD 明文）。
   const doTwstock = (firstSeen: boolean) => {
     const mul = speedMul(firstSeen);
-    // 缺口車道（玩家近旁、夾限內側車道；白輪廓為主要可讀訊號、尾數牌價為迷因提示）。
-    const gapLane = Phaser.Math.Clamp(gapLaneNear(ARROW_LANES), 1, ARROW_LANES - 2);
+    // 缺口車道（玩家近旁、連續安全車道；白輪廓為主要可讀訊號、尾數牌價為提示）。
+    const safeLanes = safeLanesNear(ARROW_LANES);
     const laneW = viewW() / ARROW_LANES;
-    const gapX = arenaLeft() + laneW * (gapLane + 0.5);
+    const firstSafeLane = safeLanes[0] ?? Math.floor(ARROW_LANES / 2);
+    const gapX = arenaLeft() + laneW * (firstSafeLane + safeLanes.length / 2);
     // 白輪廓缺口標記（0.8s 警示）。
     const marker = scene.add
-      .rectangle(gapX, GROUND_TOP - 70, laneW * 0.9, 140, 0xffffff, 0.08)
+      .rectangle(gapX, GROUND_TOP - 70, laneW * safeLanes.length * 0.9, 140, 0xffffff, 0.08)
       .setStrokeStyle(3, 0xffffff, 0.95)
       .setDepth(8);
     scene.tweens.add({
@@ -349,7 +359,7 @@ export function createLiudong(
     });
     // 迷因牌價：尾數＝缺口車道號（虛構數字、零真實代號）。
     const quote = scene.add
-      .text(arenaCx(), 84, `88${gapLane + 1}`, {
+      .text(arenaCx(), 84, `88${safeLanes.map((lane) => lane + 1).join('-')}`, {
         fontFamily: 'system-ui, sans-serif',
         fontSize: '22px',
         fontStyle: 'bold',
@@ -371,7 +381,7 @@ export function createLiudong(
       if (dying) return;
       // 紅電路牆：全車道除缺口外滑入短牆段（觸傷、駐留後退場）。
       for (let lane = 0; lane < ARROW_LANES; lane += 1) {
-        if (lane === gapLane) continue;
+        if (safeLanes.includes(lane)) continue;
         const x = arenaLeft() + laneW * (lane + 0.5);
         const wall = acquire(shockwaves, x, -60, 'fx-market-circuitwall');
         if (!wall) continue;
@@ -432,14 +442,13 @@ export function createLiudong(
       const spec = batchSpecs[batch];
       if (!spec) continue;
       delay(at, () => {
-        // 缺口逐批取樣（玩家近旁）：批啟動當下錨定、雙車道寬（PRD ≥1 路線的
+        // 缺口逐批取樣（玩家近旁）：批啟動當下錨定、寬度由 LIUDONG SSOT 控制（PRD ≥1 路線的
         // 超集——單車道 142px 對追打中的走位裕度實測不足）。
-        const gapLane = gapLaneNear(ARROW_LANES);
-        const gapLaneB = Math.min(gapLane + 1, ARROW_LANES - 1);
+        const safeLanes = safeLanesNear(ARROW_LANES);
         if (dying) return;
         playSfx('reveal', 0.7);
         for (let lane = 0; lane < ARROW_LANES; lane += 1) {
-          if (lane === gapLane || lane === gapLaneB) continue;
+          if (safeLanes.includes(lane)) continue;
           const x = arenaLeft() + laneW * (lane + 0.5);
           // 陰影預警 ≥600ms（PRD 硬規則）。
           spawnTelegraph(scene, x, GROUND_TOP - 8, LIUDONG.arrowShadowMs);
@@ -502,11 +511,11 @@ export function createLiudong(
     });
   };
 
-  // K 線海嘯（P2）：紅 K 線柱波列自一側掃向另一側，留 1 缺口車道（玩家近旁）。
+  // K 線海嘯（P2）：紅 K 線柱波列自一側掃向另一側，留安全車道缺口（玩家近旁）。
   const doKlinewave = (firstSeen: boolean) => {
     const laneW = viewW() / ARROW_LANES;
     const fromLeft = (target?.x ?? arenaCx()) > arenaCx();
-    const gapLane = Phaser.Math.Clamp(gapLaneNear(ARROW_LANES), 1, ARROW_LANES - 2);
+    const safeLanes = safeLanesNear(ARROW_LANES);
     playSfx('boss-roar', 0.7);
     const kwShock = scene.add
       .image(arenaX(fromLeft ? 0.06 : 0.94), GROUND_TOP - 70, 'fx-market-klinewave-shock')
@@ -521,7 +530,7 @@ export function createLiudong(
     });
     for (let i = 0; i < ARROW_LANES; i += 1) {
       const lane = fromLeft ? i : ARROW_LANES - 1 - i;
-      if (lane === gapLane) continue;
+      if (safeLanes.includes(lane)) continue;
       const x = arenaLeft() + laneW * (lane + 0.5);
       spawnTelegraph(scene, x, GROUND_TOP - 8, LIUDONG.klinewaveTelegraphMs + i * 150);
       delay(LIUDONG.klinewaveTelegraphMs + i * (150 / speedMul(firstSeen)), () => {
@@ -688,27 +697,36 @@ export function createLiudong(
     delay(LIUDONG.doomarrowDurationMs, () => outline.destroy());
   };
 
-  // 清算通知（P3）：通知單緩降飄落（車道錯拍恆可穿行）；焰化燒單（burn 星彈
-  // 命中即銷毀＝形態優勢，tariffang 稅票同構）。
+  // 清算通知（P3）：通知單緩降飄落（車道錯拍恆可穿行）；數量／間距／預告由
+  // LIUDONG SSOT 控制，讓玩家有固定讀招節拍；焰化燒單（burn 星彈命中即銷毀＝
+  // 形態優勢，tariffang 稅票同構）。
   const doLiquidation = (firstSeen: boolean) => {
     const mul = speedMul(firstSeen);
     const laneW = viewW() / ARROW_LANES;
+    const safeLanes = safeLanesNear(ARROW_LANES);
+    const dangerLanes = Array.from({ length: ARROW_LANES }, (_, lane) => lane).filter(
+      (lane) => !safeLanes.includes(lane),
+    );
     playSfx('reveal', 0.8);
-    for (let i = 0; i < 10; i += 1) {
-      const lane = i % ARROW_LANES;
-      // 每拍至多兩張、車道輪轉——任一時刻恆有可穿行帶。
-      delay(LIUDONG.liquidationTelegraphMs + Math.floor(i / 2) * 420, () => {
-        if (dying) return;
-        const x = arenaLeft() + laneW * (lane + 0.5) + (Math.random() - 0.5) * laneW * 0.4;
-        const notice = acquire(shockwaves, x, -24, '__WHITE');
-        if (!notice) return;
-        notice.setDisplaySize(26, 32).setTint(0xffe8e8).setAlpha(0.95);
-        notice.setData('notice', true);
-        (notice.body as Phaser.Physics.Arcade.Body).setVelocity(
-          (Math.random() - 0.5) * 30,
-          NOTICE_FALL_SPEED * mul,
-        );
-      });
+    for (let i = 0; i < LIUDONG.liquidationNoticeCount; i += 1) {
+      const lane = dangerLanes[i % dangerLanes.length] ?? 0;
+      // 每拍至多兩張、只落在危險車道——玩家近旁安全帶與箭雨/K 線共用，
+      // 不靠全場隨機落點要求玩家在通知下墜後才跨越多車道。
+      delay(
+        LIUDONG.liquidationTelegraphMs + Math.floor(i / 2) * LIUDONG.liquidationSpacingMs,
+        () => {
+          if (dying) return;
+          const x = arenaLeft() + laneW * (lane + 0.5) + (Math.random() - 0.5) * laneW * 0.4;
+          const notice = acquire(shockwaves, x, -24, '__WHITE');
+          if (!notice) return;
+          notice.setDisplaySize(26, 32).setTint(0xffe8e8).setAlpha(0.95);
+          notice.setData('notice', true);
+          (notice.body as Phaser.Physics.Arcade.Body).setVelocity(
+            (Math.random() - 0.5) * 30,
+            NOTICE_FALL_SPEED * mul,
+          );
+        },
+      );
     }
   };
 
@@ -1081,12 +1099,12 @@ export function createLiudong(
       // 地面持機踱步（禁座標直寫）：緩幅擺動錨＋approachPoint 逼近。
       const anchorX =
         arenaLeft() +
-        viewW() * PACE_ANCHOR_RATIO +
-        Math.sin(elapsedMs * PACE_FREQ) * viewW() * PACE_AMP_RATIO;
+        viewW() * LIUDONG.paceAnchorRatio +
+        Math.sin(elapsedMs * LIUDONG.paceFrequency) * viewW() * LIUDONG.paceAmplitudeRatio;
       const next = approachPoint(
         { x: body.x, y: body.y },
         { x: anchorX, y: GROUND_TOP - BODY_H / 2 },
-        APPROACH_SPEED * fsm.speedFactor,
+        LIUDONG.approachSpeedPxPerSec * fsm.speedFactor,
         deltaMs,
       );
       body.setPosition(next.x, next.y);

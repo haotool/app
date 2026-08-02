@@ -56,23 +56,28 @@ describe('§127 L30 崩盤王座（最終魔王關）', () => {
     const level = getLevel(30);
     expect(level.boss).toBe('liudong');
     expect(level.anteroomPx).toBe(400);
-    expect(level.anteroomBuffs).toEqual(['power', 'swift']);
+    expect(level.arenaEntryGraceMs).toBe(7000);
+    expect(level.anteroomBuffs).toEqual(['shield', 'power']);
     expect(level.arenaBuff).toBe('shield');
+    // 未指定即沿用魔王關預設 P2 護盾泡；P3 仍靠讀招與變身處理終局。
+    expect(level.arenaBuffPhase).toBeUndefined();
     expect(level.platforms).toEqual([]);
     expect(level.elements).toEqual([]);
     expect(level.elites).toEqual([]);
     // 七形態各有優勢情境（§126.4 對應表）：驗收機制為通用變身。
-    expect(level.bossApplies).toEqual(['transform']);
+    expect(level.bossApplies).toEqual(['gravity-form', 'transform']);
   });
 
-  it('供給契約：zappy 列首（補給輪替恆含雷味）且權重 ≥0.2、補生全可吸且恆可吸 ≥0.6', () => {
+  it('供給契約：zappy 列首、殼殼條件可吸，且常態可吸權重 ≥0.6', () => {
     const level = getLevel(30);
     const voltShare = level.enemyMix
       .filter((entry) => inhaleFlavor(entry.kind) === 'zappy')
       .reduce((sum, entry) => sum + entry.weight, 0);
     expect(voltShare).toBeGreaterThanOrEqual(0.2);
     expect(level.enemyMix[0]?.kind).toBe('zappy');
-    for (const entry of level.enemyMix) expect(canInhale(entry.kind)).toBe(true);
+    for (const entry of level.enemyMix) {
+      expect(canInhale(entry.kind) || canInhale(entry.kind, true)).toBe(true);
+    }
     const always = level.enemyMix
       .filter((e) => canInhale(e.kind))
       .reduce((sum, e) => sum + e.weight, 0);

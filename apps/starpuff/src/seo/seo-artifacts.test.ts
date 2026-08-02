@@ -52,7 +52,7 @@ describe('OG 圖與截圖資產', () => {
 });
 
 describe('public SEO 檔案與 SSOT 同步', () => {
-  it('llms.txt 含站點網址、五區與魔王名，與 SSOT 一致且無 emoji', () => {
+  it('llms.txt 含站點網址、十區與魔王名，與 SSOT 一致且無 emoji', () => {
     const llms = readPublic('llms.txt');
     expect(llms).toContain(SITE_URL);
     for (const zone of WORLD_ZONES) {

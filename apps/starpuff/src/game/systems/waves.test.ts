@@ -136,6 +136,33 @@ describe('#812 救援個體近域豁免（審查收斂）', () => {
   });
 });
 
+describe('魔王 arena 補給責任（L30）', () => {
+  it('飢荒補生會標記 safeSupply，讓正式系統停用補給個體的攻擊責任', () => {
+    const setData = vi.fn();
+    const scene = {
+      events: { on: vi.fn(), off: vi.fn(), emit: vi.fn() },
+      cameras: { main: { scrollX: 0 } },
+      scale: { width: 854, height: 480 },
+      add: { text: () => chainable() },
+      tweens: { add: vi.fn(), killTweensOf: vi.fn() },
+    } as unknown as Phaser.Scene;
+    const spawn = vi.fn(() => ({ setData }) as unknown as Phaser.Physics.Arcade.Sprite);
+    const enemies = {
+      spawn,
+      aliveCount: () => 0,
+      aliveInhalableCount: () => 0,
+      targetX: () => null,
+    } as unknown as EnemySystem;
+    const runner = createWaveRunner(scene, enemies, 30);
+    runner.start();
+    // Boss 飢荒是立即供給，不應等待 L30 的一般生成間隔。
+    runner.update(16);
+    expect(spawn).toHaveBeenCalledTimes(1);
+    expect(setData).toHaveBeenCalledWith('safeSupply', true);
+    runner.destroy();
+  });
+});
+
 describe('滿潮救援上台錨定（#841）', () => {
   // 滿潮期重力型救援必沉水下（不變式 17 上收僅保護無重力品種）——避難於平台層
   // 的玩家構不到。滿潮救援固定改為最近平台頂錨定紮根 spora＋重力關閉。
