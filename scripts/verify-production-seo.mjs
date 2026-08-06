@@ -149,6 +149,7 @@ async function verifySitemapContent(
   seoPaths,
   appShellPaths = [],
   imageResources = [],
+  expectSitemapHreflang = true,
 ) {
   const response = await fetchSitemap(requestBaseUrl);
   if (!response.ok || response.body == null) {
@@ -178,10 +179,12 @@ async function verifySitemapContent(
     }
   }
 
-  const hreflangMatches = response.body.match(/<xhtml:link/g) || [];
-  const expectedCount = seoPaths.length * 2;
-  if (hreflangMatches.length !== expectedCount) {
-    errors.push(`hreflang 數量錯誤: 期望 ${expectedCount}, 實際 ${hreflangMatches.length}`);
+  if (expectSitemapHreflang) {
+    const hreflangMatches = response.body.match(/<xhtml:link/g) || [];
+    const expectedCount = seoPaths.length * 2;
+    if (hreflangMatches.length !== expectedCount) {
+      errors.push(`hreflang 數量錯誤: 期望 ${expectedCount}, 實際 ${hreflangMatches.length}`);
+    }
   }
 
   return { ok: errors.length === 0, errors };
@@ -341,12 +344,14 @@ async function main() {
   }
 
   console.log('\n🗺️ Sitemap 內容驗證:');
+  const expectSitemapHreflang = config.seoValidation?.sitemapHreflang !== false;
   const sitemapResult = await verifySitemapContent(
     requestBaseUrl,
     canonicalBaseUrl,
     config.seoPaths,
     config.appShellPaths,
     config.resources?.images ?? [],
+    expectSitemapHreflang,
   );
   if (sitemapResult.ok) {
     log(colors.green, '✓', 'sitemap.xml 內容正確');
@@ -389,13 +394,19 @@ async function main() {
     }
   }
 
-  console.log('\n🚫 真 404 驗證:');
-  const notFoundResult = await verify404(requestBaseUrl);
-  if (notFoundResult.ok) {
-    log(colors.green, '✓', '未知路徑正確回傳 404');
+  const requireTrue404 = config.seoValidation?.requireTrue404 !== false;
+  if (requireTrue404) {
+    console.log('\n🚫 真 404 驗證:');
+    const notFoundResult = await verify404(requestBaseUrl);
+    if (notFoundResult.ok) {
+      log(colors.green, '✓', '未知路徑正確回傳 404');
+    } else {
+      notFoundResult.errors.forEach((error) => log(colors.red, '✗', error));
+      hasErrors = true;
+    }
   } else {
-    notFoundResult.errors.forEach((error) => log(colors.red, '✗', error));
-    hasErrors = true;
+    console.log('\n🚫 真 404 驗證:');
+    log(colors.yellow, 'ℹ', '此 app 使用 SPA fallback，略過未知路徑 404 檢查');
   }
 
   if (config.legacyAssetRedirects) {

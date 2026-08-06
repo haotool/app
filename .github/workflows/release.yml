@@ -171,9 +171,31 @@ jobs:
               echo "No approval-required pull_request runs for ${HEAD_SHA}; CI already runs natively."
               exit 0
             fi
-            echo "::error::No pull_request runs exist for ${HEAD_SHA}; Quality Checks will never start."
-            echo "::error::Fix: add repo secret RELEASE_PAT (fine-grained PAT, this repo, permissions: Actions/Contents/Pull requests Read&Write) — see issue #771. Interim SOP: close/reopen the release PR."
-            exit 1
+            PR_NUMBER="${{ steps.release_pr.outputs.pr_number }}"
+            echo "No pull_request runs for ${HEAD_SHA}; close/reopen release PR #${PR_NUMBER} to trigger CI..."
+            gh pr close "$PR_NUMBER"
+            gh pr reopen "$PR_NUMBER"
+            sleep 15
+            HEAD_SHA=$(gh pr view "$PR_NUMBER" --json headRefOid -q .headRefOid)
+            for i in {1..12}; do
+              sleep 5
+              PENDING_IDS=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs?branch=changeset-release%2Fmain&event=pull_request&per_page=30" \
+                --jq "[.workflow_runs[] | select(.head_sha == \"${HEAD_SHA}\" and (.status == \"action_required\" or .conclusion == \"action_required\"))] | map(.id) | join(\" \")")
+              ANY_RUN=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs?branch=changeset-release%2Fmain&event=pull_request&per_page=30" \
+                --jq "[.workflow_runs[] | select(.head_sha == \"${HEAD_SHA}\")] | length")
+              if [ -n "$PENDING_IDS" ] || [ "$ANY_RUN" -gt 0 ]; then
+                break
+              fi
+            done
+            if [ -z "$PENDING_IDS" ] && [ "$ANY_RUN" -eq 0 ]; then
+              echo "::error::No pull_request runs exist for ${HEAD_SHA}; Quality Checks will never start."
+              echo "::error::Fix: add repo secret RELEASE_PAT (fine-grained PAT, this repo, permissions: Actions/Contents/Pull requests Read&Write) — see issue #771."
+              exit 1
+            fi
+            if [ -z "$PENDING_IDS" ]; then
+              echo "pull_request runs exist after close/reopen; no approval required."
+              exit 0
+            fi
           fi
 
           for RUN in $PENDING_IDS; do

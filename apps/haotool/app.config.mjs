@@ -94,6 +94,11 @@ export const APP_CONFIG = {
     pwa: true,
   },
 
+  // 單語 zh-TW 站 v2.1：sitemap 不輸出 hreflang（見 scripts/generate-sitemap.js）。
+  seoValidation: {
+    sitemapHreflang: false,
+  },
+
   // 資源配置
   resources: {
     seoFiles: SEO_FILES,

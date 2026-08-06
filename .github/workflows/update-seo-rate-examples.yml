@@ -28,6 +28,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  actions: write
 
 jobs:
   update:
@@ -35,6 +36,8 @@ jobs:
 
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+      HAS_RELEASE_PAT: ${{ secrets.RELEASE_PAT != '' }}
+      BOT_PR_TOKEN: ${{ secrets.RELEASE_PAT || secrets.GITHUB_TOKEN }}
 
     steps:
       - uses: actions/checkout@v7
@@ -63,7 +66,7 @@ jobs:
         id: create-pr
         uses: peter-evans/create-pull-request@v8
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ env.BOT_PR_TOKEN }}
           committer: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
           author: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
           commit-message: |
@@ -107,6 +110,68 @@ jobs:
           add-paths: |
             apps/ratewise/src/config/generated/build-time-rates.json
             apps/ratewise/src/config/generated/seo-rate-examples.ts
+
+      # GITHUB_TOKEN 建立的 PR 其 pull_request workflow 常停在 action_required；
+      # RELEASE_PAT 存在時原生觸發，否則嘗試 Approve API（同 release.yml #771 補償鏈）。
+      - name: 核准匯差 PR 的 workflow runs
+        if: steps.create-pr.outputs.pull-request-number != '' && env.HAS_RELEASE_PAT != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.create-pr.outputs.pull-request-number }}
+          PR_BRANCH: chore/daily-seo-rate-update
+        run: |
+          set -euo pipefail
+          HEAD_SHA=$(gh pr view "$PR_NUMBER" --json headRefOid -q .headRefOid)
+          BRANCH_ENC=$(node -e "console.log(encodeURIComponent(process.argv[1]))" "$PR_BRANCH")
+
+          approve_pending_runs() {
+            gh api "repos/${GITHUB_REPOSITORY}/actions/runs?branch=${BRANCH_ENC}&event=pull_request&per_page=30" \
+              --jq "[.workflow_runs[] | select(.head_sha == \"${HEAD_SHA}\" and (.status == \"action_required\" or .conclusion == \"action_required\"))] | map(.id) | .[]"
+          }
+
+          PENDING_IDS=""
+          for i in {1..12}; do
+            sleep 5
+            PENDING_IDS=$(approve_pending_runs | tr '\n' ' ' | xargs echo -n || true)
+            if [ -n "$PENDING_IDS" ]; then
+              break
+            fi
+          done
+
+          if [ -z "$PENDING_IDS" ]; then
+            ANY_RUN=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs?branch=${BRANCH_ENC}&event=pull_request&per_page=30" \
+              --jq "[.workflow_runs[] | select(.head_sha == \"${HEAD_SHA}\")] | length")
+            if [ "$ANY_RUN" -gt 0 ]; then
+              echo "No approval-required runs for ${HEAD_SHA}; CI already active."
+              exit 0
+            fi
+            echo "No pull_request runs for ${HEAD_SHA}; close/reopen PR #${PR_NUMBER} to trigger CI..."
+            gh pr close "$PR_NUMBER"
+            gh pr reopen "$PR_NUMBER"
+            sleep 15
+            HEAD_SHA=$(gh pr view "$PR_NUMBER" --json headRefOid -q .headRefOid)
+            for i in {1..12}; do
+              sleep 5
+              PENDING_IDS=$(approve_pending_runs | tr '\n' ' ' | xargs echo -n || true)
+              ANY_RUN=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs?branch=${BRANCH_ENC}&event=pull_request&per_page=30" \
+                --jq "[.workflow_runs[] | select(.head_sha == \"${HEAD_SHA}\")] | length")
+              if [ -n "$PENDING_IDS" ] || [ "$ANY_RUN" -gt 0 ]; then
+                break
+              fi
+            done
+            if [ -z "$PENDING_IDS" ] && [ "$ANY_RUN" -eq 0 ]; then
+              echo "::error::No pull_request runs after close/reopen for ${HEAD_SHA}; add RELEASE_PAT secret (issue #771)."
+              exit 1
+            fi
+            if [ -z "$PENDING_IDS" ]; then
+              exit 0
+            fi
+          fi
+
+          for RUN in $PENDING_IDS; do
+            gh api -X POST "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN}/approve" >/dev/null
+            echo "Approved pull_request run ${RUN}"
+          done
 
       # 啟用 GitHub auto-merge（squash）：合併仍由 branch protection + required checks 把關，
       # checks 未通過不會合併；此步驟只是免除人工點擊，非繞過審查控制。
