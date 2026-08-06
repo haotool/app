@@ -121,9 +121,9 @@ describe('CODEX_SKILLS', () => {
     }
   });
 
-  it('涵蓋核心操作：吸入／星彈九系／混合星彈／星暴／下衝擊／殼盾／雷鏈', () => {
+  it('涵蓋核心操作：吸入／星彈九系／混合星彈／星暴／下衝擊／龜甲護甲／雷鏈', () => {
     const names = new Set(CODEX_SKILLS.map((skill) => skill.nameZh));
-    for (const required of ['吸入', '星彈九系', '混合星彈', '星暴', '下衝擊', '殼盾', '雷鏈']) {
+    for (const required of ['吸入', '星彈九系', '混合星彈', '星暴', '下衝擊', '龜甲護甲', '雷鏈']) {
       expect(names.has(required)).toBe(true);
     }
   });
@@ -142,9 +142,11 @@ describe('CODEX_SKILLS', () => {
     expect(slam?.detail).toContain('腹中含怪');
   });
 
-  it('v6 新技能標注來源怪物（§40）：殼盾對應殼殼、雷鏈對應雷雷', () => {
-    expect(CODEX_SKILLS.find((skill) => skill.nameZh === '殼盾')?.detail).toContain('護盾');
-    expect(CODEX_SKILLS.find((skill) => skill.nameZh === '殼盾')?.howTo).toContain('殼盾星');
+  it('v6 新技能標注來源怪物（§40）：龜甲護甲對應殼殼、雷鏈對應雷雷', () => {
+    const armor = CODEX_SKILLS.find((skill) => skill.nameZh === '龜甲護甲');
+    // 被動披甲語意：說明必須點出來源怪與 20 秒視窗，不得回退成長按舉盾文案。
+    expect(armor?.howTo).toContain('殼殼');
+    expect(armor?.detail).toContain('20 秒');
     expect(CODEX_SKILLS.find((skill) => skill.nameZh === '雷鏈')?.howTo).toContain('雷雷');
   });
 });

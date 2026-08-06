@@ -408,6 +408,13 @@ export function createPlayer(
   const drawShield = () => {
     turtleArmor.draw(shield.armorMs, sprite.x, sprite.y, scene.time.now);
   };
+  // 披甲單點（§40 重設計）：吞下殼殼即得 20 秒護甲——與彈匣是獨立資源，
+  // 之後把星射掉也不會卸甲；重複吞下重置視窗而不疊層。swallow 與受控賦星共用。
+  const armorIfShelly = (flavor: StarFlavor) => {
+    if (flavor !== 'shelly') return;
+    shield = grantArmor();
+    drawShield();
+  };
 
   // 蓄能大星（§109）：結晶後頭頂軌道漂浮，蓄爆期斂縮增亮；呈現委派 chargedStar。
   const chargedStar = createChargedStar(scene);
@@ -923,7 +930,6 @@ export function createPlayer(
         emitGameEvent(scene.events, GameEvents.SKILL_SHIELD_BLOCK, {
           x: sprite.x,
           y: sprite.y,
-          facing,
         });
         return;
       }
@@ -1012,12 +1018,7 @@ export function createPlayer(
       const result = swallowIntoMagazine(magazine, flavor);
       magazine = result.magazine;
       lastFlavor = flavor;
-      // 龜甲護甲（§40 重設計）：吞下殼殼即披甲 20 秒——與彈匣是獨立資源，
-      // 之後把星射掉也不會卸甲；重複吞下重置視窗而不疊層。
-      if (flavor === 'shelly') {
-        shield = grantArmor();
-        drawShield();
-      }
+      armorIfShelly(flavor);
       // 連吞升級（§23）強化音效；混合合成（§46）沿用 jingle 短奏提示。
       if (result.charged) playSfx('charge');
       else if (result.mixed) playSfx('jingle');
@@ -1072,11 +1073,7 @@ export function createPlayer(
     grantStar(flavor: StarFlavor) {
       magazine = swallowIntoMagazine(magazine, flavor).magazine;
       lastFlavor = flavor;
-      // 走正式 swallow 語意：殼盾星同樣披甲，e2e 才能觀測護甲行為。
-      if (flavor === 'shelly') {
-        shield = grantArmor();
-        drawShield();
-      }
+      armorIfShelly(flavor);
       emitAmmo();
     },
     isShieldRaised() {

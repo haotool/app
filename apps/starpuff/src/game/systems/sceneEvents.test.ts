@@ -181,8 +181,8 @@ describe('sceneEvents HP/技能路由（§11/§23）', () => {
     h.emit(GameEvents.SKILL_SLAM_LANDED, { x: 100, y: 380 });
     expect(h.spies.resolveSlamImpact).toHaveBeenCalledWith(100, 380);
     expect(h.spies.damageBricksInRadius).toHaveBeenCalledWith(100, 380, 88);
-    h.emit(GameEvents.SKILL_SHIELD_BLOCK, { x: 1, y: 2, facing: -1 });
-    expect(h.spies.resolveShieldCounter).toHaveBeenCalledWith(1, 2, -1);
+    h.emit(GameEvents.SKILL_SHIELD_BLOCK, { x: 1, y: 2 });
+    expect(h.spies.resolveShieldCounter).toHaveBeenCalledWith(1, 2);
     h.emit(GameEvents.SKILL_TRANSFORM_STRIKE, {
       kind: 'volt-beam',
       form: 'volt',

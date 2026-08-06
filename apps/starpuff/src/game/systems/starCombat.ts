@@ -77,7 +77,7 @@ export interface StarCombat {
   freezeField(x: number, y: number, mix: StarMixSpec): void;
   resolveStarstorm(bossDamage: number): void;
   resolveSlamImpact(x: number, y: number): void;
-  resolveShieldCounter(x: number, y: number, facing: 1 | -1): void;
+  resolveShieldCounter(x: number, y: number): void;
   resolveVoltBeam(x: number, y: number, facing: 1 | -1): void;
   resolveVoltDischarge(x: number, y: number): void;
   resolveGaleLanding(x: number, y: number): void;
@@ -276,9 +276,10 @@ export function createStarCombat(scene: Phaser.Scene, hooks: StarCombatHooks): S
     }
   }
 
-  // 殼盾反擊星爆（§40）：盾面前定點星爆，波及面前 90px 小怪。
-  function resolveShieldCounter(x: number, y: number, facing: 1 | -1): void {
-    const originX = x + facing * 30;
+  // 龜甲反擊星爆（§40 重設計）：以玩家為心的身周星爆，波及四周 90px 小怪。
+  // 護甲已改全向格擋，反擊不得再偏向面向側——否則被背後打到時反擊噴向反方向。
+  function resolveShieldCounter(x: number, y: number): void {
+    const originX = x;
     hooks.fx().starBurst(originX, y);
     hooks.fx().shake(5);
     for (const child of hooks.enemies().getGroup().getChildren()) {
