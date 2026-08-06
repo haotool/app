@@ -58,54 +58,66 @@ describe('shelly 視覺朝向每幀同步（walk/spin）', () => {
 });
 
 describe('魔王關補給個體安全責任', () => {
-  it('safeSupply 不啟動 zappy 放電或 boomy 迴旋刃，仍向玩家緩慢靠近', () => {
-    const pulseRing = vi.fn();
-    const spawnBoomerang = vi.fn();
-    const makeSprite = (kind: 'zappy' | 'boomy') => {
-      const data: Record<string, unknown> = {
-        state: 'idle',
-        safeSupply: true,
-        phase: 0,
-        eliteMul: 1,
-      };
-      const velocity = { x: 0, y: 0 };
-      const body = {
-        velocity,
-        setVelocityX(vx: number) {
-          velocity.x = vx;
-        },
-        setVelocityY(vy: number) {
-          velocity.y = vy;
-        },
-      };
-      const sprite = {
-        x: 200,
-        y: 100,
-        body,
-        getData: (key: string) => data[key],
-        setData(key: string, value: unknown) {
-          data[key] = value;
-          return sprite;
-        },
-      } as unknown as Phaser.Physics.Arcade.Sprite;
-      updateEnemyKind(
-        {
-          target: { x: 100, y: 100 },
-          safeSupply: true,
-          pulseRing,
-          spawnBoomerang,
-        } as unknown as EnemyUpdateContext,
-        sprite,
-        kind,
-        16,
-      );
-      return { data, velocity };
+  const pulseRing = vi.fn();
+  const spawnBoomerang = vi.fn();
+  // playerX 決定靠近方向：小於 sprite.x（200）即玩家在左，補給怪應左行並面向左。
+  const makeSupply = (kind: 'zappy' | 'boomy', playerX: number) => {
+    const data: Record<string, unknown> = {
+      state: 'idle',
+      safeSupply: true,
+      phase: 0,
+      eliteMul: 1,
     };
+    const velocity = { x: 0, y: 0 };
+    const body = {
+      velocity,
+      setVelocityX(vx: number) {
+        velocity.x = vx;
+      },
+      setVelocityY(vy: number) {
+        velocity.y = vy;
+      },
+    };
+    const setFlipX = vi.fn();
+    const sprite = {
+      x: 200,
+      y: 100,
+      body,
+      getData: (key: string) => data[key],
+      setData(key: string, value: unknown) {
+        data[key] = value;
+        return sprite;
+      },
+      setFlipX,
+    } as unknown as Phaser.Physics.Arcade.Sprite;
+    updateEnemyKind(
+      {
+        target: { x: playerX, y: 100 },
+        safeSupply: true,
+        pulseRing,
+        spawnBoomerang,
+      } as unknown as EnemyUpdateContext,
+      sprite,
+      kind,
+      16,
+    );
+    return { data, velocity, setFlipX };
+  };
 
-    expect(makeSprite('zappy').velocity.x).toBe(-45);
-    expect(makeSprite('boomy').velocity.x).toBe(-35);
+  it('safeSupply 不啟動 zappy 放電或 boomy 迴旋刃，仍向玩家緩慢靠近', () => {
+    expect(makeSupply('zappy', 100).velocity.x).toBe(-45);
+    expect(makeSupply('boomy', 100).velocity.x).toBe(-35);
     expect(pulseRing).not.toHaveBeenCalled();
     expect(spawnBoomerang).not.toHaveBeenCalled();
+  });
+
+  // L30 迴歸守門：補給態早退分支曾完全略過面向更新，方向性素材（boomy）因此凍結在
+  // 生成朝向、與實際走向相反。停用攻擊不得連帶停更面向。
+  it('safeSupply 補給態仍每幀同步面向（走左面向左、走右面向右）', () => {
+    expect(makeSupply('boomy', 100).setFlipX).toHaveBeenCalledWith(true);
+    expect(makeSupply('boomy', 300).setFlipX).toHaveBeenCalledWith(false);
+    expect(makeSupply('zappy', 100).setFlipX).toHaveBeenCalledWith(true);
+    expect(makeSupply('zappy', 300).setFlipX).toHaveBeenCalledWith(false);
   });
 });
 
