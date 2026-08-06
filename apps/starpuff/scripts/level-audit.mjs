@@ -10,6 +10,7 @@ import { execSync } from 'node:child_process';
 import { mkdirSync, realpathSync, writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { loadLogic } from './lib/ts-bridge.mjs';
+import { currentMechanicsSha } from './lib/audit-freshness.mjs';
 import { installAuditDriver } from './lib/audit-driver.mjs';
 import {
   runJumpProbe,
@@ -68,6 +69,10 @@ const baseSha = (() => {
     return 'unknown';
   }
 })();
+
+// 機制指紋（新鮮度守門）：報告連同此值落盤，verify-audit-freshness 據以機械判定
+// 報告是否已被後續機制變更作廢——不依賴人工記得重測。
+const mechanicsSha = currentMechanicsSha();
 
 const levelOf = (id) => {
   const level = LEVELS.find((l) => l.id === id);
@@ -299,7 +304,7 @@ function standardMd(r) {
   return [
     `# L${r.levelId} ${r.nameZh} 難度報告（${r.kind}）`,
     '',
-    `- 基準：base ${baseSha}｜bot ${r.bot}（反應 ${r.reactionMs}ms）｜runs ${r.runs}｜cap ${r.capSec}s`,
+    `- 基準：base ${baseSha}｜機制 ${mechanicsSha}｜bot ${r.bot}（反應 ${r.reactionMs}ms）｜runs ${r.runs}｜cap ${r.capSec}s`,
     `- 通關率：${r.clearRate === null ? '—' : r.clearRate * 100 + '%'}｜平均通關 ${r.clearSecAvg ?? '—'}s${r.ttkSecAvg !== null ? `｜TTK ${r.ttkSecAvg}s` : ''}`,
     `- 勝率門檻（#890）：${r.clearRateGate.applicable ? `${r.clearRateGate.pass ? '達標' : '未達標'}——${r.clearRateGate.reason}` : `不適用——${r.clearRateGate.reason}`}`,
     `- 死亡率：${r.deathsPerRun ?? '—'} 死/次｜死亡熱點：${hotspots}`,
@@ -674,7 +679,7 @@ function baselineMd(rows, probes) {
 }
 
 async function main() {
-  console.log(`level-audit｜base ${baseSha}｜port ${port}｜out ${OUT_DIR}`);
+  console.log(`level-audit｜base ${baseSha}｜機制 ${mechanicsSha}｜port ${port}｜out ${OUT_DIR}`);
   const session = await openSession(port);
   const { page, browser, errors } = session;
   try {
@@ -711,7 +716,7 @@ async function main() {
       probes.swallow = await runProbe(page, 'swallow', null, { runs: 40, spinRuns: 15 });
       probes.starburst = await runProbe(page, 'starburst', null);
       const name = `baseline-${baseSha}`;
-      writeReport(name, { baseSha, rows, probes }, baselineMd(rows, probes));
+      writeReport(name, { baseSha, mechanicsSha, rows, probes }, baselineMd(rows, probes));
       return;
     }
     if (!levelArg) throw new Error('用法：node scripts/level-audit.mjs <levelId> [flags]｜--all');
@@ -719,7 +724,7 @@ async function main() {
     if (probeName) {
       const result = await runProbe(page, probeName, level);
       const label = opt('label', `probe-${probeName}-l${String(level.id).padStart(2, '0')}`);
-      writeReport(label, { baseSha, ...result }, null);
+      writeReport(label, { baseSha, mechanicsSha, ...result }, null);
       console.log(JSON.stringify({ ...result, detail: undefined, stateSeq: undefined }, null, 2));
       return;
     }
@@ -750,7 +755,7 @@ async function main() {
       'label',
       `l${String(level.id).padStart(2, '0')}${exMode ? '-ex' : ''}${transformSpec ? '-tf' : ''}-${tier}`,
     );
-    writeReport(label, { baseSha, ...report }, standardMd(report));
+    writeReport(label, { baseSha, mechanicsSha, ...report }, standardMd(report));
     const { runsDetail, ...summary } = report;
     void runsDetail;
     console.log(JSON.stringify(summary, null, 2));

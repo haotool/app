@@ -16,6 +16,7 @@
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
     "test:e2e": "playwright test",
     "audit:level": "node scripts/level-audit.mjs",
+    "verify:audit-freshness": "node scripts/verify-audit-freshness.mjs",
     "verify:docs": "node scripts/verify-design-docs.mjs"
   },
   "dependencies": {
