@@ -32,6 +32,7 @@ import {
   updateSpora,
 } from './groundEnemies';
 import type { EnemyTarget } from './enemies';
+import { setFacingBySign } from './enemyFacing';
 import type { VisualScaleChannel } from './visualScale';
 
 // 小怪 per-kind 逐幀 AI 單一分派點（GAME_DESIGN §16/§30/§47/§48）：update 本體依
@@ -96,6 +97,9 @@ export function updateEnemyKind(
     const direction = ctx.target ? (ctx.target.x < sprite.x ? -1 : 1) : 0;
     body.setVelocityX(direction * (kind === 'zappy' ? 45 : 35));
     body.setVelocityY(0);
+    // 補給態仍是走動態：面向必須跟隨移動方向，否則方向性素材（boomy）會凍結在
+    // 生成朝向、與實際走向相反（L30 曝露）。攻擊停用不等於面向停更。
+    setFacingBySign(sprite, direction);
     sprite.setData('state', 'supply');
     return;
   }
