@@ -17,16 +17,14 @@ import {
   createShieldState,
   effectiveInvulnMs,
   fillMagazine,
-  isFrontalHit,
-  isTopShelly,
+  grantArmor,
+  isArmored,
   pickChainTargets,
   popTopSlot,
   pushGoldStar,
   resolveActionPress,
   resolveJumpPress,
   resolveShieldBlock,
-  shieldEligible,
-  shouldFireOnRelease,
   slotSpec,
   starDamage,
   starPitch,
@@ -225,14 +223,9 @@ describe('resolveActionPress（§109 B 鍵三語意收斂，星暴長按退場�
     expect(resolveActionPress({ ammo: 0 })).toBe('none');
   });
 
-  it('放開短於吸入閾值視為點按發射', () => {
-    expect(shouldFireOnRelease(100)).toBe(true);
-    expect(shouldFireOnRelease(150)).toBe(false);
-  });
-
-  it('頂槽殼盾星按下走延遲（§40）：點按發射與長按舉盾於放開分化', () => {
-    expect(resolveActionPress({ ammo: 1, topIsShelly: true })).toBe('defer');
-    expect(resolveActionPress({ ammo: 1, topIsShelly: false })).toBe('fire');
+  it('龜甲護甲被動化後 B 鍵單義：有彈即按即射，頂槽是不是殼盾星都不再延遲', () => {
+    expect(resolveActionPress({ ammo: 1 })).toBe('fire');
+    expect(resolveActionPress({ ammo: 5 })).toBe('fire');
   });
 });
 
@@ -287,67 +280,34 @@ describe('resolveJumpPress（§44 跳躍鍵輸入矩陣）', () => {
   });
 });
 
-describe('殼盾 FSM（§40）', () => {
-  it('isTopShelly 僅頂槽殼盾星成立；金星不算', () => {
-    expect(isTopShelly([slot('shelly')])).toBe(true);
-    expect(isTopShelly([slot('shelly'), slot('jelly')])).toBe(false);
-    expect(isTopShelly([slot('shelly', false, true)])).toBe(false);
-    expect(isTopShelly([])).toBe(false);
+describe('龜甲護甲（§40 重設計）', () => {
+  it('初始無甲；披甲取得完整 20 秒視窗', () => {
+    expect(isArmored(createShieldState())).toBe(false);
+    const armored = grantArmor();
+    expect(armored.armorMs).toBe(SHELL_SHIELD.armorMs);
+    expect(isArmored(armored)).toBe(true);
   });
 
-  it('長按且頂槽殼盾星才舉盾；條件消失即放下', () => {
-    let state = advanceShield(createShieldState(), { deltaMs: 16, held: true, eligible: true });
-    expect(state.raised).toBe(true);
-    state = advanceShield(state, { deltaMs: 16, held: false, eligible: true });
-    expect(state.raised).toBe(false);
-    state = advanceShield(state, { deltaMs: 16, held: true, eligible: false });
-    expect(state.raised).toBe(false);
+  it('視窗逐幀倒數，期滿自動卸甲且不轉負', () => {
+    let state = advanceShield(grantArmor(), 1000);
+    expect(state.armorMs).toBe(SHELL_SHIELD.armorMs - 1000);
+    expect(isArmored(state)).toBe(true);
+    state = advanceShield(state, SHELL_SHIELD.armorMs);
+    expect(state.armorMs).toBe(0);
+    expect(isArmored(state)).toBe(false);
   });
 
-  it('格擋成功入 4s CD，CD 中不可再舉盾，期滿恢復', () => {
-    let state = resolveShieldBlock();
-    expect(state.raised).toBe(false);
-    expect(state.cooldownMs).toBe(SHELL_SHIELD.cooldownMs);
-    state = advanceShield(state, { deltaMs: 1000, held: true, eligible: true });
-    expect(state.raised).toBe(false);
-    state = advanceShield(state, { deltaMs: SHELL_SHIELD.cooldownMs, held: true, eligible: true });
-    expect(state.raised).toBe(true);
+  it('格擋一次即耗盡：擋下後無甲，不再抵擋第二次', () => {
+    expect(isArmored(grantArmor())).toBe(true);
+    const blocked = resolveShieldBlock();
+    expect(blocked.armorMs).toBe(0);
+    expect(isArmored(blocked)).toBe(false);
   });
 
-  it('殼盾情境（§109 收斂）：頂槽殼盾星即成立；滿匣不再讓位星暴（長按星暴已退場）', () => {
-    expect(shieldEligible([slot('shelly')])).toBe(true);
-    expect(shieldEligible([slot('jelly'), slot('shelly')])).toBe(true);
-    expect(shieldEligible([slot('jelly')])).toBe(false);
-    expect(shieldEligible([])).toBe(false);
-    // 滿匣頂槽殼盾星（蓄能星存在時可達）：長按語意固定為舉盾。
-    expect(
-      shieldEligible([slot('jelly'), slot('floaty'), slot('puffy'), slot('jelly'), slot('shelly')]),
-    ).toBe(true);
-  });
-
-  it('殼盾情境長按不回落吸入：盾 CD 中 raised 恆 false，但情境仍成立（吸入抑制依情境判定）', () => {
-    // 模擬 player.ts 長按達閾值後的吸入判定：inhaling = !raised && !shieldEligible。
-    const magazine = [slot('shelly')];
-    let state = resolveShieldBlock();
-    state = advanceShield(state, { deltaMs: 16, held: true, eligible: shieldEligible(magazine) });
-    expect(state.raised).toBe(false);
-    const inhaling = !state.raised && !shieldEligible(magazine);
-    expect(inhaling).toBe(false);
-    // CD 期滿長按恢復舉盾（仍非吸入）。
-    state = advanceShield(state, {
-      deltaMs: SHELL_SHIELD.cooldownMs,
-      held: true,
-      eligible: shieldEligible(magazine),
-    });
-    expect(state.raised).toBe(true);
-  });
-
-  it('isFrontalHit 正面判定：面向側與同 x 為正面，背面不格擋', () => {
-    expect(isFrontalHit(1, 100, 160)).toBe(true);
-    expect(isFrontalHit(1, 100, 40)).toBe(false);
-    expect(isFrontalHit(-1, 100, 40)).toBe(true);
-    expect(isFrontalHit(-1, 100, 160)).toBe(false);
-    expect(isFrontalHit(1, 100, 100)).toBe(true);
+  it('重複披甲重置視窗而不疊層（一次一甲，不累積無敵）', () => {
+    const nearlyExpired = advanceShield(grantArmor(), SHELL_SHIELD.armorMs - 500);
+    expect(nearlyExpired.armorMs).toBe(500);
+    expect(grantArmor().armorMs).toBe(SHELL_SHIELD.armorMs);
   });
 });
 

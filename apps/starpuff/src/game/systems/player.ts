@@ -36,15 +36,13 @@ import {
   createShieldState,
   effectiveInvulnMs,
   fillMagazine,
-  isFrontalHit,
-  isTopShelly,
+  grantArmor,
+  isArmored,
   popTopSlot,
   pushGoldStar,
   resolveActionPress,
   resolveJumpPress,
   resolveShieldBlock,
-  shieldEligible,
-  shouldFireOnRelease,
   starPitch,
   swallowIntoMagazine,
 } from '../logic/skills';
@@ -100,6 +98,7 @@ import { advanceHold, createHoldState } from '../logic/holdArbiter';
 import { playSfx } from '../audio/sfx';
 import { morphFrameKeys } from '../core/assetPlan';
 import { createChargedStar } from './chargedStar';
+import { createTurtleArmor } from './turtleArmor';
 import type { ControlsState } from './controls';
 import { FX_TEXTURES, burstSmall, ensureFxTextures, heroLandingRing } from './fx';
 import { burstLayers, flashSprite, flashStarImpact } from './fxLayers';
@@ -282,8 +281,7 @@ export function createPlayer(
   let stridePhase = 0;
   let lastVy = 0;
   let pose: Pose = 'hero-idle';
-  // 技能狀態（§23/§109）：殼盾延遲發射旗標、蓄能結晶狀態機、下衝擊 CD。
-  let deferredFire = false;
+  // 技能狀態（§23/§109）：蓄能結晶狀態機、下衝擊 CD。
   let starburst = createStarburstState();
   // 星暴無敵窗（§64）：與受擊 i-frame 獨立計時，結算取較大值（effectiveInvulnMs）。
   let stormInvulnMs = 0;
@@ -405,20 +403,10 @@ export function createPlayer(
     })
     .setDepth(9);
 
-  // 殼盾面前弧盾（§40）：面向側青綠弧線 + 淡填充，逐幀重繪。
-  const shieldGfx = scene.add.graphics().setDepth(94);
+  // 龜甲護罩（§40 重設計）：呈現委派 turtleArmor；狀態真值仍在 logic/skills.ts。
+  const turtleArmor = createTurtleArmor(scene);
   const drawShield = () => {
-    shieldGfx.clear();
-    if (!shield.raised) return;
-    const cx = sprite.x + facing * 14;
-    const base = facing === 1 ? 0 : Math.PI;
-    shieldGfx.fillStyle(0x7fd8c8, 0.18);
-    shieldGfx.slice(cx, sprite.y, 36, base - 1.05, base + 1.05, false);
-    shieldGfx.fillPath();
-    shieldGfx.lineStyle(4, 0x7fd8c8, 0.95);
-    shieldGfx.beginPath();
-    shieldGfx.arc(cx, sprite.y, 36, base - 1.05, base + 1.05, false);
-    shieldGfx.strokePath();
+    turtleArmor.draw(shield.armorMs, sprite.x, sprite.y, scene.time.now);
   };
 
   // 蓄能大星（§109）：結晶後頭頂軌道漂浮，蓄爆期斂縮增亮；呈現委派 chargedStar。
@@ -490,7 +478,6 @@ export function createPlayer(
     transform = startTransform(form);
     // #948：只扣達標所需星單位，餘槽保留供變身期間射擊。
     magazine = consumeForTransform(magazine, form);
-    deferredFire = false;
     prismArm = false;
     halfDamagePool = 0;
     voltCdMs = 0;
@@ -774,14 +761,9 @@ export function createPlayer(
             squashStretch(1.2, 0.85);
           }
         }
-        // 未變身：沿既有 B 語意（殼盾星延遲／即按即射）。
+        // 未變身：B 即按即射（殼盾星延遲分流隨龜甲護甲被動化退場）。
         if (transform.form === null && controls.actionPressed) {
-          const command = resolveActionPress({
-            ammo: magazine.length,
-            topIsShelly: isTopShelly(magazine),
-          });
-          if (command === 'fire') fireStar();
-          else if (command === 'defer') deferredFire = true;
+          if (resolveActionPress({ ammo: magazine.length }) === 'fire') fireStar();
         }
 
         // SP／TF 兩鍵（#952 拆鍵）：各自單義，按下緣即時結算——長按分流隨兩義消失
@@ -802,10 +784,7 @@ export function createPlayer(
         }
       }
 
-      // 殼盾情境點按（<150ms）於放開時發射；長按則交給舉盾或吸入。
       if (!controls.actionHeld) {
-        if (deferredFire && hurtLockMs <= 0 && shouldFireOnRelease(actionHoldMs)) fireStar();
-        deferredFire = false;
         // 稜化 B 放開分派（§119）：長按 ≥ 門檻＝彩虹光束、否則三向稜光碎片。
         if (prismArm && transform.form === 'prism' && hurtLockMs <= 0 && formCdMs <= 0) {
           const spec = TRANSFORM_FORMS.prism;
@@ -843,23 +822,15 @@ export function createPlayer(
       chargedStar.update(sprite.x, sprite.y, deltaMs, starburst.phase);
 
       actionHoldMs = controls.actionHeld ? actionHoldMs + deltaMs : 0;
-      // 殼盾（§109 收斂 §40 輸入矩陣）：頂槽殼盾星即為殼盾情境——長按語意固定為
-      // 舉盾，舉盾中與盾 CD 中皆抑制吸入，不回落；變身中 B 已改役不進殼盾。
-      const inShieldContext = shieldEligible(magazine) && !transform.form;
-      shield = advanceShield(shield, {
-        deltaMs,
-        held: controls.actionHeld && actionHoldMs >= INHALE.holdThresholdMs && hurtLockMs <= 0,
-        eligible: inShieldContext && hurtLockMs <= 0,
-      });
-      if (shield.raised && !wasShieldRaised) playSfx('shell-spin');
-      wasShieldRaised = shield.raised;
+      // 龜甲護甲（§40 重設計）：被動倒數，不吃任何按鍵狀態——披甲不再佔用 B 鍵，
+      // 因此吸吐與發射在護甲期間完全照常。
+      shield = advanceShield(shield, deltaMs);
+      const armored = isArmored(shield);
+      if (armored && !wasShieldRaised) playSfx('shell-spin');
+      wasShieldRaised = armored;
       drawShield();
-      // 吸入停用情境（§109）：變身中 B 已改役、殼盾情境長按舉盾，皆不進吸入。
-      inhaling =
-        actionHoldMs >= INHALE.holdThresholdMs &&
-        !shield.raised &&
-        !inShieldContext &&
-        !transform.form;
+      // 吸入停用情境：僅變身中 B 改役一項（殼盾長按分流已隨護甲被動化退場）。
+      inhaling = actionHoldMs >= INHALE.holdThresholdMs && !transform.form;
       zoneBody.enable = inhaling;
       // 變身環＋護體視覺（§57/§109/§119）：形態倒數與泡泡盾/星體護衛逐幀重繪。
       formSkills.draw(transform, sprite.x, sprite.y, scene.time.now);
@@ -940,17 +911,15 @@ export function createPlayer(
     takeDamage(damage: number, sourceX: number) {
       // 格擋後短無敵（§40）：防同一接觸連續結算。
       if (blockInvulnMs > 0) return;
-      // 殼盾格擋（§40）：舉盾中的正面傷害——消耗頂槽、入 CD、發反擊事件，不掉血不擊退。
-      if (shield.raised && isFrontalHit(facing, sprite.x, sourceX)) {
-        const popped = popTopSlot(magazine);
-        magazine = popped.magazine;
-        if (popped.slot) lastFlavor = popped.slot.flavor;
+      // 龜甲格擋（§40 重設計）：披甲中的任意方向傷害——護甲一次耗盡、發反擊事件，
+      // 不掉血不擊退。與舊版差異：不再判正背面，也不再消耗彈匣頂槽（護甲是獨立
+      // 資源，吞下即得），因此格擋不需 emitAmmo。
+      if (isArmored(shield)) {
         shield = resolveShieldBlock();
         blockInvulnMs = SHELL_SHIELD.blockInvulnMs;
         drawShield();
         squashStretch(1.15, 0.88);
         playSfx('metal');
-        emitAmmo();
         emitGameEvent(scene.events, GameEvents.SKILL_SHIELD_BLOCK, {
           x: sprite.x,
           y: sprite.y,
@@ -1043,6 +1012,12 @@ export function createPlayer(
       const result = swallowIntoMagazine(magazine, flavor);
       magazine = result.magazine;
       lastFlavor = flavor;
+      // 龜甲護甲（§40 重設計）：吞下殼殼即披甲 20 秒——與彈匣是獨立資源，
+      // 之後把星射掉也不會卸甲；重複吞下重置視窗而不疊層。
+      if (flavor === 'shelly') {
+        shield = grantArmor();
+        drawShield();
+      }
       // 連吞升級（§23）強化音效；混合合成（§46）沿用 jingle 短奏提示。
       if (result.charged) playSfx('charge');
       else if (result.mixed) playSfx('jingle');
@@ -1097,10 +1072,15 @@ export function createPlayer(
     grantStar(flavor: StarFlavor) {
       magazine = swallowIntoMagazine(magazine, flavor).magazine;
       lastFlavor = flavor;
+      // 走正式 swallow 語意：殼盾星同樣披甲，e2e 才能觀測護甲行為。
+      if (flavor === 'shelly') {
+        shield = grantArmor();
+        drawShield();
+      }
       emitAmmo();
     },
     isShieldRaised() {
-      return shield.raised;
+      return isArmored(shield);
     },
     getTransformState() {
       return transform;
@@ -1183,7 +1163,7 @@ export function createPlayer(
       vscale.unregister(sprite);
       footDust.destroy();
       chargedStar.destroy();
-      shieldGfx.destroy();
+      turtleArmor.destroy();
       formSkills.destroy();
       silhouette.destroy();
       sprite.destroy();
