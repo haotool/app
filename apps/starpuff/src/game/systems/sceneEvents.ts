@@ -81,10 +81,8 @@ export function wireSceneEvents(bus: Bus, hooks: SceneEventHooks): () => void {
     hooks.starCombat().resolveSlamImpact(x, y);
     hooks.stage().damageBricksInRadius(x, y, hooks.starCombat().slamRadiusPx());
   });
-  // 殼盾格擋成功（§40）：正面反擊星爆，波及面前小怪。
-  bind(GameEvents.SKILL_SHIELD_BLOCK, ({ x, y, facing }) =>
-    hooks.starCombat().resolveShieldCounter(x, y, facing),
-  );
+  // 龜甲格擋成功（§40 重設計）：身周反擊星爆，波及四周小怪。
+  bind(GameEvents.SKILL_SHIELD_BLOCK, ({ x, y }) => hooks.starCombat().resolveShieldCounter(x, y));
   // 星化形態技（§57/§119）：player 發事件、starCombat 單點路由結算（七形態同制）。
   bind(GameEvents.SKILL_TRANSFORM_STRIKE, ({ kind, x, y, facing }) =>
     hooks.starCombat().resolveTransformStrike(kind, x, y, facing),

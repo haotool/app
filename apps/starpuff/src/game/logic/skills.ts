@@ -1,7 +1,6 @@
 import {
   CHARGED_STAR,
   GOLD_STAR,
-  INHALE,
   STAR,
   STAR_FLAVORS,
   STAR_MIXES,
@@ -127,15 +126,14 @@ export function effectiveInvulnMs(hitInvulnMs: number, stormInvulnMs: number): n
   return Math.max(hitInvulnMs, stormInvulnMs);
 }
 
-// B 鍵按下當幀的動作決策（§109 收斂為三語意）：點按發射、按住吸入、頂槽殼盾星
-// 按住舉盾——僅殼盾情境走延遲（放開 <150ms 結算為點按發射）。星暴長按 0.8s 與
-// 地面長按 0.6s 變身全數退場（改由 SP 情境鍵承擔，logic/starburst.ts）。
-// v7 起下衝擊改由跳躍鍵矩陣觸發（resolveJumpPress）。
-export type ActionCommand = 'fire' | 'defer' | 'none';
+// B 鍵按下當幀的動作決策（§40 龜甲護甲改造後收斂為兩語意）：點按發射、按住吸入。
+// 殼盾星延遲分流隨長按舉盾退場——護甲改為吞下即被動生效，B 鍵不再有第三義，
+// 頂槽是不是殼盾星都即按即射。星暴長按 0.8s 與地面長按 0.6s 變身亦早已退場
+// （改由 SP／TF 情境鍵承擔）。v7 起下衝擊改由跳躍鍵矩陣觸發（resolveJumpPress）。
+export type ActionCommand = 'fire' | 'none';
 
-export function resolveActionPress(opts: { ammo: number; topIsShelly?: boolean }): ActionCommand {
-  if (opts.ammo <= 0) return 'none';
-  return opts.topIsShelly === true ? 'defer' : 'fire';
+export function resolveActionPress(opts: { ammo: number }): ActionCommand {
+  return opts.ammo <= 0 ? 'none' : 'fire';
 }
 
 // 跳躍鍵輸入矩陣（§44，v7）：空中「下＋跳」＝下衝擊（吞含/puffed 狀態不影響；
@@ -157,58 +155,43 @@ export function resolveJumpPress(opts: {
     : 'jump';
 }
 
-// 滿匣延遲發射：放開時短於吸入閾值視為點按 → 發射。
-export function shouldFireOnRelease(holdMs: number): boolean {
-  return holdMs < INHALE.holdThresholdMs;
-}
-
-// 殼盾（§40）：頂槽殼盾星長按舉正面護盾——格擋一次即消耗頂槽並反擊星爆，CD 4s。
+// 龜甲護甲（§40 重設計）：吞下殼殼即披甲——20 秒視窗內自動抵擋一次「任意方向」
+// 攻擊，擋下即耗盡並反擊星爆。相對舊版長按舉正面盾的差異：被動生效不需按鍵、
+// 不佔用彈匣頂槽、不分正背面，因此披甲期間吸吐與發射全部照常。
 export const SHELL_SHIELD = {
-  cooldownMs: 4000,
+  armorMs: 20000,
   blockInvulnMs: 800,
   counterRadiusPx: 90,
   counterDamage: 3,
 } as const;
 
 export interface ShieldState {
-  raised: boolean;
-  cooldownMs: number;
+  // 剩餘護甲視窗（ms）；0 表示無甲。一次性——擋下即歸零。
+  armorMs: number;
 }
 
 export function createShieldState(): ShieldState {
-  return { raised: false, cooldownMs: 0 };
+  return { armorMs: 0 };
 }
 
-export function isTopShelly(magazine: readonly MagazineSlot[]): boolean {
-  const top = magazine[magazine.length - 1];
-  return top?.flavor === 'shelly' && !top.gold;
+// 披甲：吞下殼盾星即刷新整段視窗。重複吞下重置計時而不疊層——多層無敵會讓
+// 殼殼變成過強的續命資源，KISS 保持「一次一甲」。
+export function grantArmor(): ShieldState {
+  return { armorMs: SHELL_SHIELD.armorMs };
 }
 
-// 殼盾情境（§109 收斂 §40 輸入矩陣）：頂槽殼盾星即成立——此情境下長按語意固定為
-// 舉盾，盾 CD 中或舉盾中皆不得回落為吸入（點按發射不受影響）。星暴長按已退場，
-// 滿匣不再讓位（滿匣僅在蓄能星存在時可達，§109 不疊加）。
-export function shieldEligible(magazine: readonly MagazineSlot[]): boolean {
-  return isTopShelly(magazine);
+// 逐幀推進：視窗倒數，歸零即自動卸甲。
+export function advanceShield(state: ShieldState, deltaMs: number): ShieldState {
+  return { armorMs: Math.max(0, state.armorMs - deltaMs) };
 }
 
-// 逐幀推進：held 為長按達閾值（同吸入 150ms），eligible 為頂槽殼盾星（§109）；
-// CD 中不可舉盾，放開或條件消失即放下。
-export function advanceShield(
-  state: ShieldState,
-  tick: { deltaMs: number; held: boolean; eligible: boolean },
-): ShieldState {
-  const cooldownMs = Math.max(0, state.cooldownMs - tick.deltaMs);
-  return { raised: tick.held && tick.eligible && cooldownMs <= 0, cooldownMs };
+export function isArmored(state: ShieldState): boolean {
+  return state.armorMs > 0;
 }
 
-// 成功格擋：放下護盾並進 CD；頂槽消耗與反擊星爆由呼叫端結算。
+// 成功格擋：護甲一次性耗盡；反擊星爆由呼叫端結算。
 export function resolveShieldBlock(): ShieldState {
-  return { raised: false, cooldownMs: SHELL_SHIELD.cooldownMs };
-}
-
-// 正面判定（§40 正面護盾）：傷害來源位於面向側；同 x 視為正面（貼身重疊保護）。
-export function isFrontalHit(facing: 1 | -1, playerX: number, sourceX: number): boolean {
-  return sourceX === playerX || Math.sign(sourceX - playerX) === facing;
+  return { armorMs: 0 };
 }
 
 // 雷鏈目標選擇（§40）：命中點半徑內取最近 count 隻，由近至遠排序；純函式供 vitest。

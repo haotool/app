@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Phaser from 'phaser';
 import { STAR_FLAVORS, FORGIVENESS, STAR, STARSTORM, STAR_MIXES, getMix } from '../core/config';
 import { GameEvents } from '../core/events';
-import { MAX_CONCURRENT_WIND_BLADES, STAR_POOL_MAX } from '../logic/skills';
+import { MAX_CONCURRENT_WIND_BLADES, SHELL_SHIELD, STAR_POOL_MAX } from '../logic/skills';
 import { TRANSFORM_FORMS, unlockedTransformForms } from '../logic/transform';
 import type { ControlsState } from './controls';
 import { createPlayer } from './player';
@@ -128,6 +128,9 @@ function chainable(): Record<string, ReturnType<typeof vi.fn>> & { texture: { ke
     'beginPath',
     'arc',
     'strokePath',
+    // 龜甲護罩六邊形紋路以 moveTo/lineTo 描邊（Phaser Graphics 正式 API）。
+    'moveTo',
+    'lineTo',
     'fillStyle',
     'fillCircle',
     'slice',
@@ -841,5 +844,45 @@ describe('visualScale 銷毀護欄（#898）', () => {
     frame.postUpdate();
     expect(sprite.scaleX).toBe(0.5);
     expect(sprite.scaleY).toBe(0.5);
+  });
+});
+
+// 龜甲護甲（§40 重設計）：吞下殼殼即被動披甲 20 秒，任意方向擋一次即耗盡；
+// 相對舊版長按舉正面盾的三項行為差異，逐項鎖住避免回退。
+describe('龜甲護甲行為（§40 重設計）', () => {
+  it('吞下殼殼即披甲；視窗期滿自動卸甲', () => {
+    const { player } = makeHarness();
+    expect(player.isShieldRaised()).toBe(false);
+    player.grantStar('shelly');
+    expect(player.isShieldRaised()).toBe(true);
+    // 推進至視窗剛好耗盡。
+    for (let i = 0; i < SHELL_SHIELD.armorMs / 100; i += 1) player.update(IDLE, 100);
+    expect(player.isShieldRaised()).toBe(false);
+  });
+
+  it('背面來源同樣擋下（不再判正背面），且擋一次即耗盡', () => {
+    const { player, emit } = makeHarness();
+    player.grantStar('shelly');
+    const hpBefore = player.sprite as unknown as { x: number };
+    // 面向右（預設）時自左側來的傷害＝背面：舊版不擋，護甲必須擋。
+    player.takeDamage(1, hpBefore.x - 200);
+    expect(emit).toHaveBeenCalledWith(GameEvents.SKILL_SHIELD_BLOCK, expect.anything());
+    expect(player.isShieldRaised()).toBe(false);
+  });
+
+  it('格擋不消耗彈匣頂槽（護甲與彈匣是獨立資源）', () => {
+    const { player } = makeHarness();
+    player.grantStar('shelly');
+    expect(player.getMagazine()).toHaveLength(1);
+    player.takeDamage(1, (player.sprite as unknown as { x: number }).x + 200);
+    expect(player.getMagazine()).toHaveLength(1);
+  });
+
+  it('披甲期間長按仍可吸入（舊版殼盾情境會抑制吸入）', () => {
+    const { player } = makeHarness();
+    player.grantStar('shelly');
+    // 長按超過吸入閾值：護甲被動化後不再佔用 B 鍵。
+    player.update({ ...IDLE, actionHeld: true }, 200);
+    expect(player.isInhaling()).toBe(true);
   });
 });

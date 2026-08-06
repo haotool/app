@@ -295,15 +295,18 @@ describe('resolveSlamImpact 下衝擊落地（§23/§57）', () => {
   });
 });
 
-describe('resolveShieldCounter 殼盾反擊（§40）', () => {
-  it('盾面前 30px 定點星爆、counterRadiusPx 內結算反擊傷', () => {
-    const near = makeEnemy(130 + 50, 300);
-    const behind = makeEnemy(-100, 300);
-    const { combat, damage, fx } = makeHarness({ enemies: [near, behind] });
-    combat.resolveShieldCounter(100, 300, 1);
-    expect(fx.starBurst).toHaveBeenCalledWith(130, 300);
-    expect(damage).toHaveBeenCalledTimes(1);
-    expect(damage).toHaveBeenCalledWith(near, SHELL_SHIELD.counterDamage);
+describe('resolveShieldCounter 龜甲反擊（§40 重設計）', () => {
+  it('以玩家為心的身周星爆：前後兩側等距小怪同時結算，遠處不波及', () => {
+    // 護甲改全向格擋後反擊不得偏向面向側——前後同距必須對稱命中。
+    const front = makeEnemy(100 + 50, 300);
+    const behind = makeEnemy(100 - 50, 300);
+    const far = makeEnemy(100 + 200, 300);
+    const { combat, damage, fx } = makeHarness({ enemies: [front, behind, far] });
+    combat.resolveShieldCounter(100, 300);
+    expect(fx.starBurst).toHaveBeenCalledWith(100, 300);
+    expect(damage).toHaveBeenCalledTimes(2);
+    expect(damage).toHaveBeenCalledWith(front, SHELL_SHIELD.counterDamage);
+    expect(damage).toHaveBeenCalledWith(behind, SHELL_SHIELD.counterDamage);
   });
 });
 
