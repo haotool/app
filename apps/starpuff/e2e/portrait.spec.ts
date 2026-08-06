@@ -228,6 +228,15 @@ test('直持 390×844（D1/D2）：預設 A/B 在右下拇指帶、真觸控點 
 // 短視窗則必須保留可操作的垂直 scroll container，避免完成/取消鈕落出畫面。
 test('直持設定：面板完整可見、短視窗可垂直滾動、按鈕配置不被旋轉殼擠出', async ({ page }) => {
   const errors = collectErrors(page);
+  // 殼層卡片抑制：本案驗設定面板版面，與 PWA／方向提示卡無關。卡片由
+  // whenShellIdle 於 Title 安靜時刻浮現，CI 慢機時會趕在點擊前蓋住設定鈕。
+  // 本案是全檔唯一用 .click()（做 actionability 檢查）者，因此只有它被攔截逾時；
+  // 其餘案走 dispatchEvent 繞過檢查故未曝光。沿 modal-landscape.spec 既有慣例。
+  await page.addInitScript(() => {
+    localStorage.setItem('sp-install-dismissed', '1');
+    localStorage.setItem('sp-orientation-landscape-seen', '1');
+    localStorage.setItem('sp-rotation-notice', '1');
+  });
   await page.goto('/');
   await expect(page.locator('#app canvas')).toBeVisible();
   await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Title');
