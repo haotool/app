@@ -159,28 +159,27 @@ test('存檔持久化重載（§38）：通關寫檔後重載，地圖狀態與�
   expect(errors).toEqual([]);
 });
 
-test('殼盾格擋（§40）：長按舉盾擋正面攻擊，消耗頂槽並反擊星爆', async ({ page }) => {
+test('龜甲護甲（§40 重設計）：吞下殼殼即被動披甲，擋一次攻擊並反擊星爆', async ({ page }) => {
   const errors = collectErrors(page);
   await startGame(page);
+  // 披甲不需按鍵：取得殼盾星當下即生效（舊版需長按 ≥150ms 舉盾）。
   await page.evaluate(() => window.__sp.grantStar('shelly'));
   await expect
     .poll(() => page.evaluate(() => window.__sp.ammo()))
     .toEqual({ ammo: 1, flavor: 'shelly', mix: null });
-  // 長按 ≥150ms：頂槽殼盾星 → 舉盾（取代吸入）。
-  await page.keyboard.down('X');
-  await expect
-    .poll(() => page.evaluate(() => window.__sp.shieldRaised()), { timeout: 4000 })
-    .toBe(true);
-  // 正面（面向右側）放入滾刺瓜：接觸被格擋——不掉血、頂槽消耗、反擊星爆擊殺。
+  expect(await page.evaluate(() => window.__sp.shieldRaised())).toBe(true);
+  // 放入滾刺瓜：接觸被格擋——不掉血、護甲耗盡、反擊星爆擊殺。
+  // 頂槽不再被消耗（護甲與彈匣是獨立資源），ammo 維持 1。
   const killsBefore = await page.evaluate(() => window.__sp.quota().killCount);
   await page.evaluate(() => window.__sp.spawn('spiky', window.__sp.probe().x + 150, 350));
-  await expect.poll(() => page.evaluate(() => window.__sp.ammo().ammo), { timeout: 8000 }).toBe(0);
+  await expect
+    .poll(() => page.evaluate(() => window.__sp.shieldRaised()), { timeout: 8000 })
+    .toBe(false);
   expect(await page.evaluate(() => window.__sp.playerHp())).toBe(5);
-  expect(await page.evaluate(() => window.__sp.shieldRaised())).toBe(false);
+  expect(await page.evaluate(() => window.__sp.ammo().ammo)).toBe(1);
   await expect
     .poll(() => page.evaluate(() => window.__sp.quota().killCount), { timeout: 4000 })
     .toBeGreaterThan(killsBefore);
-  await page.keyboard.up('X');
   await page.waitForTimeout(600);
   expect(errors).toEqual([]);
 });
