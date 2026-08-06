@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-// @ts-expect-error scripts 為 .mjs 量測工具，無型別宣告；此處僅驗純函式裁決邏輯。
-import { freshnessVerdict, MECHANIC_PATHS } from '../../../scripts/lib/audit-freshness.mjs';
+import { freshnessVerdict, MECHANIC_EXCLUDES, MECHANIC_PATHS } from './auditFreshness';
 
 // 量測基準新鮮度裁決守門：audit 報告的數字是平衡決策依據，機制變更後必須能
 // 機械判定其失效。真實案例——l28-tf-high 測於 #953（變身資格放寬）與 #965
@@ -38,8 +37,12 @@ describe('MECHANIC_PATHS 涵蓋面', () => {
 
   // 呈現層刻意不納入：純視覺改動若作廢全部報告，訊號會被稀釋成雜訊。
   it('不納入純呈現層路徑', () => {
-    expect(MECHANIC_PATHS.some((p: string) => p.includes('/fx') || p.includes('style'))).toBe(
-      false,
-    );
+    expect(MECHANIC_PATHS.some((p) => p.includes('/fx') || p.includes('style'))).toBe(false);
+  });
+
+  // 測試檔與機制同住 logic/、systems/，但不改變遊戲行為。本守門導入當下即自證：
+  // 新增本檔令 21 份報告全數誤判過時——排除 pathspec 移除後此案必紅。
+  it('排除測試檔：補測試不得作廢量測基準', () => {
+    expect(MECHANIC_EXCLUDES).toContain(':(exclude)**/*.test.ts');
   });
 });
