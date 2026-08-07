@@ -426,11 +426,30 @@ describe('MiniTrendChart', () => {
       { date: '2025-10-15', rate: 31.5 },
     ];
 
-    it('提供 basisLabel 時圖角顯示基準標註', () => {
+    it('預設不顯示圖角常駐基準標註（避免壓在走勢線上）', () => {
       render(<MiniTrendChart data={testData} currencyCode="USD" basisLabel="現金賣出走勢" />);
+
+      expect(screen.queryByTestId('trend-basis-label')).not.toBeInTheDocument();
+    });
+
+    it('showBasisBadge 開啟時圖角顯示基準標註', () => {
+      render(
+        <MiniTrendChart
+          data={testData}
+          currencyCode="USD"
+          basisLabel="現金賣出走勢"
+          showBasisBadge
+        />,
+      );
 
       const badge = screen.getByTestId('trend-basis-label');
       expect(badge).toHaveTextContent('現金賣出走勢');
+    });
+
+    it('未提供 basisLabel 時即使開啟 showBasisBadge 也不顯示基準標註', () => {
+      render(<MiniTrendChart data={testData} currencyCode="USD" showBasisBadge />);
+
+      expect(screen.queryByTestId('trend-basis-label')).not.toBeInTheDocument();
     });
 
     it('未提供 basisLabel 時不顯示基準標註', () => {

@@ -24,8 +24,13 @@ export interface MiniTrendChartProps {
   data: MiniTrendDataPoint[];
   currencyCode: CurrencyCode;
   className?: string;
-  /** 走勢價格基準標註（例如「現金賣出走勢」）；提供時顯示於圖角與 tooltip。 */
+  /** 走勢價格基準標註（例如「現金賣出走勢」）；提供時顯示於 tooltip，圖角常駐標註另由 showBasisBadge 控制。 */
   basisLabel?: string;
+  /**
+   * 是否於圖表左上角常駐顯示 basisLabel。
+   * 預設關閉：常駐標註會壓在走勢線上造成視覺干擾，基準資訊改由 tooltip 呈現。
+   */
+  showBasisBadge?: boolean;
 }
 
 interface TooltipData {
@@ -63,7 +68,12 @@ export function clampTooltipCenterX(
  *
  * @version 3.0.0 - 收斂觸控處理至 lightweight-charts 內建 tracking mode
  */
-export function MiniTrendChart({ data, className = '', basisLabel }: MiniTrendChartProps) {
+export function MiniTrendChart({
+  data,
+  className = '',
+  basisLabel,
+  showBasisBadge = false,
+}: MiniTrendChartProps) {
   // 使用真實數據（Safari 404 問題已透過 logger.debug 降級處理修復）
   const displayData = data;
   const chartContainerRef = useRef<HTMLDivElement>(null);
@@ -272,8 +282,8 @@ export function MiniTrendChart({ data, className = '', basisLabel }: MiniTrendCh
         className="w-full h-full touch-none select-none"
       />
 
-      {/* 走勢基準標註（例如「現金賣出走勢」）- 展開視圖下常駐可見 */}
-      {basisLabel && (
+      {/* 走勢基準標註（例如「現金賣出走勢」）- 僅在 showBasisBadge 開啟時常駐可見 */}
+      {showBasisBadge && basisLabel && (
         <span
           data-testid="trend-basis-label"
           className="absolute top-1 left-2 z-10 pointer-events-none text-[10px] font-medium text-text-muted/80 whitespace-nowrap"
