@@ -14,6 +14,7 @@ import * as lighthouseDrift from '../lighthouse-drift.mjs';
 import * as monitorScheduleDrift from '../monitor-schedule-drift.mjs';
 import * as verify002Log from '../verify-002-log.mjs';
 import * as verifyProductionResources from '../verify-production-resources.mjs';
+import * as seoHealthUtils from '../lib/seo-health-utils.mjs';
 
 const MODULES = [
   { declaration: '../fetch-moneybox-rates.d.ts', runtime: fetchMoneyboxRates },
@@ -22,6 +23,7 @@ const MODULES = [
   { declaration: '../monitor-schedule-drift.d.mts', runtime: monitorScheduleDrift },
   { declaration: '../verify-002-log.d.mts', runtime: verify002Log },
   { declaration: '../verify-production-resources.d.mts', runtime: verifyProductionResources },
+  { declaration: '../lib/seo-health-utils.d.mts', runtime: seoHealthUtils },
 ] as const;
 
 interface DeclaredValueExports {
