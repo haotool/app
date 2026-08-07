@@ -16,7 +16,7 @@ export function getExpectedCanonicalUrl(canonicalBaseUrl, path) {
     : joinUrl(canonicalBaseUrl, path);
 }
 
-export function resolveAuditBaseUrls(config, customBaseUrl) {
+export function resolveAuditBaseUrls(config, customBaseUrl = undefined) {
   const canonicalBaseUrl = stripTrailingSlash(config.siteUrl);
   const requestBaseUrl = stripTrailingSlash(customBaseUrl || config.siteUrl);
 
