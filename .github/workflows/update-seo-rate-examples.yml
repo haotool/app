@@ -28,6 +28,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  actions: write
 
 jobs:
   update:
@@ -35,6 +36,8 @@ jobs:
 
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+      HAS_RELEASE_PAT: ${{ secrets.RELEASE_PAT != '' }}
+      BOT_PR_TOKEN: ${{ secrets.RELEASE_PAT || secrets.GITHUB_TOKEN }}
 
     steps:
       - uses: actions/checkout@v7
@@ -63,7 +66,7 @@ jobs:
         id: create-pr
         uses: peter-evans/create-pull-request@v8
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ env.BOT_PR_TOKEN }}
           committer: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
           author: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
           commit-message: |
@@ -107,6 +110,18 @@ jobs:
           add-paths: |
             apps/ratewise/src/config/generated/build-time-rates.json
             apps/ratewise/src/config/generated/seo-rate-examples.ts
+
+      # GITHUB_TOKEN 建立的 PR 其 pull_request workflow 常停在 action_required；
+      # RELEASE_PAT 存在時原生觸發，否則嘗試 Approve API（同 release.yml #771 補償鏈）。
+      - name: 核准匯差 PR 的 workflow runs
+        if: steps.create-pr.outputs.pull-request-number != '' && env.HAS_RELEASE_PAT != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.create-pr.outputs.pull-request-number }}
+        run: |
+          set -euo pipefail
+          HEAD_SHA=$(gh pr view "$PR_NUMBER" --json headRefOid -q .headRefOid)
+          bash scripts/approve-bot-pr-workflows.sh chore/daily-seo-rate-update "$HEAD_SHA" "$PR_NUMBER"
 
       # 啟用 GitHub auto-merge（squash）：合併仍由 branch protection + required checks 把關，
       # checks 未通過不會合併；此步驟只是免除人工點擊，非繞過審查控制。

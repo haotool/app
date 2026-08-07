@@ -37,6 +37,11 @@ export const APP_CONFIG = {
     pwa: true,
   },
 
+  // client-side routing：nginx 對未知路徑 fallback 至 index.html（見 nginx.conf papertrade 區塊）。
+  seoValidation: {
+    requireTrue404: false,
+  },
+
   resources: {
     seoFiles: SEO_FILES,
     images: IMAGE_RESOURCES,

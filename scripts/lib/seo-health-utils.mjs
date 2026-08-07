@@ -16,12 +16,20 @@ export function getExpectedCanonicalUrl(canonicalBaseUrl, path) {
     : joinUrl(canonicalBaseUrl, path);
 }
 
-export function resolveAuditBaseUrls(config, customBaseUrl) {
+export function resolveAuditBaseUrls(config, customBaseUrl = undefined) {
   const canonicalBaseUrl = stripTrailingSlash(config.siteUrl);
   const requestBaseUrl = stripTrailingSlash(customBaseUrl || config.siteUrl);
 
   return {
     canonicalBaseUrl,
     requestBaseUrl,
+  };
+}
+
+/** 從 app.config APP_CONFIG.seoValidation 解析生產 SEO 驗證旗標（預設全開）。 */
+export function resolveSeoValidationFlags(config) {
+  return {
+    expectSitemapHreflang: config.seoValidation?.sitemapHreflang !== false,
+    requireTrue404: config.seoValidation?.requireTrue404 !== false,
   };
 }

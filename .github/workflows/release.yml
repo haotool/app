@@ -151,40 +151,9 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          HEAD_SHA="${{ steps.release_pr.outputs.head_sha }}"
-
-          PENDING_IDS=""
-          for i in {1..12}; do
-            sleep 5
-            PENDING_IDS=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs?branch=changeset-release%2Fmain&event=pull_request&per_page=30" \
-              --jq "[.workflow_runs[] | select(.head_sha == \"${HEAD_SHA}\" and (.status == \"action_required\" or .conclusion == \"action_required\"))] | map(.id) | join(\" \")")
-            if [ -n "$PENDING_IDS" ]; then
-              break
-            fi
-          done
-
-          if [ -z "$PENDING_IDS" ]; then
-            # 沒有 pending run 時必須確認已有任一 pull_request run 存在，否則 QC 永遠不會出現。
-            ANY_RUN=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs?branch=changeset-release%2Fmain&event=pull_request&per_page=30" \
-              --jq "[.workflow_runs[] | select(.head_sha == \"${HEAD_SHA}\")] | length")
-            if [ "$ANY_RUN" -gt 0 ]; then
-              echo "No approval-required pull_request runs for ${HEAD_SHA}; CI already runs natively."
-              exit 0
-            fi
-            echo "::error::No pull_request runs exist for ${HEAD_SHA}; Quality Checks will never start."
-            echo "::error::Fix: add repo secret RELEASE_PAT (fine-grained PAT, this repo, permissions: Actions/Contents/Pull requests Read&Write) — see issue #771. Interim SOP: close/reopen the release PR."
-            exit 1
-          fi
-
-          for RUN in $PENDING_IDS; do
-            if gh api -X POST "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN}/approve" >/dev/null; then
-              echo "Approved pull_request run ${RUN}"
-            else
-              echo "::error::Failed to approve pull_request run ${RUN}. GITHUB_TOKEN cannot approve approval-required runs."
-              echo "::error::Fix: add repo secret RELEASE_PAT (fine-grained PAT, this repo, permissions: Actions/Contents/Pull requests Read&Write) — see issue #771. Interim SOP: close/reopen the release PR to trigger native CI."
-              exit 1
-            fi
-          done
+          bash scripts/approve-bot-pr-workflows.sh changeset-release/main \
+            "${{ steps.release_pr.outputs.head_sha }}" \
+            "${{ steps.release_pr.outputs.pr_number }}"
 
       # 只等必要檢查 Quality Checks；e2e / lighthouse 等非必要 job 不阻擋合併（與人工流程一致）。
       # 以 head SHA 的 check-runs 為準，同名取最新（與 GitHub merge box 相同語意）。
