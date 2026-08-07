@@ -18,7 +18,12 @@
  */
 
 import { discoverApps, loadAppConfig } from './lib/workspace-utils.mjs';
-import { getExpectedCanonicalUrl, joinUrl, resolveAuditBaseUrls } from './lib/seo-health-utils.mjs';
+import {
+  getExpectedCanonicalUrl,
+  joinUrl,
+  resolveAuditBaseUrls,
+  resolveSeoValidationFlags,
+} from './lib/seo-health-utils.mjs';
 
 const appName = process.argv[2] || 'ratewise';
 const customBaseUrl = process.argv.find((arg) => arg.startsWith('--base-url='))?.split('=')[1];
@@ -344,7 +349,7 @@ async function main() {
   }
 
   console.log('\n🗺️ Sitemap 內容驗證:');
-  const expectSitemapHreflang = config.seoValidation?.sitemapHreflang !== false;
+  const { expectSitemapHreflang, requireTrue404 } = resolveSeoValidationFlags(config);
   const sitemapResult = await verifySitemapContent(
     requestBaseUrl,
     canonicalBaseUrl,
@@ -394,7 +399,6 @@ async function main() {
     }
   }
 
-  const requireTrue404 = config.seoValidation?.requireTrue404 !== false;
   if (requireTrue404) {
     console.log('\n🚫 真 404 驗證:');
     const notFoundResult = await verify404(requestBaseUrl);

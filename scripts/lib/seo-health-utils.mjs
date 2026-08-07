@@ -25,3 +25,11 @@ export function resolveAuditBaseUrls(config, customBaseUrl) {
     requestBaseUrl,
   };
 }
+
+/** 從 app.config APP_CONFIG.seoValidation 解析生產 SEO 驗證旗標（預設全開）。 */
+export function resolveSeoValidationFlags(config) {
+  return {
+    expectSitemapHreflang: config.seoValidation?.sitemapHreflang !== false,
+    requireTrue404: config.seoValidation?.requireTrue404 !== false,
+  };
+}
