@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+5（reward 5、penalty 0、neutral 0）｜累計總分：+318
+> 本次分數變化：+0（reward 0、penalty 0、neutral 1）｜累計總分：+318
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-08-08
+- ID：neutral-ratewise-trend-basis-badge-opt-in
+- 原因：MiniTrendChart 只要傳入 basisLabel 就無條件渲染圖角常駐標註，「現金賣出走勢」文字壓在走勢線上造成視覺干擾
+- 解法：新增 showBasisBadge prop（預設 false）將常駐標註改為 opt-in，basisLabel 保留供 tooltip 使用，並補三則顯示／隱藏對照測試
 
 - 日期：2026-08-03
 - ID：reward-starpuff-modal-aria-contract
