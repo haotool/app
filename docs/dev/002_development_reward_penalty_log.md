@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+0（reward 0、penalty 0、neutral 1）｜累計總分：+318
+> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+317
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-08-08
+- ID：penalty-types-node-major-misjudged-as-patch
+- 原因：盤點 dependabot PR 時只看 mergeStateStatus=CLEAN 與 checks 全綠，未讀版本號就把 @types/node 24→26 判為「patch 級可直接合」，忽略 runtime 鎖在 Node 24（engines/.nvmrc/CI 三處一致）
+- 解法：關閉 #969，以 pnpm.overrides `"@types/node": "^24"` + dependabot ignore + renovate allowedVersions 三層鎖定，並在 CLAUDE.md 補「型別 major 先行時 typecheck 綠燈不構成安全證據」政策
 
 - 日期：2026-08-08
 - ID：neutral-ratewise-trend-basis-badge-opt-in

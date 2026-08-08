@@ -16,6 +16,12 @@ updates:
     # 2025-12-26: 改為每週，避免與 Renovate 衝突（Renovate 週一執行）
     # Dependabot 作為備援，僅處理 Renovate 遺漏的更新
     versioning-strategy: increase-if-necessary
+    ignore:
+      # 2026-08-08: runtime 鎖在 Node 24（engines ^24.0.0 / .nvmrc / CI node-version 24）。
+      # 型別 major 先行會描述執行期不存在的 API，型別檢查綠燈也擋不住執行期失敗。
+      # 待 runtime 整體升版後再一併解除（PR #969 因此關閉）。
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
 
   - package-ecosystem: 'github-actions'
     directory: '/'

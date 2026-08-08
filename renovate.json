@@ -65,6 +65,11 @@
       "matchPackageNames": ["vitest", "@vitest/coverage-v8", "playwright", "@playwright/test"],
       "groupName": "test tools",
       "automerge": true
+    },
+    {
+      "description": "🔒 @types/node - 跟隨 runtime 鎖在 Node 24，不接受 major 型別先行",
+      "matchPackageNames": ["@types/node"],
+      "allowedVersions": "^24"
     }
   ],
   "vulnerabilityAlerts": {
