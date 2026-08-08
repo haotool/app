@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-1（reward 0、penalty 1、neutral 1）｜累計總分：+316
+> 本次分數變化：+2（reward 2、penalty 0、neutral 0）｜累計總分：+318
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-08-08
+- ID：reward-gitignore-anchor-bug-fixed-after-10-months
+- 原因：`0a2ada5c2`（2025-10-14）加入 `public/rates/` 意圖從 main 移除匯率資料，但含中段斜線的樣式錨定於 repo 根，從未涵蓋 `apps/*/public/rates/`，規則失效 10 個月後 history-30d.json 於 2026-05 再度被 commit
+- 解法：補 `**/public/rates/` 並以 `git check-ignore -v` 驗證生效，於 .gitignore 就地註記錨定陷阱避免再犯
+
+- 日期：2026-08-08
+- ID：reward-dead-history-aggregate-removed
+- 原因：apps/ratewise/public/rates/history-30d.json 三重死亡——生成腳本無人呼叫、無程式碼請求、sw.ts 比對路徑含 /public/ 段與其實際 URL 不匹配，卻仍在正式站以 200 提供三個月前的匯率
+- 解法：刪除該檔並修正 .gitignore 錨定；趨勢圖實際來源為 data 分支 CDN（每日更新，實測正常），生成腳本保留供 data 分支 workflow 使用
 
 - 日期：2026-08-08
 - ID：penalty-stale-branch-analysis-misled-prd-twice
