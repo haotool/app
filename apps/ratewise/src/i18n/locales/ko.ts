@@ -85,6 +85,12 @@ const ko = {
     cashSellBasis: '현금 매도율 추이',
   },
 
+  // Rate Basis（計價基準揭露；僅在 selector 表達不出來時顯示）
+  rateBasis: {
+    mid: '중간 환율 (거래 가능 호가 아님)',
+    cross: '교차 환산 (TWD 경유, 스프레드 2회 적용)',
+  },
+
   // Multi Currency Converter
   multiConverter: {
     title: '복수 통화 환산',

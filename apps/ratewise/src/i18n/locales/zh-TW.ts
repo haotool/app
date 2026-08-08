@@ -85,6 +85,12 @@ const zhTW = {
     cashSellBasis: '現金賣出走勢',
   },
 
+  // Rate Basis（計價基準揭露；僅在 selector 表達不出來時顯示）
+  rateBasis: {
+    mid: '參考中間價（非交易報價）',
+    cross: '交叉換算（經台幣中轉，計入兩次價差）',
+  },
+
   // Multi Currency Converter
   multiConverter: {
     title: '多幣別換算',

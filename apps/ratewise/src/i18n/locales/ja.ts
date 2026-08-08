@@ -85,6 +85,12 @@ const ja = {
     cashSellBasis: '現金売レートの推移',
   },
 
+  // Rate Basis（計價基準揭露；僅在 selector 表達不出來時顯示）
+  rateBasis: {
+    mid: '仲値（取引レートではありません）',
+    cross: 'クロス換算（TWD 経由、スプレッド 2 回分）',
+  },
+
   // Multi Currency Converter
   multiConverter: {
     title: '複数通貨換算',
