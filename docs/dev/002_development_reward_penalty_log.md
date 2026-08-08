@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+317
+> 本次分數變化：-1（reward 0、penalty 1、neutral 1）｜累計總分：+316
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-08-08
+- ID：penalty-stale-branch-analysis-misled-prd-twice
+- 原因：在 checkout 於 feat/single-fold-fluid-fit（落後 main 200+ commits）的主 worktree 上盤點「main 現況」，同一份 PRD 兩度建立在過期程式碼上——先誤判幣別頁 schema 方向有 bug（main 實為自洽），後誤判 RateExample 已有 cashBuy/spotBuy/spotSell（main 僅有 cashSell/bankMid）
+- 解法：撤回 v1.0 主張並改於 origin/main worktree 重驗；新增 deriveCashBuy 以 bankMid 代數還原買入價，刪除 main 無法計算的即期來回損失欄位；往後現況盤點一律在對應 base 的 worktree 執行
+
+- 日期：2026-08-08
+- ID：neutral-ratewise-round-trip-cost-util
+- 原因：換出再換回被銀行賺兩次價差的成本從未量化，17 幣別損失率全距 2.06%～32.11% 的事實無任何模組可產出
+- 解法：新增 roundTripCost 與 rateBasisLabel 純函式模組（含真實牌告迴歸測試與四語系 key 完整性守門），計價基準自 #433 的 8 種精簡為 mid/cross/direct 三種
 
 - 日期：2026-08-08
 - ID：penalty-types-node-major-misjudged-as-patch

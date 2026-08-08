@@ -85,6 +85,12 @@ const en = {
     cashSellBasis: 'Cash sell rate trend',
   },
 
+  // Rate Basis（計價基準揭露；僅在 selector 表達不出來時顯示）
+  rateBasis: {
+    mid: 'Mid-market rate (not a dealable quote)',
+    cross: 'Cross conversion (via TWD, two spreads applied)',
+  },
+
   // Multi Currency Converter
   multiConverter: {
     title: 'Multi-Currency',
