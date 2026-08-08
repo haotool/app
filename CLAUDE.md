@@ -193,6 +193,15 @@ git push origin main            # pre-push 自動跑 typecheck + test + build
 4. 執行 `pnpm install --no-frozen-lockfile` 套用 override
 5. 提交安全修復：`fix(security): 修復 <package> 安全漏洞`
 
+**執行環境型別套件版本政策**（`@types/*` runtime 對齊）：
+
+- `@types/node` **必須**跟隨實際 runtime major，SSOT 為 `package.json engines`、`.nvmrc`、workflow `node-version` 三者一致值（現為 **24**）。
+- 型別 major 先行（例如 `@types/node` 升 26 但 runtime 仍 24）會描述執行期不存在的 API；`pnpm typecheck` 綠燈**不構成**安全證據，故障會延後到執行期才顯現。
+- 攔截設定為雙層，新增機器人或調整 runtime 時兩處都要同步：
+  - `package.json` 的 `pnpm.overrides`：`"@types/node": "^24"`（同時收斂間接依賴）
+  - `.github/dependabot.yml` `ignore` + `renovate.json` `allowedVersions`
+- runtime 升 major 時**必須**同批解除上述三處鎖定，不得只改其中之一。
+
 **PR Rebase 與合併**（處理版本衝突）：
 
 1. 檢查 PR 狀態：`gh pr view <NUMBER> --json mergeStateStatus,mergeable`
