@@ -66,7 +66,10 @@ tmp/
 *.tar.gz
 
 # Data files (managed in data branch only)
+# 注意：不可只寫 public/rates/——含中段斜線的樣式會錨定於 repo 根，
+# 不涵蓋 apps/*/public/rates/，該疏漏曾使 history-30d.json 於 2026-05 被誤 commit。
 public/rates/
+**/public/rates/
 
 # Playwright test results
 test-results/
