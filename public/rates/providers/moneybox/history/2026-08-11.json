@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-08-11T11:23:39.437Z",
-  "updateTime": "2026/08/11 20:23:39",
+  "timestamp": "2026-08-11T12:06:52.667Z",
+  "updateTime": "2026/08/11 21:06:52",
   "source": "MoneyBox (明洞換匯所聯盟)",
   "sourceUrl": "https://moneybox-exchange.com/zh-CHT/exchange",
   "apiUrl": "https://cems.moneybox.or.kr/api/cmd.php?cmd=C011&key=U1D8I4W7V6S1L3U4F3I4",
@@ -8,59 +8,59 @@
   "rates": {
     "USD": {
       "currency": "USD",
-      "base": 1413.4,
+      "base": 1413.2,
       "buy": 1417,
-      "sell": 1415,
-      "spbuy": 1438.13,
-      "spsell": 1388.67
+      "sell": 1412,
+      "spbuy": 1437.93,
+      "spsell": 1388.47
     },
     "JPY": {
       "currency": "JPY",
-      "base": 888.26,
+      "base": 887.21,
       "buy": 893,
       "sell": 887,
-      "spbuy": 903.8,
-      "spsell": 872.72
+      "spbuy": 902.73,
+      "spsell": 871.69
     },
     "CNY": {
       "currency": "CNY",
-      "base": 209.52,
+      "base": 209.48,
       "buy": 209,
       "sell": 208,
-      "spbuy": 219.99,
-      "spsell": 199.05
+      "spbuy": 219.95,
+      "spsell": 199.01
     },
     "EUR": {
       "currency": "EUR",
-      "base": 1630.92,
+      "base": 1630.27,
       "buy": 1630,
       "sell": 1615,
-      "spbuy": 1663.37,
-      "spsell": 1598.47
+      "spbuy": 1662.71,
+      "spsell": 1597.83
     },
     "HKD": {
       "currency": "HKD",
-      "base": 180.14,
+      "base": 180.11,
       "buy": 181,
       "sell": 179.6,
-      "spbuy": 183.68,
-      "spsell": 176.6
+      "spbuy": 183.65,
+      "spsell": 176.57
     },
     "TWD": {
       "currency": "TWD",
       "base": 43.82,
       "buy": 43,
-      "sell": 42.95,
+      "sell": 42.9,
       "spbuy": 49.56,
       "spsell": 39.44
     },
     "SGD": {
       "currency": "SGD",
-      "base": 1104,
+      "base": 1103.72,
       "buy": 1110,
       "sell": 1095,
-      "spbuy": 1125.96,
-      "spsell": 1082.04
+      "spbuy": 1125.68,
+      "spsell": 1081.76
     },
     "THB": {
       "currency": "THB",
@@ -72,19 +72,19 @@
     },
     "PHP": {
       "currency": "PHP",
-      "base": 23.09,
+      "base": 23.11,
       "buy": 23.9,
       "sell": 23.6,
-      "spbuy": 25.39,
-      "spsell": 21.2
+      "spbuy": 25.42,
+      "spsell": 21.22
     },
     "MYR": {
       "currency": "MYR",
-      "base": 345.36,
+      "base": 345.31,
       "buy": 365,
       "sell": 345,
-      "spbuy": 370.91,
-      "spsell": 319.81
+      "spbuy": 370.86,
+      "spsell": 319.76
     },
     "IDR": {
       "currency": "IDR",
@@ -104,19 +104,19 @@
     },
     "AUD": {
       "currency": "AUD",
-      "base": 998.36,
+      "base": 997.79,
       "buy": 1010,
       "sell": 991,
-      "spbuy": 1018.02,
-      "spsell": 978.7
+      "spbuy": 1017.44,
+      "spsell": 978.14
     },
     "GBP": {
       "currency": "GBP",
-      "base": 1907.81,
+      "base": 1906.76,
       "buy": 1910,
       "sell": 1895,
-      "spbuy": 1945.39,
-      "spsell": 1870.23
+      "spbuy": 1944.32,
+      "spsell": 1869.2
     },
     "RUB": {
       "currency": "RUB",
@@ -128,35 +128,35 @@
     },
     "CHF": {
       "currency": "CHF",
-      "base": 1744.18,
+      "base": 1742.33,
       "buy": 1745,
       "sell": 1727,
-      "spbuy": 1778.54,
-      "spsell": 1709.82
+      "spbuy": 1776.65,
+      "spsell": 1708.01
     },
     "CAD": {
       "currency": "CAD",
-      "base": 1014.35,
+      "base": 1013.74,
       "buy": 1025,
       "sell": 1010,
-      "spbuy": 1034.33,
-      "spsell": 994.37
+      "spbuy": 1033.71,
+      "spsell": 993.77
     },
     "NZD": {
       "currency": "NZD",
-      "base": 831.36,
+      "base": 830.33,
       "buy": 840,
       "sell": 810,
-      "spbuy": 847.73,
-      "spsell": 814.99
+      "spbuy": 846.68,
+      "spsell": 813.98
     },
     "AED": {
       "currency": "AED",
-      "base": 384.81,
-      "buy": 405.97,
+      "base": 384.77,
+      "buy": 405.93,
       "sell": 355,
-      "spbuy": 405.97,
-      "spsell": 358.26
+      "spbuy": 405.93,
+      "spsell": 358.23
     },
     "GFT": {
       "currency": "GFT",
