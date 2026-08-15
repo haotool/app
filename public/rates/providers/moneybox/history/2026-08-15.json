@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-08-15T00:34:50.254Z",
-  "updateTime": "2026/08/15 09:34:50",
+  "timestamp": "2026-08-15T02:02:06.128Z",
+  "updateTime": "2026/08/15 11:02:06",
   "source": "MoneyBox (明洞換匯所聯盟)",
   "sourceUrl": "https://moneybox-exchange.com/zh-CHT/exchange",
   "apiUrl": "https://cems.moneybox.or.kr/api/cmd.php?cmd=C011&key=U1D8I4W7V6S1L3U4F3I4",
@@ -9,7 +9,7 @@
     "USD": {
       "currency": "USD",
       "base": 1418.5,
-      "buy": 1425,
+      "buy": 1420,
       "sell": 1410,
       "spbuy": 1443.32,
       "spsell": 1393.68
@@ -58,7 +58,7 @@
       "currency": "SGD",
       "base": 1108.85,
       "buy": 1105,
-      "sell": 1093,
+      "sell": 1095,
       "spbuy": 1130.91,
       "spsell": 1086.79
     },
@@ -74,7 +74,7 @@
       "currency": "PHP",
       "base": 23.09,
       "buy": 24.3,
-      "sell": 23.6,
+      "sell": 23.7,
       "spbuy": 25.39,
       "spsell": 21.2
     },
@@ -138,7 +138,7 @@
       "currency": "CAD",
       "base": 1022.38,
       "buy": 1040,
-      "sell": 1015,
+      "sell": 1017,
       "spbuy": 1042.52,
       "spsell": 1002.24
     },
