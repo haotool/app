@@ -6,6 +6,8 @@ declare global {
   }
 }
 
+const TUTORIAL_MOVE_DISTANCE = 36;
+
 async function dismissOptionalControlHints(page: Page): Promise<void> {
   const hint = page.locator('[data-control-hints="card"]');
   if ((page.viewportSize()?.width ?? 0) >= 1000) return;
@@ -22,14 +24,18 @@ async function dismissOptionalControlHints(page: Page): Promise<void> {
 async function completeTouchMove(
   page: Page,
   pointerId: number,
-): Promise<{ afterFirst: { x: number }; afterSecond: { x: number } }> {
+): Promise<{ before: { x: number }; afterFirst: { x: number }; afterSecond: { x: number } }> {
   const joyZone = page.locator('#joy-zone');
   const viewport = page.viewportSize();
   const portrait = (viewport?.height ?? 0) > (viewport?.width ?? 0);
-  const centerX = 150;
-  const centerY = 330;
-  const deltaX = portrait ? 0 : 80;
-  const deltaY = portrait ? -80 : 0;
+  const box = await joyZone.boundingBox();
+  if (!box) throw new Error('找不到實際搖桿區尺寸');
+  const centerX = box.x + box.width / 2;
+  const centerY = box.y + box.height / 2;
+  const delta = Math.min(80, Math.max(48, portrait ? box.height * 0.28 : box.width * 0.28));
+  const deltaX = portrait ? 0 : delta;
+  const deltaY = portrait ? -delta : 0;
+  const before = await page.evaluate(() => window.__sp.probe());
   await joyZone.dispatchEvent('pointerdown', {
     pointerId,
     isPrimary: true,
@@ -42,7 +48,11 @@ async function completeTouchMove(
     clientX: centerX + deltaX,
     clientY: centerY + deltaY,
   });
-  await page.waitForTimeout(1000);
+  await expect
+    .poll(() => page.evaluate((originX) => Math.abs(window.__sp.probe().x - originX), before.x), {
+      timeout: 5000,
+    })
+    .toBeGreaterThan(TUTORIAL_MOVE_DISTANCE);
   const afterFirst = await page.evaluate(() => window.__sp.probe());
   await joyZone.dispatchEvent('pointermove', {
     pointerId,
@@ -50,10 +60,19 @@ async function completeTouchMove(
     clientX: centerX - deltaX,
     clientY: centerY - deltaY,
   });
-  await page.waitForTimeout(1500);
+  const firstDirection = afterFirst.x >= before.x ? 1 : -1;
+  if (firstDirection > 0) {
+    await expect
+      .poll(() => page.evaluate(() => window.__sp.probe().x), { timeout: 5000 })
+      .toBeLessThan(before.x - TUTORIAL_MOVE_DISTANCE);
+  } else {
+    await expect
+      .poll(() => page.evaluate(() => window.__sp.probe().x), { timeout: 5000 })
+      .toBeGreaterThan(before.x + TUTORIAL_MOVE_DISTANCE);
+  }
   const afterSecond = await page.evaluate(() => window.__sp.probe());
   await joyZone.dispatchEvent('pointerup', { pointerId, isPrimary: true });
-  return { afterFirst, afterSecond };
+  return { before, afterFirst, afterSecond };
 }
 
 test.describe('混合式互動新手教學', () => {
@@ -173,11 +192,16 @@ test.describe('混合式互動新手教學', () => {
     await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Game');
     await expect(page.locator('.guided-tutorial-overlay')).toBeVisible();
 
+    const before = await page.evaluate(() => window.__sp.probe());
     await page.keyboard.down('ArrowRight');
-    await page.waitForTimeout(500);
+    await expect
+      .poll(() => page.evaluate(() => window.__sp.probe().x), { timeout: 5000 })
+      .toBeGreaterThan(before.x + TUTORIAL_MOVE_DISTANCE);
     await page.keyboard.up('ArrowRight');
     await page.keyboard.down('ArrowLeft');
-    await page.waitForTimeout(700);
+    await expect
+      .poll(() => page.evaluate(() => window.__sp.probe().x), { timeout: 5000 })
+      .toBeLessThan(before.x - TUTORIAL_MOVE_DISTANCE);
     await page.keyboard.up('ArrowLeft');
     await expect(page.getByRole('button', { name: '下一步' })).toBeVisible({ timeout: 5000 });
   });
@@ -196,9 +220,8 @@ test.describe('混合式互動新手教學', () => {
     await expect(page.locator('.guided-tutorial-overlay')).toBeVisible();
     await expect(page.locator('.guided-tutorial-art')).toBeVisible();
 
-    const before = await page.evaluate(() => window.__sp.probe());
     // 直持旋轉殼的指標座標必須使用裝置座標：ccw 下滑動軸對應遊戲左右；橫持則直接左右。
-    const { afterFirst, afterSecond } = await completeTouchMove(page, 3);
+    const { before, afterFirst, afterSecond } = await completeTouchMove(page, 3);
     expect(afterFirst.x).not.toBe(before.x);
     expect(afterSecond.x).not.toBe(afterFirst.x);
     await expect(page.getByRole('button', { name: '下一步' })).toBeVisible({ timeout: 5000 });

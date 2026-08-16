@@ -74,7 +74,7 @@ test.describe('手機 viewport-level 提示與設定截圖回歸', () => {
     await expect(controlHints).toBeVisible();
     await expect(controlHints).toHaveAttribute('aria-modal', 'true');
     await expectInsideViewport(controlHints, viewport!);
-    await expect(controlHints.locator('[data-control-hint="item"]')).toHaveCount(5);
+    await expect(controlHints.locator('[data-control-hint="item"]')).toHaveCount(6);
     for (const item of await controlHints.locator('[data-control-hint="item"]').all()) {
       await expectInsideViewport(item, viewport!);
     }
