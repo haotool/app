@@ -235,6 +235,38 @@ test.describe('混合式互動新手教學', () => {
     await expect(page.getByRole('heading', { name: '先熟悉移動' })).toBeVisible();
   });
 
+  test('離開教學後下次直接開始，仍可從設定重播', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('[data-menu="start"]').dispatchEvent('pointerdown', {
+      pointerId: 23,
+      isPrimary: true,
+    });
+    await page.locator('[data-tutorial-choice="guided"]').dispatchEvent('pointerdown', {
+      pointerId: 24,
+      isPrimary: true,
+    });
+    await expect(page.locator('.guided-tutorial-overlay')).toBeVisible();
+
+    let dialogMessage = '';
+    page.once('dialog', async (dialog) => {
+      dialogMessage = dialog.message();
+      await dialog.accept();
+    });
+    await page.getByRole('button', { name: '離開教學' }).dispatchEvent('pointerdown', {
+      pointerId: 25,
+      isPrimary: true,
+    });
+    expect(dialogMessage).toContain('下次按開始會直接進入遊戲');
+    await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Title');
+
+    await page.locator('[data-menu="start"]').dispatchEvent('pointerdown', {
+      pointerId: 26,
+      isPrimary: true,
+    });
+    await expect(page.locator('.tutorial-choice-overlay')).toHaveCount(0);
+    await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Game');
+  });
+
   test('觸控可以用左側搖桿完成第一步，390×844 也不遮住提示', async ({ page }) => {
     test.skip((page.viewportSize()?.width ?? 0) >= 1000, '僅在觸控專案驗證搖桿路徑');
     await page.goto('/');

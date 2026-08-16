@@ -218,7 +218,9 @@ export function createGuidedTutorial(
       }
     }
     const leave = makeButton('離開教學', () => {
-      if (window.confirm('要離開新手教學嗎？下次會從第一步重新開始。')) finishToTitle();
+      if (window.confirm('要離開新手教學嗎？下次按開始會直接進入遊戲；需要時可從設定重新播放。')) {
+        finishToTitle();
+      }
     });
     leave.classList.add('guided-tutorial-leave');
     card.appendChild(leave);
