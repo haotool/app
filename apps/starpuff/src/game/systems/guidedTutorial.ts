@@ -75,7 +75,7 @@ const STEP_COPY: Record<TutorialStep, StepCopy> = {
   },
   shoot: {
     title: '吐出星彈',
-    touch: '放開 B 或輕點 B，把剛吸入的星星吐出去。',
+    touch: '輕點 B，把剛吸入的星星吐出去。',
     desktop: '輕點 X，把剛吸入的星星吐出去。',
     success: '星彈發射成功！',
     image: TUTORIAL_TOUCH_INHALE_ILLUSTRATION_URL,
