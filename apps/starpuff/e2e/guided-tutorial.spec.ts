@@ -204,6 +204,9 @@ test.describe('混合式互動新手教學', () => {
       .toBeLessThan(before.x - TUTORIAL_MOVE_DISTANCE);
     await page.keyboard.up('ArrowLeft');
     await expect(page.getByRole('button', { name: '下一步' })).toBeVisible({ timeout: 5000 });
+    await page.getByRole('button', { name: '下一步' }).focus();
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('heading', { name: '跳起來' })).toBeVisible();
   });
 
   test('教學中重新開始仍保留教學模式', async ({ page }) => {

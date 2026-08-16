@@ -1,5 +1,6 @@
 import type Phaser from 'phaser';
 import { GameEvents, offGameEvent, onGameEvent } from '../core/events';
+import { bindButtonActivation } from '../core/domButton';
 import {
   advanceTutorial,
   createTutorialState,
@@ -121,10 +122,7 @@ export function createGuidedTutorial(
     button.type = 'button';
     button.className = `guided-tutorial-btn ${className}`.trim();
     button.textContent = label;
-    button.addEventListener('pointerdown', (event) => {
-      event.preventDefault();
-      onClick();
-    });
+    bindButtonActivation(button, onClick);
     return button;
   };
 
