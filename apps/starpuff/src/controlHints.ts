@@ -53,7 +53,14 @@ function appendHintItem(list: HTMLOListElement, text: string): void {
 
 function consumeSession(): boolean {
   const settings = loadSettings();
-  if (!hasTouchInput() || !shouldShowControlHints(settings)) return false;
+  // 完整互動教學已實際教過相同操作；即使是舊存檔只保存 completed、尚未
+  // 耗盡舊提示場次，也不可在回主選單或進入世界地圖時再次彈出短提示。
+  if (
+    !hasTouchInput() ||
+    settings.guidedTutorialStatus === 'completed' ||
+    !shouldShowControlHints(settings)
+  )
+    return false;
   updateSettings({
     controlHintsPlayCount: Math.min(CONTROL_HINT_MAX_SESSIONS, settings.controlHintsPlayCount + 1),
   });
