@@ -16,6 +16,7 @@ const MOUTH_OFFSET_X = 26;
 // SP 變身教學浮字（§110）：變身徽章首次浮現時一次性教學，session 記憶體慣例
 //（跨關卡重試保留、重載重置）——與 starburstDirector 的教學旗標同制。
 let taughtTransformSp = false;
+let taughtInhaleHold = false;
 
 export interface PlayerFeelHooks {
   player(): PlayerHandle;
@@ -93,6 +94,10 @@ export function createPlayerFeel(groundTop: number, hooks: PlayerFeelHooks): Pla
     if (inhaling && !wasInhaling) {
       hooks.fx().startInhale(mouth);
       playSfx('inhale');
+      if (!taughtInhaleHold) {
+        taughtInhaleHold = true;
+        hooks.toasts().flavor('長按 B／X 可連續吸入；A／Z 也能同時按');
+      }
     } else if (!inhaling && wasInhaling) {
       hooks.fx().stopInhale();
       stopSfx('inhale');
@@ -113,4 +118,5 @@ export function createPlayerFeel(groundTop: number, hooks: PlayerFeelHooks): Pla
 // 測試重置鉤子：session 模組狀態在 vitest 間隔離（沿 starburstDirector 慣例）。
 export function resetPlayerFeelSession(): void {
   taughtTransformSp = false;
+  taughtInhaleHold = false;
 }

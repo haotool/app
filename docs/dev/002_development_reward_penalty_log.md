@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+2（reward 2、penalty 0、neutral 0）｜累計總分：+318
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+319
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-08-16
+- ID：reward-starpuff-guided-tutorial-dual-input
+- 原因：首次遊玩缺少可實作的操作教學，且右手食指長按吸入與大拇指同時跳躍的連續玩法不易被發現
+- 解法：在 GameScene 內加入逐步驗收的新手教學、可重播狀態、手勢圖資產與雙指標／連續吸入提示，並以單元測試與 Playwright 鎖定實際行為
 
 - 日期：2026-08-08
 - ID：reward-gitignore-anchor-bug-fixed-after-10-months

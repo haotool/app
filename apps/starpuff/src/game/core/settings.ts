@@ -5,6 +5,8 @@
 // 寫入為 last-writer-wins（遊戲為單分頁互動情境，接受此限制）。
 // one-shot 記憶鍵（sp-rotation-notice/sp-install-dismissed/sp-jump-hint 等）非偏好，不入本 schema。
 
+import type { GuidedTutorialStatus } from './tutorial';
+
 export type ScreenShakePref = 'off' | 'low' | 'full';
 export type ShellRotationSetting = 'cw' | 'ccw';
 
@@ -17,6 +19,8 @@ export interface UserSettings {
   // 新手操作提示：預設開啟，前五次「開始一場新遊戲」各顯示一次；可由設定永久關閉。
   controlHintsEnabled: boolean;
   controlHintsPlayCount: number;
+  // 完整互動教學狀態；缺欄位視為首次使用，保持 v1 舊存檔可讀。
+  guidedTutorialStatus: GuidedTutorialStatus;
   screenShake: ScreenShakePref;
   // null＝從未選擇（rotationNotice 依此判定是否需一次性告知）。
   shellRotation: ShellRotationSetting | null;
@@ -52,6 +56,7 @@ export function createDefaultSettings(): UserSettings {
     reducedMotion: prefersReducedMotion(),
     controlHintsEnabled: true,
     controlHintsPlayCount: 0,
+    guidedTutorialStatus: 'unseen',
     screenShake: 'full',
     shellRotation: null,
     keyLayout: null,
@@ -66,6 +71,10 @@ function asControlHintsPlayCount(value: unknown, fallback: number): number {
   if (typeof value !== 'number' || !Number.isFinite(value) || !Number.isInteger(value))
     return fallback;
   return Math.min(CONTROL_HINT_MAX_SESSIONS, Math.max(0, value));
+}
+
+function asGuidedTutorialStatus(value: unknown): GuidedTutorialStatus {
+  return value === 'skipped' || value === 'completed' ? value : 'unseen';
 }
 
 function asScreenShake(value: unknown): ScreenShakePref {
@@ -99,6 +108,7 @@ export function parseSettings(raw: string): UserSettings | null {
       data['controlHintsPlayCount'],
       defaults.controlHintsPlayCount,
     ),
+    guidedTutorialStatus: asGuidedTutorialStatus(data['guidedTutorialStatus']),
     screenShake: asScreenShake(data['screenShake']),
     shellRotation: asShellRotation(data['shellRotation']),
     keyLayout:
@@ -198,6 +208,7 @@ export function updateSettings(patch: Partial<Omit<UserSettings, 'schemaVersion'
   };
   next.controlHintsEnabled = asBoolean(next.controlHintsEnabled, true);
   next.controlHintsPlayCount = asControlHintsPlayCount(next.controlHintsPlayCount, 0);
+  next.guidedTutorialStatus = asGuidedTutorialStatus(next.guidedTutorialStatus);
   cached = next;
   persist(next);
   listeners.forEach((listener) => listener(next));

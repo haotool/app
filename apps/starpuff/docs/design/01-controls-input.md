@@ -23,6 +23,21 @@
 - 鍵盤（桌機備援）：←→ / Z 跳 / X 吸射 / C 特殊技（SP，§109.2）。
 - 全域：`touch-action: none`、禁雙擊縮放、首次觸控解鎖 AudioContext。
 
+### 4.1 完整互動新手教學（guided mode）
+
+- 首次按「開始遊戲」先選「看新手教學」或「直接開始」。直接開始只保留原有前五場非阻塞提示；
+  教學選擇後則由真正的 `GameScene` 輸入、物理與事件管線逐步實作。
+- 完整教學固定驗收：左右移動、離地跳躍、`ENEMY_INHALED` 吸入、`STAR_FIRED` 吐出、
+  `SKILL_SLAM_LANDED` 且命中 Shelly、三顆同味星後確認 `transform.form !== null`。
+  按鈕按過但沒有實際事件或狀態，不會解鎖下一步。
+- 下砸教學沿用現行輸入 SSOT：空中搖桿向下＋A（桌機為 ↓＋Z）；Shelly 只是安全訓練目標，
+  不在教學中灌輸衝刺／暈眩細節，該內容留在 L2 首遇情境提示。
+- `sp-settings.guidedTutorialStatus` 只保存 `unseen / skipped / completed`；中途離開回到第一步，
+  設定頁「重新播放新手教學」清除狀態。教學 sandbox 不啟動一般波次、不修改 L1 通關進度。
+- 吸入步驟明確示範「右手食指長按 B／鍵盤 X」可連續吸入靠近的多顆星星；不需要快速連點。
+  右手大拇指 A／鍵盤 Z 可在 B 持續按住時同時跳躍。觸控 A、B 各自以獨立 `pointerId` 維持
+  `held` 狀態，放開其中一指不會誤放另一鍵；桌機鍵盤 Z＋X 具有等價行為。
+
 ## 21. v3 橫式轉向（PM 親撰）
 
 - 邏輯畫布高 480、寬 854–1200 動態（§28 響應寬幅），Scale.FIT + NO_CENTER 由旋轉殼定位；manifest **不鎖** orientation；直向持機走 CSS 旋轉殼直接呈現橫式（§28 免轉向）。

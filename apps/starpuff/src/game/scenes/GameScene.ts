@@ -12,7 +12,7 @@ import {
   type SaveData,
 } from '../core/save';
 import { SceneKeys, type GameResultData, type LevelId, type TransformForm } from '../core/types';
-import { unlockedTransformForms } from '../logic/transform';
+import { TRANSFORM_FORMS, unlockedTransformForms } from '../logic/transform';
 import { awardAchievements, getAchievement } from '../logic/achievements';
 import { BOSS } from '../logic/bossFsm';
 import { buffAccelMul, buffSpeedMul } from '../logic/buffs';
@@ -52,6 +52,7 @@ import { createStarSteering, type StarSteering } from '../systems/starSteering';
 import { createToasts, type ToastSystem } from '../systems/toasts';
 import { createTide, type TideHandle } from '../systems/tide';
 import { createWaveRunner, type WaveRunner } from '../systems/waves';
+import { createGuidedTutorial, type GuidedTutorialHandle } from '../systems/guidedTutorial';
 import { playMarketOpenVignette } from '../systems/liudongCinematics';
 import { bindSfxToEvents, playSfx, stopSfx } from '../audio/sfx';
 import { notifySaveUnavailable } from '../../shellCards';
@@ -69,11 +70,20 @@ const RETRY_DELAY_MS = 350;
 // 產生假 console error，也保留失敗後下一關可重試的語意。
 const pendingDeferredAssetKeys = new Set<string>();
 
+// guided sandbox 不應消費或寫入正式 L1 彩蛋進度；仍提供完整介面讓事件路由保持單一路徑。
+const DISABLED_EGG_TRACKER: EggTracker = {
+  sync: () => undefined,
+  feed: (_event) => undefined,
+  noteBossHit: () => undefined,
+};
+
 interface GameSceneData {
   levelId?: LevelId;
   deaths?: number;
   // Title／地圖開啟的新一輪遊玩才顯示新手提示；死亡重試與同輪換關不重複打斷。
   newSession?: boolean;
+  // 首次互動教學：沿用正式 GameScene 的輸入、碰撞、吸入與變身管線，不寫入 L1 通關。
+  guidedTutorial?: boolean;
   // EX 變體挑戰（§58）：已通關魔王節點的第二入口。
   ex?: boolean;
   // 教學關死亡配額結轉（§105 D5）：僅 retryLevel 傳入，值由 carryKillsOnDeath 夾限。
@@ -97,6 +107,7 @@ export class GameScene extends Phaser.Scene {
   // EX 變體模式（§58）：魔王工廠與通關記錄依此分流。
   private exMode = false;
   private newSession = false;
+  private guidedTutorialMode = false;
   // 教學關死亡配額結轉（§105 D5）：retryLevel 帶入、waves runner 以此為種子。
   private carryKills = 0;
   // 慈悲補血（§62）：評估與生成錨點委派 systems/mercyDirector（create 重建即歸零）。
@@ -150,6 +161,7 @@ export class GameScene extends Phaser.Scene {
   private toasts!: ToastSystem;
   // 彩蛋（§24）：每關進度與 crown-early-hit 時間窗委派 systems/eggTracker。
   private eggTracker!: EggTracker;
+  private guidedTutorial: GuidedTutorialHandle | null = null;
 
   // e2e 觀測點（§94）：最近一張成就 toast 文案（canvas 文字無法由 DOM 斷言）。
   get lastAchievementToast(): string {
@@ -165,6 +177,7 @@ export class GameScene extends Phaser.Scene {
     this.deaths = data.deaths ?? 0;
     this.exMode = data.ex === true;
     this.newSession = data.newSession === true;
+    this.guidedTutorialMode = data.guidedTutorial === true;
     this.carryKills = data.carryKills ?? 0;
   }
 
@@ -250,7 +263,9 @@ export class GameScene extends Phaser.Scene {
       : 100;
     // 形態解鎖集（§119）：可觸及最高關派生（不動 save schema），SP/HUD 同一裁決。
     const reach = Math.max(this.currentLevelId, this.save.highestClearedLevel + 1);
-    this.unlockedForms = unlockedTransformForms(reach);
+    this.unlockedForms = this.guidedTutorialMode
+      ? new Set(Object.keys(TRANSFORM_FORMS) as TransformForm[])
+      : unlockedTransformForms(reach);
     this.player = createPlayer(this, startX, GROUND_TOP - 40, this.unlockedForms);
     this.enemies = createEnemySystem(this);
     // 糖漿潮汐（§71）：關卡級配置建立；spawn 調整走交叉不變式 13/17 hook。
@@ -336,17 +351,19 @@ export class GameScene extends Phaser.Scene {
       arenaLeft: () => this.arenaLeft(),
       worldWidth: () => this.worldWidth(),
     });
-    // 彩蛋進度追蹤（§24）：每關重建；存檔寫入與成就佇列經 persistAndAward 回流；
-    // bossKit 的 feedEggs 回呼僅於魔王事件觸發（此時 tracker 已就緒）。
-    this.eggTracker = createEggTracker(this.level, {
-      player: () => this.player,
-      playerHp: () => this.playerHp,
-      bossActive: () => this.boss.isActive(),
-      now: () => this.time.now,
-      recordEggAndAward: (trigger) =>
-        this.persistAndAward(recordEgg(this.save, this.currentLevelId, trigger)),
-      celebrate: (message) => this.toasts.celebrate(message),
-    });
+    // 彩蛋進度追蹤（§24）：每關重建；guided sandbox 使用 no-op，避免將練習動作
+    // 寫入正式 L1 存檔或觸發成就；正式關卡仍經 persistAndAward 回流。
+    this.eggTracker = this.guidedTutorialMode
+      ? DISABLED_EGG_TRACKER
+      : createEggTracker(this.level, {
+          player: () => this.player,
+          playerHp: () => this.playerHp,
+          bossActive: () => this.boss.isActive(),
+          now: () => this.time.now,
+          recordEggAndAward: (trigger) =>
+            this.persistAndAward(recordEgg(this.save, this.currentLevelId, trigger)),
+          celebrate: (message) => this.toasts.celebrate(message),
+        });
     // 星彈規格與技能世界結算（§23/§46/§57）：委派 systems/starCombat；
     // GameScene 只留事件路由與 overlap 接線。
     this.starCombat = createStarCombat(this, {
@@ -466,6 +483,13 @@ export class GameScene extends Phaser.Scene {
       isBossDown: () => this.bossDown,
       now: () => this.time.now,
     });
+    if (this.guidedTutorialMode) {
+      this.guidedTutorial = createGuidedTutorial(this, {
+        player: () => this.player,
+        controls: () => this.controls,
+        enemies: () => this.enemies,
+      });
+    }
     this.bindEvents();
 
     this.boss.onMinionDrop(() => bossKit.spawnBossMinion());
@@ -475,6 +499,8 @@ export class GameScene extends Phaser.Scene {
     this.events.once('shutdown', () => {
       this.closeControlHints?.();
       this.closeControlHints = null;
+      this.guidedTutorial?.destroy();
+      this.guidedTutorial = null;
       this.unbinders.forEach((off) => off());
       this.unbinders.length = 0;
       unbindSfx();
@@ -492,9 +518,10 @@ export class GameScene extends Phaser.Scene {
       this.meteor = null;
     });
 
-    this.waves.start();
+    if (!this.guidedTutorialMode) this.waves.start();
     this.closeControlHints?.();
-    this.closeControlHints = this.newSession ? showControlHintsForSession() : null;
+    this.closeControlHints =
+      this.newSession && !this.guidedTutorialMode ? showControlHintsForSession() : null;
     // 前室魔王關（§69）：入場運鏡延至玩家走入 arena 才啟動（onEnterArena）。
     if (this.level.boss && !this.bossRoom) this.boss.spawn();
 
@@ -554,13 +581,16 @@ export class GameScene extends Phaser.Scene {
       this.damage.applyBossVents(deltaMs);
     }
     this.enemies.update(deltaMs);
+    this.guidedTutorial?.update(deltaMs);
     // 拉力必須在 enemies AI 之後套用，避免被小怪速度邏輯覆寫。
     // 吸入拉近（§30/#811 移至 overlaps.ts）：錐形收斂、吞下與殼殼暈眩窗強化拉力。
     if (!this.finished && !this.transitioning) {
       applyInhalePull(this, this.player, this.enemies, this.feel.mouth());
     }
     // 魔王關補生等入場運鏡完成（boss active）才推進，避免入場中生怪干擾玩家（review #698）。
-    if (!this.level.boss || this.boss.isActive()) this.waves.update(deltaMs);
+    if (!this.guidedTutorialMode && (!this.level.boss || this.boss.isActive())) {
+      this.waves.update(deltaMs);
+    }
     this.boss.update(deltaMs);
     this.starSteering.syncTrails();
   }
@@ -673,6 +703,7 @@ export class GameScene extends Phaser.Scene {
       levelId: this.currentLevelId,
       deaths: this.deaths,
       ex: this.exMode,
+      guidedTutorial: this.guidedTutorialMode,
     });
   }
 
@@ -834,6 +865,7 @@ export class GameScene extends Phaser.Scene {
         levelId: this.currentLevelId,
         deaths: this.deaths,
         carryKills: carryKillsOnDeath(this.level, this.waves.getQuota().killCount),
+        guidedTutorial: this.guidedTutorialMode,
       }),
     );
   }

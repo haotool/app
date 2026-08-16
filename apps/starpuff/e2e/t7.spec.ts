@@ -330,6 +330,7 @@ test('設定 migration（卡 4）：legacy 散鍵一次性吸收入 sp-settings 
   page,
 }) => {
   await page.addInitScript(() => {
+    localStorage.removeItem('sp-settings');
     localStorage.setItem('sp-muted', '1');
     localStorage.setItem('sp-rotation', 'cw');
   });

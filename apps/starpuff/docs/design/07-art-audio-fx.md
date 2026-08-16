@@ -48,6 +48,36 @@ jump、flap、inhale（迴圈）、swallow、shoot、hit、hurt、metal（皇冠
 - 程式端面向決策唯一出口為 `src/game/systems/enemyFacing.ts`（主角為 `player.ts` 既有 `facing` 通道）；方向性品種清單 `DIRECTIONAL_ENEMY_KINDS` 由表驅動測試與型別完整性守門雙重把關，新增品種必須顯式歸類。
 - 正面或對稱構圖素材（如 magno、splatta——臉正面、僅持物不對稱）歸非方向性，不做 flip。
 
+### 10.1 guided tutorial 手勢圖 prompt registry
+
+本批資產由內建 `image_gen` 逐張生成，交付至 `src/assets/ui/`，以 WebP q82 保存 alpha；不覆蓋
+既有 `control-hints-onboarding.webp`。所有中文、鍵位與操作標籤由 DOM 渲染，圖片不得包含文字。
+
+共用 prompt：
+
+```text
+Use case: scientific-educational. Asset type: StarPuff in-game interactive tutorial illustration.
+Scene/backdrop: true transparent background, no environment clutter. Style/medium: kawaii chibi pastel
+mobile game illustration, thick rounded soft outline, glossy jelly highlights, flat cel shading, clean
+high-quality game asset. Composition: centered, large readable silhouette, one action only, empty space
+for code-rendered labels. Palette: mint, aqua, pastel pink, lavender, warm yellow. Text: none.
+Constraints: preserve the existing StarPuff silhouette and colors; no logos, watermark, fake UI text,
+letters or A/B/TF labels. Avoid photorealistic hands, extra characters, clutter and ambiguous arrows.
+```
+
+| 資產                              | prompt 差異與角色基準                                                                                                         |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `tutorial-touch-move.webp`        | 噗噗＋左手大拇指按左側搖桿，清楚呈現左右滑動；只保留單一噗噗與一隻手。                                                        |
+| `tutorial-touch-jump.webp`        | 噗噗離地跳起＋右手大拇指按右下跳躍區，附上升弧線與落地陰影。                                                                  |
+| `tutorial-touch-inhale.webp`      | 沿用 `hero-inhale-big-1` 張大嘴語彙；右手食指長按右上動作區，單顆星沿漩渦被吸入。                                             |
+| `tutorial-touch-hold-inhale.webp` | 沿用 `hero-inhale-big-1` 張大嘴語彙；右手食指持續按住右上動作區，三顆不同顏色星星沿同一吸力軌跡接續靠近，強調「長按可連吞」。 |
+| `tutorial-touch-dual-input.webp`  | 同一隻右手的食指按住上方動作區、拇指同時按住下方跳躍區；噗噗邊張嘴吸星邊跳起，呈現 A＋B 雙指標並行，不放按鍵字母。            |
+| `tutorial-touch-slam.webp`        | 噗噗空中垂直下砸一隻 `minion-shelly`，左搖桿向下、右拇指按跳躍區，落點有衝擊圈；Shelly 不受傷死亡。                           |
+| `tutorial-touch-transform.webp`   | 沿用 `hero-gale` 風化色彩；三顆同味星進入噗噗並形成風化光環，不使用文字流程圖。                                               |
+
+角色色彩基準仍以噗噗薄荷 `#BFF3E0`、珊瑚腮紅 `#FFB7A0`、Shelly 藍綠 `#7FD8C8` 為準；
+Bearlet 與 Syrona 保留給後續危險方向／Boss 情境提示，不放入第一輪 onboarding。
+
 ## 18. 動畫流暢度打磨清單（全實體）
 
 走路彈跳（玩家移動時 y 微幅 bob + 輕微傾斜）、落地塵埃圈（著地速度 >300 觸發）、所有敵人生成 popIn（scale 0→1 back.out）、死亡 squash 消失、星星門吸入過關演出（玩家縮小旋轉飛入）、轉場卡緩動（slide+fade）、鏡頭剛性跟隨 lerp(1,1)（v3 定案；lerp×roundPixels 逐幀往返跳動的根因修復見 §25 抖動修復定案）。

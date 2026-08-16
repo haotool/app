@@ -10,6 +10,8 @@ import { createMenuBackdrop, type BackgroundHandle } from '../systems/background
 import { addDomButton, addMuteButton, bindMenuRelayout } from '../systems/hud';
 import { isKeyConfigOpen } from '../systems/keyConfig';
 import { isSettingsPageOpen, openSettingsPage } from '../systems/settingsPage';
+import { closeTutorialChoice, showTutorialChoice } from '../systems/tutorialChoice';
+import { loadSettings, updateSettings } from '../core/settings';
 
 const TITLE_GLOW_TEX = 'title-glow';
 
@@ -42,6 +44,7 @@ export class TitleScene extends Phaser.Scene {
       ambience: 'bg-meadow',
     });
     this.events.once('shutdown', () => {
+      closeTutorialChoice();
       this.backdrop?.destroy();
     });
     addMuteButton(this);
@@ -195,13 +198,33 @@ export class TitleScene extends Phaser.Scene {
 
     // 首次手勢：解鎖 iOS AudioContext 後啟動 BGM；接續當前可挑戰關（§39），
     // 全通關後改開世界地圖供重玩選關。
-    const start = () => {
+    const startGame = (guidedTutorial: boolean): void => {
       if (isKeyConfigOpen() || isSettingsPageOpen()) return;
       unlockAudio();
       startBgm();
       const challenge = currentChallenge(loadSave());
-      if (challenge === null) this.scene.start(SceneKeys.Map, {});
+      if (guidedTutorial) {
+        this.scene.start(SceneKeys.Game, {
+          levelId: 1,
+          deaths: 0,
+          newSession: true,
+          guidedTutorial: true,
+        });
+      } else if (challenge === null) this.scene.start(SceneKeys.Map, {});
       else this.scene.start(SceneKeys.Game, { levelId: challenge, deaths: 0, newSession: true });
+    };
+    const start = () => {
+      if (loadSettings().guidedTutorialStatus === 'unseen') {
+        showTutorialChoice(
+          () => startGame(true),
+          () => {
+            updateSettings({ guidedTutorialStatus: 'skipped' });
+            startGame(false);
+          },
+        );
+        return;
+      }
+      startGame(false);
     };
     // 持續監聽（審查修復 #718）：once 會被配置面板開啟時的無效 Enter 消耗，
     // 導致關閉面板後快捷鍵失效；start 內部已以 isKeyConfigOpen 擋無效觸發。
@@ -233,7 +256,9 @@ export class TitleScene extends Phaser.Scene {
         onPress: () => {
           unlockAudio();
           playSfx('pop');
-          openSettingsPage();
+          openSettingsPage(undefined, {
+            onReplayTutorial: () => startGame(true),
+          });
         },
       },
     ];
