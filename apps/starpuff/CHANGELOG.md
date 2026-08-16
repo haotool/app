@@ -1,5 +1,11 @@
 # @app/starpuff
 
+## 0.33.1
+
+### Patch Changes
+
+- 3c4eb89: 完成完整新手教學後不再重複顯示舊版操作提示。
+
 ## 0.33.0
 
 ### Minor Changes
