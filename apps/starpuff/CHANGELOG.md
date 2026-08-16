@@ -1,5 +1,11 @@
 # @app/starpuff
 
+## 0.33.0
+
+### Minor Changes
+
+- 961fddc: 新增可實作的互動式新手教學、雙指標操作提示與連續吸入引導。
+
 ## 0.32.1
 
 ### Patch Changes
