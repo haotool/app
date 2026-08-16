@@ -194,6 +194,15 @@ describe('loadSettings（v19 卡 4：預設與 migration）', () => {
     );
   });
 
+  it('完成完整教學時同步耗盡舊版操作提示場次', async () => {
+    const { CONTROL_HINT_MAX_SESSIONS, loadSettings, markGuidedTutorialCompleted } =
+      await loadSettingsModule();
+    loadSettings();
+    const settings = markGuidedTutorialCompleted();
+    expect(settings.guidedTutorialStatus).toBe('completed');
+    expect(settings.controlHintsPlayCount).toBe(CONTROL_HINT_MAX_SESSIONS);
+  });
+
   it('localStorage 不可用：回預設不拋錯，updateSettings 仍更新記憶體快取', async () => {
     vi.stubGlobal('localStorage', {
       getItem: () => {

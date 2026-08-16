@@ -215,6 +215,15 @@ export function updateSettings(patch: Partial<Omit<UserSettings, 'schemaVersion'
   return next;
 }
 
+// 完整互動教學已涵蓋舊版短提示；一次同步標記兩種狀態，避免完成後
+// 從主選單或世界地圖再次進入遊戲時被舊提示卡攔住。
+export function markGuidedTutorialCompleted(): UserSettings {
+  return updateSettings({
+    guidedTutorialStatus: 'completed',
+    controlHintsPlayCount: CONTROL_HINT_MAX_SESSIONS,
+  });
+}
+
 // 變更訂閱（wakeLock 等需即時重同步的消費者）；回傳退訂函式。
 export function onSettingsChanged(listener: (settings: UserSettings) => void): () => void {
   listeners.add(listener);

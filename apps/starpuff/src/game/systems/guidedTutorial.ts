@@ -9,7 +9,7 @@ import {
   observeTutorial,
   type TutorialStep,
 } from '../core/tutorial';
-import { updateSettings } from '../core/settings';
+import { markGuidedTutorialCompleted, updateSettings } from '../core/settings';
 import { SceneKeys } from '../core/types';
 import type { EnemySystem } from './enemies';
 import type { ControlsSystem } from './controls';
@@ -187,7 +187,7 @@ export function createGuidedTutorial(
           makeButton(
             '開始正式 L1',
             () => {
-              updateSettings({ guidedTutorialStatus: 'completed' });
+              markGuidedTutorialCompleted();
               scene.scene.start(SceneKeys.Game, { levelId: 1, deaths: 0, newSession: false });
             },
             'guided-tutorial-primary',
@@ -195,7 +195,7 @@ export function createGuidedTutorial(
         );
         actions.appendChild(
           makeButton('回主選單', () => {
-            updateSettings({ guidedTutorialStatus: 'completed' });
+            markGuidedTutorialCompleted();
             scene.scene.start(SceneKeys.Title);
           }),
         );
