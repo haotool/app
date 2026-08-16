@@ -99,7 +99,7 @@ jobs:
         id: changesets
         if: steps.check_changesets.outputs.has_changesets == 'true'
         continue-on-error: true
-        uses: changesets/action@v1
+        uses: changesets/action@v2
         with:
           version: pnpm changeset:version
           commit: 'chore(release): 更新版本套件'
@@ -412,7 +412,7 @@ jobs:
       # 如果未來需要發布，可以新增以下步驟：
       # - name: Publish to npm
       #   if: steps.changesets.outputs.hasChangesets == 'false'
-      #   uses: changesets/action@v1
+      #   uses: changesets/action@v2
       #   with:
       #     publish: pnpm changeset:publish
       #   env:
