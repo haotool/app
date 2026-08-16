@@ -188,7 +188,7 @@ export function createGuidedTutorial(
             '開始正式 L1',
             () => {
               updateSettings({ guidedTutorialStatus: 'completed' });
-              scene.scene.start(SceneKeys.Game, { levelId: 1, deaths: 0, newSession: true });
+              scene.scene.start(SceneKeys.Game, { levelId: 1, deaths: 0, newSession: false });
             },
             'guided-tutorial-primary',
           ),

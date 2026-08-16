@@ -70,6 +70,13 @@ const RETRY_DELAY_MS = 350;
 // 產生假 console error，也保留失敗後下一關可重試的語意。
 const pendingDeferredAssetKeys = new Set<string>();
 
+// guided sandbox 不應消費或寫入正式 L1 彩蛋進度；仍提供完整介面讓事件路由保持單一路徑。
+const DISABLED_EGG_TRACKER: EggTracker = {
+  sync: () => undefined,
+  feed: (_event) => undefined,
+  noteBossHit: () => undefined,
+};
+
 interface GameSceneData {
   levelId?: LevelId;
   deaths?: number;
@@ -344,17 +351,19 @@ export class GameScene extends Phaser.Scene {
       arenaLeft: () => this.arenaLeft(),
       worldWidth: () => this.worldWidth(),
     });
-    // 彩蛋進度追蹤（§24）：每關重建；存檔寫入與成就佇列經 persistAndAward 回流；
-    // bossKit 的 feedEggs 回呼僅於魔王事件觸發（此時 tracker 已就緒）。
-    this.eggTracker = createEggTracker(this.level, {
-      player: () => this.player,
-      playerHp: () => this.playerHp,
-      bossActive: () => this.boss.isActive(),
-      now: () => this.time.now,
-      recordEggAndAward: (trigger) =>
-        this.persistAndAward(recordEgg(this.save, this.currentLevelId, trigger)),
-      celebrate: (message) => this.toasts.celebrate(message),
-    });
+    // 彩蛋進度追蹤（§24）：每關重建；guided sandbox 使用 no-op，避免將練習動作
+    // 寫入正式 L1 存檔或觸發成就；正式關卡仍經 persistAndAward 回流。
+    this.eggTracker = this.guidedTutorialMode
+      ? DISABLED_EGG_TRACKER
+      : createEggTracker(this.level, {
+          player: () => this.player,
+          playerHp: () => this.playerHp,
+          bossActive: () => this.boss.isActive(),
+          now: () => this.time.now,
+          recordEggAndAward: (trigger) =>
+            this.persistAndAward(recordEgg(this.save, this.currentLevelId, trigger)),
+          celebrate: (message) => this.toasts.celebrate(message),
+        });
     // 星彈規格與技能世界結算（§23/§46/§57）：委派 systems/starCombat；
     // GameScene 只留事件路由與 overlap 接線。
     this.starCombat = createStarCombat(this, {
