@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+319
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+320
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-08-17
+- ID：reward-starpuff-tutorial-release-metadata
+- 原因：完成互動教學後停用舊提示的 follow-up 變更缺少版本意圖與稽核追蹤
+- 解法：補 StarPuff patch changeset 與本次 002 條目，確保 release 與稽核鏈完整
 
 - 日期：2026-08-16
 - ID：reward-starpuff-guided-tutorial-dual-input
