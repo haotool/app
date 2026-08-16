@@ -206,6 +206,32 @@ test.describe('混合式互動新手教學', () => {
     await expect(page.getByRole('button', { name: '下一步' })).toBeVisible({ timeout: 5000 });
   });
 
+  test('教學中重新開始仍保留教學模式', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('[data-menu="start"]').dispatchEvent('pointerdown', {
+      pointerId: 19,
+      isPrimary: true,
+    });
+    await page.locator('[data-tutorial-choice="guided"]').dispatchEvent('pointerdown', {
+      pointerId: 20,
+      isPrimary: true,
+    });
+    await expect(page.locator('.guided-tutorial-overlay')).toBeVisible();
+    await expect(page.getByRole('heading', { name: '先熟悉移動' })).toBeVisible();
+
+    await page.locator('[data-menu="pause"]').dispatchEvent('pointerdown', {
+      pointerId: 21,
+      isPrimary: true,
+    });
+    await page.locator('[data-pause="restart"]').dispatchEvent('pointerdown', {
+      pointerId: 22,
+      isPrimary: true,
+    });
+
+    await expect(page.locator('.guided-tutorial-overlay')).toBeVisible();
+    await expect(page.getByRole('heading', { name: '先熟悉移動' })).toBeVisible();
+  });
+
   test('觸控可以用左側搖桿完成第一步，390×844 也不遮住提示', async ({ page }) => {
     test.skip((page.viewportSize()?.width ?? 0) >= 1000, '僅在觸控專案驗證搖桿路徑');
     await page.goto('/');

@@ -694,6 +694,7 @@ export class GameScene extends Phaser.Scene {
       levelId: this.currentLevelId,
       deaths: this.deaths,
       ex: this.exMode,
+      guidedTutorial: this.guidedTutorialMode,
     });
   }
 
@@ -855,6 +856,7 @@ export class GameScene extends Phaser.Scene {
         levelId: this.currentLevelId,
         deaths: this.deaths,
         carryKills: carryKillsOnDeath(this.level, this.waves.getQuota().killCount),
+        guidedTutorial: this.guidedTutorialMode,
       }),
     );
   }
