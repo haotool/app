@@ -264,7 +264,15 @@ export function createGuidedTutorial(
     if (state.step === 'shoot') state = observeTutorial(state, makeObservation({ fired: true }));
   };
   const onSlam = (): void => {
-    if (state.step === 'slam-shelly') slamLanded = true;
+    if (state.step !== 'slam-shelly') return;
+    slamLanded = true;
+    // Shelly 的正式 FSM 只有 2.2 秒暈眩窗；教學目標必須在玩家真正落地命中
+    // 的同一事件回呼前恢復為可擊殺的 stun，否則過期後第一次下砸只會讓它進 spin。
+    if (target?.active) {
+      target.setData('state', 'stun');
+      target.setData('stateMs', 0);
+      (target.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0);
+    }
   };
   const onKilled = ({ kind }: { kind: string }): void => {
     if (state.step === 'slam-shelly' && kind === 'shelly' && slamLanded) slamTargetHit = true;

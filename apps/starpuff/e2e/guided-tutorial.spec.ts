@@ -107,6 +107,23 @@ test.describe('混合式互動新手教學', () => {
     await expect(page.locator('.tutorial-choice-overlay')).toHaveCount(0);
   });
 
+  test('首次教學選擇對話框限制鍵盤焦點，不會穿透到底層場景', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('[data-menu="start"]').click();
+    await expect(page.locator('.tutorial-choice-overlay')).toBeVisible();
+
+    const guided = page.locator('[data-tutorial-choice="guided"]');
+    const direct = page.locator('[data-tutorial-choice="direct"]');
+    await expect(guided).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(direct).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(guided).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('.tutorial-choice-overlay')).toHaveCount(0);
+    await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Game');
+  });
+
   test('右手食指長按 B 時，右手大拇指仍可同時按 A', async ({ page }) => {
     test.skip((page.viewportSize()?.width ?? 0) >= 1000, '僅在觸控專案驗證雙指標路徑');
     await page.goto('/');
@@ -207,6 +224,79 @@ test.describe('混合式互動新手教學', () => {
     await page.getByRole('button', { name: '下一步' }).focus();
     await page.keyboard.press('Enter');
     await expect(page.getByRole('heading', { name: '跳起來' })).toBeVisible();
+  });
+
+  test('Shelly 暈眩窗過期後，第一次下砸仍能完成實作', async ({ page }) => {
+    test.skip((page.viewportSize()?.width ?? 0) < 1000, '僅在桌機專案驗證鍵盤下砸路徑');
+    await page.goto('/');
+    await page.locator('[data-menu="start"]').click();
+    await page.locator('[data-tutorial-choice="guided"]').click();
+    await expect(page.locator('.guided-tutorial-overlay')).toBeVisible();
+
+    const finishStep = async (): Promise<void> => {
+      await expect(page.getByRole('button', { name: '下一步' })).toBeVisible({ timeout: 5000 });
+      await page.getByRole('button', { name: '下一步' }).click();
+    };
+
+    const before = await page.evaluate(() => window.__sp.probe());
+    await page.keyboard.down('ArrowRight');
+    await expect
+      .poll(() => page.evaluate(() => window.__sp.probe().x), { timeout: 5000 })
+      .toBeGreaterThan(before.x + TUTORIAL_MOVE_DISTANCE);
+    await page.keyboard.up('ArrowRight');
+    await page.keyboard.down('ArrowLeft');
+    await expect
+      .poll(() => page.evaluate(() => window.__sp.probe().x), { timeout: 5000 })
+      .toBeLessThan(before.x - TUTORIAL_MOVE_DISTANCE);
+    await page.keyboard.up('ArrowLeft');
+    await finishStep();
+
+    await page.keyboard.press('Z', { delay: 60 });
+    await finishStep();
+    await page.keyboard.down('X');
+    await expect(page.getByRole('button', { name: '下一步' })).toBeVisible({ timeout: 5000 });
+    await page.keyboard.up('X');
+    await finishStep();
+    await page.keyboard.down('X');
+    await page.waitForTimeout(60);
+    await page.keyboard.up('X');
+    await finishStep();
+
+    await expect(page.getByRole('heading', { name: '對 Shelly 下砸' })).toBeVisible();
+    await expect
+      .poll(
+        () =>
+          page.evaluate(
+            () => window.__sp.enemies().find((enemy) => enemy.kind === 'shelly')?.state,
+          ),
+        { timeout: 5000 },
+      )
+      .toBe('stun');
+    await page.waitForTimeout(2400);
+    await expect
+      .poll(
+        () =>
+          page.evaluate(
+            () => window.__sp.enemies().find((enemy) => enemy.kind === 'shelly')?.state,
+          ),
+        { timeout: 1000 },
+      )
+      .toBe('walk');
+
+    await page.keyboard.press('Z', { delay: 60 });
+    await page.waitForTimeout(160);
+    await page.keyboard.down('ArrowDown');
+    await page.keyboard.down('Z');
+    await expect
+      .poll(() => page.evaluate(() => window.__sp.walk().vy), {
+        intervals: [20, 40],
+        timeout: 2000,
+      })
+      .toBeGreaterThanOrEqual(690);
+    await page.keyboard.up('Z');
+    await page.keyboard.up('ArrowDown');
+    await finishStep();
+    await expect(page.getByRole('heading', { name: '真正變身' })).toBeVisible();
   });
 
   test('教學中重新開始仍保留教學模式', async ({ page }) => {

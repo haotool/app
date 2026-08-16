@@ -1,12 +1,16 @@
 import { bindButtonActivation } from '../core/domButton';
+import { createFocusTrap, type FocusTrap } from '../core/focusTrap';
 
 let overlay: HTMLElement | null = null;
+let focusTrap: FocusTrap | null = null;
 
 export function isTutorialChoiceOpen(): boolean {
   return overlay !== null;
 }
 
 export function closeTutorialChoice(): void {
+  focusTrap?.release();
+  focusTrap = null;
   overlay?.remove();
   overlay = null;
 }
@@ -56,5 +60,6 @@ export function showTutorialChoice(onTutorial: () => void, onDirectStart: () => 
   card.appendChild(actions);
   overlay.appendChild(card);
   document.body.appendChild(overlay);
-  guided.focus();
+  // aria-modal 必須配合真正的焦點循環；否則 Tab 會離開選擇卡並操作底層場景。
+  focusTrap = createFocusTrap(card);
 }

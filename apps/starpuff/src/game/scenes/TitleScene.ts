@@ -10,7 +10,7 @@ import { createMenuBackdrop, type BackgroundHandle } from '../systems/background
 import { addDomButton, addMuteButton, bindMenuRelayout } from '../systems/hud';
 import { isKeyConfigOpen } from '../systems/keyConfig';
 import { isSettingsPageOpen, openSettingsPage } from '../systems/settingsPage';
-import { showTutorialChoice } from '../systems/tutorialChoice';
+import { closeTutorialChoice, showTutorialChoice } from '../systems/tutorialChoice';
 import { loadSettings, updateSettings } from '../core/settings';
 
 const TITLE_GLOW_TEX = 'title-glow';
@@ -44,6 +44,7 @@ export class TitleScene extends Phaser.Scene {
       ambience: 'bg-meadow',
     });
     this.events.once('shutdown', () => {
+      closeTutorialChoice();
       this.backdrop?.destroy();
     });
     addMuteButton(this);
