@@ -232,10 +232,14 @@ export function createGuidedTutorial(
     if (enemy && kind === 'shelly') {
       target = enemy;
       enemy.setData('state', 'stun');
+      // 教學目標保留正式地面碰撞，只在玩家接觸傷害結算層設為無害。
+      enemy.setData('tutorialContactHarmless', true);
       const body = enemy.body as Phaser.Physics.Arcade.Body;
       body.setVelocity(0, 0);
-      body.setImmovable(true);
-      body.checkCollision.none = true;
+      // immovable 動態體與靜態地面可能無法完成分離；由地面碰撞防止下沉，
+      // update() 每幀歸零速度以維持教學目標在原地。
+      body.setImmovable(false);
+      body.checkCollision.none = false;
     }
     return enemy;
   };

@@ -282,6 +282,13 @@ test.describe('混合式互動新手教學', () => {
         { timeout: 1000 },
       )
       .toBe('walk');
+    await expect
+      .poll(
+        () =>
+          page.evaluate(() => window.__sp.enemies().find((enemy) => enemy.kind === 'shelly')?.y),
+        { timeout: 1000 },
+      )
+      .toBeLessThan(400);
 
     await page.keyboard.press('Z', { delay: 60 });
     await page.waitForTimeout(160);

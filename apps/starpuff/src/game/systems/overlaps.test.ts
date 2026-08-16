@@ -61,6 +61,7 @@ interface HarnessConfig {
   // §119 形態替身（PR #886 收斂）：自訂形態名與 spec，優先於快捷旗標。
   form?: { name: 'shell' | 'tide' | 'prism' | null; spec: Record<string, unknown> | null };
   inhaling?: boolean;
+  tutorialContactHarmless?: boolean;
 }
 
 function makeHarness(config: HarnessConfig = {}): {
@@ -82,6 +83,7 @@ function makeHarness(config: HarnessConfig = {}): {
   groups: {
     stars: object;
     enemyGroup: object;
+    tutorialEnemy: object;
     hazards: object;
     inhaleZone: object;
     playerSprite: { x: number; y: number; body: object; setVelocityY: ReturnType<typeof vi.fn> };
@@ -91,7 +93,14 @@ function makeHarness(config: HarnessConfig = {}): {
 } {
   const { scene, wirings, moveTo } = makeScene();
   const stars = { name: 'stars' };
-  const enemyGroup = { name: 'enemies', getChildren: () => [] as unknown[] };
+  const tutorialEnemy = {
+    kind: 'shelly',
+    x: 120,
+    y: 300,
+    getData: (key: string) =>
+      key === 'tutorialContactHarmless' ? (config.tutorialContactHarmless ?? false) : undefined,
+  };
+  const enemyGroup = { name: 'enemies', getChildren: () => [tutorialEnemy] as unknown[] };
   const hazards = { name: 'hazards' };
   const inhaleZone = { name: 'inhale-zone' };
   const playerSprite = { x: 100, y: 300, body: { bottom: 300 }, setVelocityY: vi.fn() };
@@ -116,6 +125,7 @@ function makeHarness(config: HarnessConfig = {}): {
     isInhaling: () => config.inhaling ?? false,
     getFacing: () => 1,
     isSlamming: () => false,
+    isShellCharging: () => false,
     onSlamBounce,
     getTransformState: () => ({
       form: config.form
@@ -214,7 +224,16 @@ function makeHarness(config: HarnessConfig = {}): {
       applyCaramel,
       grantStar,
     },
-    groups: { stars, enemyGroup, hazards, inhaleZone, playerSprite, projectiles, shockwaves },
+    groups: {
+      stars,
+      enemyGroup,
+      hazards,
+      inhaleZone,
+      playerSprite,
+      projectiles,
+      shockwaves,
+      tutorialEnemy,
+    },
   };
 }
 
@@ -425,6 +444,24 @@ describe('關鍵回調結算路徑', () => {
     meteorWiring?.callback?.({}, rock);
     expect(harness.spies.shatter).toHaveBeenCalledWith(rock);
     expect(harness.spies.damagePlayer).toHaveBeenCalledWith(ENEMY.touchDamage, 500);
+  });
+
+  it('教學 Shelly 保留接線但不造成玩家接觸傷害', () => {
+    const tutorial = makeHarness({ tutorialContactHarmless: true });
+    wireCombatOverlaps(tutorial.scene, tutorial.hooks);
+    const tutorialWiring = tutorial.wirings.find(
+      (w) => w.a === tutorial.groups.playerSprite && w.b === tutorial.groups.enemyGroup,
+    );
+    tutorialWiring?.callback?.(tutorial.groups.playerSprite, tutorial.groups.tutorialEnemy);
+    expect(tutorial.spies.damagePlayer).not.toHaveBeenCalled();
+
+    const normal = makeHarness();
+    wireCombatOverlaps(normal.scene, normal.hooks);
+    const normalWiring = normal.wirings.find(
+      (w) => w.a === normal.groups.playerSprite && w.b === normal.groups.enemyGroup,
+    );
+    normalWiring?.callback?.(normal.groups.playerSprite, normal.groups.tutorialEnemy);
+    expect(normal.spies.damagePlayer).toHaveBeenCalledWith(ENEMY.touchDamage, 120);
   });
 });
 

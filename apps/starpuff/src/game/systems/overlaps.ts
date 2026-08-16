@@ -278,6 +278,8 @@ export function wireCombatOverlaps(scene: Phaser.Scene, hooks: CombatOverlapHook
     if (isContactHarmless(hooks.now(), (target.getData('inhaleGraceUntil') as number) ?? 0)) {
       return;
     }
+    // 互動教學的 Shelly 保留正式物理碰撞，僅抑制玩家接觸傷害，避免停留等待時受傷。
+    if (target.getData('tutorialContactHarmless') === true) return;
     hooks.damagePlayer(ENEMY.touchDamage, target.x);
   });
 
