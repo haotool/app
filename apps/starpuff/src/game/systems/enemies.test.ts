@@ -238,6 +238,7 @@ describe('enemies.spawn 池復用重建（§77/PR #886 R5）', () => {
       },
       body: {
         enable: false,
+        checkCollision: { none: false },
         reset: vi.fn(),
         setSize: vi.fn(),
         setCollideWorldBounds: vi.fn(),
@@ -265,7 +266,7 @@ describe('enemies.spawn 池復用重建（§77/PR #886 R5）', () => {
     return sprite;
   }
 
-  it('回池個體帶殘留 inhalePull/beamDir/aimX/aimY/tailMs：spawn 復用必全歸位', () => {
+  it('回池個體帶殘留狀態與碰撞遮罩：spawn 復用必全歸位', () => {
     const enemyChildren: Record<string, unknown>[] = [];
     const enemyGroup = {
       getChildren: () => enemyChildren,
@@ -298,6 +299,7 @@ describe('enemies.spawn 池復用重建（§77/PR #886 R5）', () => {
     expect(first).not.toBeNull();
     const sprite = first as unknown as {
       active: boolean;
+      body: { checkCollision: { none: boolean } };
       getData(key: string): unknown;
       setData(key: string, value: unknown): unknown;
       setActive(value: boolean): unknown;
@@ -308,6 +310,8 @@ describe('enemies.spawn 池復用重建（§77/PR #886 R5）', () => {
     sprite.setData('aimX', 777);
     sprite.setData('aimY', 888);
     sprite.setData('tailMs', 999);
+    const body = sprite.body;
+    body.checkCollision.none = true;
     sprite.setActive(false);
     // 池復用：全量重建必歸位。
     const second = system.spawn('jelly', 200, 300) as unknown as Record<string, unknown>;
@@ -317,5 +321,6 @@ describe('enemies.spawn 池復用重建（§77/PR #886 R5）', () => {
     expect(sprite.getData('aimX')).toBeUndefined();
     expect(sprite.getData('aimY')).toBeUndefined();
     expect(sprite.getData('tailMs')).toBeUndefined();
+    expect(body.checkCollision.none).toBe(false);
   });
 });

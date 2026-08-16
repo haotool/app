@@ -724,6 +724,8 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     const body = sprite.body as Phaser.Physics.Arcade.Body;
     body.enable = true;
     body.reset(x, y);
+    // 池重用重設：教學下砸等情境可能暫時關閉碰撞，不能污染下一個敵人。
+    body.checkCollision.none = false;
     // 命中寬容：碰撞體縮至視覺 90%（spiky 85%），setSize 以未縮放的 frame 尺寸為基準。
     const hitboxScale = kind === 'spiky' ? 0.85 : 0.9;
     body.setSize(sprite.width * hitboxScale, sprite.height * hitboxScale);
