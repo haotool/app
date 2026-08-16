@@ -879,6 +879,192 @@ html.sp-desktop #controls.is-active {
   background: linear-gradient(to bottom, rgba(253, 239, 246, 0.7), rgba(253, 239, 246, 0.99) 24%);
 }
 
+/* 首次完整互動教學：卡片位於上方安全區，pointer-events 不會攔截下方搖桿與按鍵；
+   只有明確按鈕接收操作，讓玩家可以邊看提示邊實作。 */
+.tutorial-choice-overlay,
+.guided-tutorial-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  pointer-events: none;
+  font-family: system-ui, sans-serif;
+}
+
+.tutorial-choice-overlay {
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(58, 58, 74, 0.42);
+  pointer-events: auto;
+}
+
+.tutorial-choice-card,
+.guided-tutorial-card {
+  width: min(440px, calc(100vw - 24px));
+  padding: 18px;
+  border: 2px solid rgba(122, 95, 184, 0.35);
+  border-radius: 22px;
+  background: rgba(253, 239, 246, 0.98);
+  box-shadow: 0 8px 28px rgba(58, 58, 74, 0.28);
+  color: #3a3a4a;
+}
+
+.tutorial-choice-title,
+.guided-tutorial-title {
+  margin: 0;
+  font:
+    700 22px/1.25 system-ui,
+    sans-serif;
+}
+
+.tutorial-choice-desc,
+.guided-tutorial-instruction,
+.guided-tutorial-success {
+  margin: 8px 0 0;
+  font:
+    500 15px/1.5 system-ui,
+    sans-serif;
+}
+
+.tutorial-choice-actions,
+.guided-tutorial-actions {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.tutorial-choice-actions {
+  grid-template-columns: 1fr 1fr;
+}
+
+.guided-tutorial-overlay {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: max(12px, env(safe-area-inset-top, 0px)) 12px 0;
+}
+
+.guided-tutorial-card {
+  width: min(350px, calc(100vw - 24px));
+  pointer-events: auto;
+  padding: 10px 14px 12px;
+}
+
+.guided-tutorial-progress {
+  color: #7a5fb8;
+  font:
+    700 12px system-ui,
+    sans-serif;
+  text-align: right;
+}
+
+.guided-tutorial-art {
+  display: block;
+  width: min(100%, 150px);
+  height: 104px;
+  margin: 0 auto 4px;
+  object-fit: contain;
+}
+
+.guided-tutorial-tip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 6px 8px;
+  border: 1px solid rgba(122, 95, 184, 0.22);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.guided-tutorial-tip-art {
+  flex: 0 0 76px;
+  width: 76px;
+  height: 58px;
+  object-fit: contain;
+}
+
+.guided-tutorial-tip-title {
+  margin: 0;
+  color: #7a5fb8;
+  font:
+    700 12px/1.25 system-ui,
+    sans-serif;
+}
+
+.guided-tutorial-tip-text {
+  margin: 2px 0 0;
+  font:
+    500 12px/1.4 system-ui,
+    sans-serif;
+}
+
+.guided-tutorial-success {
+  color: #287c63;
+  font-weight: 700;
+}
+
+.guided-tutorial-btn {
+  min-height: 40px;
+  padding: 7px 12px;
+  border: 2px solid rgba(122, 95, 184, 0.4);
+  border-radius: 14px;
+  background: #ffffff;
+  color: #3a3a4a;
+  font:
+    700 14px system-ui,
+    sans-serif;
+  cursor: pointer;
+}
+
+.guided-tutorial-primary {
+  background: #bff3e0;
+}
+
+.guided-tutorial-leave {
+  min-height: 32px;
+  margin-top: 6px;
+  border: 0;
+  background: transparent;
+  color: #7a5fb8;
+  font-size: 12px;
+}
+
+@media (max-height: 520px) {
+  .guided-tutorial-card {
+    width: min(520px, calc(100vw - 24px));
+    display: grid;
+    grid-template-columns: 104px 1fr;
+    column-gap: 12px;
+    align-items: center;
+  }
+
+  .guided-tutorial-progress,
+  .guided-tutorial-art {
+    grid-row: span 3;
+  }
+
+  .guided-tutorial-progress {
+    grid-column: 1;
+  }
+
+  .guided-tutorial-art {
+    grid-column: 1;
+    grid-row: 2 / span 2;
+    width: 104px;
+    height: 82px;
+  }
+
+  .guided-tutorial-title,
+  .guided-tutorial-instruction,
+  .guided-tutorial-tip,
+  .guided-tutorial-success,
+  .guided-tutorial-actions,
+  .guided-tutorial-leave {
+    grid-column: 2;
+  }
+}
+
 .settings-row {
   display: flex;
   align-items: center;

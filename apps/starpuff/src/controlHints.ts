@@ -95,6 +95,7 @@ export function showControlHintsForSession(): () => void {
   appendHintItem(list, '右手大拇指：A 鍵跳躍');
   appendHintItem(list, '右手食指：B 鍵長按吸入；放開或短按吐出');
   appendHintItem(list, 'B 鍵長按可以連續吸取多隻星星');
+  appendHintItem(list, '吸入時 A+B 可以同時按：拇指跳躍、食指持續吸入');
   appendHintItem(list, '設定可永久關閉提示，也能進入按鈕配置調整位置');
   card.appendChild(list);
 

@@ -125,7 +125,11 @@ function addShakeRow(card: HTMLElement): void {
   card.appendChild(row);
 }
 
-export function openSettingsPage(onClose?: () => void): void {
+export interface SettingsPageOptions {
+  onReplayTutorial?: () => void;
+}
+
+export function openSettingsPage(onClose?: () => void, options: SettingsPageOptions = {}): void {
   if (open) return;
   // 模態不放進旋轉遊戲殼：直持手機時 #game-shell 會 rotate(±90deg)，
   // 若把設定卡掛在殼內，flex/overflow 的 layout 軸會跟著旋轉，按鈕會被
@@ -191,6 +195,20 @@ export function openSettingsPage(onClose?: () => void): void {
     openKeyConfig();
   });
   actions.appendChild(configButton);
+
+  if (options.onReplayTutorial) {
+    const tutorialButton = document.createElement('button');
+    tutorialButton.type = 'button';
+    tutorialButton.className = 'install-btn';
+    tutorialButton.dataset['setting'] = 'replay-tutorial';
+    tutorialButton.textContent = '重新播放新手教學';
+    bindButtonActivation(tutorialButton, () => {
+      updateSettings({ guidedTutorialStatus: 'unseen' });
+      close();
+      options.onReplayTutorial?.();
+    });
+    actions.appendChild(tutorialButton);
+  }
 
   const closeButton = document.createElement('button');
   closeButton.type = 'button';

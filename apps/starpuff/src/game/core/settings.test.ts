@@ -46,6 +46,7 @@ describe('loadSettings（v19 卡 4：預設與 migration）', () => {
       reducedMotion: false,
       controlHintsEnabled: true,
       controlHintsPlayCount: 0,
+      guidedTutorialStatus: 'unseen',
       screenShake: 'full',
       shellRotation: null,
       keyLayout: null,
@@ -179,6 +180,18 @@ describe('loadSettings（v19 卡 4：預設與 migration）', () => {
     expect(loadSettings().controlHintsPlayCount).toBe(5);
     updateSettings({ controlHintsPlayCount: -4 });
     expect(loadSettings().controlHintsPlayCount).toBe(0);
+  });
+
+  it('舊 v1 設定缺少完整教學欄位時回 unseen，狀態值會收斂', async () => {
+    store.set('sp-settings', JSON.stringify({ schemaVersion: 1, guidedTutorialStatus: 'broken' }));
+    const { loadSettings, updateSettings } = await loadSettingsModule();
+    expect(loadSettings().guidedTutorialStatus).toBe('unseen');
+    expect(updateSettings({ guidedTutorialStatus: 'completed' }).guidedTutorialStatus).toBe(
+      'completed',
+    );
+    expect(updateSettings({ guidedTutorialStatus: 'broken' as never }).guidedTutorialStatus).toBe(
+      'unseen',
+    );
   });
 
   it('localStorage 不可用：回預設不拋錯，updateSettings 仍更新記憶體快取', async () => {

@@ -93,7 +93,10 @@ test('直持 390×844：旋轉殼進場、搖桿與按鍵可操作、走星星�
 // 舊方向偏好（§87）：sp-rotation=cw 時殼轉 90deg，裝置「往下滑」對應遊戲「往右」。
 test('直持 390×844（sp-rotation=cw 舊方向）：殼與搖桿語意跟隨偏好', async ({ page }) => {
   const errors = collectErrors(page);
-  await page.addInitScript(() => localStorage.setItem('sp-rotation', 'cw'));
+  await page.addInitScript(() => {
+    localStorage.removeItem('sp-settings');
+    localStorage.setItem('sp-rotation', 'cw');
+  });
   await page.goto('/');
   await expect(page.locator('#app canvas')).toBeVisible();
   await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Title');
@@ -107,6 +110,10 @@ test('直持 390×844（sp-rotation=cw 舊方向）：殼與搖桿語意跟隨�
   await page
     .locator('[data-menu="start"]')
     .dispatchEvent('pointerdown', { pointerId: 9, isPrimary: true });
+  await page.locator('[data-tutorial-choice="direct"]').dispatchEvent('pointerdown', {
+    pointerId: 9,
+    isPrimary: true,
+  });
   await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Game');
   await dismissControlHints(page);
 
@@ -389,6 +396,7 @@ test('觸控新手提示：前五場顯示、第五場後停止，設定可永�
       await expect(hint).toContainText('左手大拇指');
       await expect(hint).toContainText('右手食指');
       await expect(hint).toContainText('長按可以連續吸取多隻');
+      await expect(hint).toContainText('A+B 可以同時按');
       await hint.locator('[data-control-hints="close"]').dispatchEvent('pointerdown', {
         pointerId: play + 10,
         isPrimary: true,

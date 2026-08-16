@@ -24,6 +24,13 @@ L1-L4 的 v2 直向世界寬配置表已全數失效（v3 §21 改橫式尺寸�
 - 尾端 release：每關末 `safeZoneTailPx: 480` 禁 spawn（星星門前喘息區，鋸齒 tension-release）。`maxOnScreen`：S1 3、S2 4、S3 5。
 - HUD 增列：左上 `STAGE N 關卡名` + 配額 `⭐ n/quota`。
 
+### 15.2 首次 guided sandbox 與情境化提示
+
+- 完整 onboarding 不建立第二套 `TutorialScene`；`TitleScene` 以 `guidedTutorial: true` 啟動
+  `GameScene` 的固定低壓力訓練區，重用 `teaches`、`drillSpawns`、`PlayerHandle` 與 `GameEvents`。
+- 完成基本操作後只提供「開始正式 L1」，進入 L1 後仍由 L2 Shelly、L3 變身／星暴及各形態首次登場
+  的既有 `hint`／情境提示補充規則，避免首次 onboarding 變成長篇百科。
+
 ### 15.1 觸控寬容度硬規則（調研回寫，全關卡生效）
 
 - Coyote time 150ms、jump buffer 160ms（離台仍可跳、提前按跳落地即跳）。

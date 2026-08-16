@@ -151,8 +151,10 @@ describe('playerFeel 吸入同步（§30）', () => {
     h.feel.syncInhale();
     expect(h.spies.startInhale).toHaveBeenCalledWith(h.feel.mouth());
     expect(playSfx).toHaveBeenCalledWith('inhale');
+    expect(h.spies.flavor).toHaveBeenCalledWith('長按 B／X 可連續吸入；A／Z 也能同時按');
     h.feel.syncInhale();
     expect(h.spies.startInhale).toHaveBeenCalledTimes(1);
+    expect(h.spies.flavor).toHaveBeenCalledTimes(1);
   });
 
   it('吸入下降沿：stopInhale + 止音；未吸入穩態無呼叫', () => {
