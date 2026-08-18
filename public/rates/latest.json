@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-08-18T08:42:04.693Z",
-  "updateTime": "2026/08/18 16:42:04",
+  "timestamp": "2026-08-18T09:15:23.097Z",
+  "updateTime": "2026/08/18 17:15:23",
   "source": "Taiwan Bank (臺灣銀行牌告匯率)",
   "sourceUrl": "https://rate.bot.com.tw/xrt",
   "base": "TWD",
@@ -13,7 +13,7 @@
     "SGD": 25.32,
     "CHF": 39.74,
     "JPY": 0.2037,
-    "NZD": 19.14,
+    "NZD": 19.15,
     "THB": 1.0268,
     "PHP": 0.5831,
     "IDR": 0.00208,
@@ -115,12 +115,12 @@
     "NZD": {
       "name": "紐元",
       "spot": {
-        "buy": 18.62,
-        "sell": 18.92
+        "buy": 18.63,
+        "sell": 18.93
       },
       "cash": {
-        "buy": 18.29,
-        "sell": 19.14
+        "buy": 18.3,
+        "sell": 19.15
       }
     },
     "THB": {
