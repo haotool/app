@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-08-18T10:55:34.353Z",
-  "updateTime": "2026/08/18 18:55:34",
+  "timestamp": "2026-08-18T11:28:21.036Z",
+  "updateTime": "2026/08/18 19:28:21",
   "source": "Taiwan Bank (臺灣銀行牌告匯率)",
   "sourceUrl": "https://rate.bot.com.tw/xrt",
   "base": "TWD",
@@ -11,7 +11,7 @@
     "AUD": 23.11,
     "CAD": 23.46,
     "SGD": 25.34,
-    "CHF": 39.74,
+    "CHF": 39.71,
     "JPY": 0.2037,
     "NZD": 19.17,
     "THB": 1.028,
@@ -93,12 +93,12 @@
     "CHF": {
       "name": "瑞士法郎",
       "spot": {
-        "buy": 39.15,
-        "sell": 39.54
+        "buy": 39.12,
+        "sell": 39.51
       },
       "cash": {
-        "buy": 38.54,
-        "sell": 39.74
+        "buy": 38.51,
+        "sell": 39.71
       }
     },
     "JPY": {
