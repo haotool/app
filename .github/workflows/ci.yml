@@ -541,7 +541,12 @@ jobs:
           #（pnpm workspace 共用單一 lockfile），足以改變 bundle 體積與執行期行為，
           # 故納入觸發條件——E2E 的 paths-filter 早已納入這兩者，此處補齊一致性。
           # 兩者以 $ 錨定為 repo 根檔案；apps/ratewise/package.json 已由第一條規則涵蓋。
-          if git diff --name-only "$BASE" "$HEAD" | grep -Eq '^(apps/ratewise/|scripts/lighthouse-|\.github/workflows/(ci|lighthouse-production)\.yml|\.lighthouserc\.cjs|package\.json$|pnpm-lock\.yaml$)'; then
+          #
+          # 必須用 three-dot（merge-base）而非 two-dot：two-dot 比較的是兩個 commit 的
+          # 端點狀態，會把「PR 開啟後 main 前進」的變更也算成差異。本 repo 每日有匯差 PR
+          # 寫入 apps/ratewise/src/config/generated/，實測 PR #1023（完全未碰 lighthouse
+          # 相關路徑）因此誤觸發並實際執行了 Lighthouse CI。three-dot 只取 PR 自身的變更。
+          if git diff --name-only "$BASE...$HEAD" | grep -Eq '^(apps/ratewise/|scripts/lighthouse-|\.github/workflows/(ci|lighthouse-production)\.yml|\.lighthouserc\.cjs|package\.json$|pnpm-lock\.yaml$)'; then
             echo "lighthouse=true" >> "$GITHUB_OUTPUT"
           else
             echo "lighthouse=false" >> "$GITHUB_OUTPUT"

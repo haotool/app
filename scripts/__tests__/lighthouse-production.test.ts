@@ -98,3 +98,29 @@ describe('compareDirection behavioral drift checks', () => {
     expect(isHardThresholdBreached(250, { direction: 'lowerBetter', threshold: 200 })).toBe(true);
   });
 });
+
+describe('Lighthouse CI 觸發判定（ci.yml lighthouse-changes）', () => {
+  const workflow = readFileSync(join(ROOT_DIR, '.github/workflows/ci.yml'), 'utf-8');
+  const filterLine = workflow
+    .split('\n')
+    .find(
+      (line) => line.includes('git diff --name-only') && line.includes('lighthouse-production'),
+    );
+
+  it('存在 lighthouse 觸發判定行', () => {
+    expect(filterLine).toBeDefined();
+  });
+
+  // two-dot 比較兩個 commit 的端點狀態，會把「PR 開啟後 main 前進」的變更算成差異。
+  // 本 repo 每日匯差 PR 寫入 apps/ratewise/，實測 PR #1023 因此誤觸發 Lighthouse CI。
+  it('使用 three-dot（merge-base）而非 two-dot，避免 main 前進造成誤觸發', () => {
+    expect(filterLine).toContain('"$BASE...$HEAD"');
+    expect(filterLine).not.toMatch(/"\$BASE"\s+"\$HEAD"/);
+  });
+
+  it('觸發樣式涵蓋依賴變更，且根檔案以 $ 錨定避免誤中其他 app', () => {
+    expect(filterLine).toContain('package\\.json$');
+    expect(filterLine).toContain('pnpm-lock\\.yaml$');
+    expect(filterLine).toContain('^(apps/ratewise/');
+  });
+});

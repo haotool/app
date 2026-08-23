@@ -14,6 +14,16 @@
 ## 條目（新→舊）
 
 - 日期：2026-08-23
+- ID：penalty-extended-unvalidated-filter-and-overclaimed-perf-gating
+- 原因：#1036 擴充 Lighthouse path filter 前未驗證該 filter 本身正確——其 `git diff "$BASE" "$HEAD"` 為 two-dot，會把 PR 開啟後 main 前進的變更算成差異而誤觸發；同時 PR 描述宣稱「換得效能回歸能被攔一次」，但 .lighthouserc.cjs 的 categories:performance 是 warn 不是 error，該說法不成立
+- 解法：改為 three-dot 並補守門測試；往後修改既有判定邏輯前，先用真實 SHA 重現其現行行為，且宣稱守門價值前必須先讀斷言等級（warn/error）而非只看斷言存在
+
+- 日期：2026-08-23
+- ID：reward-lighthouse-filter-two-dot-diff-fixed
+- 原因：lighthouse-changes 以 two-dot `git diff "$BASE" "$HEAD"` 判定變更範圍，比較的是兩端點狀態而非 PR 自身 diff；本 repo 每日匯差 PR 持續寫入 apps/ratewise/src/config/generated/，使任何在其後開啟的 PR 都可能誤觸發 Lighthouse CI，觸發行為長期不可預測
+- 解法：改用 three-dot `"$BASE...$HEAD"` 取 merge-base 差異，並以 PR #1023 的真實 BASE/HEAD SHA 重現（two-dot 命中兩個該 PR 未碰的 generated 檔、three-dot 零命中）；補 3 條守門測試並以還原 two-dot 的反向測試確認偵測力
+
+- 日期：2026-08-23
 - ID：penalty-stacked-pr-assumption-broken-by-squash-merge
 - 原因：為避開 002 記分表頭衝突而把 PR 疊在另一個未合併 PR 之上，卻沒考慮本 repo 一律使用 squash merge——上游 PR 合併後其原始 commit 不會進入 main 歷史，疊在其上的分支父 commit 成為孤兒，PR 直接變 DIRTY，反而製造了原本想避免的衝突
 - 解法：改以 origin/main 重建分支並只重新套用自身變更；往後 stacked PR 僅適用於 merge commit 或 rebase merge 的 repo，squash merge 下應直接開在 main 並接受 002 衝突、於 rebase 後手動補跑 verify-002-log.mjs
