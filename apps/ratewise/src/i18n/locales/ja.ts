@@ -71,6 +71,7 @@ const ja = {
     switchToCash: '現金レートに切替',
     switchToExchangeShop: '両替所レートに切替',
     fallbackRate: '参考値',
+    staleExchangeShopRate: '{{hours}}時間以上未更新',
     rateTypeUnavailable: '{{rateType}}レートは現在利用できません',
     rateTypeUnavailableForCurrencies:
       '{{currencies}} は {{rateType}} レート非対応のため、{{fallbackType}} を使用します',

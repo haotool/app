@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+2（reward 2、penalty 0、neutral 0）｜累計總分：+324
+> 本次分數變化：+2（reward 2、penalty 0、neutral 0）｜累計總分：+326
 
 ## 新增模板（4 行）
 
@@ -32,6 +32,16 @@
 - ID：reward-moneybox-outage-escalation-throttle
 - 原因：workflow 每 5 分鐘執行（288 次/日），持續中斷時每次都 fail 產生同質失敗通知洪水，反而降低事故可見度；但直接改成 exit 0 會違反「禁止綠燈掩蓋持續停更」的既有治理規則
 - 解法：改以 outage issue 作持久信號——首次偵測建 issue 並 fail、其後每小時留言＋fail 一次、節流視窗內僅 warning，恢復時自動關閉 issue；所有 issue 查詢失敗一律 fallback exit 1，並以 stub gh 模擬六個分支（含兩條 fail-safe）驗證後同步更新 CLAUDE.md 治理條文
+
+- 日期：2026-08-23
+- ID：reward-exchange-shop-stale-disclosure
+- 原因：換錢所 badge 只顯示 updateTime 原始字串（如 2026/08/22 08:56），使用者無從判斷那是幾小時前；2026-08-22 上游停供 sell 導致資料靜止 38h 期間，正式站照常顯示該匯率且畫面毫無提示，而 ExchangeShopRate 根本沒有機器可讀的時間戳可供判定
+- 解法：將上游 ISO timestamp 傳遞進 ExchangeShopRate（fallback 明確為 null），新增 24h 門檻的純函式判定與 badge 過期揭露（danger 色、role=status、四語系），年齡未知時不揭露；門檻刻意比 workflow 的 30h 營運告警嚴格，因使用者會拿這個數字去換錢
+
+- 日期：2026-08-23
+- ID：reward-required-timestamp-field-exposed-fallback-gap
+- 原因：新欄位若設為選填，正式程式碼可能靜默漏設而讓過期判定永遠不觸發——這正是本次要修的失效模式本身
+- 解法：timestamp 設為必填，型別檢查因此揪出 useCurrencyConverter 的 buildFallbackExchangeShopRate 這條正式路徑也需明確標為 null；並把測試 fixture 從固定舊時間改為 new Date().toISOString()，避免 fixture 隨真實時間流逝從新鮮漂移成過期
 
 - 日期：2026-08-23
 - ID：penalty-stacked-pr-assumption-broken-by-squash-merge

@@ -71,6 +71,8 @@ const buildFallbackExchangeShopRate = (currency: CurrencyCode): ExchangeShopRate
     sell: provider.fallbackSell,
     buy: provider.fallbackBuy,
     updateTime: '—',
+    // fallback 是編譯期常數，沒有上游快照時間；null 使過期揭露不對它誤判年齡。
+    timestamp: null,
     source: provider.source,
     sourceUrl: provider.sourceUrl,
     providerName: provider.providerName,

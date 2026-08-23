@@ -23,6 +23,7 @@ const krwRate: ExchangeShopRate = {
   sell: 45.25,
   buy: 45.8,
   updateTime: '2026-05-07 12:00',
+  timestamp: new Date().toISOString(), // 新鮮資料：預設不觸發過期揭露
   source: 'MoneyBox',
   sourceUrl: 'https://moneybox-exchange.com/zh-CHT/exchange',
   providerName: '明洞換匯所',

@@ -107,6 +107,7 @@ describe('SingleConverter - 核心功能測試', () => {
     sell: 44.85,
     buy: 45.1,
     updateTime: '2026/05/07 16:33:55',
+    timestamp: new Date().toISOString(), // 新鮮資料：預設不觸發過期揭露
     source: 'MoneyBox',
     sourceUrl: 'https://moneybox-exchange.com/zh-CHT/exchange',
     providerName: '明洞換匯所',
