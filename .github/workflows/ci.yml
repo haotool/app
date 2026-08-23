@@ -537,7 +537,11 @@ jobs:
           fi
           BASE="${{ github.event.pull_request.base.sha }}"
           HEAD="${{ github.event.pull_request.head.sha }}"
-          if git diff --name-only "$BASE" "$HEAD" | grep -Eq '^(apps/ratewise/|scripts/lighthouse-|\.github/workflows/(ci|lighthouse-production)\.yml|\.lighthouserc\.cjs)'; then
+          # 根 package.json 與 pnpm-lock.yaml 會改變 ratewise 實際解析到的依賴樹
+          #（pnpm workspace 共用單一 lockfile），足以改變 bundle 體積與執行期行為，
+          # 故納入觸發條件——E2E 的 paths-filter 早已納入這兩者，此處補齊一致性。
+          # 兩者以 $ 錨定為 repo 根檔案；apps/ratewise/package.json 已由第一條規則涵蓋。
+          if git diff --name-only "$BASE" "$HEAD" | grep -Eq '^(apps/ratewise/|scripts/lighthouse-|\.github/workflows/(ci|lighthouse-production)\.yml|\.lighthouserc\.cjs|package\.json$|pnpm-lock\.yaml$)'; then
             echo "lighthouse=true" >> "$GITHUB_OUTPUT"
           else
             echo "lighthouse=false" >> "$GITHUB_OUTPUT"
