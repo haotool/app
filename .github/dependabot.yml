@@ -1,5 +1,6 @@
 version: 2
 updates:
+  # pnpm workspace 根目錄：apps/* 共用同一份 pnpm-lock.yaml，由此單一 entry 涵蓋。
   - package-ecosystem: 'npm'
     directory: '/'
     schedule:
@@ -11,17 +12,48 @@ updates:
       prefix: 'chore(deps)'
     allow:
       - dependency-type: 'direct'
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 5
     rebase-strategy: auto
-    # 2025-12-26: 改為每週，避免與 Renovate 衝突（Renovate 週一執行）
-    # Dependabot 作為備援，僅處理 Renovate 遺漏的更新
     versioning-strategy: increase-if-necessary
+    # minor/patch 收斂成單一 PR，避免每個套件各開一個 PR 與一封通知；
+    # major 刻意不分組——需要逐案評估相容性（例：react-router v7 與 vite-react-ssg 耦合），
+    # 混進群組 PR 會讓其他安全更新一起被卡住。
+    groups:
+      npm-minor-patch:
+        patterns:
+          - '*'
+        update-types:
+          - 'minor'
+          - 'patch'
     ignore:
       # 2026-08-08: runtime 鎖在 Node 24（engines ^24.0.0 / .nvmrc / CI node-version 24）。
       # 型別 major 先行會描述執行期不存在的 API，型別檢查綠燈也擋不住執行期失敗。
       # 待 runtime 整體升版後再一併解除（PR #969 因此關閉）。
       - dependency-name: '@types/node'
         update-types: ['version-update:semver-major']
+
+  # security-headers Worker 自帶 npm + package-lock.json，不在 pnpm workspace 內，
+  # 沒有這個 entry 就只會在漏洞警報觸發時被動冒出 security update PR（例：PR #979）。
+  - package-ecosystem: 'npm'
+    directory: '/security-headers'
+    schedule:
+      interval: 'weekly'
+      day: 'sunday'
+      time: '02:00'
+      timezone: 'Asia/Taipei'
+    commit-message:
+      prefix: 'chore(deps)'
+    allow:
+      - dependency-type: 'direct'
+    open-pull-requests-limit: 3
+    rebase-strategy: auto
+    groups:
+      security-headers-minor-patch:
+        patterns:
+          - '*'
+        update-types:
+          - 'minor'
+          - 'patch'
 
   - package-ecosystem: 'github-actions'
     directory: '/'
@@ -32,3 +64,9 @@ updates:
       timezone: 'Asia/Taipei'
     commit-message:
       prefix: 'chore(ci)'
+    open-pull-requests-limit: 3
+    # action 升級彼此獨立且風險同質，全部收成一個 PR。
+    groups:
+      github-actions:
+        patterns:
+          - '*'

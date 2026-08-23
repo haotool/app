@@ -1,0 +1,63 @@
+# Dependabot 自動合併
+#
+# 背景：repo 先前把自動合併責任寄託在 renovate.json，但 Renovate App 從未安裝
+#（零 Renovate PR、無 Dependency Dashboard issue），使 Dependabot PR 即使 checks 全綠
+# 也無人合併而長期堆積（例：PR #1014、#979 綠燈掛置數週）。
+#
+# 策略：minor/patch 掛 GitHub auto-merge（squash），major 只加標籤等人工評估。
+# 合併仍由 branch protection 與 required checks 把關——auto-merge 只是排隊機制，
+# checks 未過不會合併，不存在繞過審查控制的路徑。
+#
+# 安全性：Dependabot 觸發的 pull_request 事件其 GITHUB_TOKEN 為唯讀，故必須用
+# pull_request_target 取得寫入權限。本 workflow 刻意不 checkout PR 分支、不執行
+# PR 內任何程式碼，僅呼叫 GitHub API，避免 pull_request_target 的權限提升風險。
+name: Dependabot Auto-merge
+
+on:
+  pull_request_target:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  automerge:
+    name: Auto-merge Dependabot minor/patch
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      PR_URL: ${{ github.event.pull_request.html_url }}
+
+    steps:
+      - name: Fetch Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        env:
+          # dependabot/fetch-metadata@v2 仍宣告 node20，先強制切到 node24。
+          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      # 分組 PR 的 update-type 取群組內最高的 semver 等級，故 major 混入群組時
+      # 整包會落到人工審查分支，不會被誤自動合併。
+      - name: Enable auto-merge (minor/patch)
+        if: steps.metadata.outputs.update-type != 'version-update:semver-major'
+        run: |
+          set -euo pipefail
+          echo "update-type=${{ steps.metadata.outputs.update-type }} → 掛上 auto-merge"
+          gh pr merge --auto --squash "$PR_URL"
+
+      - name: Flag major update for manual review
+        if: steps.metadata.outputs.update-type == 'version-update:semver-major'
+        run: |
+          set -euo pipefail
+          echo "update-type=major → 不自動合併，改標記人工審查"
+          # --force 使標籤建立具冪等性，避免依賴 repo 端的手動前置設定。
+          gh label create 'major-update' \
+            --color 'D93F0B' \
+            --description '需人工評估相容性的 major 依賴升級' \
+            --force
+          gh pr edit "$PR_URL" --add-label 'major-update'
