@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+0（reward 1、penalty 1、neutral 0）｜累計總分：+322
+> 本次分數變化：+2（reward 2、penalty 0、neutral 0）｜累計總分：+324
 
 ## 新增模板（4 行）
 
@@ -22,6 +22,16 @@
 - ID：reward-lighthouse-filter-two-dot-diff-fixed
 - 原因：lighthouse-changes 以 two-dot `git diff "$BASE" "$HEAD"` 判定變更範圍，比較的是兩端點狀態而非 PR 自身 diff；本 repo 每日匯差 PR 持續寫入 apps/ratewise/src/config/generated/，使任何在其後開啟的 PR 都可能誤觸發 Lighthouse CI，觸發行為長期不可預測
 - 解法：改用 three-dot `"$BASE...$HEAD"` 取 merge-base 差異，並以 PR #1023 的真實 BASE/HEAD SHA 重現（two-dot 命中兩個該 PR 未碰的 generated 檔、three-dot 零命中）；補 3 條守門測試並以還原 two-dot 的反向測試確認偵測力
+
+- 日期：2026-08-23
+- ID：reward-moneybox-upstream-outage-diagnosable-error
+- 原因：上游對 18/20 幣別回傳 sell="0.0000"，經 `parseFloat(...) || null` 轉成 null 後只被 TWD.sell 區間檢查攔下，錯誤訊息「TWD.sell null is outside plausible range 30-70」讀起來像 TWD 單一幣別數值異常，會把後續除錯導向錯誤方向
+- 解法：在 TWD 檢查之前加入上游停供偵測（正 sell 幣別佔比 < 50% 即判定 source-side outage），錯誤訊息明確報出 N/M 比例與查證入口；以真實上游 payload 驗證輸出為 only 2/20，並補正反兩向單元測試
+
+- 日期：2026-08-23
+- ID：reward-moneybox-outage-escalation-throttle
+- 原因：workflow 每 5 分鐘執行（288 次/日），持續中斷時每次都 fail 產生同質失敗通知洪水，反而降低事故可見度；但直接改成 exit 0 會違反「禁止綠燈掩蓋持續停更」的既有治理規則
+- 解法：改以 outage issue 作持久信號——首次偵測建 issue 並 fail、其後每小時留言＋fail 一次、節流視窗內僅 warning，恢復時自動關閉 issue；所有 issue 查詢失敗一律 fallback exit 1，並以 stub gh 模擬六個分支（含兩條 fail-safe）驗證後同步更新 CLAUDE.md 治理條文
 
 - 日期：2026-08-23
 - ID：penalty-stacked-pr-assumption-broken-by-squash-merge

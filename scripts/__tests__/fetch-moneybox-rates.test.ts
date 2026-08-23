@@ -87,6 +87,30 @@ describe('fetch-moneybox-rates / assertMoneyBoxRatesIntegrity', () => {
     );
   });
 
+  it('上游對多數幣別停供 sell（回傳 0）時，報為來源停供而非 TWD 個案異常', () => {
+    // 2026-08-22 實際事故：上游對 18/20 幣別回傳 "0.0000"，parseFloat 後經 `|| null` 轉成 null。
+    const rates = makeMoneyBoxRates(20);
+    for (const [code, rate] of Object.entries(rates)) {
+      if (code !== 'CAD') rate.sell = null;
+    }
+
+    expect(() => assertMoneyBoxRatesIntegrity(rates, null)).toThrow(/Upstream sell-quote outage/);
+    // 不得再誤報成 TWD 單一幣別的數值區間問題
+    expect(() => assertMoneyBoxRatesIntegrity(rates, null)).not.toThrow(
+      /TWD\.sell sanity circuit breaker/,
+    );
+  });
+
+  it('少數幣別缺 sell 時不誤判為上游停供，仍走既有的 TWD 檢查', () => {
+    const rates = makeMoneyBoxRates(20);
+    for (const code of ['C01', 'C02']) {
+      const rate = rates[code];
+      if (rate) rate.sell = null;
+    }
+
+    expect(() => assertMoneyBoxRatesIntegrity(rates, null)).not.toThrow();
+  });
+
   it('TWD.sell 超出 30-70 KRW/TWD 合理區間時拋出 AbortError', () => {
     expect(() => assertMoneyBoxRatesIntegrity(makeMoneyBoxRates(10, 4.59), null)).toThrow(
       /TWD\.sell sanity circuit breaker/,

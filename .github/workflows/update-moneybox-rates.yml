@@ -30,6 +30,8 @@ jobs:
 
     permissions:
       contents: write
+      # 持續中斷時建立／更新／關閉 outage 追蹤 issue（見 staleness gate 的升級節流）。
+      issues: write
 
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
@@ -90,6 +92,22 @@ jobs:
         run: |
           echo "🔄 Fetching latest exchange rates from MoneyBox (明洞換匯所)..."
           node scripts/fetch-moneybox-rates.js
+
+      # 恢復後必須關閉追蹤 issue：否則它會永久 open，使下一次中斷從第一次執行就被節流，
+      # 失去「首次偵測大聲失敗」的曝光。關閉失敗不阻斷本次資料更新。
+      - name: Close outage tracking issue on recovery
+        if: steps.fetch-rates.outcome == 'success'
+        env:
+          OUTAGE_LABEL: 'outage:moneybox'
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+        run: |
+          ISSUE_NUMBER="$(gh issue list --state open --label "$OUTAGE_LABEL" \
+            --limit 1 --json number --jq '.[0].number // empty')"
+          if [ -n "$ISSUE_NUMBER" ]; then
+            gh issue close "$ISSUE_NUMBER" \
+              --comment "上游已恢復：本次抓取成功（run ${GITHUB_RUN_ID}），自動關閉。"
+          fi
 
       - name: Save MoneyBox daily history snapshot
         id: save-history
@@ -359,10 +377,19 @@ jobs:
       # 健康狀態下每日 rollover 至少寫一次、timestamp 最舊約 24h，30h 額外容忍時差與排程延遲。
       # fetch 失敗的 summary 統一由本 step 輸出（transient / persistent 兩種），
       # 不得另設宣稱「一切正常」的 API-failure summary step 掩蓋紅燈語意。
+      #
+      # 升級節流（2026-08-23）：本 workflow 每 5 分鐘執行一次（288 次/日），持續性中斷時
+      # 每一次都失敗會產生 288 筆同質失敗通知，實際降低了事故的可見度（alert fatigue）。
+      # 改為以 GitHub issue 作為持久信號，並每 ESCALATION_INTERVAL_HOURS 才紅一次。
+      # 這不是綠燈掩蓋：中斷期間仍有常駐 open issue + 每小時一次 workflow 失敗。
+      # 任何 gh 查詢失敗一律 fallback 到 exit 1——fail-safe 方向只會更常失敗，不會更少。
       - name: Data staleness gate (fail on persistent outage)
         if: steps.fetch-rates.outcome != 'success'
         env:
           STALENESS_THRESHOLD_HOURS: '30'
+          ESCALATION_INTERVAL_HOURS: '1'
+          OUTAGE_LABEL: 'outage:moneybox'
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           AGE_HOURS=$(node -e "
             const { readFileSync } = require('fs');
@@ -386,8 +413,62 @@ jobs:
             echo "## ❌ Persistent outage detected" >> $GITHUB_STEP_SUMMARY
             echo "MoneyBox rates have been stale for over ${STALENESS_THRESHOLD_HOURS}h — manual investigation required." >> $GITHUB_STEP_SUMMARY
             echo "Check whether the MoneyBox API endpoint or response format changed." >> $GITHUB_STEP_SUMMARY
-            echo "::error::MoneyBox exchange rates stale for ${AGE_HOURS}h and fetch failed"
-            exit 1
+
+            # 標籤冪等建立；失敗不阻斷（後續查詢失敗才是硬失敗）。
+            gh label create "$OUTAGE_LABEL" --color 'B60205' \
+              --description 'MoneyBox 匯率來源持續中斷' --force || true
+
+            # 查既有 open 追蹤 issue。查詢本身失敗 → fail-safe 走 exit 1。
+            if ! ISSUE_JSON="$(gh issue list --state open --label "$OUTAGE_LABEL" \
+              --limit 1 --json number,updatedAt)"; then
+              echo "::error::Cannot query outage tracking issue; escalating (fail-safe)"
+              exit 1
+            fi
+
+            ISSUE_NUMBER="$(echo "$ISSUE_JSON" | jq -r '.[0].number // empty')"
+
+            if [ -z "$ISSUE_NUMBER" ]; then
+              # 首次偵測：建立常駐追蹤 issue，並讓本次 run 失敗（大聲曝光一次）。
+              # body 以 --body-file 傳入：多行字串直接寫在 YAML block scalar 內會頂到第 0 欄而破壞縮排。
+              BODY_FILE="$(mktemp)"
+              {
+                echo "自動偵測：committed \`latest.json\` 已 ${AGE_HOURS}h 未更新（門檻 ${STALENESS_THRESHOLD_HOURS}h），且抓取持續失敗。"
+                echo ""
+                echo "- API: https://cems.moneybox.or.kr/api/cmd.php?cmd=C011"
+                echo "- 首次偵測 run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+                echo ""
+                echo "中斷期間本 workflow 每 ${ESCALATION_INTERVAL_HOURS}h 失敗一次並在此留言更新資料年齡。"
+                echo "上游恢復後由 workflow 自動關閉本 issue。"
+              } > "$BODY_FILE"
+              gh issue create --label "$OUTAGE_LABEL" --label 'severity:p1' \
+                --title "[outage] MoneyBox 匯率來源持續停更" \
+                --body-file "$BODY_FILE" || true
+              echo "::error::MoneyBox exchange rates stale for ${AGE_HOURS}h and fetch failed"
+              exit 1
+            fi
+
+            echo "- Tracking issue: #${ISSUE_NUMBER}" >> $GITHUB_STEP_SUMMARY
+
+            UPDATED_AT="$(echo "$ISSUE_JSON" | jq -r '.[0].updatedAt // empty')"
+            SINCE_HOURS="$(node -e "
+              const updatedAt = process.argv[1];
+              const parsed = updatedAt ? Date.parse(updatedAt) : NaN;
+              // 無法解析 → 回 999 使其落入升級分支（fail-safe）。
+              console.log(Number.isNaN(parsed) ? 999 : Math.floor((Date.now() - parsed) / 3600000));
+            " "$UPDATED_AT")"
+
+            if [ "$SINCE_HOURS" -ge "$ESCALATION_INTERVAL_HOURS" ]; then
+              gh issue comment "$ISSUE_NUMBER" \
+                --body "仍未恢復：\`latest.json\` 已 ${AGE_HOURS}h 未更新（run ${GITHUB_RUN_ID}）。" || true
+              echo "::error::MoneyBox exchange rates stale for ${AGE_HOURS}h and fetch failed"
+              exit 1
+            fi
+
+            # 節流視窗內：不重複紅燈，但事故仍由 open issue 常駐曝光。
+            echo "## ⏳ Outage already escalated" >> $GITHUB_STEP_SUMMARY
+            echo "Tracked in #${ISSUE_NUMBER} (last escalated ${SINCE_HOURS}h ago); next escalation in <= ${ESCALATION_INTERVAL_HOURS}h." >> $GITHUB_STEP_SUMMARY
+            echo "::warning::MoneyBox outage ongoing (${AGE_HOURS}h stale), throttled — see issue #${ISSUE_NUMBER}"
+            exit 0
           fi
 
           echo "## Transient failure tolerated" >> $GITHUB_STEP_SUMMARY
