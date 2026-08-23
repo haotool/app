@@ -21,10 +21,47 @@ export interface ExchangeShopRate {
   sell: number;
   buy: number;
   updateTime: string;
+  /**
+   * 上游快照的 ISO 時間戳；fallback 值或上游未提供時為 null。
+   * `updateTime` 只是給人看的字串，無法計算年齡——過期判定一律以本欄為準。
+   */
+  timestamp: string | null;
   source: string;
   sourceUrl: string;
   providerName: string;
   isFallback: boolean;
+}
+
+/**
+ * 換錢所匯率的過期揭露門檻（小時）。
+ *
+ * 健康狀態下 latest.json 至少每個首爾日重寫一次（牌價變動或跨日 rollover），
+ * 故 timestamp 最舊約 24h；超過即代表上游停更而非正常的夜間／週末靜止
+ *（2026-08-22 上游對 18/20 幣別停供 sell 時，資料曾靜止 38h 而畫面毫無提示）。
+ *
+ * 刻意比 workflow 的 30h 營運告警門檻嚴格：營運告警要避免誤報，
+ * 對使用者揭露則應更早，因為使用者會拿這個數字去換錢。
+ */
+export const EXCHANGE_SHOP_STALE_THRESHOLD_HOURS = 24;
+
+/** 計算快照年齡（小時）；timestamp 缺失或無法解析時回傳 null（未知，不等於過期）。 */
+export function getExchangeShopRateAgeHours(
+  rate: Pick<ExchangeShopRate, 'timestamp'>,
+  nowMs: number = Date.now(),
+): number | null {
+  if (!rate.timestamp) return null;
+  const parsed = Date.parse(rate.timestamp);
+  if (Number.isNaN(parsed)) return null;
+  return Math.floor((nowMs - parsed) / 3_600_000);
+}
+
+/** 是否應對使用者揭露資料過期。年齡未知時不揭露——寧可不顯示，也不顯示錯誤的年齡。 */
+export function isExchangeShopRateStale(
+  rate: Pick<ExchangeShopRate, 'timestamp'>,
+  nowMs: number = Date.now(),
+): boolean {
+  const ageHours = getExchangeShopRateAgeHours(rate, nowMs);
+  return ageHours !== null && ageHours >= EXCHANGE_SHOP_STALE_THRESHOLD_HOURS;
 }
 
 export type ExchangeShopRatesByCurrency = Partial<Record<CurrencyCode, ExchangeShopRate>>;
@@ -102,6 +139,8 @@ function buildFallbackRate(currency: CurrencyCode, config: ExchangeShopConfig): 
     sell: config.fallbackSell,
     buy: config.fallbackBuy,
     updateTime: '—',
+    // fallback 是編譯期常數，沒有上游快照時間；標為 null 以免被誤算年齡。
+    timestamp: null,
     source: config.source,
     sourceUrl: config.sourceUrl,
     providerName: config.providerName,
@@ -128,12 +167,13 @@ function parseExchangeShopRate(
     return null;
   }
 
-  const rawData = raw as { updateTime?: string } | null;
+  const rawData = raw as { updateTime?: string; timestamp?: string } | null;
   return {
     currency,
     sell,
     buy,
     updateTime: rawData?.updateTime ?? '—',
+    timestamp: rawData?.timestamp ?? null,
     source: config.source,
     sourceUrl: config.sourceUrl,
     providerName: config.providerName,

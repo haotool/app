@@ -71,6 +71,7 @@ const en = {
     switchToCash: 'Switch to cash rate',
     switchToExchangeShop: 'Switch to exchange shop rate',
     fallbackRate: 'Reference',
+    staleExchangeShopRate: 'Not updated for {{hours}}h',
     rateTypeUnavailable: '{{rateType}} rate is currently unavailable',
     rateTypeUnavailableForCurrencies:
       '{{currencies}} does not provide {{rateType}} rate, switched to {{fallbackType}}',

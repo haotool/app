@@ -357,6 +357,13 @@ export const singleConverterLayoutTokens = {
     /** 換錢所 badge 來源連結 */
     exchangeShopBadgeLink:
       'text-text-muted/70 underline decoration-dotted underline-offset-2 transition-colors hover:text-primary',
+
+    /** 換錢所 badge 過期提示：用 danger 而非 muted——這是使用者可能據以換錢的
+        金額正確性警告，不該與一般來源資訊同權重 */
+    exchangeShopBadgeStale: 'inline-flex items-center gap-1 font-semibold text-danger',
+
+    /** 換錢所 badge 過期提示圖示 */
+    exchangeShopBadgeStaleIcon: 'h-3 w-3 shrink-0',
   },
 
   /**

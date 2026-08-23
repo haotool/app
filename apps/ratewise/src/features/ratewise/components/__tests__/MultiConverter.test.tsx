@@ -315,6 +315,7 @@ describe('MultiConverter', () => {
         sell: 44.9,
         buy: 45.1,
         updateTime: '2026/05/08 09:30:00',
+        timestamp: new Date().toISOString(), // 新鮮資料：預設不觸發過期揭露
         source: 'MoneyBox',
         sourceUrl: 'https://moneybox-exchange.com/zh-CHT/exchange',
         providerName: '明洞換匯所',
@@ -348,6 +349,7 @@ describe('MultiConverter', () => {
         sell: 44.9,
         buy: 45.1,
         updateTime: '2026/05/08 09:30:00',
+        timestamp: new Date().toISOString(), // 新鮮資料：預設不觸發過期揭露
         source: 'MoneyBox',
         sourceUrl: 'https://moneybox-exchange.com/zh-CHT/exchange',
         providerName: '明洞換匯所',

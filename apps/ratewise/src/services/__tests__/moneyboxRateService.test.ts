@@ -7,6 +7,9 @@ import {
   computeConverterRate,
   getExchangeShopRateForPair,
   type ExchangeShopRate,
+  EXCHANGE_SHOP_STALE_THRESHOLD_HOURS,
+  getExchangeShopRateAgeHours,
+  isExchangeShopRateStale,
 } from '../moneyboxRateService';
 import { EXCHANGE_SHOP_PROVIDERS } from '../../config/exchangeShopProviders';
 import type { CurrencyCode } from '../../features/ratewise/types';
@@ -49,6 +52,8 @@ describe('fetchExchangeShopRate', () => {
     expect((result as ExchangeShopRate & { currency?: CurrencyCode })!.currency).toBe('KRW');
     expect(result!.providerName).toBe('明洞換匯所');
     expect(result!.source).toBe('MoneyBox');
+    // 過期揭露依賴機器可讀的 ISO timestamp，必須從上游 payload 傳遞上來
+    expect(result!.timestamp).toBe(MOCK_MONEYBOX_JSON.timestamp);
   });
 
   it('falls back to raw GitHub URL when jsDelivr CDN returns stale schemaVersion', async () => {
@@ -101,6 +106,7 @@ describe('fetchExchangeShopRate', () => {
           sell: 44.85,
           buy: 45.1,
           updateTime: '2026/05/07 16:33:55',
+          timestamp: '2026-05-07T08:33:55.000Z',
           source: 'MoneyBox',
           sourceUrl: 'https://moneybox-exchange.com/zh-CHT/exchange',
           providerName: '明洞換匯所',
@@ -127,6 +133,7 @@ describe('fetchExchangeShopRate', () => {
           sell: 1.5,
           buy: 1.6,
           updateTime: '2026/05/07 16:33:55',
+          timestamp: '2026-05-07T08:33:55.000Z',
           source: 'MoneyBox',
           sourceUrl: 'https://moneybox-exchange.com/zh-CHT/exchange',
           providerName: '錯誤換匯所',
@@ -155,6 +162,8 @@ describe('fetchExchangeShopRate', () => {
     expect(result!.sell).toBe(46.0);
     expect(result!.buy).toBe(46.7);
     expect(result!.isFallback).toBe(true);
+    // fallback 無上游快照時間，必須為 null 以免被誤算年齡
+    expect(result!.timestamp).toBeNull();
   });
 
   it('returns null for unsupported currency', async () => {
@@ -265,6 +274,7 @@ describe('computeConverterRate', () => {
     sell: 44.85,
     buy: 45.1,
     updateTime: '2026/05/07 16:33:55',
+    timestamp: '2026-05-07T08:33:55.000Z',
     source: 'MoneyBox',
     sourceUrl: 'https://moneybox-exchange.com/zh-CHT/exchange',
     providerName: '明洞換匯所',
@@ -309,6 +319,7 @@ describe('getExchangeShopRateForPair', () => {
     sell: 44.85,
     buy: 45.1,
     updateTime: '2026/05/07 16:33:55',
+    timestamp: '2026-05-07T08:33:55.000Z',
     source: 'MoneyBox',
     sourceUrl: 'https://moneybox-exchange.com/zh-CHT/exchange',
     providerName: '明洞換匯所',
@@ -342,5 +353,32 @@ describe('getExchangeShopRateForPair', () => {
         KRW: krwRate,
       }),
     ).toBeNull();
+  });
+});
+
+describe('換錢所匯率過期判定', () => {
+  const at = (iso: string) => Date.parse(iso);
+  const rate = { timestamp: '2026-05-07T04:00:00.000Z' };
+
+  it('門檻常數為 24 小時（比 workflow 的 30h 營運告警嚴格）', () => {
+    expect(EXCHANGE_SHOP_STALE_THRESHOLD_HOURS).toBe(24);
+  });
+
+  it('以 ISO timestamp 計算年齡（無條件捨去至小時）', () => {
+    expect(getExchangeShopRateAgeHours(rate, at('2026-05-07T05:59:00.000Z'))).toBe(1);
+    expect(getExchangeShopRateAgeHours(rate, at('2026-05-08T09:00:00.000Z'))).toBe(29);
+  });
+
+  it('未達門檻不判定過期，達門檻即判定', () => {
+    expect(isExchangeShopRateStale(rate, at('2026-05-08T03:59:00.000Z'))).toBe(false);
+    expect(isExchangeShopRateStale(rate, at('2026-05-08T04:00:00.000Z'))).toBe(true);
+  });
+
+  it('timestamp 為 null 或無法解析時年齡未知，且不判定過期', () => {
+    const far = at('2030-01-01T00:00:00.000Z');
+    expect(getExchangeShopRateAgeHours({ timestamp: null }, far)).toBeNull();
+    expect(getExchangeShopRateAgeHours({ timestamp: 'not-a-date' }, far)).toBeNull();
+    expect(isExchangeShopRateStale({ timestamp: null }, far)).toBe(false);
+    expect(isExchangeShopRateStale({ timestamp: 'not-a-date' }, far)).toBe(false);
   });
 });

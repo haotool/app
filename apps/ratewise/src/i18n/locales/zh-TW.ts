@@ -71,6 +71,7 @@ const zhTW = {
     switchToCash: '切換到現金匯率',
     switchToExchangeShop: '切換到換錢所匯率',
     fallbackRate: '參考值',
+    staleExchangeShopRate: '逾 {{hours}} 小時未更新',
     rateTypeUnavailable: '目前不提供 {{rateType}} 匯率',
     rateTypeUnavailableForCurrencies:
       '{{currencies}} 不提供 {{rateType}} 匯率，已改用 {{fallbackType}}',

@@ -71,6 +71,7 @@ const ko = {
     switchToCash: '현금 환율로 전환',
     switchToExchangeShop: '환전소 환율로 전환',
     fallbackRate: '참고값',
+    staleExchangeShopRate: '{{hours}}시간 이상 미갱신',
     rateTypeUnavailable: '{{rateType}} 환율은 현재 이용할 수 없습니다',
     rateTypeUnavailableForCurrencies:
       '{{currencies}}는 {{rateType}} 환율을 지원하지 않아 {{fallbackType}}으로 전환되었습니다',

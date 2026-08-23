@@ -175,6 +175,7 @@ describe('SingleConverter - 趨勢圖載入測試', () => {
         sell: 45,
         buy: 45.2,
         updateTime: '2026/05/10 12:00:00',
+        timestamp: new Date().toISOString(), // 新鮮資料：預設不觸發過期揭露
         source: 'MoneyBox',
         sourceUrl: 'https://moneybox-exchange.com/zh-CHT/exchange',
         providerName: '明洞換匯所',
@@ -189,6 +190,7 @@ describe('SingleConverter - 趨勢圖載入測試', () => {
             sell: 44.8,
             buy: 45.1,
             updateTime: '2026/05/09 12:00:00',
+            timestamp: new Date().toISOString(), // 新鮮資料：預設不觸發過期揭露
           },
         },
       ]);
