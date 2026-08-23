@@ -1,5 +1,11 @@
 # @app/ratewise
 
+## 2.27.7
+
+### Patch Changes
+
+- 9c61804: 換錢所匯率逾 24 小時未更新時，在來源資訊列標示實際過期時數
+
 ## 2.27.6
 
 ### Patch Changes
