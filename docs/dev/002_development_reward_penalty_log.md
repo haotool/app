@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+0（reward 1、penalty 1、neutral 0）｜累計總分：+321
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+322
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-08-23
+- ID：reward-extract-zip-eliminated-via-puppeteer-browsers-3
+- 原因：extract-zip <=2.0.1 的 symlink path traversal（GHSA-jmr9-qjv8-65gv, high）上游無修補版，初判只能 dismiss；實際上其唯一來源 @puppeteer/browsers 自 3.0.6 起已改用 yauzl，且該版本早已因 puppeteer-core 25.3.0 存在於鎖檔中，只有舊 puppeteer-core 24.x 仍釘 2.x
+- 解法：以 `@puppeteer/browsers@<3.0.6` override 收斂至 3.0.6 使 extract-zip 歸零；風險在 2.x CommonJS → 3.x ESM-only 的型態變更，故實測 puppeteer 24.x 中真正 require 該套件的 install.js / cli.js 於 Node 24 載入成功，並驗證 15 個所需符號零缺失；往後遇到「無修補版」先查上游是否已換掉該依賴，再判斷是否只能 dismiss
 
 - 日期：2026-08-23
 - ID：penalty-security-overrides-and-guard-pinned-stale-versions
