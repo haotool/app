@@ -3,7 +3,7 @@
 > 整理 HaoRate 最常被問的換匯問題，涵蓋台銀匯率來源、現金與即期差異、買入賣出判讀、DCC 刷卡匯率、收藏排序、歷史記錄、離線使用與 PWA 安裝重點，讓第一次換匯也能快速判斷並少踩錯價。
 
 - Canonical: https://app.haotool.org/ratewise/faq/
-- Version: v2.27.5
+- Version: v2.27.6
 
 ## 先掌握三個重點
 
@@ -99,5 +99,5 @@ DCC（Dynamic Currency Conversion，動態貨幣轉換）是海外消費刷卡�
 
 ---
 
-_本 Markdown 鏡像由 `scripts/generate-markdown-mirrors.mjs` 於 build 時自動產生（v2.27.5），與 HTML 頁面語義一致。_
+_本 Markdown 鏡像由 `scripts/generate-markdown-mirrors.mjs` 於 build 時自動產生（v2.27.6），與 HTML 頁面語義一致。_
 _正式人眼版本請見對應 HTML URL。_
