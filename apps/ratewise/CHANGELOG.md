@@ -1,5 +1,11 @@
 # @app/ratewise
 
+## 2.27.6
+
+### Patch Changes
+
+- f8ba156: 修補建置期依賴的已知漏洞（brace-expansion、js-yaml、fast-uri、ip-address、postcss）
+
 ## 2.27.5
 
 ### Patch Changes
