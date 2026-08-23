@@ -33,6 +33,10 @@ const TWD_SELL_MIN = 30;
 const TWD_SELL_MAX = 70;
 // 突變熔斷預設閾值：TWD.sell 單次變動超過 15% 視為垃圾資料（可由 env 覆寫）。
 const DEFAULT_MUTATION_THRESHOLD = 0.15;
+// 上游停供 sell 報價的偵測門檻：健康狀態下 20 種幣別全數帶正的 sell。
+// 2026-08-22 起上游對 18/20 幣別回傳 "0.0000"（parseFloat 後經 `|| null` 轉成 null）。
+// 若只靠 TWD.sell 檢查，錯誤訊息會誤導成「TWD 單一幣別數值異常」，讓後續除錯往錯的方向查。
+const SELL_QUOTE_MIN_RATIO = 0.5;
 
 class AbortError extends Error {
   constructor(message, status) {
@@ -222,6 +226,18 @@ function assertMoneyBoxRatesIntegrity(
   if (currencyCount < minCurrencyCount) {
     throw new AbortError(
       `Currency count circuit breaker: parsed ${currencyCount} currencies (< ${minCurrencyCount}); refusing to write suspicious data`,
+    );
+  }
+
+  // 先判上游全面停供，再判單一幣別數值——否則系統性事故會被報成 TWD 個案而誤導除錯方向。
+  const quotedSellCount = Object.values(newRates ?? {}).filter(
+    (rate) => typeof rate?.sell === 'number' && rate.sell > 0,
+  ).length;
+  if (quotedSellCount < currencyCount * SELL_QUOTE_MIN_RATIO) {
+    throw new AbortError(
+      `Upstream sell-quote outage: only ${quotedSellCount}/${currencyCount} currencies carry a positive sell rate ` +
+        `(upstream returns "0.0000"); this is a source-side outage, not a per-currency anomaly. ` +
+        `Verify https://cems.moneybox.or.kr/ before touching sanity thresholds; refusing to write suspicious data`,
     );
   }
 

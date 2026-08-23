@@ -345,6 +345,10 @@ gh pr merge <PR_NUMBER> --squash --delete-branch=false
 
 **台銀牌告匯率停更（bot challenge）**：`rate.bot.com.tw` 對非瀏覽器請求回傳 Challenge Validation HTML（2026-06-29 起），純 fetch 與 headless/Playwright request context 均被擋。修法：direct fetch 偵測 challenge 後改走 `scripts/fetch-taiwan-bank-rates-browser.mjs`（xvfb headed Chrome，於頁面內 fetch CSV 沿用瀏覽器指紋），再以 `CSV_INPUT_FILE` 模式解析寫檔；抓取全數失敗且 latest.json 超過 6 小時未更新時 workflow 必須 fail 曝光事故，禁止綠燈掩蓋持續停更。
 
+**MoneyBox `sell` 欄位全面回 0（上游停供）**：`cems.moneybox.or.kr` 自 2026-08-22 起對多數幣別回傳 `"sell": "0.0000"`（`parseFloat(...) || null` 會轉成 `null`）。腳本先判「上游停供」再判 TWD 個別數值，錯誤訊息為 `Upstream sell-quote outage: only N/M currencies carry a positive sell rate`；**不得**為了讓 CI 變綠而放寬 `TWD_SELL_MIN/MAX` 或由 `spbuy`／`spsell` 推導 `sell`——那等於對使用者輸出捏造的匯率。
+
+**排程資料 workflow 的持續中斷升級節流（SSOT）**：高頻排程（MoneyBox 每 5 分鐘、288 次/日）在持續中斷時若每次都 fail，會產生同質失敗通知洪水而降低事故可見度。標準做法是**以 GitHub issue 作為持久信號**：首次偵測建立帶 `outage:*` 標籤的 issue 並 fail；其後每 `ESCALATION_INTERVAL_HOURS` 才留言＋fail 一次，節流視窗內輸出 `::warning::` 並 `exit 0`；抓取恢復時由 workflow 自動關閉該 issue。**此節流不等於綠燈掩蓋**——中斷期間必須同時存在常駐 open issue 與週期性紅燈，兩者缺一即回到原本「每次都 fail」的行為。所有 issue 查詢失敗一律 fallback 到 `exit 1`（fail-safe 只能更常失敗，不能更少）。恢復時未關閉 issue 會使下一次中斷從第一次執行就被節流，失去首次曝光，故自動關閉是必要環節而非優化。
+
 **Release workflow 顯示 success 但沒有語意升版**：先查 `.changeset/*.md` 是否仍存在，再查 release run log。若 `Create Release Pull Request` 在 `git commit` 階段被 commitlint 擋下，將 `changesets/action` 的 `commit` / `title` 改為 `chore(release): 更新版本套件`，且失敗回報步驟必須 `exit 1`，避免 release PR 未建立卻顯示綠燈。
 
 **Release workflow 卡在 Create release tags**：取消卡住 run 後檢查是否在 CI 內呼叫 `pnpm changeset tag`，或 tag push 是否觸發 `.husky/pre-push`。修法是移除互動式 changeset tag 呼叫，改由 `scripts/get-release-metadata.mjs --changed` 顯式輸出 package tag 與 app tag，先驗證 `git check-ref-format`，再用完整 refspec 一次推送全部 tag；CI tag push 必須設定 `HUSKY=0` 並為步驟設定 timeout。
