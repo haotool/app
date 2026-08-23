@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+320
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+321
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-08-23
+- ID：reward-park-keeper-home-empty-state-gate-flake
+- 原因：Home 載入態與空狀態同構（同樣渲染 quick-record-cta），以該 testid 當 waitFor 閘門等於零等待，斷言打在骨架殼上抓到 GuideEntryLink（accessible name 僅「捷徑教學」），在 CI 排程壓力下隨機失敗並卡死每日匯差 PR 的 auto-merge
+- 解法：改以僅存在於載入完成後的空狀態訊息「尚無停車紀錄」作為閘門，並以延後 resolve 的 mock 重現原失敗、驗證修復後 46 檔 662 測試全綠
 
 - 日期：2026-08-17
 - ID：reward-starpuff-tutorial-release-metadata

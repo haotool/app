@@ -131,9 +131,10 @@ describe('Home', () => {
 
     renderHome();
 
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: '手動記錄（不拍照）' })).toBeInTheDocument();
-    });
+    // 載入態骨架與空狀態同構（同樣渲染 hero CTA 與其內部按鈕），以 CTA 內元素當閘門
+    // 等同不等待；改以僅存在於載入完成後的空狀態訊息作為閘門。
+    await screen.findByText('尚無停車紀錄');
+    expect(screen.getByRole('button', { name: '手動記錄（不拍照）' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '新增停車紀錄' })).toBeNull();
   });
 
@@ -142,9 +143,11 @@ describe('Home', () => {
 
     renderHome();
 
-    await waitFor(() => {
-      expect(screen.getByTestId('quick-record-cta')).toBeInTheDocument();
-    });
+    // 閘門必須是「載入完成」信號：isLoading 分支同樣渲染 hero 變體 quick-record-cta
+    //（載入態與 SSG 殼同構），等 CTA 出現等於零等待，會讓後續斷言打在骨架殼上，
+    // 使 guideLink 抓到載入態的 GuideEntryLink（accessible name 僅「捷徑教學」）而 flaky。
+    await screen.findByText('尚無停車紀錄');
+
     // hero 變體：≥30dvh 置頂
     expect(screen.getByTestId('quick-record-cta').className).toContain('min-h-[32dvh]');
     expect(screen.queryByTestId('pickup-hero-card')).toBeNull();
