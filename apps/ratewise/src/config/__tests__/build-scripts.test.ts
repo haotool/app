@@ -321,11 +321,19 @@ describe('ratewise build scripts', () => {
 
   it('should not globally pin brace-expansion to the legacy 2.x API', async () => {
     const packageJson = await readRootPackageJson();
+    const overrides = packageJson.pnpm?.overrides ?? {};
 
-    expect(packageJson.pnpm?.overrides?.['brace-expansion']).toBeUndefined();
-    expect(packageJson.pnpm?.overrides?.['brace-expansion@<1.1.13']).toBeDefined();
-    expect(packageJson.pnpm?.overrides?.['brace-expansion@>=2.0.0 <2.0.3']).toBeDefined();
-    expect(packageJson.pnpm?.overrides?.['brace-expansion@>=5.0.0 <5.0.5']).toBeDefined();
+    // 無 range 的全域 key 會把所有 major line 一起釘到單一版本（歷史事故：釘到 2.x legacy API）。
+    expect(overrides['brace-expansion']).toBeUndefined();
+
+    // 改以 range-scoped override 逐條 major line 收斂。此處只驗結構不寫死版號——
+    // 安全版會隨新 advisory 前進，寫死會讓守門在每次安全修復時誤擋
+    //（2026-08-23 的 1.1.13/2.0.3/5.0.5 → 1.1.16/2.1.2/5.0.7 即為一例）。
+    const scopedKeys = Object.keys(overrides).filter((key) => key.startsWith('brace-expansion@'));
+    expect(scopedKeys).toHaveLength(3);
+    expect(scopedKeys.some((key) => key.startsWith('brace-expansion@<1.'))).toBe(true);
+    expect(scopedKeys.some((key) => key.startsWith('brace-expansion@>=2.0.0 <'))).toBe(true);
+    expect(scopedKeys.some((key) => /^brace-expansion@>=[35]\.0\.0 </.test(key))).toBe(true);
   });
 
   it('should keep Node version hints aligned across engines, .nvmrc and .node-version', async () => {

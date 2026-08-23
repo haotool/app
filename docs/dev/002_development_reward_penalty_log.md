@@ -14,6 +14,16 @@
 ## 條目（新→舊）
 
 - 日期：2026-08-23
+- ID：penalty-security-overrides-and-guard-pinned-stale-versions
+- 原因：pnpm.overrides 早有 brace-expansion 三條規則卻停在 1.1.13/2.0.3/5.0.5——這些版本本身已被新 advisory 涵蓋，且 range key（如 `<1.1.13`）把當下安裝版排除在外而完全不生效；build-scripts 守門測試又把同一組版號寫死，使每次安全升級都被自家守門誤擋
+- 解法：override 的 range key 與目標版同批前進（1.1.16/2.1.2/5.0.7），守門測試改驗結構（無全域 key、三條 range-scoped key 覆蓋各 major line）而非字面版號，並以加入全域 pin 的反向測試確認偵測力未被削弱
+
+- 日期：2026-08-23
+- ID：reward-dev-dependency-advisory-sweep-11-alerts
+- 原因：16 個 open alert 中 13 個屬 development scope 但長期無人收斂，其中 brace-expansion/js-yaml/fast-uri/ip-address/postcss 五個套件僅需 override 即可清除，卻因 overrides 過期而持續累積
+- 解法：以 range-scoped override 一次收斂 11 個 alert（含 8 個 high），並實跑 changeset:version 完整 release 鏈驗證 js-yaml 4.3.1 未重演 read-yaml-file safeLoad 事故，全 workspace 8 app 測試與 typecheck 全綠
+
+- 日期：2026-08-23
 - ID：penalty-renovate-json-never-installed-8-months
 - 原因：034 文件（2025-12-26）把自動合併責任全交給 renovate.json，卻從未驗證 Renovate App 是否安裝——實際零 Renovate PR、無 Dependency Dashboard issue，設定 8 個月完全未生效；同時依該文件把唯一在跑的 Dependabot 降規格（limit 3、無 grouping、無 automerge），使原本要解決的 PR 堆積問題原樣復發
 - 解法：刪除 renovate.json，將 grouping 與 automerge 收回 .github/dependabot.yml 與新增的 dependabot-automerge.yml，並在 034 標註作廢、於 CLAUDE.md 立「單一依賴機器人」SSOT 規則；往後導入外部 App 型自動化必須先驗證實際產出物存在
