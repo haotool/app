@@ -66,7 +66,7 @@
 2. **原子化升級**：每個 major 版本獨立 PR，附完整驗收腳本與回滾策略。
 3. **鎖版嚴格**：保持 `packageManager: "pnpm@9.10.0"` 與 `engines.node: ">=24.0.0"`。
 4. **記錄與回滾**：每次升級完成後，更新本文件、`CHANGELOG.md` 與 `TECH_DEBT_AUDIT.md`。
-5. **自動化**：使用 Renovate 或 Dependabot 自動監控，patch 版本自動合併。
+5. **自動化**：由 Dependabot 單一機器人監控（`.github/dependabot.yml`），minor/patch 分組後自動合併，major 標記人工審查。
 
 ## 3. 升級順序
 

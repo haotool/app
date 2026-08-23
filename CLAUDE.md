@@ -199,8 +199,15 @@ git push origin main            # pre-push 自動跑 typecheck + test + build
 - 型別 major 先行（例如 `@types/node` 升 26 但 runtime 仍 24）會描述執行期不存在的 API；`pnpm typecheck` 綠燈**不構成**安全證據，故障會延後到執行期才顯現。
 - 攔截設定為雙層，新增機器人或調整 runtime 時兩處都要同步：
   - `package.json` 的 `pnpm.overrides`：`"@types/node": "^24"`（同時收斂間接依賴）
-  - `.github/dependabot.yml` `ignore` + `renovate.json` `allowedVersions`
-- runtime 升 major 時**必須**同批解除上述三處鎖定，不得只改其中之一。
+  - `.github/dependabot.yml` 的 `ignore`
+- runtime 升 major 時**必須**同批解除上述鎖定，不得只改其中之一。
+
+**依賴機器人 SSOT**（2026-08-23 起）：
+
+- 唯一在運作的依賴機器人是 **Dependabot**；`renovate.json` 已刪除（Renovate App 從未安裝，該設定自 2025-12-26 建立起零生效）。
+- 自動化規則一律寫進 `.github/dependabot.yml`，**禁止**再引入第二套機器人設定造成重複 PR。
+- minor/patch 由 `.github/workflows/dependabot-automerge.yml` 掛 GitHub auto-merge；major 只加 `major-update` 標籤，需人工評估相容性。
+- 該 workflow 以 `pull_request_target` 取得寫入權限，**不得**在其中 checkout PR 分支或執行 PR 內程式碼。
 
 **PR Rebase 與合併**（處理版本衝突）：
 

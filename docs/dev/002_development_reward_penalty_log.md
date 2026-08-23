@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+321
+> 本次分數變化：+0（reward 1、penalty 1、neutral 0）｜累計總分：+321
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-08-23
+- ID：penalty-renovate-json-never-installed-8-months
+- 原因：034 文件（2025-12-26）把自動合併責任全交給 renovate.json，卻從未驗證 Renovate App 是否安裝——實際零 Renovate PR、無 Dependency Dashboard issue，設定 8 個月完全未生效；同時依該文件把唯一在跑的 Dependabot 降規格（limit 3、無 grouping、無 automerge），使原本要解決的 PR 堆積問題原樣復發
+- 解法：刪除 renovate.json，將 grouping 與 automerge 收回 .github/dependabot.yml 與新增的 dependabot-automerge.yml，並在 034 標註作廢、於 CLAUDE.md 立「單一依賴機器人」SSOT 規則；往後導入外部 App 型自動化必須先驗證實際產出物存在
+
+- 日期：2026-08-23
+- ID：reward-dependabot-grouping-automerge-consolidation
+- 原因：Dependabot 無 grouping 使每個套件各開一個 PR 與通知，且無任何自動合併機制，checks 全綠的 PR（#1014、#979）仍長期掛置；security-headers 不在 pnpm workspace 又無專屬 entry，只能被動等漏洞警報冒 PR
+- 解法：npm/github-actions 皆加 minor-patch grouping、補 /security-headers entry，並新增 pull_request_target 型 automerge workflow（不 checkout PR 程式碼），minor/patch 掛 auto-merge、major 只標 major-update 交人工評估
 
 - 日期：2026-08-23
 - ID：reward-park-keeper-home-empty-state-gate-flake

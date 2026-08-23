@@ -2,8 +2,17 @@
 
 > **建立時間**: 2025-12-26T23:45:00+08:00
 > **版本**: v1.0
-> **狀態**: ✅ 已完成
+> **狀態**: ⛔ 已作廢（2026-08-23）——保留作歷史紀錄，**不得**依此文件行事
 > **作者**: Claude Code (基於 Context7 + WebSearch 2025 最佳實踐)
+
+> **作廢原因**：本文件的方案把自動合併責任全部交給 `renovate.json`，但 **Renovate App
+> 從未安裝**（截至 2026-08-23 零 Renovate PR、無 Dependency Dashboard issue），該設定
+> 自建立起 8 個月完全沒有生效。更糟的是，`.github/dependabot.yml` 依本文件被刻意降規格
+> （每週、limit 3、僅 direct），使唯一實際在跑的機器人失去 grouping 與自動合併，
+> 造成本文件想解決的「PR 堆積」問題原樣復發。
+>
+> **現行 SSOT**：`.github/dependabot.yml`（grouping）+ `.github/workflows/dependabot-automerge.yml`
+> （minor/patch auto-merge、major 標籤化）。`renovate.json` 已刪除。
 
 ---
 

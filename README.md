@@ -101,27 +101,27 @@ GPS 輔助的停車場路徑指引工具
 
 ### 技術棧
 
-| 類別         | 技術                         |
-| ------------ | ---------------------------- |
-| **框架**     | React 19.2 + TypeScript 5.9  |
-| **建置工具** | Vite 8.0 + vite-react-ssg    |
-| **樣式**     | Tailwind CSS 3.4             |
-| **測試**     | Vitest 4.1 + Playwright 1.57 |
-| **套件管理** | pnpm 9.10.0 (Monorepo)       |
-| **CI/CD**    | GitHub Actions (9 workflows) |
-| **部署**     | Docker + Zeabur / Vercel     |
-| **安全**     | Gitleaks CLI + Trivy + SARIF |
+| 類別         | 技術                          |
+| ------------ | ----------------------------- |
+| **框架**     | React 19.2 + TypeScript 5.9   |
+| **建置工具** | Vite 8.0 + vite-react-ssg     |
+| **樣式**     | Tailwind CSS 3.4              |
+| **測試**     | Vitest 4.1 + Playwright 1.57  |
+| **套件管理** | pnpm 9.10.0 (Monorepo)        |
+| **CI/CD**    | GitHub Actions (13 workflows) |
+| **部署**     | Docker + Zeabur / Vercel      |
+| **安全**     | Gitleaks CLI + Trivy + SARIF  |
 
 ### 品質指標
 
-| 指標           | 數值          |
-| -------------- | ------------- |
-| **測試數量**   | 1700+         |
-| **測試覆蓋率** | 92%+          |
-| **TypeScript** | Strict Mode   |
-| **ESLint**     | 0 警告        |
-| **Lighthouse** | 95+ 全類別    |
-| **CI 管線**    | 9 個 workflow |
+| 指標           | 數值           |
+| -------------- | -------------- |
+| **測試數量**   | 1700+          |
+| **測試覆蓋率** | 92%+           |
+| **TypeScript** | Strict Mode    |
+| **ESLint**     | 0 警告         |
+| **Lighthouse** | 95+ 全類別     |
+| **CI 管線**    | 13 個 workflow |
 
 ### 快速開始
 
@@ -286,7 +286,7 @@ haotool Apps is a professional pnpm Monorepo containing multiple high-quality Re
 - **Styling**: Tailwind CSS 3.4
 - **Testing**: Vitest 4.1 + Playwright 1.57
 - **Package Manager**: pnpm 9.10.0 (Monorepo)
-- **CI/CD**: GitHub Actions (10 workflows)
+- **CI/CD**: GitHub Actions (13 workflows)
 - **Deployment**: Docker + Zeabur / Vercel
 - **Security**: Gitleaks CLI + Trivy + SARIF
 
