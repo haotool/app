@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+322
+> 本次分數變化：+0（reward 1、penalty 1、neutral 0）｜累計總分：+322
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-08-23
+- ID：penalty-stacked-pr-assumption-broken-by-squash-merge
+- 原因：為避開 002 記分表頭衝突而把 PR 疊在另一個未合併 PR 之上，卻沒考慮本 repo 一律使用 squash merge——上游 PR 合併後其原始 commit 不會進入 main 歷史，疊在其上的分支父 commit 成為孤兒，PR 直接變 DIRTY，反而製造了原本想避免的衝突
+- 解法：改以 origin/main 重建分支並只重新套用自身變更；往後 stacked PR 僅適用於 merge commit 或 rebase merge 的 repo，squash merge 下應直接開在 main 並接受 002 衝突、於 rebase 後手動補跑 verify-002-log.mjs
+
+- 日期：2026-08-23
+- ID：reward-lighthouse-filter-lockfile-parity
+- 原因：Lighthouse CI 的 path filter 只匹配 apps/ratewise 與 lighthouse 相關檔，未含根 package.json 與 pnpm-lock.yaml——依賴變更會改變 ratewise 實際解析到的依賴樹與 bundle 體積卻不觸發效能守門；同一份 ci.yml 的 E2E paths-filter 早已納入這兩者，屬既有不一致而非刻意設計
+- 解法：在 lighthouse-changes 的 grep 樣式補上以 `$` 錨定的 `package\.json` 與 `pnpm-lock\.yaml`，並以 15 個路徑案例實測確認 apps/starpuff/package.json、security-headers/package.json、package.json.bak 等不誤觸發
 
 - 日期：2026-08-23
 - ID：reward-extract-zip-eliminated-via-puppeteer-browsers-3
