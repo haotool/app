@@ -1,5 +1,11 @@
 # @app/park-keeper
 
+## 1.3.5
+
+### Patch Changes
+
+- e14c7d2: 修正首頁空狀態測試的等待閘門，讓守門真正驗證載入完成後的畫面（無使用者可見行為變更）
+
 ## 1.3.4
 
 ### Patch Changes
