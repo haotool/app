@@ -432,15 +432,25 @@ jobs:
               # body 以 --body-file 傳入：多行字串直接寫在 YAML block scalar 內會頂到第 0 欄而破壞縮排。
               BODY_FILE="$(mktemp)"
               {
-                echo "自動偵測：committed \`latest.json\` 已 ${AGE_HOURS}h 未更新（門檻 ${STALENESS_THRESHOLD_HOURS}h），且抓取持續失敗。"
+                echo "## 摘要"
+                echo "MoneyBox 匯率來源持續停更，已拒絕寫入可疑資料。"
                 echo ""
-                echo "- API: https://cems.moneybox.or.kr/api/cmd.php?cmd=C011"
+                echo "## 背景／證據"
+                echo "- latest.json 已 ${AGE_HOURS}h 未更新（門檻 ${STALENESS_THRESHOLD_HOURS}h）。"
+                echo "- 抓取 API: https://cems.moneybox.or.kr/api/cmd.php?cmd=C011"
                 echo "- 首次偵測 run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
                 echo ""
-                echo "中斷期間本 workflow 每 ${ESCALATION_INTERVAL_HOURS}h 失敗一次並在此留言更新資料年齡。"
-                echo "上游恢復後由 workflow 自動關閉本 issue。"
+                echo "## 影響"
+                echo "- 使用者可能只能看到最後已知的匯率快照；本 workflow 不會把停供值寫入公開資料。"
+                echo ""
+                echo "## 範圍"
+                echo "- 追蹤上游 API、latest.json 新鮮度與 workflow 重試；不放寬單一幣別 sanity threshold。"
+                echo ""
+                echo "## 驗收標準"
+                echo "- 上游恢復後 workflow 成功更新資料並自動關閉本 issue。"
+                echo "- 中斷持續時每 ${ESCALATION_INTERVAL_HOURS}h 留言並保留 workflow 失敗訊號。"
               } > "$BODY_FILE"
-              gh issue create --label "$OUTAGE_LABEL" --label 'severity:p1' \
+              gh issue create --label "$OUTAGE_LABEL" --label 'severity:p1' --label 'bug' \
                 --title "[outage] MoneyBox 匯率來源持續停更" \
                 --body-file "$BODY_FILE" || true
               echo "::error::MoneyBox exchange rates stale for ${AGE_HOURS}h and fetch failed"

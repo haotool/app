@@ -333,7 +333,7 @@ describe('ratewise build scripts', () => {
     expect(scopedKeys).toHaveLength(3);
     expect(scopedKeys.some((key) => key.startsWith('brace-expansion@<1.'))).toBe(true);
     expect(scopedKeys.some((key) => key.startsWith('brace-expansion@>=2.0.0 <'))).toBe(true);
-    expect(scopedKeys.some((key) => /^brace-expansion@>=[35]\.0\.0 </.test(key))).toBe(true);
+    expect(scopedKeys.some((key) => key.startsWith('brace-expansion@>=3.0.0 <'))).toBe(true);
   });
 
   it('should keep Node version hints aligned across engines, .nvmrc and .node-version', async () => {
@@ -652,6 +652,17 @@ describe('ratewise build scripts', () => {
     expect(latestWorkflow).toContain('Workflow schedule:');
     expect(moneyBoxWorkflow).toContain('Workflow event:');
     expect(moneyBoxWorkflow).toContain('Workflow schedule:');
+  });
+
+  it('should create a typed MoneyBox outage issue with evidence, impact, scope, and acceptance sections', async () => {
+    const workflowSource = await readMoneyBoxWorkflow();
+
+    expect(workflowSource).toContain('gh issue create --label "$OUTAGE_LABEL"');
+    expect(workflowSource).toContain("--label 'severity:p1'");
+    expect(workflowSource).toContain("--label 'bug'");
+    for (const section of ['## 摘要', '## 背景／證據', '## 影響', '## 範圍', '## 驗收標準']) {
+      expect(workflowSource).toContain(section);
+    }
   });
 
   it('should refresh rate JSON from origin/data before summary generation so rebase-conflicted worktrees cannot leak into workflow logs', async () => {

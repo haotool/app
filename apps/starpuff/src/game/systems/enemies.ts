@@ -805,6 +805,11 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
         sprite.setData('dmgCdMs', DAMAGE_COOLDOWN_MS);
         flashWhite(sprite);
         enterShellySpin(sprite);
+        // Shelly 的殼盾格擋是情境教學的真實觸發點；不要讓 guidanceDirector
+        // 監聽玩家護盾事件來代替敵人自身的 enter-spin 結算。
+        emitGameEvent(scene.events, GameEvents.GUIDANCE_FEATURE_USED, {
+          feature: 'shell-shield',
+        });
         return 'hurt';
       }
     }

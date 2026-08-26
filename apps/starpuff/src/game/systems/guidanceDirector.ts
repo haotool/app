@@ -16,7 +16,12 @@ import {
   mapMechanicToLearningLesson,
   type LearningCopy,
 } from '../core/learning';
-import { loadSettings, markGuidanceLessonCompleted, type UserSettings } from '../core/settings';
+import {
+  loadSettings,
+  markGuidanceLessonCompleted,
+  onSettingsChanged,
+  type UserSettings,
+} from '../core/settings';
 import type { LevelSpec } from '../logic/levels';
 import type { TransformForm } from '../core/types';
 import { TUTORIAL_ANGEL_ILLUSTRATION_URL } from '../../onboardingAssets';
@@ -57,7 +62,7 @@ export function createGuidanceDirector(
   hooks: GuidanceDirectorHooks,
 ): GuidanceDirectorHandle {
   const settings: UserSettings = loadSettings();
-  if (!settings.guidanceEnabled) return { update: () => undefined, destroy: () => undefined };
+  let guidanceEnabled = settings.guidanceEnabled;
 
   let state: GuidanceState = createGuidanceState(
     hooks.player().sprite.x,
@@ -90,13 +95,13 @@ export function createGuidanceDirector(
     if (!root) return;
     const lesson = state.activeLesson;
     const complete = isGuidanceLessonComplete(state);
-    const key = `${lesson ?? 'none'}:${complete ? 'success' : 'active'}:${isDesktop() ? 'desktop' : 'touch'}`;
+    const key = `${guidanceEnabled ? 'enabled' : 'disabled'}:${lesson ?? 'none'}:${complete ? 'success' : 'active'}:${isDesktop() ? 'desktop' : 'touch'}`;
     if (!force && key === lastRenderKey) return;
     lastRenderKey = key;
     clearFocus();
     root.innerHTML = '';
-    root.hidden = lesson === null;
-    if (lesson === null) return;
+    root.hidden = !guidanceEnabled || lesson === null;
+    if (!guidanceEnabled || lesson === null) return;
 
     const copy = copyFor(lesson);
     const card = document.createElement('aside');
@@ -169,7 +174,7 @@ export function createGuidanceDirector(
   };
 
   const consumeObservation = (extra: Partial<Parameters<typeof observeGuidance>[1]> = {}): void => {
-    if (state.activeLesson === null || successUntilMs > elapsedMs) return;
+    if (!guidanceEnabled || state.activeLesson === null || successUntilMs > elapsedMs) return;
     const active = state.activeLesson;
     state = observeGuidance(state, observation(extra));
     if (!isGuidanceLessonComplete(state)) return;
@@ -189,7 +194,6 @@ export function createGuidanceDirector(
     const player = hooks.player().sprite;
     if (Math.hypot(player.x - x, player.y - y) < 120) consumeObservation({ slamTargetHit: true });
   };
-  const onShield = (): void => consumeObservation({ featureUsed: 'shell-shield' });
   const onStarburst = ({ phase }: { phase: 'none' | 'charged' | 'detonating' }): void => {
     if (phase === 'detonating') consumeObservation({ featureUsed: 'starburst' });
   };
@@ -203,7 +207,6 @@ export function createGuidanceDirector(
   onGameEvent(scene.events, GameEvents.STAR_FIRED, onFired);
   onGameEvent(scene.events, GameEvents.SKILL_SLAM_LANDED, onSlam);
   onGameEvent(scene.events, GameEvents.ENEMY_KILLED, onKilled);
-  onGameEvent(scene.events, GameEvents.SKILL_SHIELD_BLOCK, onShield);
   onGameEvent(scene.events, GameEvents.STARBURST_CHANGED, onStarburst);
   onGameEvent(scene.events, GameEvents.SKILL_STARSTORM, onStarstorm);
   onGameEvent(scene.events, GameEvents.GUIDANCE_FEATURE_USED, onFeature);
@@ -213,7 +216,6 @@ export function createGuidanceDirector(
     () => offGameEvent(scene.events, GameEvents.STAR_FIRED, onFired),
     () => offGameEvent(scene.events, GameEvents.SKILL_SLAM_LANDED, onSlam),
     () => offGameEvent(scene.events, GameEvents.ENEMY_KILLED, onKilled),
-    () => offGameEvent(scene.events, GameEvents.SKILL_SHIELD_BLOCK, onShield),
     () => offGameEvent(scene.events, GameEvents.STARBURST_CHANGED, onStarburst),
     () => offGameEvent(scene.events, GameEvents.SKILL_STARSTORM, onStarstorm),
     () => offGameEvent(scene.events, GameEvents.GUIDANCE_FEATURE_USED, onFeature),
@@ -226,6 +228,21 @@ export function createGuidanceDirector(
   root.hidden = true;
   document.body.appendChild(root);
   const removeViewportListeners = addLearningCoachmarkViewportListeners(root, focusSelector);
+  const handleSettingsChanged = (nextSettings: UserSettings): void => {
+    if (guidanceEnabled === nextSettings.guidanceEnabled) return;
+    guidanceEnabled = nextSettings.guidanceEnabled;
+    lastRenderKey = '';
+    if (!guidanceEnabled) {
+      clearFocus();
+      root?.replaceChildren();
+      if (root) root.hidden = true;
+      return;
+    }
+    // 開啟後立即恢復目前 lesson；若尚未開始，下一個 game tick 會啟動第一個 lesson。
+    startAfterMs = elapsedMs;
+    render(true);
+  };
+  const removeSettingsListener = onSettingsChanged(handleSettingsChanged);
 
   const pollEnvironment = (): void => {
     const level = hooks.level();
@@ -268,6 +285,7 @@ export function createGuidanceDirector(
   return {
     update(deltaMs: number): void {
       elapsedMs += deltaMs;
+      if (!guidanceEnabled) return;
       pollEnvironment();
       if (successUntilMs > 0 && elapsedMs >= successUntilMs) {
         successUntilMs = 0;
@@ -279,6 +297,7 @@ export function createGuidanceDirector(
     },
     destroy(): void {
       unbinders.forEach((unbind) => unbind());
+      removeSettingsListener();
       removeViewportListeners();
       clearFocus();
       root?.remove();
