@@ -28,8 +28,15 @@ L1-L4 的 v2 直向世界寬配置表已全數失效（v3 §21 改橫式尺寸�
 
 - 完整 onboarding 不建立第二套 `TutorialScene`；`TitleScene` 以 `guidedTutorial: true` 啟動
   `GameScene` 的固定低壓力訓練區，重用 `teaches`、`drillSpawns`、`PlayerHandle` 與 `GameEvents`。
-- 完成基本操作後只提供「開始正式 L1」，進入 L1 後仍由 L2 Shelly、L3 變身／星暴及各形態首次登場
-  的既有 `hint`／情境提示補充規則，避免首次 onboarding 變成長篇百科。
+- 首次按開始先選「進入練習區」或「直接開始」。練習區固定驗收移動、跳躍、吸入、吐星、
+  對 Shelly 真實下砸命中，以及三顆同味星後的真實變身；未完成當前操作不顯示下一步。
+- 正式關卡不再顯示中央教學浮字：`guidanceDirector` 只依 `core/learning.ts` 的單一 lesson registry
+  與 `levels.ts.teaches`，在新機制首次出現時建立一張錨定於對應控制的非阻塞小天使 coachmark。
+  L1 只依序提醒基礎操作，L2 Shelly、L3 變身／星暴、L5 以後的氣流／潮汐／折躍／磁場／鏡面與各形態
+  則在對應關卡情境化出現；文案、素材、focus selector 不得在 director 另存第二份。
+- 完成基本操作後只提供「開始正式 L1」，進入 L1 後由上述情境提示補充規則，避免首次 onboarding
+  變成長篇百科。練習區目標失手、死亡或離開可自動補回／重置目前目標，也可按「再試一次」；
+  救援不會把半完成操作誤算成功。
 
 ### 15.1 觸控寬容度硬規則（調研回寫，全關卡生效）
 
