@@ -333,7 +333,7 @@ describe('ratewise build scripts', () => {
     expect(scopedKeys).toHaveLength(3);
     expect(scopedKeys.some((key) => key.startsWith('brace-expansion@<1.'))).toBe(true);
     expect(scopedKeys.some((key) => key.startsWith('brace-expansion@>=2.0.0 <'))).toBe(true);
-    expect(scopedKeys.some((key) => /^brace-expansion@>=[35]\.0\.0 </.test(key))).toBe(true);
+    expect(scopedKeys.some((key) => key.startsWith('brace-expansion@>=3.0.0 <'))).toBe(true);
   });
 
   it('should keep Node version hints aligned across engines, .nvmrc and .node-version', async () => {
