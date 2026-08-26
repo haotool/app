@@ -14,6 +14,16 @@
 ## 條目（新→舊）
 
 - 日期：2026-08-26
+- ID：penalty-llms-txt-prose-schema-is-a-timebomb-for-ai-crawlers
+- 原因：llms.txt 第 17 行是專門寫給 LLM 的欄位說明，卻以散文寫死 v2 欄位名（timestamp/updateTime/rates/details/spot.buy）；v3 一上線該段立刻過期，而 AI agent 讀到後只會照錯的欄位名解析且無從察覺——人類看 UI 會發現不對，機器不會
+- 解法：定案以版本化 JSON Schema 為 SSOT 並生成 llms.txt，散文只保留短操作指引與禁止事項清單；補文件反漂移守門斷言 llms.txt 不得殘留 v2 語意
+
+- 日期：2026-08-26
+- ID：reward-single-contract-ssot-replaces-six-drifting-surfaces
+- 原因：欄位語意同時定義在 api-semantics-v2.ts、openapi.json、llms.txt、OpenData 頁、JSON-LD 與 payload 內 semanticFieldMapping 六處，且已證實漂移（JSON-LD 語意比資料 API 更正確、v2 只套用在部分產物）
+- 解法：定案單一版本化 JSON Schema contract 為 SSOT，TS 型別／OpenAPI／llms.txt／欄位表／runtime validator／JSON-LD 投影全部由其衍生；v3 移除 semanticFieldMapping 改以 $schema 指向 canonical contract，消除 payload 內的第二份事實
+
+- 日期：2026-08-26
 - ID：penalty-polled-upstream-48x-its-declared-cache-ttl
 - 原因：MoneyBox 新 API 回應標頭明載 cache-control public max-age=14400（4 小時）且提供 last-modified，我方 cron 卻每 5 分鐘輪詢（288 次/日，為上游自宣 TTL 的 48 倍）且未使用條件式請求；實測平日僅 25–34 次實際變動，等於把成本外部化給一個免費公開 API
 - 解法：改依上游 max-age 排程並帶 If-Modified-Since；欄位由 nextUpdateAt 改名 nextSourceCheckAt，因前者暗示上游必然更新而我方只能保證檢查時間；往後接取第三方來源時，輪詢頻率必須先讀對方的快取契約而非依我方習慣設定
