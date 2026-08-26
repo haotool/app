@@ -34,12 +34,15 @@ export interface StageHooks {
   spawnAmmoMinion(x: number, y: number): void;
   // 折躍瞬移通知（§66）：經 GameScene 轉發 levelGate 重置掃掠基準（星星門背擋防偽跨越）。
   onWarp?(x: number): void;
+  // 情境教學只接收「真的發生」的地形機制，不以玩家靠近或觀看預警視為完成。
+  onGuidanceFeature?(feature: 'updraft' | 'vent' | 'warp'): void;
   // 地形單向平台（§77）：GameScene addTerrain 的粉紅平台納入同一套下穿裁決。
   terrainOneWay?(): Phaser.GameObjects.Rectangle[];
 }
 
 export interface StageHandle {
   update(input: StageInput, deltaMs: number): void;
+  activeGuidanceFeature(): 'updraft' | 'vent' | 'warp' | null;
   // 下跳就緒（§77）：壓下且站在單向平台上（跳鍵此刻＝下跳），供 HUD 跳鍵指示。
   isDropReady(down: boolean): boolean;
   getOneWay(): Phaser.GameObjects.Rectangle[];
@@ -101,6 +104,7 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
   const warpPairTints = new Map<string, number>();
   let warpLockedUntilMs = 0;
   let dropUntilMs = 0;
+  let activeGuidanceFeature: 'updraft' | 'vent' | 'warp' | null = null;
 
   // 佈景先建、元素後建：同深度下維持 平台 < 佈景 < 元素 < 玩家 的繪製序（§32）。
   // boss 關 decor x 以資料 worldWidth 為基準等比換算至當前視寬（§28 禁硬編）；
@@ -377,6 +381,8 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
       if (ventPhase(stageElapsedMs, zone) !== 'erupt') continue;
       if (!isInUpdraft(player.x, player.y, zone, GROUND_TOP)) continue;
       body.setVelocityY(updraftLift(body.velocity.y, deltaMs, body.blocked.up));
+      activeGuidanceFeature = zone.periodMs === undefined ? 'updraft' : 'vent';
+      hooks.onGuidanceFeature?.(activeGuidanceFeature);
       return;
     }
   }
@@ -416,11 +422,14 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
     playSfx('reveal');
     burstSmall(scene, result.exit.x, result.exit.y, 0xffffff);
     hooks.onWarp?.(result.exit.x);
+    activeGuidanceFeature = 'warp';
+    hooks.onGuidanceFeature?.('warp');
   }
 
   return {
     update(input: StageInput, deltaMs: number) {
       stageElapsedMs += deltaMs;
+      activeGuidanceFeature = null;
       const player = hooks.player();
       const body = player.sprite.body as Phaser.Physics.Arcade.Body;
       syncVentVisuals();
@@ -450,6 +459,8 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
       sweepSprings(body);
       applyWarp(body);
     },
+
+    activeGuidanceFeature: () => activeGuidanceFeature,
 
     isDropReady(down: boolean) {
       const body = hooks.player().sprite.body as Phaser.Physics.Arcade.Body;
@@ -503,6 +514,7 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
       updrafts.length = 0;
       ventVisuals.length = 0;
       warpGates.length = 0;
+      activeGuidanceFeature = null;
       if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
         (window as unknown as { __spStage?: unknown }).__spStage = undefined;
       }

@@ -21,6 +21,10 @@ export interface UserSettings {
   controlHintsPlayCount: number;
   // 完整互動教學狀態；缺欄位視為首次使用，保持 v1 舊存檔可讀。
   guidedTutorialStatus: GuidedTutorialStatus;
+  // 情境小天使提示：正常遊戲中只顯示一個非阻塞目標泡泡；沿用舊操作提示
+  // 欄位作為 v1 migration 的來源，保留舊欄位以免外部 QA/舊版資料失效。
+  guidanceEnabled: boolean;
+  guidanceCompletedLessons: string[];
   screenShake: ScreenShakePref;
   // null＝從未選擇（rotationNotice 依此判定是否需一次性告知）。
   shellRotation: ShellRotationSetting | null;
@@ -30,7 +34,8 @@ export interface UserSettings {
 }
 
 export const SETTINGS_STORAGE_KEY = 'sp-settings';
-export const SETTINGS_SCHEMA_VERSION = 1;
+export const SETTINGS_SCHEMA_VERSION = 2;
+const LEGACY_SETTINGS_SCHEMA_VERSION = 1;
 export const CONTROL_HINT_MAX_SESSIONS = 5;
 
 // legacy 散鍵（v19 前世代 migration 來源；字面值即歷史 SSOT，不得改動）。
@@ -57,6 +62,8 @@ export function createDefaultSettings(): UserSettings {
     controlHintsEnabled: true,
     controlHintsPlayCount: 0,
     guidedTutorialStatus: 'unseen',
+    guidanceEnabled: true,
+    guidanceCompletedLessons: [],
     screenShake: 'full',
     shellRotation: null,
     keyLayout: null,
@@ -77,6 +84,11 @@ function asGuidedTutorialStatus(value: unknown): GuidedTutorialStatus {
   return value === 'skipped' || value === 'completed' ? value : 'unseen';
 }
 
+function asGuidanceCompletedLessons(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return [...new Set(value.filter((lesson): lesson is string => typeof lesson === 'string'))];
+}
+
 function asScreenShake(value: unknown): ScreenShakePref {
   return value === 'off' || value === 'low' || value === 'full' ? value : 'full';
 }
@@ -95,8 +107,11 @@ export function parseSettings(raw: string): UserSettings | null {
     return null;
   }
   if (typeof data !== 'object' || data === null) return null;
-  if (data['schemaVersion'] !== SETTINGS_SCHEMA_VERSION) return null;
+  const schemaVersion = data['schemaVersion'];
+  if (schemaVersion !== LEGACY_SETTINGS_SCHEMA_VERSION && schemaVersion !== SETTINGS_SCHEMA_VERSION)
+    return null;
   const defaults = createDefaultSettings();
+  const legacyHintsEnabled = asBoolean(data['controlHintsEnabled'], defaults.guidanceEnabled);
   return {
     schemaVersion: SETTINGS_SCHEMA_VERSION,
     audioMuted: asBoolean(data['audioMuted'], defaults.audioMuted),
@@ -109,6 +124,8 @@ export function parseSettings(raw: string): UserSettings | null {
       defaults.controlHintsPlayCount,
     ),
     guidedTutorialStatus: asGuidedTutorialStatus(data['guidedTutorialStatus']),
+    guidanceEnabled: asBoolean(data['guidanceEnabled'], legacyHintsEnabled),
+    guidanceCompletedLessons: asGuidanceCompletedLessons(data['guidanceCompletedLessons']),
     screenShake: asScreenShake(data['screenShake']),
     shellRotation: asShellRotation(data['shellRotation']),
     keyLayout:
@@ -116,6 +133,16 @@ export function parseSettings(raw: string): UserSettings | null {
         ? data['keyLayout']
         : null,
   };
+}
+
+function persistedSchemaVersion(raw: string): unknown {
+  try {
+    const value: unknown = JSON.parse(raw);
+    if (typeof value !== 'object' || value === null) return undefined;
+    return (value as { schemaVersion?: unknown }).schemaVersion;
+  } catch {
+    return undefined;
+  }
 }
 
 // 一次性 migration（v19 卡 4）：吸收 legacy 散鍵為初始值；legacy 值損毀逐項回預設。
@@ -185,6 +212,8 @@ export function loadSettings(): UserSettings {
     const parsed = parseSettings(raw);
     if (parsed !== null) {
       cached = parsed;
+      // 舊版設定只在第一次讀取時升級，避免每個遊戲迴圈寫入 localStorage。
+      if (persistedSchemaVersion(raw) !== SETTINGS_SCHEMA_VERSION) persist(parsed);
       return cached;
     }
     // 主鍵損毀（審查 Blocking）：回退 legacy 散鍵吸收（存在即恢復偏好，缺席等同預設），
@@ -209,6 +238,14 @@ export function updateSettings(patch: Partial<Omit<UserSettings, 'schemaVersion'
   next.controlHintsEnabled = asBoolean(next.controlHintsEnabled, true);
   next.controlHintsPlayCount = asControlHintsPlayCount(next.controlHintsPlayCount, 0);
   next.guidedTutorialStatus = asGuidedTutorialStatus(next.guidedTutorialStatus);
+  next.guidanceEnabled = asBoolean(next.guidanceEnabled, next.controlHintsEnabled);
+  next.guidanceCompletedLessons = asGuidanceCompletedLessons(next.guidanceCompletedLessons);
+  // 舊 consumer 仍可能讀 controlHintsEnabled；兩個開關保持同一個使用者意圖。
+  if ('guidanceEnabled' in patch && !('controlHintsEnabled' in patch)) {
+    next.controlHintsEnabled = next.guidanceEnabled;
+  } else if ('controlHintsEnabled' in patch && !('guidanceEnabled' in patch)) {
+    next.guidanceEnabled = next.controlHintsEnabled;
+  }
   cached = next;
   persist(next);
   listeners.forEach((listener) => listener(next));
@@ -222,6 +259,16 @@ export function markGuidedTutorialCompleted(): UserSettings {
     guidedTutorialStatus: 'completed',
     controlHintsPlayCount: CONTROL_HINT_MAX_SESSIONS,
   });
+}
+
+export function markGuidanceLessonCompleted(lesson: string): UserSettings {
+  const completed = new Set(loadSettings().guidanceCompletedLessons);
+  completed.add(lesson);
+  return updateSettings({ guidanceCompletedLessons: [...completed] });
+}
+
+export function resetGuidedTutorialForReplay(): UserSettings {
+  return updateSettings({ guidedTutorialStatus: 'unseen', guidanceEnabled: true });
 }
 
 // 變更訂閱（wakeLock 等需即時重同步的消費者）；回傳退訂函式。

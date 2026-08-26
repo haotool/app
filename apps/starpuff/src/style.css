@@ -135,6 +135,359 @@ body {
   }
 }
 
+/* 學習提示共用同一個非阻塞 coachmark。root 只負責定位，只有卡片內的
+   dismiss／練習按鈕接收 pointer；搖桿與遊戲按鍵永遠維持可操作。 */
+.learning-coachmark-layer {
+  position: fixed;
+  top: max(8px, env(safe-area-inset-top, 0px));
+  left: 50%;
+  z-index: var(--z-shell-card);
+  width: min(320px, calc(100vw - 16px));
+  height: auto;
+  transform: translateX(-50%);
+  pointer-events: none;
+  font-family: system-ui, sans-serif;
+}
+
+.learning-coachmark-card {
+  position: relative;
+  border: 1px solid rgba(122, 95, 184, 0.24);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 4px 14px rgba(58, 58, 74, 0.14);
+  color: #3a3a4a;
+  pointer-events: auto;
+}
+
+.learning-coachmark-card.is-success {
+  border-color: rgba(40, 124, 99, 0.42);
+}
+
+.learning-focus,
+.guidance-focus {
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 0 0 3px rgba(255, 209, 102, 0.82);
+  animation: learning-focus-pulse 1.1s ease-in-out 3;
+}
+
+.learning-focus::after,
+.guidance-focus::after {
+  position: absolute;
+  inset: -4px;
+  border: 2px solid rgba(255, 209, 102, 0.78);
+  border-radius: inherit;
+  content: '';
+  pointer-events: none;
+  animation: learning-focus-ring 1.1s ease-in-out 3;
+}
+
+#joy-zone.learning-focus::after {
+  inset: 50% auto auto 50%;
+  width: 78px;
+  height: 78px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+@keyframes learning-focus-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 2px rgba(255, 209, 102, 0.46);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(255, 209, 102, 0.16);
+  }
+}
+
+@keyframes learning-focus-ring {
+  0%,
+  100% {
+    opacity: 0.86;
+  }
+  50% {
+    opacity: 0.24;
+  }
+}
+
+/* 首次入口是選擇，不是警告；只讓小卡可操作，不建立 backdrop 或焦點鎖。 */
+.learning-coachmark-layer.learning-entry-layer {
+  z-index: var(--z-shell-card);
+}
+
+.learning-entry-popover {
+  display: block;
+  width: 100%;
+  padding: 12px;
+}
+
+.learning-entry-popover .tutorial-choice-actions {
+  display: grid;
+}
+
+/* 舊 API 保留供 v1 存檔與外部呼叫相容，但 runtime 不再渲染 legacy modal。 */
+.control-hints-overlay {
+  display: none !important;
+}
+
+/* 直持時用小型手機圖示示範「轉 90°」，不使用會遮住遊戲的全螢幕 modal。 */
+.orientation-coachmark-layer {
+  position: fixed;
+  top: max(8px, env(safe-area-inset-top, 0px));
+  left: 50%;
+  z-index: var(--z-shell-card);
+  width: min(316px, calc(100vw - 16px));
+  transform: translateX(-50%);
+  pointer-events: none;
+  font-family: system-ui, sans-serif;
+}
+
+.orientation-coachmark {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 9px;
+  border: 1px solid rgba(122, 95, 184, 0.24);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 4px 14px rgba(58, 58, 74, 0.14);
+  color: #3a3a4a;
+  pointer-events: auto;
+}
+
+.orientation-coachmark-visual {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(191, 243, 224, 0.42);
+}
+
+.orientation-phone {
+  position: relative;
+  display: block;
+  width: 18px;
+  height: 30px;
+  border: 2px solid #7a5fb8;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.88);
+  transform-origin: center;
+  animation: orientation-phone-rotate 2.8s ease-in-out infinite;
+}
+
+.orientation-phone::before {
+  position: absolute;
+  top: 3px;
+  left: 50%;
+  width: 7px;
+  height: 2px;
+  border-radius: 2px;
+  background: #7a5fb8;
+  content: '';
+  transform: translateX(-50%);
+}
+
+.orientation-phone::after {
+  position: absolute;
+  right: 4px;
+  bottom: 3px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #ffb7a0;
+  content: '';
+}
+
+.orientation-phone-screen {
+  position: absolute;
+  inset: 7px 3px 8px;
+  border-radius: 2px;
+  background: linear-gradient(160deg, #bff3e0, #ffd166);
+}
+
+@keyframes orientation-phone-rotate {
+  0%,
+  18% {
+    transform: rotate(0deg);
+  }
+  45%,
+  62% {
+    transform: rotate(90deg);
+  }
+  82%,
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+.orientation-coachmark-copy {
+  min-width: 0;
+}
+
+.orientation-coachmark-title {
+  display: block;
+  font-size: 14px;
+  line-height: 1.25;
+}
+
+.orientation-coachmark-desc {
+  margin-top: 2px;
+  color: #5a5a6e;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.orientation-coachmark-button {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 5px 8px;
+  border: 1px solid rgba(122, 95, 184, 0.34);
+  border-radius: 10px;
+  background: #bff3e0;
+  color: #3a3a4a;
+  font:
+    700 11px system-ui,
+    sans-serif;
+  white-space: nowrap;
+  pointer-events: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .learning-focus,
+  .guidance-focus,
+  .learning-focus::after,
+  .guidance-focus::after {
+    animation: none;
+  }
+
+  .orientation-phone {
+    animation: none;
+    transform: rotate(90deg);
+  }
+}
+
+@media (orientation: landscape) {
+  /* 左半屏是整片搖桿 hit area；提示縮進右側安全帶，不遮住實作手勢。 */
+  .learning-coachmark-layer.guided-tutorial-overlay,
+  .learning-coachmark-layer.guidance-angel-layer {
+    width: min(204px, calc(50vw - 18px));
+  }
+}
+
+/* 情境式小天使提示 v2：正常關卡只佔一個小角落，不建立 backdrop，也不攔截
+   搖桿／按鍵；提示靠近控制區但不覆蓋控制區。模態設定與練習區仍使用上方 z-index。 */
+.guidance-angel-layer {
+  position: fixed;
+  top: max(8px, env(safe-area-inset-top, 0px));
+  left: 50%;
+  z-index: var(--z-shell-card);
+  width: min(300px, calc(100vw - 16px));
+  transform: translateX(-50%);
+  pointer-events: none;
+  font-family: system-ui, sans-serif;
+}
+
+.guidance-angel-card {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) 32px;
+  align-items: center;
+  column-gap: 6px;
+  min-height: 52px;
+  padding: 6px 7px;
+}
+
+.guidance-angel-card.is-success {
+  border-color: rgba(40, 124, 99, 0.42);
+}
+
+.guidance-angel-avatar {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.guidance-angel-body {
+  min-width: 0;
+  grid-column: 2;
+}
+
+.guidance-angel-eyebrow {
+  display: block;
+  color: #7a5fb8;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.guidance-angel-title {
+  display: block;
+  margin-top: 1px;
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.guidance-angel-instruction,
+.guidance-angel-tip {
+  margin-top: 2px;
+  overflow: hidden;
+  font-size: 11px;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.guidance-angel-tip {
+  color: #6b5b82;
+  font-size: 10px;
+  -webkit-line-clamp: 1;
+}
+
+.guidance-angel-dismiss {
+  grid-column: 3;
+  grid-row: 1;
+  width: 32px;
+  min-height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: #7a5fb8;
+  font-size: 18px;
+  line-height: 1;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.guidance-angel-dismiss:focus-visible,
+.guidance-focus:focus-visible {
+  outline: 3px solid #ffb7a0;
+  outline-offset: 2px;
+}
+
+@media (max-height: 520px) {
+  .guidance-angel-layer {
+    top: max(5px, env(safe-area-inset-top, 0px));
+    width: min(300px, calc(100vw - 16px));
+  }
+
+  .guidance-angel-card {
+    min-height: 48px;
+    padding: 5px 6px;
+  }
+
+  .guidance-angel-avatar {
+    width: 28px;
+    height: 28px;
+  }
+
+  .guidance-angel-instruction {
+    font-size: 10px;
+  }
+}
+
 /* 桌機虛擬鍵隱藏（#817）：鍵盤為唯一操作面；置於 is-active 之後確保覆蓋。 */
 html.sp-desktop #controls.is-active {
   display: none;
@@ -703,129 +1056,6 @@ html.sp-desktop #controls.is-active {
   transform: scale(0.96);
 }
 
-/* 首次五場操作提示：viewport-level modal，直持保持正向可讀、橫持依可視高度收斂；
-   插圖只做輕微漂浮，不把提示變成會干擾讀招的全螢幕特效。 */
-.control-hints-overlay {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
-  height: 100dvh;
-  min-height: 100svh;
-  z-index: var(--z-modal);
-  display: grid;
-  place-items: center;
-  padding: max(12px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px))
-    max(12px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
-  background: rgba(58, 58, 74, 0.18);
-  /* 教學是可捲動的真正模態：按「開始玩」前攔截場內觸控，避免提示卡覆蓋搖桿／按鍵
-     時出現「看得到但 hit-test 送不到」的半模態狀態。 */
-  pointer-events: auto;
-}
-
-.control-hints-card {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  width: min(560px, 100%);
-  max-width: calc(100vw - 24px);
-  max-height: calc(
-    100dvh - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)
-  );
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: 16px 18px;
-  border: 2px solid rgba(122, 95, 184, 0.35);
-  border-radius: 22px;
-  background: rgba(253, 239, 246, 0.98);
-  box-shadow: 0 8px 28px rgba(58, 58, 74, 0.28);
-  color: #3a3a4a;
-  touch-action: pan-y;
-  pointer-events: auto;
-}
-
-.control-hints-art {
-  display: block;
-  width: min(100%, 188px);
-  max-height: 150px;
-  margin: 0 auto;
-  object-fit: contain;
-  border-radius: 16px;
-  animation: sp-onboarding-float 3.2s ease-in-out infinite;
-}
-
-.control-hints-title {
-  font:
-    700 22px system-ui,
-    sans-serif;
-  color: #3a3a4a;
-}
-
-.control-hints-desc {
-  font:
-    500 14px/1.5 system-ui,
-    sans-serif;
-  color: #5a5a6e;
-}
-
-.control-hints-list {
-  display: grid;
-  gap: 6px;
-  margin: 0;
-  padding-left: 22px;
-  font:
-    600 14px/1.45 system-ui,
-    sans-serif;
-}
-
-.control-hints-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  position: sticky;
-  bottom: -16px;
-  margin: 2px -2px -16px;
-  padding: 10px 2px 16px;
-  background: linear-gradient(to bottom, rgba(253, 239, 246, 0.7), rgba(253, 239, 246, 0.99) 24%);
-}
-
-.control-hints-btn {
-  min-height: 44px;
-  border: 2px solid rgba(122, 95, 184, 0.4);
-  border-radius: 14px;
-  background: #ffffff;
-  color: #3a3a4a;
-  font:
-    700 15px system-ui,
-    sans-serif;
-  cursor: pointer;
-}
-
-.control-hints-btn-primary {
-  background: #bff3e0;
-}
-
-.control-hints-btn:active {
-  transform: scale(0.96);
-}
-
-@keyframes sp-onboarding-float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-4px);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .install-illustration,
-  .control-hints-art {
-    animation: none;
-  }
-}
-
 /* 設定頁（v19 #819 卡 4）：viewport-level 置中模態偏好面板，沿殼卡視覺語彙；
    不進旋轉遊戲殼，避免直持手機的祖先 rotate 破壞 flex 軸、命中區與滾動方向。 */
 .settings-overlay {
@@ -879,108 +1109,126 @@ html.sp-desktop #controls.is-active {
   background: linear-gradient(to bottom, rgba(253, 239, 246, 0.7), rgba(253, 239, 246, 0.99) 24%);
 }
 
-/* 首次完整互動教學：卡片位於上方安全區，pointer-events 不會攔截下方搖桿與按鍵；
-   只有明確按鈕接收操作，讓玩家可以邊看提示邊實作。 */
+/* 首次入口與練習區共用 coachmark；不建立 backdrop，讓玩家可以邊看提示邊實作。 */
 .tutorial-choice-overlay,
 .guided-tutorial-overlay {
   position: fixed;
-  inset: 0;
+  inset: auto;
   z-index: var(--z-modal);
   pointer-events: none;
   font-family: system-ui, sans-serif;
 }
 
 .tutorial-choice-overlay {
-  display: grid;
-  place-items: center;
-  padding: 16px;
-  background: rgba(58, 58, 74, 0.42);
+  display: block;
+}
+
+.tutorial-choice-card {
+  width: min(300px, 100%);
+  padding: 12px;
   pointer-events: auto;
 }
 
-.tutorial-choice-card,
-.guided-tutorial-card {
-  width: min(440px, calc(100vw - 24px));
-  padding: 18px;
-  border: 2px solid rgba(122, 95, 184, 0.35);
-  border-radius: 22px;
-  background: rgba(253, 239, 246, 0.98);
-  box-shadow: 0 8px 28px rgba(58, 58, 74, 0.28);
-  color: #3a3a4a;
-}
-
-.tutorial-choice-title,
-.guided-tutorial-title {
+.tutorial-choice-title {
   margin: 0;
   font:
-    700 22px/1.25 system-ui,
+    700 18px/1.25 system-ui,
     sans-serif;
 }
 
-.tutorial-choice-desc,
-.guided-tutorial-instruction,
-.guided-tutorial-success {
+.tutorial-choice-desc {
   margin: 8px 0 0;
   font:
-    500 15px/1.5 system-ui,
+    500 13px/1.4 system-ui,
     sans-serif;
-}
-
-.tutorial-choice-actions,
-.guided-tutorial-actions {
-  display: grid;
-  gap: 8px;
-  margin-top: 16px;
 }
 
 .tutorial-choice-actions {
+  display: grid;
   grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
 }
 
 .guided-tutorial-overlay {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: max(12px, env(safe-area-inset-top, 0px)) 12px 0;
+  display: block;
 }
 
 .guided-tutorial-card {
-  width: min(350px, calc(100vw - 24px));
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  column-gap: 7px;
+  align-items: center;
+  width: 100%;
+  padding: 8px;
   pointer-events: auto;
-  padding: 10px 14px 12px;
+}
+
+.guided-tutorial-card > .guided-tutorial-btn {
+  grid-column: 1 / -1;
+  margin-top: 6px;
 }
 
 .guided-tutorial-progress {
+  position: absolute;
+  top: 6px;
+  right: 8px;
   color: #7a5fb8;
   font:
-    700 12px system-ui,
+    700 10px system-ui,
     sans-serif;
   text-align: right;
 }
 
 .guided-tutorial-art {
-  display: block;
-  width: min(100%, 150px);
-  height: 104px;
-  margin: 0 auto 4px;
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  width: 52px;
+  height: 44px;
+  margin: 0;
   object-fit: contain;
+}
+
+.guided-tutorial-title {
+  grid-column: 2;
+  grid-row: 1;
+  margin: 0;
+  font:
+    700 15px/1.2 system-ui,
+    sans-serif;
+}
+
+.guided-tutorial-instruction {
+  grid-column: 2;
+  grid-row: 2;
+  min-width: 0;
+  margin: 2px 0 0;
+  overflow: hidden;
+  font:
+    500 11px/1.35 system-ui,
+    sans-serif;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
 }
 
 .guided-tutorial-tip {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 8px;
-  padding: 6px 8px;
+  grid-column: 1 / -1;
+  min-width: 0;
+  margin-top: 6px;
+  padding: 5px 6px;
   border: 1px solid rgba(122, 95, 184, 0.22);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.65);
+  border-radius: 10px;
+  background: rgba(191, 243, 224, 0.2);
 }
 
 .guided-tutorial-tip-art {
-  flex: 0 0 76px;
-  width: 76px;
-  height: 58px;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 32px;
   object-fit: contain;
 }
 
@@ -988,31 +1236,47 @@ html.sp-desktop #controls.is-active {
   margin: 0;
   color: #7a5fb8;
   font:
-    700 12px/1.25 system-ui,
+    700 10px/1.25 system-ui,
     sans-serif;
 }
 
 .guided-tutorial-tip-text {
+  overflow: hidden;
   margin: 2px 0 0;
   font:
-    500 12px/1.4 system-ui,
+    500 10px/1.3 system-ui,
     sans-serif;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .guided-tutorial-success {
+  grid-column: 1 / -1;
+  margin: 6px 0 0;
   color: #287c63;
-  font-weight: 700;
+  font:
+    700 12px/1.35 system-ui,
+    sans-serif;
+}
+
+.guided-tutorial-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-column: 1 / -1;
+  gap: 6px;
+  margin-top: 6px;
 }
 
 .guided-tutorial-btn {
-  min-height: 40px;
-  padding: 7px 12px;
-  border: 2px solid rgba(122, 95, 184, 0.4);
-  border-radius: 14px;
+  min-height: 44px;
+  padding: 5px 8px;
+  border: 1px solid rgba(122, 95, 184, 0.34);
+  border-radius: 11px;
   background: #ffffff;
   color: #3a3a4a;
   font:
-    700 14px system-ui,
+    700 12px system-ui,
     sans-serif;
   cursor: pointer;
 }
@@ -1022,46 +1286,18 @@ html.sp-desktop #controls.is-active {
 }
 
 .guided-tutorial-leave {
+  grid-column: 1 / -1;
   min-height: 32px;
-  margin-top: 6px;
+  margin-top: 2px;
   border: 0;
   background: transparent;
   color: #7a5fb8;
-  font-size: 12px;
+  font-size: 11px;
 }
 
 @media (max-height: 520px) {
   .guided-tutorial-card {
-    width: min(520px, calc(100vw - 24px));
-    display: grid;
-    grid-template-columns: 104px 1fr;
-    column-gap: 12px;
-    align-items: center;
-  }
-
-  .guided-tutorial-progress,
-  .guided-tutorial-art {
-    grid-row: span 3;
-  }
-
-  .guided-tutorial-progress {
-    grid-column: 1;
-  }
-
-  .guided-tutorial-art {
-    grid-column: 1;
-    grid-row: 2 / span 2;
-    width: 104px;
-    height: 82px;
-  }
-
-  .guided-tutorial-title,
-  .guided-tutorial-instruction,
-  .guided-tutorial-tip,
-  .guided-tutorial-success,
-  .guided-tutorial-actions,
-  .guided-tutorial-leave {
-    grid-column: 2;
+    padding: 7px;
   }
 }
 
@@ -1108,9 +1344,7 @@ html.sp-desktop #controls.is-active {
   transform: scale(0.96);
 }
 
-/* 橫式手機優先讓提示一次讀完：寬版卡片、操作提示雙欄、設定兩欄；極矮裝置仍保留
-   卡片內捲動，不讓按鈕離開 viewport。這些規則只作用於 viewport-level modal，
-   不改變遊戲殼與虛擬鍵的旋轉座標。 */
+/* 橫式手機優先讓系統卡與設定卡一次讀完；不改變遊戲殼與虛擬鍵的旋轉座標。 */
 @media (orientation: landscape) {
   .install-card:not(.settings-card) {
     width: min(
@@ -1138,31 +1372,6 @@ html.sp-desktop #controls.is-active {
     gap: 2px;
     font-size: 13px;
     line-height: 1.35;
-  }
-
-  .control-hints-card {
-    gap: 7px;
-    padding: 12px 16px;
-  }
-
-  .control-hints-art {
-    width: min(100%, 150px);
-    max-height: 96px;
-  }
-
-  .control-hints-title {
-    font-size: 20px;
-  }
-
-  .control-hints-desc,
-  .control-hints-list {
-    font-size: 13px;
-    line-height: 1.35;
-  }
-
-  .control-hints-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    column-gap: 16px;
   }
 
   .pause-card {

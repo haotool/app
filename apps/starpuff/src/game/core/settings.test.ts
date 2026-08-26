@@ -34,7 +34,7 @@ afterEach(() => {
 });
 
 describe('loadSettings（v19 卡 4：預設與 migration）', () => {
-  it('無任何既有資料：回預設並落盤 sp-settings v1', async () => {
+  it('無任何既有資料：回預設並落盤最新 settings schema', async () => {
     const { SETTINGS_SCHEMA_VERSION, SETTINGS_STORAGE_KEY, loadSettings } =
       await loadSettingsModule();
     const settings = loadSettings();
@@ -47,6 +47,8 @@ describe('loadSettings（v19 卡 4：預設與 migration）', () => {
       controlHintsEnabled: true,
       controlHintsPlayCount: 0,
       guidedTutorialStatus: 'unseen',
+      guidanceEnabled: true,
+      guidanceCompletedLessons: [],
       screenShake: 'full',
       shellRotation: null,
       keyLayout: null,
@@ -182,6 +184,24 @@ describe('loadSettings（v19 卡 4：預設與 migration）', () => {
     expect(loadSettings().controlHintsPlayCount).toBe(0);
   });
 
+  it('v1 舊操作提示關閉會 migration 為情境提示關閉，完成 lesson 會去重保存', async () => {
+    store.set(
+      'sp-settings',
+      JSON.stringify({
+        schemaVersion: 1,
+        controlHintsEnabled: false,
+        guidanceCompletedLessons: ['move'],
+      }),
+    );
+    const { loadSettings, markGuidanceLessonCompleted } = await loadSettingsModule();
+    expect(loadSettings().guidanceEnabled).toBe(false);
+    expect(JSON.parse(store.get('sp-settings') ?? '{}')).toMatchObject({ schemaVersion: 2 });
+    markGuidanceLessonCompleted('move');
+    markGuidanceLessonCompleted('jump');
+    markGuidanceLessonCompleted('jump');
+    expect(loadSettings().guidanceCompletedLessons).toEqual(['move', 'jump']);
+  });
+
   it('舊 v1 設定缺少完整教學欄位時回 unseen，狀態值會收斂', async () => {
     store.set('sp-settings', JSON.stringify({ schemaVersion: 1, guidedTutorialStatus: 'broken' }));
     const { loadSettings, updateSettings } = await loadSettingsModule();
@@ -201,6 +221,21 @@ describe('loadSettings（v19 卡 4：預設與 migration）', () => {
     const settings = markGuidedTutorialCompleted();
     expect(settings.guidedTutorialStatus).toBe('completed');
     expect(settings.controlHintsPlayCount).toBe(CONTROL_HINT_MAX_SESSIONS);
+  });
+
+  it('重播練習區只重置 guided 狀態並重新開啟情境提示，不改變 lesson 記錄', async () => {
+    const {
+      loadSettings,
+      markGuidanceLessonCompleted,
+      resetGuidedTutorialForReplay,
+      updateSettings,
+    } = await loadSettingsModule();
+    markGuidanceLessonCompleted('move');
+    updateSettings({ guidedTutorialStatus: 'completed', guidanceEnabled: false });
+    const settings = resetGuidedTutorialForReplay();
+    expect(settings.guidedTutorialStatus).toBe('unseen');
+    expect(settings.guidanceEnabled).toBe(true);
+    expect(loadSettings().guidanceCompletedLessons).toEqual(['move']);
   });
 
   it('localStorage 不可用：回預設不拋錯，updateSettings 仍更新記憶體快取', async () => {

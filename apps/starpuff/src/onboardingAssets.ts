@@ -9,6 +9,8 @@ import tutorialTouchHoldInhaleUrl from './assets/ui/tutorial-touch-hold-inhale.w
 import tutorialTouchDualInputUrl from './assets/ui/tutorial-touch-dual-input.webp';
 import tutorialTouchSlamUrl from './assets/ui/tutorial-touch-slam.webp';
 import tutorialTouchTransformUrl from './assets/ui/tutorial-touch-transform.webp';
+import tutorialTouchContinuousInhaleUrl from './assets/ui/tutorial-touch-continuous-inhale.webp';
+import tutorialAngelUrl from './assets/ui/tutorial-angel-guide.webp';
 
 export const CONTROL_HINTS_ILLUSTRATION_URL = controlHintsUrl;
 export const PWA_INSTALL_ILLUSTRATION_URL = pwaInstallUrl;
@@ -19,3 +21,5 @@ export const TUTORIAL_TOUCH_HOLD_INHALE_ILLUSTRATION_URL = tutorialTouchHoldInha
 export const TUTORIAL_TOUCH_DUAL_INPUT_ILLUSTRATION_URL = tutorialTouchDualInputUrl;
 export const TUTORIAL_TOUCH_SLAM_ILLUSTRATION_URL = tutorialTouchSlamUrl;
 export const TUTORIAL_TOUCH_TRANSFORM_ILLUSTRATION_URL = tutorialTouchTransformUrl;
+export const TUTORIAL_TOUCH_CONTINUOUS_INHALE_ILLUSTRATION_URL = tutorialTouchContinuousInhaleUrl;
+export const TUTORIAL_ANGEL_ILLUSTRATION_URL = tutorialAngelUrl;

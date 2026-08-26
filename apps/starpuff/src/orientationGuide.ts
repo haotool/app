@@ -1,9 +1,12 @@
 // 方向解鎖引導＋桌機操作提示（GAME_DESIGN §87／#817）：
 // (a) 直持（旋轉殼態）在尚未觀測到橫持的造訪中建議開啟系統方向解鎖、橫持遊玩（鏡頭朝右）；
 // (b) 桌機（旋轉殼旁路）首次顯示鍵盤鍵位卡；Title「操作說明」入口可隨時重看。
-// 兩卡皆走 shellCards 殼層安靜時刻管線；桌機鍵位卡一次性，方向卡直到真實轉橫才停止。
+// 桌機鍵位卡走 shellCards 殼層安靜時刻管線；方向提示是 body-level 非模態 coachmark，直到真實
+// 轉橫才停止。兩者都不把「看過卡片」誤當成已完成方向設定。
 
+import { bindButtonActivation } from './game/core/domButton';
 import { isDesktopMode, isHybridKeyboardEnvironment, isPortrait } from './game/core/rotation';
+import { positionLearningCoachmark } from './game/systems/learningCoachmark';
 import { showShellCard, whenShellIdle } from './shellCards';
 
 // 舊版此鍵在卡片「顯示」時就寫入，無法證明玩家真的轉過橫向；新鍵只代表已觀測到
@@ -12,6 +15,7 @@ export const ORIENTATION_HINT_KEY = 'sp-orientation-landscape-seen';
 const LEGACY_ORIENTATION_HINT_KEY = 'sp-orientation-hint';
 export const DESKTOP_KEYS_KEY = 'sp-desktop-keys';
 const SHOW_DELAY_MS = 2000;
+let orientationRoot: HTMLDivElement | null = null;
 
 function hasSeen(key: string): boolean {
   try {
@@ -35,6 +39,87 @@ function forgetLegacyOrientationHint(): void {
   } catch {
     /* noop */
   }
+}
+
+function canTryUnlockOrientation(): boolean {
+  return (
+    typeof screen !== 'undefined' &&
+    'orientation' in screen &&
+    typeof screen.orientation?.unlock === 'function'
+  );
+}
+
+function showOrientationCoachmark(onClose?: () => void): () => void {
+  if (orientationRoot) {
+    const existingRoot = orientationRoot;
+    return () => {
+      if (orientationRoot === existingRoot) orientationRoot = null;
+      existingRoot.remove();
+      onClose?.();
+    };
+  }
+  const root = document.createElement('div');
+  root.className = 'orientation-coachmark-layer';
+  root.dataset['orientationCoachmark'] = 'true';
+  root.setAttribute('aria-live', 'polite');
+
+  const card = document.createElement('aside');
+  card.className = 'orientation-coachmark';
+  card.setAttribute('role', 'status');
+  card.dataset['orientationCard'] = 'true';
+
+  const visual = document.createElement('div');
+  visual.className = 'orientation-coachmark-visual';
+  visual.setAttribute('aria-hidden', 'true');
+  const phone = document.createElement('span');
+  phone.className = 'orientation-phone';
+  phone.dataset['orientationAnimation'] = 'rotate-phone';
+  const phoneScreen = document.createElement('span');
+  phoneScreen.className = 'orientation-phone-screen';
+  phone.appendChild(phoneScreen);
+  visual.appendChild(phone);
+  card.appendChild(visual);
+
+  const copy = document.createElement('div');
+  copy.className = 'orientation-coachmark-copy';
+  const title = document.createElement('strong');
+  title.className = 'orientation-coachmark-title';
+  title.textContent = '建議橫持遊玩';
+  copy.appendChild(title);
+  const description = document.createElement('p');
+  description.className = 'orientation-coachmark-desc';
+  description.textContent = canTryUnlockOrientation()
+    ? '解除直向鎖定，將手機轉 90°。'
+    : '到控制中心關閉直向鎖定，再將手機轉 90°。';
+  copy.appendChild(description);
+  card.appendChild(copy);
+
+  const action = document.createElement('button');
+  action.type = 'button';
+  action.className = 'orientation-coachmark-button';
+  action.dataset['orientationAction'] = 'unlock';
+  action.textContent = canTryUnlockOrientation() ? '嘗試解除' : '知道了';
+  const close = (): void => {
+    orientationRoot = null;
+    root.remove();
+    onClose?.();
+  };
+  bindButtonActivation(action, () => {
+    if (canTryUnlockOrientation()) {
+      try {
+        screen.orientation.unlock();
+      } catch {
+        // 部分瀏覽器只允許在 fullscreen／user gesture 中呼叫，失敗時保留手動說明。
+      }
+    }
+    close();
+  });
+  card.appendChild(action);
+  root.appendChild(card);
+  document.body.appendChild(root);
+  orientationRoot = root;
+  positionLearningCoachmark(root);
+  return close;
 }
 
 // 桌機鍵位卡：Title 常駐入口與首次自動顯示共用（單一文案來源）。
@@ -93,16 +178,8 @@ export function initOrientationGuide(): void {
   forgetLegacyOrientationHint();
   whenShellIdle(() => {
     if (!isPortrait() || observedLandscape) return;
-    closeCard = showShellCard(
-      {
-        title: '橫持遊玩體驗更佳',
-        description:
-          '建議解除方向鎖定（關閉直向鎖定），將手機轉橫遊玩——鏡頭朝右即正立。遊戲不會強制鎖定方向，直持時也會保留提示並自動轉向。',
-        buttons: [{ label: '知道了', primary: true, onPress: (close) => close() }],
-      },
-      () => {
-        closeCard = null;
-      },
-    );
+    closeCard = showOrientationCoachmark(() => {
+      closeCard = null;
+    });
   }, SHOW_DELAY_MS);
 }
