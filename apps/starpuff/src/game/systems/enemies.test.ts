@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type Phaser from 'phaser';
+import { GameEvents } from '../core/events';
 import { RESCUE_REACH_PX, RESCUE_REACH_Y_TOP } from '../logic/levels';
 import { createEnemySystem } from './enemies';
 
@@ -51,6 +52,48 @@ function makeSystem(children: FakeFoe[]): ReturnType<typeof createEnemySystem> {
   } as unknown as Phaser.Scene;
   return createEnemySystem(scene);
 }
+
+describe('enemies.damage Shelly 殼盾事件', () => {
+  it('首次星彈命中進入 spin 時發出 shell-shield guidance 事件', () => {
+    const data: Record<string, unknown> = {
+      kind: 'shelly',
+      state: 'walk',
+      elite: false,
+      dmgCdMs: 0,
+      baseSX: 1,
+      baseSY: 1,
+    };
+    const body = { setVelocityX: vi.fn() };
+    const shelly = {
+      active: true,
+      x: 240,
+      y: 360,
+      body,
+      getData: (key: string) => data[key],
+      setData(key: string, value: unknown) {
+        data[key] = value;
+        return shelly;
+      },
+      setTint: () => shelly,
+      setTintMode: () => shelly,
+    };
+    const events = { emit: vi.fn() };
+    const groups = [{ getChildren: () => [] }, { getChildren: () => [] }];
+    const scene = {
+      textures: { exists: () => true },
+      physics: { add: { group: () => groups.shift() } },
+      events,
+      time: { delayedCall: vi.fn() },
+    } as unknown as Phaser.Scene;
+    const system = createEnemySystem(scene);
+
+    expect(system.damage(shelly as unknown as Phaser.GameObjects.GameObject, 1)).toBe('hurt');
+    expect(data['state']).toBe('spin');
+    expect(events.emit).toHaveBeenCalledWith(GameEvents.GUIDANCE_FEATURE_USED, {
+      feature: 'shell-shield',
+    });
+  });
+});
 
 describe('enemies.aliveInhalableCount 近域可及口徑（#812）', () => {
   it('RESCUE_REACH_Y_TOP 頂線：高空定飄（y<280）不計近域供給、頂線上（y≥280）計入', () => {
