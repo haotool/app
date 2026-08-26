@@ -1,8 +1,8 @@
 # 匯率 API 語意 v3 正名與 MoneyBox 上游遷移 PRD
 
 > **建立時間**: 2026-08-26T14:00:00+08:00
-> **版本**: v7.0
-> **狀態**: ✅ PR 1 可立即實作；§15.4 有 8 項聚合器議題續議
+> **版本**: v8.0（定案）
+> **狀態**: ✅ v3 欄位定案（§16）；PR 1 可立即實作；§17 有 6 項需外部資訊才能定案
 > **作者**: Claude Code（研究與盤點）+ Codex（獨立第二意見）
 > **上位文件**: `CLAUDE.md`、`AGENTS.md`
 > **相關**: PR #472（v2 導入）、PR #1039（MoneyBox 中斷處理）
@@ -674,15 +674,100 @@ Wise 的教訓正是 nationwide 匯率較好但 fee 15.0 使實得最差（§13.
 
 ---
 
+## 16. v3 公開 API 最終定案
+
+### 16.1 產品定位是設計的起點
+
+> **本產品主打「比其他匯率工具精準」——別的工具顯示中間價，我們顯示實際可成交的牌告買賣價。**
+
+repo 既有文案佐證：`DEFAULT_DESCRIPTION`「顯示臺灣銀行牌告的**實際買入賣出價（非中間價）**」；feature 條目「顯示實際買賣價（非中間價）——換匯金額更精準」。
+
+**差異化模型早已完整實作於 `seo-rate-examples.ts`，卻只服務 SEO 文案、沒進 API**（`foreignAtCash` / `foreignAtMarketMid` / `diffForeign` / `diffTWD` / `diffPct`）。這與 §2.10「SEO 層比資料 API 層更正確」是同一個模式。
+
+### 16.2 這推翻了中間價的先前裁決
+
+§13.3.3 曾將 `comparisonBenchmark` 列為 deferred，理由是「升格即隱含本產品為此數字背書」。**該推論建立在「中間價是權威基準」的假設上。**
+
+在此定位下，中間價的角色是**對照組**而非基準——它是本產品要糾正的東西。展示「中間價會讓你以為多換到 X、實際拿不到」正是**反向背書**。
+
+### 16.3 命名裁決
+
+| 概念             | 欄位名                        | 為何不用其他名稱                                                |
+| ---------------- | ----------------------------- | --------------------------------------------------------------- |
+| 中間價對照       | **`marketMidCounterfactual`** | 不用 `referenceRate`／`comparisonBenchmark`——兩者皆暗示權威基準 |
+| 上游明示的參考價 | `providerReferenceRate`       | 與中間價對照**不得混用**                                        |
+| 主匯率數值       | **`publishedRate`**           | 不用 `rate`——過於中性，無法傳達「這是牌告的實際成交價」         |
+| 精準度落差       | **`marketMidExpectationGap`** | 只出現在 `amountTiers`，不進逐筆 rate row                       |
+
+`marketMidCounterfactual` 須帶 `purpose: "comparison_only"`。
+
+### 16.4 「傳達精準」與「不過度承諾」的平衡
+
+主匯率結構保留 `customerBuy` / `customerSell`，但新增兩個限定欄位：
+
+```json
+"customerBuy": {
+  "fromCurrency": "TWD", "toCurrency": "KRW",
+  "publishedRate": 42.15,
+  "rateUnit": "TO_PER_1_FROM",
+  "quoteNature": "published_board_rate",
+  "quoteAvailability": "indicative_not_transaction_guarantee"
+}
+```
+
+- `quoteNature: "published_board_rate"` — **傳達精準**：這是牌告的實際買賣價，不是中間價
+- `quoteAvailability: "indicative_not_transaction_guarantee"` — **防止過度承諾**：牌告價會變動、現場可得性不保證
+
+兩者合起來正好落在 §14 排除清單（不保證 all-in 實得）與 §15.1 `pricingScope`（限定牌告匯率、排除線上優惠匯率）之間。
+
+### 16.5 精準度落差欄位
+
+升為一級 API 欄位，但**只依附於固定金額的 `amountTiers`**，不進逐筆 rate row（金額落差本質上需要金額）：
+
+```json
+"marketMidExpectationGap": {
+  "receiveAmountShortfall": ...,              // 中間價高估的目標幣數量
+  "additionalSendAmountAtPublishedRate": ..., // 要拿到中間價的數量需多付多少來源幣
+  "shortfallPercent": ...
+}
+```
+
+### 16.6 獨有價值主張 vs 業界標準對齊
+
+| 分類             | 欄位                                                                                                                      |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| **本產品獨有**   | `marketMidCounterfactual`、`marketMidExpectationGap`、`published_board_rate` scope                                        |
+| **業界標準對齊** | `TO_PER_1_FROM`（FX per-1）、provider `type`（Wise）、freshness 欄位群、fee 與 rate 分離、`SEND` 語意（Wise `amountTyp`） |
+
+---
+
+## 17. 最終未定案清單（6 項）
+
+獨立審查誠實列出**無法在此輪定案**的項目與原因：
+
+| #   | 項目                              | 為何無法定案                          | 暫定行為                                        |
+| --- | --------------------------------- | ------------------------------------- | ----------------------------------------------- |
+| 1   | 中間價來源的授權與再散布條件      | `open.er-api.com` 公開資格未確認      | 確認前不得發佈 `marketMidCounterfactual`        |
+| 2   | 中間價的獨立 freshness 門檻       | 需與台銀 36h／MoneyBox 24h 對齊或另定 | 待定                                            |
+| 3   | 既有 SEO `diffTWD`/`diffPct` 公式 | 未比對 fixture，無法判斷可否沿用      | 若公式不同須 `methodVersion: "2.0"` 版控        |
+| 4   | MoneyBox 正式 rate type           | 產品類型定義證據不足                  | **維持 `unspecified`**（§13.3 一致）            |
+| 5   | 歷史中間價共時性                  | 未證實歷史期間存在共時 benchmark      | 歷史 gap **必須為 `null`**，不得用今日中價回填  |
+| 6   | 兩個來源的再散布權利              | 台銀與 MoneyBox 條款盤點結果未提供    | `termsOfUse.redistributionStatus: "unverified"` |
+
+> 第 5 項與 §11 第 3 點（`publishedAt` 不得回填）是同一原則：**缺的就是缺的，不用今天的數字填昨天的洞。**
+
+---
+
 ## 修訂紀錄
 
-| 日期       | 版本 | 變更                                                                                                                                                                                                                                       |
-| ---------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 2026-08-26 | v7.0 | 查證台銀免手續費推翻 feeCoverage=unknown，改 fee:0 + pricingScope；新增 comparisonProfile 取代 rateType 字串比對（避免錯殺唯一可比對）；十二項逐項裁決（5 採納 7 修正）；覆蓋範圍與可得性分離；新增 8 項續議與阻塞分析，確認 PR 1 不被阻塞 |
-| 2026-08-26 | v6.0 | 第二輪獨立審查推翻三項裁決：`amountTiers` 改為納入、`grossReceivedAmount` 否決、`comparisonBenchmark` 延後；新增 `comparablePairs` 強制欄位與 §13.3.4 只有一組可比對的實測；新增 §14 產品定位界定與 §15 十二項待對齊清單                   |
-| 2026-08-26 | v5.0 | 新增 §13 權威聚合器設計：Wise Comparison API 實測、8 條提取原則的獨立評估（僅 3 條完全成立）、provider.kind + providerRole、cash/spot 正交、中價不升格改立 comparisonBenchmark、grossReceivedAmount 折衷、十項要素與四階段路徑             |
-| 2026-08-26 | v4.0 | 補生產級 API 實測對照（Wise／Stripe／OANDA／exchangerate-api／ECB／schema.org）與版本治理標準（AIP-180、RFC 9745/8594、Zalando #185–#191）；新增 payload 層級欄位 `nextUpdateAt`／出處連結；補 PR 3 的棄用 header 與流量監控驗收           |
-| 2026-08-26 | v3.1 | `status` 改採 ECB `CL_OBS_STATUS` 官方碼表子集（不自創字串）；釐清正規化不屬 status 而由 `rateUnit` 自我描述；裁決 `spread` 對外輸出                                                                                                       |
-| 2026-08-26 | v3.0 | 補 ECB SDMX／schema.org／ISO 20022 權威對照；裁決 rateType 為平行維度、publishedAt 不回填；`referenceRateStatus` 泛化為 `status`；新增 `spread`；記錄 JSON-LD 語意優於資料 API 的對比                                                      |
-| 2026-08-26 | v2.0 | 產品裁決硬切、取消 sunset；v3 範圍擴大至台銀；歷史 419 檔全轉換；補 Codex 7 項風險；PR 由 4 收斂為 3                                                                                                                                       |
-| 2026-08-26 | v1.0 | 初版：上游遷移調查、v2 命名方案失效判定、雙軌規劃                                                                                                                                                                                          |
+| 日期       | 版本 | 變更                                                                                                                                                                                                                                                                               |
+| ---------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-08-26 | v8.0 | 產品定位揭露（主打實際牌告價非中間價）推翻中間價 deferred 裁決；中間價改名 marketMidCounterfactual 並定位為對照組；主匯率數值改名 publishedRate 並以 quoteNature + quoteAvailability 平衡精準與不過度承諾；精準度落差升為一級欄位但只依附 amountTiers；列出 6 項需外部資訊的未定案 |
+| 2026-08-26 | v7.0 | 查證台銀免手續費推翻 feeCoverage=unknown，改 fee:0 + pricingScope；新增 comparisonProfile 取代 rateType 字串比對（避免錯殺唯一可比對）；十二項逐項裁決（5 採納 7 修正）；覆蓋範圍與可得性分離；新增 8 項續議與阻塞分析，確認 PR 1 不被阻塞                                         |
+| 2026-08-26 | v6.0 | 第二輪獨立審查推翻三項裁決：`amountTiers` 改為納入、`grossReceivedAmount` 否決、`comparisonBenchmark` 延後；新增 `comparablePairs` 強制欄位與 §13.3.4 只有一組可比對的實測；新增 §14 產品定位界定與 §15 十二項待對齊清單                                                           |
+| 2026-08-26 | v5.0 | 新增 §13 權威聚合器設計：Wise Comparison API 實測、8 條提取原則的獨立評估（僅 3 條完全成立）、provider.kind + providerRole、cash/spot 正交、中價不升格改立 comparisonBenchmark、grossReceivedAmount 折衷、十項要素與四階段路徑                                                     |
+| 2026-08-26 | v4.0 | 補生產級 API 實測對照（Wise／Stripe／OANDA／exchangerate-api／ECB／schema.org）與版本治理標準（AIP-180、RFC 9745/8594、Zalando #185–#191）；新增 payload 層級欄位 `nextUpdateAt`／出處連結；補 PR 3 的棄用 header 與流量監控驗收                                                   |
+| 2026-08-26 | v3.1 | `status` 改採 ECB `CL_OBS_STATUS` 官方碼表子集（不自創字串）；釐清正規化不屬 status 而由 `rateUnit` 自我描述；裁決 `spread` 對外輸出                                                                                                                                               |
+| 2026-08-26 | v3.0 | 補 ECB SDMX／schema.org／ISO 20022 權威對照；裁決 rateType 為平行維度、publishedAt 不回填；`referenceRateStatus` 泛化為 `status`；新增 `spread`；記錄 JSON-LD 語意優於資料 API 的對比                                                                                              |
+| 2026-08-26 | v2.0 | 產品裁決硬切、取消 sunset；v3 範圍擴大至台銀；歷史 419 檔全轉換；補 Codex 7 項風險；PR 由 4 收斂為 3                                                                                                                                                                               |
+| 2026-08-26 | v1.0 | 初版：上游遷移調查、v2 命名方案失效判定、雙軌規劃                                                                                                                                                                                                                                  |

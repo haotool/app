@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+334
+> 本次分數變化：+0（reward 1、penalty 1、neutral 0）｜累計總分：+334
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-08-26
+- ID：penalty-designed-api-eight-rounds-without-knowing-product-positioning
+- 原因：連續八輪推敲 v3 欄位語意、查六個權威來源、與獨立審查往返五次，卻始終沒問「這個產品的差異化主張是什麼」；直到產品負責人主動揭露「主打實際牌告價非中間價」，才發現對中間價的整套處理（列為 deferred、擔心背書風險）建立在錯誤假設上——而該差異化模型早已完整實作在 seo-rate-examples.ts 只是沒進 API
+- 解法：中間價重新定位為對照組並改名 marketMidCounterfactual；往後設計對外契約前，必須先確認產品的差異化主張與既有實作，不得只從技術正確性推導欄位
+
+- 日期：2026-08-26
+- ID：reward-quote-nature-availability-resolves-precision-promise-tension
+- 原因：主打精準則主匯率欄位不能叫中性的 rate，但也不能承諾保證實得——牌告價會變動、現場可得性不保證，兩者只差一線
+- 解法：主匯率數值改名 publishedRate 傳達「牌告實際買賣價」，另以 quoteNature: published_board_rate 與 quoteAvailability: indicative_not_transaction_guarantee 兩個限定欄位夾出邊界，正好落在 §14 排除 all-in 保證與 §15.1 pricingScope 限定牌告匯率之間
 
 - 日期：2026-08-26
 - ID：reward-comparison-profile-avoids-killing-only-comparable-pair
