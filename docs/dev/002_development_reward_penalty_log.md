@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+5（reward 5、penalty 0、neutral 1）｜累計總分：+332
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+333
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,91 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-08-26
+- ID：reward-positioning-redraft-separates-all-in-from-guarantee
+- 原因：§14 初版以「無費用資料」為由排除 all-in 實得金額，該前提被後續查證的 fee=0 推翻——實際上界定情境內算得出 all-in，真正的限制是「算得出成本結構」不等於「保證拿得到」；初版等於低估自己的能力，與過度承諾同樣是定位失準
+- 解法：重新定稿為情境限定式，新增「是什麼」章節明示牌告換現鈔情境內可給 all-in，並補現場成交保證與牌告情境外來源兩項排除；新增可以說/不可以說對照表，其中「隱去 quoteAvailability 限定」一列直接對應稽核發現的人民幣 FAQ 矛盾
+
+- 日期：2026-08-26
+- ID：penalty-not-prohibited-mistaken-for-justified
+- 原因：稽核台銀「每 5 分鐘」宣稱時，查到上游回 cache-control no-cache no-store 便判定 288 次/日「適當、非漂移」——但 no-cache 只是重新驗證訊號，證明的是「未被禁止」而非「已被證成」；正當化高頻輪詢還需要實際變價頻率、明確 SLO 與上游負載責任三項判準
+- 解法：改判為「部分成立」並列出四項正確判準；往後以「上游沒禁止」為由維持任何高成本行為前，必須另外證明其效益與責任邊界
+
+- 日期：2026-08-26
+- ID：penalty-throttle-fixed-small-source-left-larger-one
+- 原因：#1039 為 MoneyBox 建立 outage issue 節流機制解決 288 次/日通知洪水，但台銀 workflow（佔 CDN 流量 92%、cron 同為每 5 分鐘）只有 staleness gate 沒有 outage routing——等於修了小來源的通知洪水、留下大來源的
+- 解法：稽核時列為確認漂移並記入 PRD §20.1；往後為單一 provider 建立營運機制時，必須同時盤點其餘同類 provider 是否有相同缺口
+
+- 日期：2026-08-26
+- ID：reward-global-drift-audit-caught-copy-contradicting-own-scope
+- 原因：全域稽核 SEO 文案時發現人民幣 FAQ 寫「線上結匯（如台銀 Easy 購）匯率最優惠」，而我方 pricingScope 明確把 online_preferential_rate 列為 excludedConditions——文案在推薦一個我方資料不涵蓋的管道，卻未標示顯示數字不適用於它
+- 解法：列為確認漂移；並確認四項原判「非漂移」中有兩項被獨立審查推翻，記錄正確判準避免下次再以單一訊號下結論
+
+- 日期：2026-08-26
+- ID：penalty-prd-carried-two-contradictory-field-tables
+- 原因：PRD 049 在 §16 與 §18 多次改名欄位（rate→publishedRate、referenceRate→marketMidCounterfactual、nextUpdateAt→nextSourceCheckAt），卻從未回填 §4.3／§4.3.1 的原始欄位表，使同一份文件同時存在兩套規範性欄位名——照前段實作的人會用到已被推翻的名字，正是本 PRD 花整份篇幅在防的「同名不同義」問題出現在自己身上
+- 解法：以 §4.3 為唯一權威欄位表並回填所有後續裁決，新增 §4.5 已汰換名稱對照表保留可追溯性，並逐一驗證殘留出現處皆為對照或說明用途；往後文件內改名必須同步回填前段定義，不得只在新章節宣告
+
+- 日期：2026-08-26
+- ID：penalty-llms-txt-prose-schema-is-a-timebomb-for-ai-crawlers
+- 原因：llms.txt 第 17 行是專門寫給 LLM 的欄位說明，卻以散文寫死 v2 欄位名（timestamp/updateTime/rates/details/spot.buy）；v3 一上線該段立刻過期，而 AI agent 讀到後只會照錯的欄位名解析且無從察覺——人類看 UI 會發現不對，機器不會
+- 解法：定案以版本化 JSON Schema 為 SSOT 並生成 llms.txt，散文只保留短操作指引與禁止事項清單；補文件反漂移守門斷言 llms.txt 不得殘留 v2 語意
+
+- 日期：2026-08-26
+- ID：reward-single-contract-ssot-replaces-six-drifting-surfaces
+- 原因：欄位語意同時定義在 api-semantics-v2.ts、openapi.json、llms.txt、OpenData 頁、JSON-LD 與 payload 內 semanticFieldMapping 六處，且已證實漂移（JSON-LD 語意比資料 API 更正確、v2 只套用在部分產物）
+- 解法：定案單一版本化 JSON Schema contract 為 SSOT，TS 型別／OpenAPI／llms.txt／欄位表／runtime validator／JSON-LD 投影全部由其衍生；v3 移除 semanticFieldMapping 改以 $schema 指向 canonical contract，消除 payload 內的第二份事實
+
+- 日期：2026-08-26
+- ID：penalty-polled-upstream-48x-its-declared-cache-ttl
+- 原因：MoneyBox 新 API 回應標頭明載 cache-control public max-age=14400（4 小時）且提供 last-modified，我方 cron 卻每 5 分鐘輪詢（288 次/日，為上游自宣 TTL 的 48 倍）且未使用條件式請求；實測平日僅 25–34 次實際變動，等於把成本外部化給一個免費公開 API
+- 解法：改依上游 max-age 排程並帶 If-Modified-Since；欄位由 nextUpdateAt 改名 nextSourceCheckAt，因前者暗示上游必然更新而我方只能保證檢查時間；往後接取第三方來源時，輪詢頻率必須先讀對方的快取契約而非依我方習慣設定
+
+- 日期：2026-08-26
+- ID：reward-derived-midpoint-scoped-without-replacing-market-mid
+- 原因：期望以「由真實買賣價推導中價」取代外部市場中價，藉此解掉授權未確認的發佈阻塞——但推導中點是同一 provider 兩側牌告價的數學中點，與 Google/XE/Wise 顯示的市場中價是不同概念，用它頂替會讓差異化敘事失真
+- 解法：新增 derivedQuoteMidpoint 並強制標記 isMarketRate false 與 derivation 來源，同時保留 marketMidCounterfactual 供對照敘事，授權未確認前後者為 null 且不得由前者頂替；seo-rate-examples 早已同時計算兩者，正說明用途不可互換
+
+- 日期：2026-08-26
+- ID：penalty-designed-api-eight-rounds-without-knowing-product-positioning
+- 原因：連續八輪推敲 v3 欄位語意、查六個權威來源、與獨立審查往返五次，卻始終沒問「這個產品的差異化主張是什麼」；直到產品負責人主動揭露「主打實際牌告價非中間價」，才發現對中間價的整套處理（列為 deferred、擔心背書風險）建立在錯誤假設上——而該差異化模型早已完整實作在 seo-rate-examples.ts 只是沒進 API
+- 解法：中間價重新定位為對照組並改名 marketMidCounterfactual；往後設計對外契約前，必須先確認產品的差異化主張與既有實作，不得只從技術正確性推導欄位
+
+- 日期：2026-08-26
+- ID：reward-quote-nature-availability-resolves-precision-promise-tension
+- 原因：主打精準則主匯率欄位不能叫中性的 rate，但也不能承諾保證實得——牌告價會變動、現場可得性不保證，兩者只差一線
+- 解法：主匯率數值改名 publishedRate 傳達「牌告實際買賣價」，另以 quoteNature: published_board_rate 與 quoteAvailability: indicative_not_transaction_guarantee 兩個限定欄位夾出邊界，正好落在 §14 排除 all-in 保證與 §15.1 pricingScope 限定牌告匯率之間
+
+- 日期：2026-08-26
+- ID：reward-comparison-profile-avoids-killing-only-comparable-pair
+- 原因：提案「僅相同 rateType 可比、unspecified 不可比較」看似嚴謹，但台銀為 cash、MoneyBox 依裁決不得推測填 cash 而為 unspecified，該規則會錯殺產品唯一已知可比的 TWD↔KRW；另主張 feeCoverage 恆為 unknown，實際查證台銀與換錢所皆免手續費，價差即全部成本
+- 解法：改以結構化 comparisonProfile（交割方式、報價基礎、費用政策）判可比性，rateType 降為資料品質資訊；fee 改 0 並以 pricingScope 宣告牌告匯率邊界；覆蓋範圍（結構性事實）與可得性（當下狀態）分離，避免 comparablePairs 隨每次抓取閃爍
+
+- 日期：2026-08-26
+- ID：penalty-incomplete-premise-caused-wrong-architecture-ruling
+- 原因：向獨立審查描述架構時只說「靜態 CDN、無 query 參數」，漏講 seo-paths.config.mjs 早有 INDEXABLE_FORWARD_AMOUNTS 預生成金額階梯，導致對方據此裁決 receivedAmount 不可行並提出 grossReceivedAmount 折衷——一個我後來證明會把誤導從 rate 層搬到 amount 層的設計
+- 解法：補齊前提後對方推翻自身裁決改為納入 amountTiers；往後委外審查架構問題時，必須先盤點既有能力再描述限制，不得只列表面約束
+
+- 日期：2026-08-26
+- ID：reward-aggregator-scope-honesty-only-one-comparable-pair
+- 原因：規劃「權威匯率聚合器」時未驗證實際可比範圍，台銀 17 幣別與換錢所 20 幣別有 16 個代碼交集看似可比，但兩者計價基準不同（TWD-base vs KRW-base），真正可比的只有 TWD↔KRW 一組
+- 解法：以實測證實後將定位降級為「TWD↔KRW 的台銀與明洞換錢所報價比較資料服務」，並把 comparablePairs 升為強制顯著欄位、延後 comparisonBenchmark；往後宣稱聚合能力前，必須先驗證計價基準是否一致而非只比對幣別代碼
+
+- 日期：2026-08-26
+- ID：reward-aggregator-semantics-validated-against-wise-comparison
+- 原因：規劃「銀行視角 vs 換錢所視角買賣價」的欄位區分時，方向本身可能是錯的——需要驗證業界權威聚合器是否真的用側名表達視角
+- 解法：實測 Wise Comparison API live 回應（16 家 provider），確認整份 payload 無任何 buy/sell/bid/ask，視角改由 provider type 分類承載、方向置於頂層查詢屬性、並以 receivedAmount 直接給答案；再經獨立審查將自提的 8 條原則收斂為 3 條完全成立、5 條前提未滿足，避免把不適用本產品的設計照搬
+
+- 日期：2026-08-26
+- ID：penalty-api-semantics-v2-shipped-without-arithmetic-guard
+- 原因：v2 語意層以 customerBuyForeignRate 宣稱跨 provider 可比較，但 bank 用 `amount / sell`、exchange-shop 用 `amount * sell`——同名反運算；7 條守門測試全在驗欄位對應，其中一條甚至把公式字串當期望值鎖住，等於把不一致認證為正確；且 v2 只套在文件面與單一 provider 檔，佔 92% 流量的台銀主檔完全沒有語意層
+- 解法：以 ECB SDMX／Stripe／Wise／schema.org 等六個權威來源重新設計 v3（方向進 key、rateType 平行維度、ECB CL_OBS_STATUS 狀態碼）；往後任何宣稱「可比較」的欄位，必須有跨 provider 的數值換算測試，而非只驗欄位對應或公式字串
+
+- 日期：2026-08-26
+- ID：reward-moneybox-upstream-migration-diagnosed-via-browser
+- 原因：MoneyBox 匯率停更被歸因為上游停供 sell，但實際上官網已遷移至自有 endpoint 且完全不再呼叫舊 API；舊 endpoint 半殘（base 續更、sell 恆 0）使純 API 探測無法分辨「上游壞掉」與「上游搬家」
+- 解法：以瀏覽器實際載入官網並攔截網路請求，發現 moneybox-exchange.com/api/rates 新端點；再以官網買入/賣出欄位對照與價差方向三重驗證欄位反轉，並用舊 base 推算出 JPY/IDR/VND 的 per-100 單位差；產出 PRD 049 規劃三段式遷移
 
 - 日期：2026-08-26
 - ID：reward-starpuff-shelly-guidance-event
