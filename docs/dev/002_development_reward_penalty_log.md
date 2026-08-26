@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+327
+> 本次分數變化：+5（reward 5、penalty 0、neutral 1）｜累計總分：+332
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,36 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-08-26
+- ID：reward-starpuff-shelly-guidance-event
+- 原因：Shelly 殼盾教學監聽了玩家殼盾格擋事件，但實際教學目標是 Shelly 被星彈命中後進入旋轉防禦，導致教學永遠無法進入下砸步驟
+- 解法：在 Shelly 首次進入旋轉防禦時發出既有 feature event，並移除不符合目標的玩家殼盾事件監聽，補上系統測試
+
+- 日期：2026-08-26
+- ID：reward-starpuff-guidance-toggle-live
+- 原因：遊戲內操作提示開關只在 guidance director 建立時讀取，設定頁變更後目前場景仍顯示舊狀態
+- 解法：訂閱既有 settings change 事件，關閉時立即清除提示與焦點、開啟時恢復當前步驟，並補上 jsdom 回歸測試
+
+- 日期：2026-08-26
+- ID：reward-moneybox-outage-issue-contract
+- 原因：MoneyBox 持續停供自動建立的事故 issue 缺少 bug 類型標籤與摘要、證據、影響、範圍及驗收標準，無法符合正式事故追蹤契約
+- 解法：補上 bug 標籤與完整 issue body，並以 RateWise source-level test 鎖定欄位與段落
+
+- 日期：2026-08-26
+- ID：reward-moneybox-outage-ssot-agents
+- 原因：MoneyBox 升級節流已在 CLAUDE.md 定義，但 AGENTS.md 未同步標示 issue 契約與 fail-safe 規則，造成治理 SSOT 不一致
+- 解法：在 AGENTS.md 補上 workflow SSOT、正式標籤、必要段落、恢復關閉與查詢失敗 exit 1 規則
+
+- 日期：2026-08-26
+- ID：reward-ratewise-brace-expansion-selector-guard
+- 原因：brace-expansion override 測試使用可匹配 3.x 或 5.x 的 regex，5.x 規則存在時可能誤放過 3.x 覆蓋缺失
+- 解法：改以 `>=3.0.0` 精確前綴驗證第三條 major-line 規則，保留 3.x／4.x 依賴覆蓋保證
+
+- 日期：2026-08-26
+- ID：neutral-pr1036-002-header-final-diff
+- 原因：Codex 對 #1036 002 記分的評論指向中間狀態，但最終 PR diff 已包含一筆 reward 與一筆 penalty 並將檔頭修正為淨變化 0
+- 解法：以 `gh pr diff 1036` 與最終 head 的 `git show` 重現核對，無需追加程式變更，回覆證據後關閉 thread
 
 - 日期：2026-08-26
 - ID：reward-starpuff-contextual-guidance-coachmark
