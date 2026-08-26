@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+0（reward 1、penalty 1、neutral 0）｜累計總分：+332
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+333
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-08-26
+- ID：reward-aggregator-semantics-validated-against-wise-comparison
+- 原因：規劃「銀行視角 vs 換錢所視角買賣價」的欄位區分時，方向本身可能是錯的——需要驗證業界權威聚合器是否真的用側名表達視角
+- 解法：實測 Wise Comparison API live 回應（16 家 provider），確認整份 payload 無任何 buy/sell/bid/ask，視角改由 provider type 分類承載、方向置於頂層查詢屬性、並以 receivedAmount 直接給答案；再經獨立審查將自提的 8 條原則收斂為 3 條完全成立、5 條前提未滿足，避免把不適用本產品的設計照搬
 
 - 日期：2026-08-26
 - ID：penalty-api-semantics-v2-shipped-without-arithmetic-guard

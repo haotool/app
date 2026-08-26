@@ -1,7 +1,7 @@
 # 匯率 API 語意 v3 正名與 MoneyBox 上游遷移 PRD
 
 > **建立時間**: 2026-08-26T14:00:00+08:00
-> **版本**: v4.0
+> **版本**: v5.0
 > **狀態**: ✅ 已裁決，待實作
 > **作者**: Claude Code（研究與盤點）+ Codex（獨立第二意見）
 > **上位文件**: `CLAUDE.md`、`AGENTS.md`
@@ -438,10 +438,98 @@ _無。§11 與 §4.4／§4.5 已裁決全部先前未決項目。_
 
 ---
 
+## 13. 權威匯率聚合器設計（延伸議題）
+
+> 本節回答「如何成為權威匯率聚合網站 API」。結論影響 v3 的**擴充方向**，但**不阻擋** §5 的三段式遷移——v3 底座（固定方向、per-1、固定乘法）可先落地。
+
+### 13.1 實測：Wise Comparison API
+
+`GET api.wise.com/v4/comparisons?sourceCurrency=GBP&targetCurrency=EUR&sendAmount=1000` 實際回應（16 家 provider）：
+
+```json
+{ "amount": 1000.0, "amountType": "SEND",
+  "sourceCurrency": "GBP", "targetCurrency": "EUR",
+  "providerTypes": ["bank", "moneyTransferProvider"],
+  "providers": [{ "alias": "wise", "id": 39, "name": "...", "type": "moneyTransferProvider",
+    "logos": {...}, "partner": ...,
+    "quotes": [{ "dateCollected": "2026-08-26T10:59:08Z", "rate": 1.16782, "fee": 3.81,
+      "markup": 0.0, "receivedAmount": 1163.37, "sendAmount": null,
+      "isConsideredMidMarketRate": true,
+      "deliveryEstimation": { "duration": { "min": "PT0S", "max": "PT0S" } } }] }] }
+```
+
+**全份 payload 沒有任何 `buy` / `sell` / `bid` / `ask` 欄位。**
+
+兩筆實測數據值得記錄：
+
+| provider     | type | rate        | fee      | **receivedAmount** | dateCollected |
+| ------------ | ---- | ----------- | -------- | ------------------ | ------------- |
+| `barclays`   | bank | 1.13594     | 0.0      | 1135.94            | 08-25T13:13   |
+| `nationwide` | bank | **1.14100** | **15.0** | **1123.88**        | 08-26T10:20   |
+| `wise`       | mtp  | 1.16782     | 3.81     | 1163.37            | 08-26T10:59   |
+
+- **只看 rate 會得出錯誤結論**：nationwide 匯率較好但 fee 15.0，實得反而最差
+- **採集時間相差 21 小時仍並列呈現**，靠逐筆 `dateCollected` 讓消費端自行判斷，不隱藏也不強行對齊
+
+### 13.2 我方提取原則的獨立評估（Codex）
+
+送交獨立審查後，8 條原則中**僅 3 條完全成立**：
+
+| #   | 原則                               | 裁定         | 未成立的前提                                             |
+| --- | ---------------------------------- | ------------ | -------------------------------------------------------- |
+| 2   | 方向是查詢屬性而非每筆匯率屬性     | **完全成立** | —                                                        |
+| 3   | `amountType` 消除金額歧義          | **完全成立** | —                                                        |
+| 5   | `fee` 與 `rate` 分離               | **完全成立** | —                                                        |
+| 1   | provider 分類取代視角              | 部分成立     | RateWise 多了 Wise 沒有的實體換錢所維度                  |
+| 4   | `receivedAmount` 是終極防錯        | 部分成立     | 依賴 query 帶金額；本專案為靜態預生成 CDN JSON           |
+| 6   | `markup` 是聚合器核心價值          | 部分成立     | 需可信中價基準；本專案目前無                             |
+| 7   | 逐筆 `dateCollected` 即可交付判斷  | 部分成立     | 需同時公開採集失敗與覆蓋率，否則沉默缺漏會被誤讀為無報價 |
+| 8   | `isConsideredMidMarketRate` 標基準 | 部分成立     | Wise 標的是**自己**；第三方聚合器需說明基準來源與中立性  |
+
+**不適合照搬之處**：RateWise 無 fee／國別／配送時間資訊，且多了實體換錢所這個 Wise 沒有的維度。
+
+### 13.3 裁決
+
+| 議題                         | 裁決                                                                                                                                                     |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| FIBO Party/Role vs Wise 分類 | **互補**。採 `provider.kind`（Wise 式分類）+ 最小 `providerRole` 概念；**不導入完整 FIBO 本體**                                                          |
+| cash / spot 與 provider.kind | **正交維度**。MoneyBox 在未經驗證前應填 **`unspecified`**，不得推測填 `cash`                                                                             |
+| `open.er-api.com` 中價       | **不升格為 `referenceRate`**。另立獨立 `comparisonBenchmark`（含 `methodVersion` / `status` / `collectedAt`），未過新鮮度與可比性門檻**不得**計算 markup |
+| `receivedAmount`             | 靜態架構下**不可行**。短期改 `grossReceivedAmount` + 明示 `feeStatus: "not_included"`；長期路徑為動態 `/comparisons` API                                 |
+
+> **為何不把中價升格**：`referenceRate` 屬 rate row 的一級語意，一旦升格即隱含「本產品為此數字背書」。而 `open.er-api.com` 的採集時間與台銀／換錢所不一致，且其權威性未經本專案驗證。獨立為 `comparisonBenchmark` 可保留其效用，同時把責任界面說清楚。
+
+### 13.4 成為權威聚合器的十項要素
+
+欄位設計只是其一。Codex 列出的完整清單：
+
+1. **涵蓋範圍聲明** — 明示納入哪些 provider、為何是這些
+2. **方向與單位不變式** — `received = paid × rate`、恆 per-1（§4）
+3. **逐筆時間透明** — 每筆報價自帶採集時間，不對齊、不隱藏
+4. **採集失敗方法論** — 缺報價時明示原因（ECB `CL_OBS_STATUS`，§4.4），不得沉默省略
+5. **可重現的比較方法** — markup 計算公式與基準來源公開且可複算
+6. **費用與條件揭露** — 匯率之外的成本（本專案目前無 fee 資料，須明示 `feeStatus`）
+7. **資料覆蓋一致性** — 不同 provider 的幣別覆蓋差異須可查
+8. **歷史可稽核性** — 歷史資料可回溯、轉換過程有 manifest（§3.4）
+9. **版本治理** — AIP-180 / RFC 9745 / 8594（§2.9.2）
+10. **中立性與責任界面** — 說明本產品與各 provider 無商業關係、數字僅供參考
+
+### 13.5 分階段路徑
+
+| 階段  | 內容                                                                     | 與 §5 的關係           |
+| ----- | ------------------------------------------------------------------------ | ---------------------- |
+| **0** | v3 底座（固定方向、per-1、固定乘法、ECB status 碼）                      | 即 §5 的 PR 1–3        |
+| **1** | 公開比較**方法論**（不做排名）：`comparisonBenchmark` + `feeStatus` 揭露 | v3 落地後              |
+| **2** | markup 計算與排名                                                        | 方法論穩定且基準可信後 |
+| **3** | 動態 `/comparisons` API（可帶金額、回 `receivedAmount`）                 | 需離開純靜態架構       |
+
+---
+
 ## 修訂紀錄
 
 | 日期       | 版本 | 變更                                                                                                                                                                                                                             |
 | ---------- | ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-08-26 | v5.0 | 新增 §13 權威聚合器設計：Wise Comparison API 實測、8 條提取原則的獨立評估（僅 3 條完全成立）、provider.kind + providerRole、cash/spot 正交、中價不升格改立 comparisonBenchmark、grossReceivedAmount 折衷、十項要素與四階段路徑   |
 | 2026-08-26 | v4.0 | 補生產級 API 實測對照（Wise／Stripe／OANDA／exchangerate-api／ECB／schema.org）與版本治理標準（AIP-180、RFC 9745/8594、Zalando #185–#191）；新增 payload 層級欄位 `nextUpdateAt`／出處連結；補 PR 3 的棄用 header 與流量監控驗收 |
 | 2026-08-26 | v3.1 | `status` 改採 ECB `CL_OBS_STATUS` 官方碼表子集（不自創字串）；釐清正規化不屬 status 而由 `rateUnit` 自我描述；裁決 `spread` 對外輸出                                                                                             |
 | 2026-08-26 | v3.0 | 補 ECB SDMX／schema.org／ISO 20022 權威對照；裁決 rateType 為平行維度、publishedAt 不回填；`referenceRateStatus` 泛化為 `status`；新增 `spread`；記錄 JSON-LD 語意優於資料 API 的對比                                            |
