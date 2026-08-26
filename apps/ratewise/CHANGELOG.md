@@ -1,5 +1,11 @@
 # @app/ratewise
 
+## 2.27.8
+
+### Patch Changes
+
+- c468613: 修正 Shelly 情境提示事件與遊戲中操作提示開關的即時行為。
+
 ## 2.27.7
 
 ### Patch Changes
