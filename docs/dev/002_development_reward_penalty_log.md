@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+333
+> 本次分數變化：+0（reward 1、penalty 1、neutral 0）｜累計總分：+333
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-08-26
+- ID：penalty-incomplete-premise-caused-wrong-architecture-ruling
+- 原因：向獨立審查描述架構時只說「靜態 CDN、無 query 參數」，漏講 seo-paths.config.mjs 早有 INDEXABLE_FORWARD_AMOUNTS 預生成金額階梯，導致對方據此裁決 receivedAmount 不可行並提出 grossReceivedAmount 折衷——一個我後來證明會把誤導從 rate 層搬到 amount 層的設計
+- 解法：補齊前提後對方推翻自身裁決改為納入 amountTiers；往後委外審查架構問題時，必須先盤點既有能力再描述限制，不得只列表面約束
+
+- 日期：2026-08-26
+- ID：reward-aggregator-scope-honesty-only-one-comparable-pair
+- 原因：規劃「權威匯率聚合器」時未驗證實際可比範圍，台銀 17 幣別與換錢所 20 幣別有 16 個代碼交集看似可比，但兩者計價基準不同（TWD-base vs KRW-base），真正可比的只有 TWD↔KRW 一組
+- 解法：以實測證實後將定位降級為「TWD↔KRW 的台銀與明洞換錢所報價比較資料服務」，並把 comparablePairs 升為強制顯著欄位、延後 comparisonBenchmark；往後宣稱聚合能力前，必須先驗證計價基準是否一致而非只比對幣別代碼
 
 - 日期：2026-08-26
 - ID：reward-aggregator-semantics-validated-against-wise-comparison

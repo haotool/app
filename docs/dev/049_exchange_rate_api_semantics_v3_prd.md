@@ -1,8 +1,8 @@
 # 匯率 API 語意 v3 正名與 MoneyBox 上游遷移 PRD
 
 > **建立時間**: 2026-08-26T14:00:00+08:00
-> **版本**: v5.0
-> **狀態**: ✅ 已裁決，待實作
+> **版本**: v6.0
+> **狀態**: 📋 §5 遷移已裁決可實作；§15 有 12 項聚合器議題待收斂
 > **作者**: Claude Code（研究與盤點）+ Codex（獨立第二意見）
 > **上位文件**: `CLAUDE.md`、`AGENTS.md`
 > **相關**: PR #472（v2 導入）、PR #1039（MoneyBox 中斷處理）
@@ -488,16 +488,64 @@ _無。§11 與 §4.4／§4.5 已裁決全部先前未決項目。_
 
 **不適合照搬之處**：RateWise 無 fee／國別／配送時間資訊，且多了實體換錢所這個 Wise 沒有的維度。
 
-### 13.3 裁決
+### 13.3 裁決（含第二輪推翻）
 
-| 議題                         | 裁決                                                                                                                                                     |
-| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| FIBO Party/Role vs Wise 分類 | **互補**。採 `provider.kind`（Wise 式分類）+ 最小 `providerRole` 概念；**不導入完整 FIBO 本體**                                                          |
-| cash / spot 與 provider.kind | **正交維度**。MoneyBox 在未經驗證前應填 **`unspecified`**，不得推測填 `cash`                                                                             |
-| `open.er-api.com` 中價       | **不升格為 `referenceRate`**。另立獨立 `comparisonBenchmark`（含 `methodVersion` / `status` / `collectedAt`），未過新鮮度與可比性門檻**不得**計算 markup |
-| `receivedAmount`             | 靜態架構下**不可行**。短期改 `grossReceivedAmount` + 明示 `feeStatus: "not_included"`；長期路徑為動態 `/comparisons` API                                 |
+| 議題                         | 最終裁決                                                                                   |
+| ---------------------------- | ------------------------------------------------------------------------------------------ |
+| FIBO Party/Role vs Wise 分類 | **互補**。採 `provider.kind`（Wise 式分類）+ 最小 `providerRole`；**不導入完整 FIBO 本體** |
+| cash / spot 與 provider.kind | **正交維度**。MoneyBox 未經驗證前填 **`unspecified`**，不得推測填 `cash`                   |
+| `amountTiers`                | **納入**（第二輪推翻「靜態架構不可行」）                                                   |
+| `grossReceivedAmount`        | **否決**（第二輪推翻自身提案）                                                             |
+| `comparisonBenchmark`        | **延後**（第二輪由「另立」改為 deferred）                                                  |
 
-> **為何不把中價升格**：`referenceRate` 屬 rate row 的一級語意，一旦升格即隱含「本產品為此數字背書」。而 `open.er-api.com` 的採集時間與台銀／換錢所不一致，且其權威性未經本專案驗證。獨立為 `comparisonBenchmark` 可保留其效用，同時把責任界面說清楚。
+#### 13.3.1 推翻一：`amountTiers` 納入
+
+上一輪裁決「靜態 CDN 架構下 `receivedAmount` 不可行」是基於**不完整的前提**——本專案 `seo-paths.config.mjs` 早有 `INDEXABLE_FORWARD_AMOUNTS` / `INDEXABLE_REVERSE_TWD_AMOUNTS`，實際預生成 `/usd-twd/100/`、`/vnd-twd/5000000/` 等金額階梯頁。**既然已為 SEO 算過，技術上完全可行。**
+
+納入 `api/pairs/{pair}.json`，但須嚴格分級：
+
+| 欄位                       | 值域                                      | 規則                                       |
+| -------------------------- | ----------------------------------------- | ------------------------------------------ |
+| `feeCoverage`              | `complete` / `partial` / `unknown`        | 費用資料完整度                             |
+| `comparisonEligibility`    | `all_in` / `rate_only` / `not_comparable` | 該 tier 可用於何種比較                     |
+| `allInReceivedAmount`      | number \| **null**                        | **費用未知時必須為 `null`**                |
+| `rateAppliedReceiveAmount` | number                                    | 僅套用匯率的結果                           |
+| `rateSnapshotId`           | string                                    | 綁定 rate 快照，避免 rate 與 amount 不同步 |
+
+**禁止**預設排名或任何「最佳／推薦」標籤。
+
+#### 13.3.2 推翻二：`grossReceivedAmount` 否決
+
+我方質疑「發布明知不含費用的 gross 金額，是否把 rate 層的誤導搬到 amount 層」——此質疑**成立**。
+
+Wise 的教訓正是 nationwide 匯率較好但 fee 15.0 使實得最差（§13.1）。一個名為 `grossReceivedAmount` 的欄位會被讀成「我會拿到這麼多」，其誤導性**強於**原本只給 rate。改為上表的雙欄位設計：費用未知時 `allInReceivedAmount = null`，只給 `rateAppliedReceiveAmount` 並以 `comparisonEligibility: rate_only` 明示其限制。
+
+#### 13.3.3 推翻三：`comparisonBenchmark` 延後
+
+實測顯示真正可比的 provider-pair **只有一組**（§13.3.4）。在此前提下引入第三方中價的**邊際效益不足以抵消其可信度風險**。改列 deferred，前提是先解決費用覆蓋與 rateType 可比性。
+
+#### 13.3.4 `comparablePairs`：強制且顯著
+
+實測兩個 provider 的計價基準**不同**：
+
+| provider | 幣別數 | 計價基準         |
+| -------- | ------ | ---------------- |
+| 台銀     | 17     | **TWD** per 外幣 |
+| MoneyBox | 20     | **KRW** per 外幣 |
+| 代碼交集 | 16     | —                |
+
+**那 16 個代碼交集不可比**——台銀的 `USD` 是「1 USD 值多少 TWD」，MoneyBox 的 `USD` 是「1 USD 值多少 KRW」。
+
+真正可比的只有 **TWD↔KRW 一組**：
+
+```
+台銀   details.KRW.cash = 0.02515 TWD/KRW  →  倒數 39.76 KRW/TWD
+換錢所 rates.TWD        = 42.15   KRW/TWD  →  換錢所較優
+```
+
+`EXCHANGE_SHOP_PROVIDERS` 也確實只註冊 `KRW` 一組。
+
+**規則**：`comparablePairs` 必須出現在 catalog／open-data 首頁與 `amountTiers` 的守門條件中，明列 TWD↔KRW 為唯一可比對象。**16 個代碼交集不得被列為可比較。**
 
 ### 13.4 成為權威聚合器的十項要素
 
@@ -525,10 +573,55 @@ _無。§11 與 §4.4／§4.5 已裁決全部先前未決項目。_
 
 ---
 
+## 14. 本產品是什麼／不是什麼
+
+§13.3.4 證實真正可比的 provider-pair 只有一組。定位據此**降級**為誠實敘述：
+
+> **RateWise 是「TWD↔KRW 的台銀與明洞換錢所報價比較資料服務」，外加多幣別匯率查詢。**
+
+### 明確排除的宣稱
+
+| 不是                   | 原因                                                     |
+| ---------------------- | -------------------------------------------------------- |
+| 全球匯率比較服務       | 只有 TWD↔KRW 一組可比對（§13.3.4）                       |
+| all-in 實得金額保證    | 無費用資料，`allInReceivedAmount` 恆為 `null`（§13.3.1） |
+| 市場中價的唯一權威來源 | 中價取自第三方且延後導入（§13.3.3）                      |
+| 投資或交易建議         | 資料僅供參考，不含即時性保證                             |
+
+> 定位降級不是退讓，而是**權威性的前提**。§13.4 第 10 項「中立性與責任界面」要求說清楚責任邊界；宣稱超出實際覆蓋範圍，正是最快失去權威的方式。
+
+---
+
+## 15. 尚未對齊最佳實踐的清單
+
+獨立審查明確回覆「非『無』」，列出 12 項待定案。實作前須逐項收斂：
+
+| #   | 項目                                       | 缺什麼                                                     |
+| --- | ------------------------------------------ | ---------------------------------------------------------- |
+| 1   | 比較覆蓋 SSOT                              | `comparablePairs` 由誰定義、如何驗證                       |
+| 2   | 比較資格模型                               | `comparisonEligibility` 的判定規則未形式化                 |
+| 3   | 費用資料契約                               | 目前完全無費用資料，`feeCoverage` 恆為 `unknown` 的處置    |
+| 4   | amount tier 新鮮度                         | tier 與 `rateSnapshotId` 的綁定與失效規則                  |
+| 5   | SEO 階梯與 API `amountTiers` 是否共用 SSOT | 若共用，SEO 路徑變更即成 API breaking surface              |
+| 6   | `cash` / `unspecified` 可比性              | 不同 rateType 間能否比較的規則                             |
+| 7   | 逐筆 freshness 門檻                        | stale 判定閾值與 API 行為（§2.10 已定 24h，需與 API 對齊） |
+| 8   | 資料完整性失敗策略                         | 部分 provider 缺報價時整體 payload 的行為                  |
+| 9   | 精度與捨入規格                             | **尤其台銀倒數計算**（0.02515 → 39.76）的精度與捨入        |
+| 10  | 歷史 manifest 格式與重算政策               | §3.4 提及 manifest 但未定格式                              |
+| 11  | CDN 原子發佈與快取一致性驗證               | 風險 #7 有識別但無驗證方法                                 |
+| 12  | 資料來源使用責任與免責聲明                 | 台銀／MoneyBox 資料的使用條款未盤點                        |
+
+> 第 5 項風險最隱蔽：SEO 金額階梯目前是內部設定，一旦與 API `amountTiers` 共用 SSOT，**改一個 SEO 路徑就等於改公開 API 契約**。需在實作前明確決定共用或分離。
+>
+> 第 9 項是本次事故的同類：台銀報價需取倒數才能與換錢所比較（§13.3.4），而倒數運算的浮點漂移正是風險 #10 已識別但未定規格的項目。
+
+---
+
 ## 修訂紀錄
 
 | 日期       | 版本 | 變更                                                                                                                                                                                                                             |
 | ---------- | ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-08-26 | v6.0 | 第二輪獨立審查推翻三項裁決：`amountTiers` 改為納入、`grossReceivedAmount` 否決、`comparisonBenchmark` 延後；新增 `comparablePairs` 強制欄位與 §13.3.4 只有一組可比對的實測；新增 §14 產品定位界定與 §15 十二項待對齊清單         |
 | 2026-08-26 | v5.0 | 新增 §13 權威聚合器設計：Wise Comparison API 實測、8 條提取原則的獨立評估（僅 3 條完全成立）、provider.kind + providerRole、cash/spot 正交、中價不升格改立 comparisonBenchmark、grossReceivedAmount 折衷、十項要素與四階段路徑   |
 | 2026-08-26 | v4.0 | 補生產級 API 實測對照（Wise／Stripe／OANDA／exchangerate-api／ECB／schema.org）與版本治理標準（AIP-180、RFC 9745/8594、Zalando #185–#191）；新增 payload 層級欄位 `nextUpdateAt`／出處連結；補 PR 3 的棄用 header 與流量監控驗收 |
 | 2026-08-26 | v3.1 | `status` 改採 ECB `CL_OBS_STATUS` 官方碼表子集（不自創字串）；釐清正規化不屬 status 而由 `rateUnit` 自我描述；裁決 `spread` 對外輸出                                                                                             |
