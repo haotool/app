@@ -1,5 +1,11 @@
 # @app/starpuff
 
+## 0.34.0
+
+### Minor Changes
+
+- f82c74c: 改用情境式小天使提示與可選練習區，並在教學目標失誤時自動補回可實作的目標。
+
 ## 0.33.1
 
 ### Patch Changes
