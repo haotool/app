@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+2（reward 2、penalty 0、neutral 0）｜累計總分：+326
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+327
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-08-26
+- ID：reward-starpuff-contextual-guidance-coachmark
+- 原因：原有新手教學以大模態視窗阻擋遊戲操作，且失誤時缺少可持續完成的救援流程，導致新手無法穩定學會玩法
+- 解法：以共用 learning/guidance SSOT、非阻塞小天使 coachmark、焦點閃爍、失誤補給與可重試流程收斂，並同步測試與設計文件
 
 - 日期：2026-08-23
 - ID：penalty-extended-unvalidated-filter-and-overclaimed-perf-gating
