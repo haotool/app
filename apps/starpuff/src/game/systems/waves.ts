@@ -1,7 +1,6 @@
 import type Phaser from 'phaser';
 import { ENEMY_SIZE, VIEW } from '../core/config';
 import { GameEvents, emitGameEvent, offGameEvent, onGameEvent } from '../core/events';
-import { isDesktopMode } from '../core/rotation';
 import type { EnemyKind, LevelId } from '../core/types';
 import {
   RESCUE_REACH_PX,
@@ -102,14 +101,6 @@ const RESCUE_HOVER_KINDS: readonly EnemyKind[] = [
   'riftling',
 ];
 
-const TUTORIAL_TEXT_TOUCH = '左搖桿 移動　綠鍵 跳躍\n粉鍵 長按吸入・點按發射\nA+B 可同時按';
-// 桌機教學浮字（#817/§109）：虛擬鍵已隱藏，改示鍵盤鍵位（與 Title 鍵位卡文案一致，
-// 含 C 特殊技——觸控版由 SP 鍵浮現視覺承擔同一教學）。
-const TUTORIAL_TEXT_DESKTOP = '← → 移動　Z 跳躍\nX 點按發射・長按吸入\nZ+X 可同時按　C 特殊技';
-// 教學浮字：首次操作輸入後 1s 淡出；無輸入最多停留 6s。
-const TUTORIAL_INPUT_LINGER_MS = 1000;
-const TUTORIAL_MAX_MS = 6000;
-
 // 關卡 runner：讀 levels.ts 資料驅動生成與配額推進，禁止每關硬編碼分支。
 // initialKills（§105 D5）：教學關死亡重試的配額結轉。
 export function createWaveRunner(
@@ -125,9 +116,6 @@ export function createWaveRunner(
   let spawnCounter = 0;
   // 反卡死（§26）：以 AMMO_CHANGED 事件追蹤彈藥量，判定飢荒強制補可吸怪。
   let playerAmmo = 0;
-  let tutorialText: Phaser.GameObjects.Text | null = null;
-  let tutorialAgeMs = 0;
-  let tutorialDismissAtMs = TUTORIAL_MAX_MS;
 
   const onAmmoChanged = ({ ammo }: { ammo: number }): void => {
     playerAmmo = ammo;
@@ -241,46 +229,10 @@ export function createWaveRunner(
     supply?.setData('safeSupply', level.boss !== null);
   }
 
-  function showTutorial(text: string, fontSize = '24px'): void {
-    // 教學浮字 y=0.46：與 STAGE 公告（hud y=0.34）垂直錯開，進關 1.4s 內不再同屏重疊。
-    tutorialText = scene.add
-      .text(scene.scale.width / 2, scene.scale.height * 0.46, text, {
-        fontFamily: 'system-ui, sans-serif',
-        fontSize,
-        color: '#3a3a4a',
-        align: 'center',
-      })
-      .setOrigin(0.5)
-      .setScrollFactor(0);
-    scene.tweens.add({
-      targets: tutorialText,
-      y: '-=12',
-      duration: 900,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut',
-    });
-  }
-
-  function dismissTutorial(): void {
-    if (!tutorialText) return;
-    const text = tutorialText;
-    tutorialText = null;
-    scene.tweens.killTweensOf(text);
-    scene.tweens.add({
-      targets: text,
-      alpha: 0,
-      duration: 400,
-      onComplete: () => text.destroy(),
-    });
-  }
-
   return {
     start() {
       run = createLevelRun(levelId, initialKills);
       stopped = false;
-      tutorialAgeMs = 0;
-      tutorialDismissAtMs = TUTORIAL_MAX_MS;
       onGameEvent(scene.events, GameEvents.BOSS_DEFEATED, onBossDefeated);
       onGameEvent(scene.events, GameEvents.ENEMY_KILLED, onEnemyRemoved);
       onGameEvent(scene.events, GameEvents.ENEMY_INHALED, onEnemyRemoved);
@@ -297,11 +249,6 @@ export function createWaveRunner(
           killQuota: level.killQuota,
         });
       }
-      if (level.tutorial) {
-        showTutorial(isDesktopMode() ? TUTORIAL_TEXT_DESKTOP : TUTORIAL_TEXT_TOUCH);
-      }
-      // v9 關卡開場提示（§60）：資料驅動一行浮字（L8 星化教學），沿教學淡出機制。
-      else if (level.hint) showTutorial(level.hint, '20px');
       // 教學供給（§110 L3 變身首教）：進關即於固定位點生成保證同系個體，不佔補生節奏。
       for (const drill of level.drillSpawns ?? []) {
         enemies.spawn(drill.kind, drill.x, SPAWN_Y[drill.kind]);
@@ -310,10 +257,6 @@ export function createWaveRunner(
 
     update(deltaMs: number) {
       if (stopped) return;
-      if (tutorialText) {
-        tutorialAgeMs += deltaMs;
-        if (tutorialAgeMs >= tutorialDismissAtMs) dismissTutorial();
-      }
       // #812 救援個體追蹤：被消化（吞/殺）即釋放追蹤；逾時未取得重定位到玩家身旁。
       if (rescueSprite) {
         if (!rescueSprite.active) {
@@ -353,8 +296,7 @@ export function createWaveRunner(
     },
 
     noteInput() {
-      if (!tutorialText) return;
-      tutorialDismissAtMs = Math.min(tutorialDismissAtMs, tutorialAgeMs + TUTORIAL_INPUT_LINGER_MS);
+      // 舊版中央浮字已移除；保留介面讓輸入回饋不耦合提示呈現。
     },
 
     isGateOpen() {
@@ -376,11 +318,6 @@ export function createWaveRunner(
       offGameEvent(scene.events, GameEvents.ENEMY_KILLED, onEnemyRemoved);
       offGameEvent(scene.events, GameEvents.ENEMY_INHALED, onEnemyRemoved);
       offGameEvent(scene.events, GameEvents.AMMO_CHANGED, onAmmoChanged);
-      if (tutorialText) {
-        scene.tweens.killTweensOf(tutorialText);
-        tutorialText.destroy();
-        tutorialText = null;
-      }
     },
   };
 }

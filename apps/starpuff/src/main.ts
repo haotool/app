@@ -3,7 +3,6 @@ import './pwa';
 import './style.css';
 import { initInstallGuide } from './installGuide';
 import { initOrientationGuide } from './orientationGuide';
-import { initRotationNotice } from './rotationNotice';
 import { initWakeLock } from './wakeLock';
 import { GRAVITY_Y, STAR_FLAVORS, VIEW, type StarFlavor } from './game/core/config';
 import { applyLayoutToDom, loadLayout } from './game/core/layout';
@@ -35,10 +34,7 @@ restoreMutePreference();
 // 桌機正置（#817）：boot 一次判定掛 sp-desktop class——旋轉殼旁路（CSS transform 免除
 // ＋getShellRotation 恆 none）、虛擬鍵隱藏；Phaser boot 前套用使殼量測即為正置尺寸。
 applyDesktopModeClass();
-// 方向變更一次性告知（§87）：回訪玩家優先於安裝指引（同為殼層卡片，先到先顯示，
-// 另一張等殼層再次安靜）。
-initRotationNotice();
-// 方向解鎖引導＋桌機鍵位卡（#817）：與其他殼層卡片同走安靜時刻管線依序顯示。
+// 方向解鎖引導＋桌機鍵位卡（#817）：直持與回訪方向說明統一為同一個 coachmark。
 initOrientationGuide();
 // PWA 安裝指引（§90）：已安裝／已忽略／不支援平台不打擾；viewport-level overlay 不進 Phaser Scene。
 initInstallGuide();

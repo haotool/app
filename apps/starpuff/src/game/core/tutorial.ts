@@ -1,9 +1,10 @@
 import type { ControlsState } from '../systems/controls';
 import type { TransformForm } from './types';
+import { PRACTICE_STEPS } from './learning';
 
 export type GuidedTutorialStatus = 'unseen' | 'skipped' | 'completed';
 
-export type TutorialStep = 'move' | 'jump' | 'inhale' | 'shoot' | 'slam-shelly' | 'transform';
+export type TutorialStep = (typeof PRACTICE_STEPS)[number];
 
 export interface TutorialObservation {
   input: Pick<ControlsState, 'left' | 'right' | 'down' | 'jumpPressed' | 'actionPressed'>;
@@ -29,14 +30,7 @@ export interface TutorialState {
   transformForm: TransformForm | null;
 }
 
-export const TUTORIAL_STEPS: readonly TutorialStep[] = [
-  'move',
-  'jump',
-  'inhale',
-  'shoot',
-  'slam-shelly',
-  'transform',
-];
+export const TUTORIAL_STEPS = PRACTICE_STEPS;
 
 export const TUTORIAL_MOVE_DISTANCE = 36;
 
@@ -105,6 +99,15 @@ export function advanceTutorial(state: TutorialState): TutorialState | null {
   return {
     ...createTutorialState(state.maxX),
     step: nextStep,
+  };
+}
+
+// 練習區重試目前步驟：不改變步驟順序，也不保留半完成旗標，避免救援後出現
+// 「畫面已換目標、reducer 卻仍認為已落地」的半套狀態。
+export function retryTutorialStep(state: TutorialState, originX = state.originX): TutorialState {
+  return {
+    ...createTutorialState(originX),
+    step: state.step,
   };
 }
 

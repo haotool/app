@@ -210,10 +210,10 @@ test.describe('#817 直持方向解鎖引導', () => {
       await page.evaluate(() => document.documentElement.classList.contains('sp-desktop')),
     ).toBe(false);
 
-    const card = page.locator('.install-card', { hasText: '橫持遊玩體驗更佳' });
+    const card = page.locator('.orientation-coachmark');
     await expect(card).toBeVisible({ timeout: 10000 });
     await card
-      .locator('button', { hasText: '知道了' })
+      .locator('[data-orientation-action]')
       .dispatchEvent('pointerdown', { pointerId: 5, isPrimary: true });
     await expect(card).toHaveCount(0);
     expect(await page.evaluate(() => localStorage.getItem('sp-orientation-landscape-seen'))).toBe(
@@ -223,13 +223,13 @@ test.describe('#817 直持方向解鎖引導', () => {
     // 尚未轉橫：再次進站仍需提示。
     await page.reload();
     await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Title');
-    await expect(page.locator('.install-card', { hasText: '橫持遊玩體驗更佳' })).toBeVisible({
+    await expect(page.locator('.orientation-coachmark')).toBeVisible({
       timeout: 10000,
     });
 
     // 真正轉橫：收卡並寫入「已觀測 landscape」記憶。
     await page.setViewportSize({ width: 844, height: 390 });
-    await expect(page.locator('.install-card', { hasText: '橫持遊玩體驗更佳' })).toHaveCount(0);
+    await expect(page.locator('.orientation-coachmark')).toHaveCount(0);
     expect(await page.evaluate(() => localStorage.getItem('sp-orientation-landscape-seen'))).toBe(
       '1',
     );

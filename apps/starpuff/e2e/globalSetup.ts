@@ -17,7 +17,7 @@ export default function globalSetup(config: FullConfig): void {
             {
               name: 'sp-settings',
               value: JSON.stringify({
-                schemaVersion: 1,
+                schemaVersion: 2,
                 audioMuted: false,
                 hapticsEnabled: true,
                 wakeLockEnabled: true,
@@ -25,6 +25,8 @@ export default function globalSetup(config: FullConfig): void {
                 controlHintsEnabled: true,
                 controlHintsPlayCount: 0,
                 guidedTutorialStatus: 'skipped',
+                guidanceEnabled: true,
+                guidanceCompletedLessons: [],
                 screenShake: 'full',
                 shellRotation: null,
                 keyLayout: null,

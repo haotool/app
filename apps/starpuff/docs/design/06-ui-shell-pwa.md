@@ -74,27 +74,30 @@
   schema）／桌面不打擾；首次到站延遲 2.5s 且僅 Title 安靜時刻顯示；
   appinstalled 自動收卡並記憶。
 
-### 90.1 觸控新手操作提示（首次五場）
+### 90.1 情境小天使提示（正常關卡）
 
-- GameScene 僅在 Title／世界地圖開啟一場新遊戲時消費一次 `sp-settings.controlHintsPlayCount`；
-  前五場顯示可捲動、可關閉的模態教學卡，玩家按「開始玩」後才恢復搖桿／按鍵操作，死亡重試、
-  同一輪換關與桌機鍵盤遊玩不重複攔截。
-- 教學單一文案提示：左手大拇指操控搖桿左右、右手大拇指按 A 跳躍、右手食指按住
-  B 吸入（放開或短按吐出），B 長按可連續吸取多隻；吸入時 A+B 可同時按；設定可永久關閉並轉入按鈕配置調整位置。
-- 教學插圖（`src/assets/ui/control-hints-onboarding.webp`）沿用 StarPuff 可愛角色與怪物語彙，
-  以 CSS 輕微漂浮呈現，不改變 Phaser 關卡資產載入。
-- 行動裝置橫持時採 viewport-level 卡片與自適應雙欄，優先讓五項提示與操作列一次完整呈現；
-  極矮視窗保留卡片內垂直捲動。直持時卡片保持正向可讀，且模態開啟期間不讓卡片下方的搖桿／A／B
-  觸控誤觸，關閉後才恢復遊戲操作。
+- 正常 `GameScene` 不再顯示中央模態操作卡或 WaveRunner 教學浮字；`guidanceDirector` 只建立
+  一張以 `getBoundingClientRect()` 錨定在對應控制附近的 coachmark。外層 layer 為
+  `pointer-events: none`，只有卡片本身與「稍後再提醒」按鈕可互動，因此搖桿、A/B、SP、TF 與畫面
+  仍可操作；卡片會在 resize／orientationchange 後重新定位。
+- 小卡依實際事件／狀態完成 lesson：移動需左右都走過、跳躍需離地、吸入／吐出需收到正式事件、
+  下砸需同時有落地與 Shelly 命中、變身需讀到非 null 的 `transform.form`。可用 `×` 稍後提醒，
+  設定的「情境操作提示」可永久關閉。
+- 觸控文案明確說明右手食指可長按 B 連吞，右手大拇指可同時按 A 跳躍；桌機以 X、Z 提供等價指引。
+- 正常關卡 coachmark 只保留小天使、短文案與關閉鈕；對應動作插圖只在 guided practice 顯示，
+  避免同一張提示同時堆兩張圖而遮住遊戲畫面。
+- 390×844 直持與 844×390 橫持只調整安全區與卡片寬度，不改變遊戲控制座標；控制焦點以柔和
+  外框／最多兩輪的低頻 pulse 提示，不用全屏遮罩或改變 layout。`prefers-reduced-motion` 時停用
+  pulse，仍保留靜態 focus ring 與文字提示。
 
 ### 90.2 混合式互動 onboarding
 
-- 首次「開始遊戲」顯示選擇卡：`看新手教學` 進入 guided sandbox，`直接開始` 記為 skipped 並不再自動
-  彈出；設定頁可用「重新播放新手教學」重設為 unseen。完成後記為 completed。
-- guided HUD 固定在上方安全區，只讓教學按鈕接收 pointer event，底下的虛擬搖桿、A/B、TF 仍由真實
-  GameScene 接收。當前步驟完成前不顯示「下一步」；成功時顯示回饋並由玩家繼續。
-- 每步圖片是單一動作示意，中文／鍵位文案由 DOM 產生，不把文字烘焙進圖。直持 390×844、橫持 844×390
-  均以 viewport-level 卡片與短版插圖維持必要控制區可見。
+- 首次「開始遊戲」顯示選擇卡：`進入練習區` 進入 guided sandbox，`直接開始` 記為 skipped 並不再自動
+  彈出；設定頁可用「重新進入練習區」重設為 unseen。完成後記為 completed。
+- guided practice 是低壓力訓練區，當前步驟完成前不顯示「下一步」；成功時顯示回饋並由玩家繼續。
+  目標失手／被打掉／離開可自動補怪或重置，目前步驟也提供「再試一次」，不會卡在半套教學。
+- 每步圖片是單一動作示意，中文／鍵位文案由 DOM 產生，不把文字烘焙進圖；小天使圖層不攔截底層
+  遊戲控制。
 
 ## 91. v14 觸覺回饋與螢幕常亮（調研加碼，ROI 閘通過二項）
 
@@ -112,14 +115,13 @@
 - 安裝指引與方向告知共用：`whenShellIdle`（1s 輪詢）僅在 Title
   （data-menu="start" 存在）且殼層安靜（無 controls is-active／is-configuring／
   pause-overlay／既有卡）時顯示——杜絕戰鬥中彈窗攔截操作。
-- viewport-level 卡片：overlay 掛在 `document.body`，以 `position:fixed`、`100dvh`、
-  safe-area padding 對齊玩家實際看到的視口；不進旋轉遊戲殼，避免直持祖先 `rotate(±90deg)`
-  讓文字與捲動軸轉向。PWA／方向／恢復卡仍是非模態殼卡；操作提示與設定是可捲動模態，
-  由焦點鎖與 overlay hit-test 保護操作邊界。
-- 橫持 844×390 實測：PWA／方向／設定修復／儲存不可用卡片與操作提示、暫停、設定、按鈕配置
-  均以 AABB 檢查卡片與每顆按鈕完全落在 viewport；設定與操作提示在極矮視窗可內捲，操作列 sticky。
-  殼層卡支援可選教學插圖、`aria-modal=false` 對話框語意＋Escape 關閉；操作提示／設定卡
-  另支援 `aria-modal=true`、焦點鎖與模態 hit-test。
+- viewport-level 卡片：overlay 掛在 `document.body`，以 `position:fixed` 與 safe-area padding
+  對齊玩家實際看到的視口；不進旋轉遊戲殼，避免直持祖先 `rotate(±90deg)`
+  讓文字與捲動軸轉向。PWA／方向／學習 coachmark 是非模態殼卡，只有設定頁維持模態 hit-test。
+- 橫持 844×390 實測：PWA／方向／設定修復／儲存不可用卡片、學習 coachmark、暫停、設定與按鈕配置
+  均以 AABB 檢查卡片與每顆按鈕完全落在 viewport；學習 coachmark 另檢查不與搖桿、A/B、TF、SP 相交。
+- 殼層卡支援可選教學插圖與 `aria-modal=false` 非模態語意；學習 coachmark 不建立焦點鎖，
+  只有明確按鈕接收 pointer。
 - 開玩自動收卡：MutationObserver 監聽 `#controls.is-active`，進遊戲即收
   （不記憶忽略，下次回 Title 再顯示）。
 
@@ -127,14 +129,16 @@
 > 固定卡與 `max-height:72%` 假設所有手機高度足夠；真實 844×390 橫持測試曾出現 PWA 按鈕、
 > 操作提示項目與設定列被裁切，故改採本節 viewport-level SSOT。
 
-### 92.1 方向提示與模態截圖驗收
+### 92.1 方向提示與 coachmark 截圖驗收
 
-- 直持且尚未觀測到橫持時顯示「橫持遊玩體驗更佳」；按「知道了」不寫入完成記憶，
-  重新進入直持仍提示。只有實際偵測到 landscape 才寫入 `sp-orientation-landscape-seen=1`
-  並收起卡片；舊 `sp-orientation-hint` 只做清理，不再阻擋新流程。
+- 直持且尚未觀測到橫持時顯示 `orientation-coachmark`「建議橫持遊玩」，卡內手機圖示以動畫示範
+  由直向轉成橫向 90°；按「知道了」不寫入完成
+  記憶，重新進入直持仍提示。只有實際偵測到 landscape 才寫入 `sp-orientation-landscape-seen=1`
+  並收起卡片；舊 `sp-orientation-hint` 只做清理，不再阻擋新流程。方向解鎖按鈕只做 best-effort，
+  不假設瀏覽器一定允許網頁解除系統方向鎖定。
 - Playwright `e2e/modal-landscape.spec.ts` 以 Mobile Chrome（844×390）與 Mobile Chrome Portrait
-  （390×844）實測並截圖 `screenshots/modal-landscape/`：PWA、方向、操作提示、暫停、設定、
-  按鈕配置、回訪方向更新、設定損毀修復、儲存不可用共九類卡片／模態；console error 必須為 0。
+  （390×844）實測並截圖 `screenshots/modal-landscape/`：PWA、方向 coachmark、操作提示、暫停、
+  設定、按鈕配置、回訪方向更新、設定損毀修復、儲存不可用共九類殼層表面；console error 必須為 0。
 
 ## 93. v14 殼局部 safe-area 量測（canvas 內 HUD 避讓預備）
 

@@ -84,13 +84,17 @@
 
 ### 118.1 UserSettings 單鍵 SSOT（core/settings.ts）
 
-- 儲存鍵 `sp-settings`（`SETTINGS_SCHEMA_VERSION = 1`）為**唯一偏好真相**，欄位：
+- 儲存鍵 `sp-settings`（`SETTINGS_SCHEMA_VERSION = 2`）為**唯一偏好真相**，欄位：
   `audioMuted`／`hapticsEnabled`／`wakeLockEnabled`／`reducedMotion`／`screenShake`
   （`off|low|full`）／`shellRotation`（`cw|ccw|null`，null＝從未選擇供 §87.2 一次性
   告知判定）／`keyLayout`（§89 v2 子樹，null＝預設態不落盤，§95.2 語意不變）。
 - `reducedMotion` 預設尊重系統 `prefers-reduced-motion`（WCAG 2.3.3）；非瀏覽器環境 false。
-- `controlHintsEnabled`／`controlHintsPlayCount` 為觸控新手教學偏好：預設開啟、前五場
-  新遊戲各提示一次（計數夾在 0–5）；設定可永久關閉，死亡重試與同一輪換關不重複計數。
+- `controlHintsEnabled`／`controlHintsPlayCount` 為舊版觸控提示欄位，保留供 v1 存檔相容；現行
+  正常關卡提示改由 `guidanceEnabled` 控制，不再以「前五場」計數或彈出阻塞式提示。
+- `guidedTutorialStatus` 保存 `unseen`／`skipped`／`completed`；`guidanceEnabled` 控制正常
+  關卡的小天使提示，`guidanceCompletedLessons` 保存已完成的情境 lesson；lesson 的 ID、文案、素材與
+  控制焦點由 `src/game/core/learning.ts` 單一 registry 提供。v1 舊資料會以
+  `controlHintsEnabled` 作為 `guidanceEnabled` 的 migration 預設，並升級落盤為 schema 2。
 - **一次性 migration**：首次讀取時吸收 legacy 散鍵 `sp-muted`／`sp-rotation`／
   `sp-key-layout` 為初始值（值損毀逐項回預設），**落盤成功即刪除三個 legacy 鍵**
   （單真相；PWA 部署單向前進，回滾非支援路徑，殘留舊值會在主鍵遺失時被吸回過期偏好）。
@@ -109,9 +113,10 @@
 - Title 次選單第四鈕「設定」（`data-menu="settings"`）開啟純 DOM overlay（沿
   keyConfig／shellCards 慣例，不進 Phaser Scene）；容器沿用 `.install-overlay`
   class，`isShellBusy` 天然視為忙碌（與 PWA 套用／殼卡排隊互斥）。
-- 內容：音效／震動回饋／遊戲中螢幕常亮／減少動態效果／操作提示（前五場）五開關＋
+- 內容：音效／震動回饋／遊戲中螢幕常亮／減少動態效果／情境操作提示五開關＋
   震屏強度三段（關／弱／全）＋「按鈕配置（位置與持向）」轉入口（§34 keyConfig 專頁
   由此轉入，不再是 Title 獨立鈕）＋「完成」。ESC 關閉。
+- 「重新進入練習區」只重置 guided 狀態並重新開啟提示，不會清除正式 L1 通關或已完成 lesson。
 - **即改即存**，無草稿語意（草稿／取消回滾僅存在於按鈕配置頁，§87.2/§95.2 不變）；
   音效切換同步 mute 系統，震動開啟時輕震一次即時回饋。
 - 震屏／閃光偏好落地（`systems/cameraFxGate.ts`）：一次性包裝 main camera 的

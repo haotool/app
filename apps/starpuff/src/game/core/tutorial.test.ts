@@ -5,6 +5,7 @@ import {
   isLastTutorialStep,
   isTutorialStepComplete,
   observeTutorial,
+  retryTutorialStep,
 } from './tutorial';
 
 const observation = (overrides: Partial<Parameters<typeof observeTutorial>[1]> = {}) => ({
@@ -70,5 +71,18 @@ describe('guided tutorial reducer', () => {
     const completed = observeTutorial(state, observation({ transformForm: 'gale' }));
     expect(isTutorialStepComplete(completed)).toBe(true);
     expect(isLastTutorialStep(completed)).toBe(true);
+  });
+
+  it('重試目前步驟會清除半完成旗標但保留步驟位置', () => {
+    const state = {
+      ...createTutorialState(100),
+      step: 'slam-shelly' as const,
+      slamLanded: true,
+      slamTargetHit: false,
+    };
+    const retried = retryTutorialStep(state, 140);
+    expect(retried.step).toBe('slam-shelly');
+    expect(retried.originX).toBe(140);
+    expect(retried.slamLanded).toBe(false);
   });
 });

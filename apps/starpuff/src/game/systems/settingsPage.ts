@@ -9,6 +9,7 @@ import { bindButtonActivation } from '../core/domButton';
 import { createFocusTrap, type FocusTrap } from '../core/focusTrap';
 import {
   loadSettings,
+  resetGuidedTutorialForReplay,
   updateSettings,
   type ScreenShakePref,
   type UserSettings,
@@ -31,7 +32,7 @@ type BooleanPref =
   | 'hapticsEnabled'
   | 'wakeLockEnabled'
   | 'reducedMotion'
-  | 'controlHintsEnabled';
+  | 'guidanceEnabled';
 
 interface ToggleSpec {
   key: BooleanPref;
@@ -47,7 +48,7 @@ const TOGGLES: ToggleSpec[] = [
   { key: 'hapticsEnabled', label: '震動回饋', onChange: (on) => on && vibratePattern(15) },
   { key: 'wakeLockEnabled', label: '遊戲中螢幕常亮' },
   { key: 'reducedMotion', label: '減少動態效果' },
-  { key: 'controlHintsEnabled', label: '操作提示（前五場）' },
+  { key: 'guidanceEnabled', label: '情境操作提示' },
 ];
 
 const SHAKE_OPTIONS: { value: ScreenShakePref; label: string }[] = [
@@ -201,9 +202,9 @@ export function openSettingsPage(onClose?: () => void, options: SettingsPageOpti
     tutorialButton.type = 'button';
     tutorialButton.className = 'install-btn';
     tutorialButton.dataset['setting'] = 'replay-tutorial';
-    tutorialButton.textContent = '重新播放新手教學';
+    tutorialButton.textContent = '重新進入練習區';
     bindButtonActivation(tutorialButton, () => {
-      updateSettings({ guidedTutorialStatus: 'unseen' });
+      resetGuidedTutorialForReplay();
       close();
       options.onReplayTutorial?.();
     });

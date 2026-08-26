@@ -53,10 +53,10 @@ import { createToasts, type ToastSystem } from '../systems/toasts';
 import { createTide, type TideHandle } from '../systems/tide';
 import { createWaveRunner, type WaveRunner } from '../systems/waves';
 import { createGuidedTutorial, type GuidedTutorialHandle } from '../systems/guidedTutorial';
+import { createGuidanceDirector, type GuidanceDirectorHandle } from '../systems/guidanceDirector';
 import { playMarketOpenVignette } from '../systems/liudongCinematics';
 import { bindSfxToEvents, playSfx, stopSfx } from '../audio/sfx';
 import { notifySaveUnavailable } from '../../shellCards';
-import { showControlHintsForSession } from '../../controlHints';
 
 const GROUND_TOP = VIEW.height - GROUND_HEIGHT;
 // 魔王死亡演出：慢動作 0.5s + 星爆 0.9s 後進勝利流程。
@@ -106,7 +106,6 @@ export class GameScene extends Phaser.Scene {
   private deaths = 0;
   // EX 變體模式（§58）：魔王工廠與通關記錄依此分流。
   private exMode = false;
-  private newSession = false;
   private guidedTutorialMode = false;
   // 教學關死亡配額結轉（§105 D5）：retryLevel 帶入、waves runner 以此為種子。
   private carryKills = 0;
@@ -146,7 +145,6 @@ export class GameScene extends Phaser.Scene {
   private terrainPlatforms: Phaser.GameObjects.Rectangle[] = [];
   private background!: BackgroundHandle;
   private controls!: ControlsSystem;
-  private closeControlHints: (() => void) | null = null;
   private player!: PlayerHandle;
   private enemies!: EnemySystem;
   private waves!: WaveRunner;
@@ -162,6 +160,7 @@ export class GameScene extends Phaser.Scene {
   // 彩蛋（§24）：每關進度與 crown-early-hit 時間窗委派 systems/eggTracker。
   private eggTracker!: EggTracker;
   private guidedTutorial: GuidedTutorialHandle | null = null;
+  private guidanceDirector: GuidanceDirectorHandle | null = null;
 
   // e2e 觀測點（§94）：最近一張成就 toast 文案（canvas 文字無法由 DOM 斷言）。
   get lastAchievementToast(): string {
@@ -176,7 +175,6 @@ export class GameScene extends Phaser.Scene {
     this.currentLevelId = data.levelId ?? 1;
     this.deaths = data.deaths ?? 0;
     this.exMode = data.ex === true;
-    this.newSession = data.newSession === true;
     this.guidedTutorialMode = data.guidedTutorial === true;
     this.carryKills = data.carryKills ?? 0;
   }
@@ -220,6 +218,8 @@ export class GameScene extends Phaser.Scene {
       spawnAmmoMinion: (x, y) => this.enemies.spawn('jelly', x, y),
       // 折躍瞬移（§66）：重置門掃掠基準，防前後幀大位移被誤判為跨越星星門。
       onWarp: (x) => this.levelGate.noteWarp(x),
+      onGuidanceFeature: (feature) =>
+        emitGameEvent(this.events, GameEvents.GUIDANCE_FEATURE_USED, { feature }),
       // §77：地形粉紅平台納入下穿裁決（下＋跳可穿落，與 elements oneway 同權）。
       terrainOneWay: () => this.terrainPlatforms,
     });
@@ -385,6 +385,8 @@ export class GameScene extends Phaser.Scene {
       isBossLevel: () => this.level.boss !== null,
       isBossDown: () => this.bossDown,
       nearestBossBody: (x, y) => this.nearestBossBody(x, y),
+      onGuidanceFeature: (feature) =>
+        emitGameEvent(this.events, GameEvents.GUIDANCE_FEATURE_USED, { feature }),
     });
     // 精英房（§48/§52）：boss 關無精英；一關可多房，hooks 閉包延遲解析既有系統。
     const eliteHooks = {
@@ -482,12 +484,24 @@ export class GameScene extends Phaser.Scene {
       isSettled: () => this.finished || this.transitioning,
       isBossDown: () => this.bossDown,
       now: () => this.time.now,
+      onGuidanceFeature: (feature) =>
+        emitGameEvent(this.events, GameEvents.GUIDANCE_FEATURE_USED, { feature }),
     });
     if (this.guidedTutorialMode) {
       this.guidedTutorial = createGuidedTutorial(this, {
         player: () => this.player,
         controls: () => this.controls,
         enemies: () => this.enemies,
+      });
+    } else {
+      this.guidanceDirector = createGuidanceDirector(this, {
+        player: () => this.player,
+        controls: () => this.controls,
+        enemies: () => this.enemies,
+        level: () => this.level,
+        stage: () => this.stage,
+        tide: () => this.tide,
+        meteor: () => this.meteor,
       });
     }
     this.bindEvents();
@@ -497,10 +511,10 @@ export class GameScene extends Phaser.Scene {
     // shutdown 清理 Phaser 不接管的資源（scene.events/DOM 監聽、音訊迴圈）；fx/hud
     // 自掛自清，enemies/boss 的 group/timer/tween 由 Phaser 先行銷毀，不得重複呼叫。
     this.events.once('shutdown', () => {
-      this.closeControlHints?.();
-      this.closeControlHints = null;
       this.guidedTutorial?.destroy();
       this.guidedTutorial = null;
+      this.guidanceDirector?.destroy();
+      this.guidanceDirector = null;
       this.unbinders.forEach((off) => off());
       this.unbinders.length = 0;
       unbindSfx();
@@ -519,9 +533,6 @@ export class GameScene extends Phaser.Scene {
     });
 
     if (!this.guidedTutorialMode) this.waves.start();
-    this.closeControlHints?.();
-    this.closeControlHints =
-      this.newSession && !this.guidedTutorialMode ? showControlHintsForSession() : null;
     // 前室魔王關（§69）：入場運鏡延至玩家走入 arena 才啟動（onEnterArena）。
     if (this.level.boss && !this.bossRoom) this.boss.spawn();
 
@@ -582,6 +593,7 @@ export class GameScene extends Phaser.Scene {
     }
     this.enemies.update(deltaMs);
     this.guidedTutorial?.update(deltaMs);
+    this.guidanceDirector?.update(deltaMs);
     // 拉力必須在 enemies AI 之後套用，避免被小怪速度邏輯覆寫。
     // 吸入拉近（§30/#811 移至 overlaps.ts）：錐形收斂、吞下與殼殼暈眩窗強化拉力。
     if (!this.finished && !this.transitioning) {

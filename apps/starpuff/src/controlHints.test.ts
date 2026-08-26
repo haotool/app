@@ -34,6 +34,8 @@ describe('controlHints 新手提示策略（首次五場）', () => {
         controlHintsEnabled: false,
         controlHintsPlayCount: 3,
         guidedTutorialStatus: 'unseen',
+        guidanceEnabled: false,
+        guidanceCompletedLessons: [],
         screenShake: 'full',
         shellRotation: null,
         keyLayout: null,

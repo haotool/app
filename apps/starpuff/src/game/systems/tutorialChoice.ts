@@ -1,16 +1,16 @@
 import { bindButtonActivation } from '../core/domButton';
-import { createFocusTrap, type FocusTrap } from '../core/focusTrap';
+import { positionLearningCoachmark } from './learningCoachmark';
 
 let overlay: HTMLElement | null = null;
-let focusTrap: FocusTrap | null = null;
+let escapeHandler: ((event: KeyboardEvent) => void) | null = null;
 
 export function isTutorialChoiceOpen(): boolean {
   return overlay !== null;
 }
 
 export function closeTutorialChoice(): void {
-  focusTrap?.release();
-  focusTrap = null;
+  if (escapeHandler) document.removeEventListener('keydown', escapeHandler);
+  escapeHandler = null;
   overlay?.remove();
   overlay = null;
 }
@@ -18,13 +18,14 @@ export function closeTutorialChoice(): void {
 export function showTutorialChoice(onTutorial: () => void, onDirectStart: () => void): void {
   if (overlay) return;
   overlay = document.createElement('div');
-  overlay.className = 'tutorial-choice-overlay';
-  overlay.setAttribute('role', 'dialog');
-  overlay.setAttribute('aria-modal', 'true');
-  overlay.setAttribute('aria-label', '選擇新手教學');
+  overlay.className = 'learning-coachmark-layer learning-entry-layer tutorial-choice-overlay';
+  overlay.dataset['learningMode'] = 'entry';
 
   const card = document.createElement('div');
-  card.className = 'tutorial-choice-card';
+  card.className = 'learning-coachmark-card learning-entry-popover tutorial-choice-card';
+  card.dataset['learningCard'] = 'true';
+  card.setAttribute('role', 'region');
+  card.setAttribute('aria-label', '選擇新手教學');
   const title = document.createElement('h2');
   title.className = 'tutorial-choice-title';
   title.textContent = '第一次玩星噗噗？';
@@ -39,7 +40,7 @@ export function showTutorialChoice(onTutorial: () => void, onDirectStart: () => 
   const guided = document.createElement('button');
   guided.type = 'button';
   guided.className = 'install-btn install-btn-primary';
-  guided.textContent = '看新手教學';
+  guided.textContent = '進入練習區';
   guided.dataset['tutorialChoice'] = 'guided';
   bindButtonActivation(guided, () => {
     closeTutorialChoice();
@@ -60,6 +61,9 @@ export function showTutorialChoice(onTutorial: () => void, onDirectStart: () => 
   card.appendChild(actions);
   overlay.appendChild(card);
   document.body.appendChild(overlay);
-  // aria-modal 必須配合真正的焦點循環；否則 Tab 會離開選擇卡並操作底層場景。
-  focusTrap = createFocusTrap(card);
+  escapeHandler = (event: KeyboardEvent): void => {
+    if (event.key === 'Escape') closeTutorialChoice();
+  };
+  document.addEventListener('keydown', escapeHandler);
+  positionLearningCoachmark(overlay, '[data-menu="start"]');
 }

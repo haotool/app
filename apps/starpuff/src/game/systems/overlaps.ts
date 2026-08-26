@@ -47,6 +47,8 @@ export interface CombatOverlapHooks {
   isSettled(): boolean;
   isBossDown(): boolean;
   now(): number;
+  // 情境教學只在星彈真的被鏡面反射時通知。
+  onGuidanceFeature?(feature: 'mirror'): void;
 }
 
 // 吸入拉近結算（§30/§77/#811）：zone overlap 僅標記候選，錐形收斂、吞下與拉力集中於此。
@@ -141,6 +143,7 @@ export function wireCombatOverlaps(scene: Phaser.Scene, hooks: CombatOverlapHook
       const reflector = asSprite(enemy);
       const playerSprite = hooks.player().sprite;
       hooks.enemies().reflectStar(reflector.x, reflector.y, playerSprite.x, playerSprite.y);
+      hooks.onGuidanceFeature?.('mirror');
       hooks.fx().burstSmall(s.x, s.y, 0xf0f4ff);
       hooks.player().onStarHit(s, 'absorb');
       return;

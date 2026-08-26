@@ -34,6 +34,8 @@ export interface StarSteeringHooks {
   isBossDown(): boolean;
   // 多本體（§68）：最近存活本體歸屬由 GameScene 持有。
   nearestBossBody(x: number, y: number): Phaser.Physics.Arcade.Sprite;
+  // 情境教學只在磁場實際改變星彈速度時通知，避免靠近敵人就提前完成。
+  onGuidanceFeature?(feature: 'magnet'): void;
 }
 
 export interface StarSteering {
@@ -121,6 +123,7 @@ export function createStarSteering(hooks: StarSteeringHooks): StarSteering {
       magnos.push({ x: magno.x, y: magno.y });
     }
     if (magnos.length === 0) return;
+    let pulledAnyStar = false;
     for (const child of hooks.player().getStars().getChildren()) {
       const star = asSprite(child);
       if (!star.active) continue;
@@ -136,8 +139,10 @@ export function createStarSteering(hooks: StarSteeringHooks): StarSteering {
           deltaMs,
         );
         body.setVelocity(pulled.vx, pulled.vy);
+        pulledAnyStar = true;
       }
     }
+    if (pulledAnyStar) hooks.onGuidanceFeature?.('magnet');
   }
 
   return {
