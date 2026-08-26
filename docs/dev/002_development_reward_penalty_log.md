@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+0（reward 1、penalty 1、neutral 0）｜累計總分：+333
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+334
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-08-26
+- ID：reward-comparison-profile-avoids-killing-only-comparable-pair
+- 原因：提案「僅相同 rateType 可比、unspecified 不可比較」看似嚴謹，但台銀為 cash、MoneyBox 依裁決不得推測填 cash 而為 unspecified，該規則會錯殺產品唯一已知可比的 TWD↔KRW；另主張 feeCoverage 恆為 unknown，實際查證台銀與換錢所皆免手續費，價差即全部成本
+- 解法：改以結構化 comparisonProfile（交割方式、報價基礎、費用政策）判可比性，rateType 降為資料品質資訊；fee 改 0 並以 pricingScope 宣告牌告匯率邊界；覆蓋範圍（結構性事實）與可得性（當下狀態）分離，避免 comparablePairs 隨每次抓取閃爍
 
 - 日期：2026-08-26
 - ID：penalty-incomplete-premise-caused-wrong-architecture-ruling
