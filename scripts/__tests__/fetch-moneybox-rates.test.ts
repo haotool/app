@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import {
   assertMoneyBoxRatesIntegrity,
+  deriveMidpoint,
+  mapUpstreamRow,
   shouldRefreshLatestSnapshot,
+  toLegacyQuoteUnit,
 } from '../fetch-moneybox-rates.js';
 
 const baseRates = {
@@ -131,5 +134,77 @@ describe('fetch-moneybox-rates / assertMoneyBoxRatesIntegrity', () => {
 
   it('舊檔不存在（previousRates=null）時跳過突變檢查', () => {
     expect(() => assertMoneyBoxRatesIntegrity(makeMoneyBoxRates(10, 60.5), null)).not.toThrow();
+  });
+});
+
+describe('fetch-moneybox-rates / 新 API 欄位對應（PRD 049 §2.2）', () => {
+  it('legacy sell 來自上游 buyRate、legacy buy 來自上游 sellRate——語意相反不可照字面對接', () => {
+    const mapped = mapUpstreamRow({ currencyCode: 'TWD', buyRate: 42.15, sellRate: 42.3 });
+
+    expect(mapped).not.toBeNull();
+    const [code, quote] = mapped!;
+    expect(code).toBe('TWD');
+    // 換匯所買入 TWD ＝ 旅客持 TWD 換 KRW 的到手匯率 ＝ 我方 sell
+    expect(quote.sell).toBe(42.15);
+    expect(quote.buy).toBe(42.3);
+    // 反向對接會取到價差的錯誤那一側
+    expect(quote.sell).not.toBe(42.3);
+  });
+
+  it('價差方向維持 sell < buy（店家低買高賣）', () => {
+    const [, quote] = mapUpstreamRow({ currencyCode: 'TWD', buyRate: 42.15, sellRate: 42.3 })!;
+
+    expect(quote.sell!).toBeLessThan(quote.buy!);
+  });
+
+  it('上游無 base / spbuy / spsell：base 由兩側中點推導，其餘一律 null 不得填補', () => {
+    const [, quote] = mapUpstreamRow({ currencyCode: 'TWD', buyRate: 42.15, sellRate: 42.3 })!;
+
+    expect(quote.base).toBe(42.225);
+    expect(quote.spbuy).toBeNull();
+    expect(quote.spsell).toBeNull();
+  });
+
+  it('0 與非有限值視為上游未報價（null），不得當成有效匯率', () => {
+    const [, zero] = mapUpstreamRow({ currencyCode: 'USD', buyRate: 0, sellRate: 0 })!;
+    expect(zero.sell).toBeNull();
+    expect(zero.buy).toBeNull();
+    expect(zero.base).toBeNull();
+
+    const [, nan] = mapUpstreamRow({ currencyCode: 'USD', buyRate: 'x', sellRate: null })!;
+    expect(nan.sell).toBeNull();
+    expect(nan.buy).toBeNull();
+  });
+
+  it('缺 currencyCode 的列被丟棄', () => {
+    expect(mapUpstreamRow({ buyRate: 1, sellRate: 2 })).toBeNull();
+    expect(mapUpstreamRow({ currencyCode: '  ', buyRate: 1, sellRate: 2 })).toBeNull();
+  });
+});
+
+describe('fetch-moneybox-rates / per-100 單位還原（PRD 049 §2.3）', () => {
+  it('JPY / IDR / VND 由上游 per-1 還原為既有 per-100 慣例', () => {
+    expect(toLegacyQuoteUnit('JPY', 8.72)).toBe(872);
+    expect(toLegacyQuoteUnit('IDR', 0.09)).toBe(9);
+    expect(toLegacyQuoteUnit('VND', 0.056)).toBe(5.6);
+  });
+
+  it('其餘幣別不縮放', () => {
+    expect(toLegacyQuoteUnit('TWD', 42.15)).toBe(42.15);
+    expect(toLegacyQuoteUnit('USD', 1383)).toBe(1383);
+  });
+
+  // 8.72 * 100 在 JS 得 872.0000000000001；(42.15+42.3)/2 得 42.224999999999994。
+  // 上游原本直接提供乾淨值，換算後若不收斂會使公開產物出現浮點雜訊。
+  it('換算結果不得帶二進位浮點雜訊', () => {
+    expect(String(toLegacyQuoteUnit('JPY', 8.72))).toBe('872');
+    expect(String(toLegacyQuoteUnit('VND', 0.056))).toBe('5.6');
+    expect(String(deriveMidpoint(42.3, 42.15))).toBe('42.225');
+    expect(String(deriveMidpoint(872, 868))).toBe('870');
+  });
+
+  it('中點在任一側缺報價時為 null', () => {
+    expect(deriveMidpoint(null, 42.15)).toBeNull();
+    expect(deriveMidpoint(42.3, null)).toBeNull();
   });
 });

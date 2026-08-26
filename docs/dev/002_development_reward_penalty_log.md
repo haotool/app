@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+5（reward 5、penalty 0、neutral 1）｜累計總分：+332
+> 本次分數變化：+0（reward 1、penalty 1、neutral 0）｜累計總分：+332
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-08-26
+- ID：penalty-per100-rescale-introduced-float-noise
+- 原因：將上游 per-1 報價還原為既有 per-100 慣例時直接乘 100，使 8.72×100 得 872.0000000000001、0.056×100 得 5.6000000000000005，中點 (42.15+42.3)/2 得 42.224999999999994——這些值上游原本直接提供且乾淨，我的換算反而讓公開產物出現浮點雜訊
+- 解法：以輸入位數推導輸出位數收斂（×100 減兩位、中點取較多者加一位），並補守門測試斷言輸出字串不得含浮點尾數；完整 decimal 算術遷移仍列 PR 2
+
+- 日期：2026-08-26
+- ID：reward-moneybox-endpoint-migration-with-inversion-guard
+- 原因：MoneyBox 遷移至自有 endpoint 且 buy/sell 語意與舊 API 相反，照字面把 sell 對到 sellRate 會取到價差的錯誤那一側；舊 endpoint 半殘（回 200 但 sell 恆 0）使純 API 探測無法察覺搬家
+- 解法：改打新 endpoint 並以具名常數表達反向對應，補 9 條守門測試涵蓋映射方向、價差方向、per-100 還原、0 與非有限值處理；以反轉映射的反向測試確認守門會擋，並驗證對外欄位集合零變化
 
 - 日期：2026-08-26
 - ID：reward-starpuff-shelly-guidance-event
