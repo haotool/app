@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+5（reward 5、penalty 0、neutral 1）｜累計總分：+332
+> 本次分數變化：+0（reward 1、penalty 1、neutral 0）｜累計總分：+332
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-08-26
+- ID：penalty-api-semantics-v2-shipped-without-arithmetic-guard
+- 原因：v2 語意層以 customerBuyForeignRate 宣稱跨 provider 可比較，但 bank 用 `amount / sell`、exchange-shop 用 `amount * sell`——同名反運算；7 條守門測試全在驗欄位對應，其中一條甚至把公式字串當期望值鎖住，等於把不一致認證為正確；且 v2 只套在文件面與單一 provider 檔，佔 92% 流量的台銀主檔完全沒有語意層
+- 解法：以 ECB SDMX／Stripe／Wise／schema.org 等六個權威來源重新設計 v3（方向進 key、rateType 平行維度、ECB CL_OBS_STATUS 狀態碼）；往後任何宣稱「可比較」的欄位，必須有跨 provider 的數值換算測試，而非只驗欄位對應或公式字串
+
+- 日期：2026-08-26
+- ID：reward-moneybox-upstream-migration-diagnosed-via-browser
+- 原因：MoneyBox 匯率停更被歸因為上游停供 sell，但實際上官網已遷移至自有 endpoint 且完全不再呼叫舊 API；舊 endpoint 半殘（base 續更、sell 恆 0）使純 API 探測無法分辨「上游壞掉」與「上游搬家」
+- 解法：以瀏覽器實際載入官網並攔截網路請求，發現 moneybox-exchange.com/api/rates 新端點；再以官網買入/賣出欄位對照與價差方向三重驗證欄位反轉，並用舊 base 推算出 JPY/IDR/VND 的 per-100 單位差；產出 PRD 049 規劃三段式遷移
 
 - 日期：2026-08-26
 - ID：reward-starpuff-shelly-guidance-event
