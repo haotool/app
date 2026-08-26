@@ -654,6 +654,17 @@ describe('ratewise build scripts', () => {
     expect(moneyBoxWorkflow).toContain('Workflow schedule:');
   });
 
+  it('should create a typed MoneyBox outage issue with evidence, impact, scope, and acceptance sections', async () => {
+    const workflowSource = await readMoneyBoxWorkflow();
+
+    expect(workflowSource).toContain('gh issue create --label "$OUTAGE_LABEL"');
+    expect(workflowSource).toContain("--label 'severity:p1'");
+    expect(workflowSource).toContain("--label 'bug'");
+    for (const section of ['## 摘要', '## 背景／證據', '## 影響', '## 範圍', '## 驗收標準']) {
+      expect(workflowSource).toContain(section);
+    }
+  });
+
   it('should refresh rate JSON from origin/data before summary generation so rebase-conflicted worktrees cannot leak into workflow logs', async () => {
     const latestWorkflow = await readLatestRatesWorkflow();
     const moneyBoxWorkflow = await readMoneyBoxWorkflow();
