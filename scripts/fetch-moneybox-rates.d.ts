@@ -48,3 +48,12 @@ export function assertMoneyBoxRatesIntegrity(
   options?: { minCurrencyCount?: number; mutationThreshold?: number },
 ): void;
 export function resolveMutationThreshold(env?: Record<string, string | undefined>): number;
+
+/** 將新 API 的一列轉為 legacy 欄位結構；無效列回傳 null。 */
+export function mapUpstreamRow(item: unknown): [string, MoneyBoxRateQuote] | null;
+
+/** 將上游每 1 單位報價還原為既有 per-100 慣例（僅 JPY/IDR/VND）。 */
+export function toLegacyQuoteUnit(code: string, value: number | null): number | null;
+
+/** 兩側牌告價的算術中點。 */
+export function deriveMidpoint(buy: number | null, sell: number | null): number | null;
