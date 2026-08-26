@@ -107,19 +107,18 @@ test.describe('混合式互動新手教學', () => {
     await expect(page.locator('.tutorial-choice-overlay')).toHaveCount(0);
   });
 
-  test('首次教學選擇對話框限制鍵盤焦點，不會穿透到底層場景', async ({ page }) => {
+  test('首次教學選擇是非模態入口，不建立焦點鎖或 backdrop', async ({ page }) => {
     await page.goto('/');
     await page.locator('[data-menu="start"]').click();
     await expect(page.locator('.tutorial-choice-overlay')).toBeVisible();
 
     const guided = page.locator('[data-tutorial-choice="guided"]');
     const direct = page.locator('[data-tutorial-choice="direct"]');
+    await expect(page.locator('.tutorial-choice-card')).not.toHaveAttribute('aria-modal', 'true');
+    await expect(page.locator('.tutorial-choice-overlay')).toHaveCSS('pointer-events', 'none');
+    await guided.focus();
     await expect(guided).toBeFocused();
-    await page.keyboard.press('Tab');
-    await expect(direct).toBeFocused();
-    await page.keyboard.press('Tab');
-    await expect(guided).toBeFocused();
-    await page.keyboard.press('Enter');
+    await direct.click();
     await expect(page.locator('.tutorial-choice-overlay')).toHaveCount(0);
     await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Game');
   });
@@ -163,7 +162,7 @@ test.describe('混合式互動新手教學', () => {
 
     await completeTouchMove(page, 3);
     await page.getByRole('button', { name: '下一步' }).click();
-    await expect(page.getByRole('heading', { name: '跳起來' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '跳一下就好' })).toBeVisible();
 
     const jumpButton = page.locator('[data-btn="a"]');
     await jumpButton.dispatchEvent('pointerdown', { pointerId: 4, isPrimary: true });
@@ -182,7 +181,7 @@ test.describe('混合式互動新手教學', () => {
     );
     await expect(page.locator('.guided-tutorial-tip-art')).toHaveAttribute(
       'src',
-      /tutorial-touch-dual-input/,
+      /tutorial-touch-continuous-inhale/,
     );
   });
 
@@ -208,6 +207,15 @@ test.describe('混合式互動新手教學', () => {
     await page.locator('[data-tutorial-choice="guided"]').click();
     await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Game');
     await expect(page.locator('.guided-tutorial-overlay')).toBeVisible();
+    const focusCue = await page.evaluate(() => {
+      const joy = document.querySelector<HTMLElement>('#joy-zone');
+      return {
+        focused: joy?.classList.contains('learning-focus') ?? false,
+        ringAnimation: joy ? getComputedStyle(joy, '::after').animationName : '',
+      };
+    });
+    expect(focusCue.focused).toBe(true);
+    expect(focusCue.ringAnimation).toBe('learning-focus-ring');
 
     const before = await page.evaluate(() => window.__sp.probe());
     await page.keyboard.down('ArrowRight');
@@ -223,7 +231,7 @@ test.describe('混合式互動新手教學', () => {
     await expect(page.getByRole('button', { name: '下一步' })).toBeVisible({ timeout: 5000 });
     await page.getByRole('button', { name: '下一步' }).focus();
     await page.keyboard.press('Enter');
-    await expect(page.getByRole('heading', { name: '跳起來' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '跳一下就好' })).toBeVisible();
   });
 
   test('Shelly 暈眩窗過期後，第一次下砸仍能完成實作', async ({ page }) => {
@@ -262,7 +270,7 @@ test.describe('混合式互動新手教學', () => {
     await page.keyboard.up('X');
     await finishStep();
 
-    await expect(page.getByRole('heading', { name: '對 Shelly 下砸' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '遇到 Shelly 就下砸' })).toBeVisible();
     await expect
       .poll(
         () =>
@@ -303,7 +311,7 @@ test.describe('混合式互動新手教學', () => {
     await page.keyboard.up('Z');
     await page.keyboard.up('ArrowDown');
     await finishStep();
-    await expect(page.getByRole('heading', { name: '真正變身' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '三顆同味可以變身' })).toBeVisible();
   });
 
   test('教學中重新開始仍保留教學模式', async ({ page }) => {
@@ -317,7 +325,7 @@ test.describe('混合式互動新手教學', () => {
       isPrimary: true,
     });
     await expect(page.locator('.guided-tutorial-overlay')).toBeVisible();
-    await expect(page.getByRole('heading', { name: '先熟悉移動' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '往前走走看' })).toBeVisible();
 
     await page.locator('[data-menu="pause"]').dispatchEvent('pointerdown', {
       pointerId: 21,
@@ -329,7 +337,7 @@ test.describe('混合式互動新手教學', () => {
     });
 
     await expect(page.locator('.guided-tutorial-overlay')).toBeVisible();
-    await expect(page.getByRole('heading', { name: '先熟悉移動' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '往前走走看' })).toBeVisible();
   });
 
   test('離開教學後下次直接開始，仍可從設定重播', async ({ page }) => {
@@ -377,6 +385,41 @@ test.describe('混合式互動新手教學', () => {
     });
     await expect(page.locator('.guided-tutorial-overlay')).toBeVisible();
     await expect(page.locator('.guided-tutorial-art')).toBeVisible();
+
+    const coachmarkMetrics = await page.evaluate(() => {
+      const layer = document.querySelector<HTMLElement>('.guided-tutorial-overlay');
+      const card = document.querySelector<HTMLElement>('.guided-tutorial-card');
+      const cardRect = card?.getBoundingClientRect();
+      const targets = [
+        '#joy-zone',
+        '[data-btn="a"]',
+        '[data-btn="b"]',
+        '[data-btn="tf"]',
+        '[data-btn="sp"]',
+      ];
+      const intersects = (
+        left: number,
+        top: number,
+        right: number,
+        bottom: number,
+        target: DOMRect,
+      ) => left < target.right && right > target.left && top < target.bottom && bottom > target.top;
+      return {
+        layerPointerEvents: layer ? getComputedStyle(layer).pointerEvents : null,
+        cardPointerEvents: card ? getComputedStyle(card).pointerEvents : null,
+        overlaps: cardRect
+          ? targets.some((selector) => {
+              const rect = document.querySelector<HTMLElement>(selector)?.getBoundingClientRect();
+              return rect
+                ? intersects(cardRect.left, cardRect.top, cardRect.right, cardRect.bottom, rect)
+                : false;
+            })
+          : true,
+      };
+    });
+    expect(coachmarkMetrics.layerPointerEvents).toBe('none');
+    expect(coachmarkMetrics.cardPointerEvents).toBe('auto');
+    expect(coachmarkMetrics.overlaps).toBe(false);
 
     // 直持旋轉殼的指標座標必須使用裝置座標：ccw 下滑動軸對應遊戲左右；橫持則直接左右。
     const { before, afterFirst, afterSecond } = await completeTouchMove(page, 3);

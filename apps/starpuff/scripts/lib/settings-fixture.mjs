@@ -4,7 +4,7 @@
 // 例外：專測 migration 的腳本（v16-legacy-qa/v16-d1、v14-e 場景一）仍以 legacy 鍵作輸入。
 
 export const SETTINGS_KEY = 'sp-settings';
-export const SETTINGS_SCHEMA_VERSION = 1;
+export const SETTINGS_SCHEMA_VERSION = 2;
 
 // 前置偏好 JSON：parseSettings 要求 schemaVersion 完全相符，其餘欄位缺席回預設。
 export function settingsFixture(patch) {

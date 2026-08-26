@@ -38,7 +38,7 @@ async function waitForTitle(page: Page): Promise<void> {
 }
 
 test.describe('手機 viewport-level 提示與設定截圖回歸', () => {
-  test('橫式：PWA、操作提示、暫停、設定、按鈕配置都不被遮蔽', async ({ page, viewport }) => {
+  test('橫式：PWA、小天使提示、暫停、設定、按鈕配置都不被遮蔽', async ({ page, viewport }) => {
     test.skip(
       !viewport || viewport.height >= viewport.width || viewport.width >= 1024,
       '需要手機橫式 project',
@@ -70,18 +70,36 @@ test.describe('手機 viewport-level 提示與設定截圖回歸', () => {
     });
     await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Game');
 
-    const controlHints = page.locator('[data-control-hints="card"]');
-    await expect(controlHints).toBeVisible();
-    await expect(controlHints).toHaveAttribute('aria-modal', 'true');
-    await expectInsideViewport(controlHints, viewport!);
-    await expect(controlHints.locator('[data-control-hint="item"]')).toHaveCount(6);
-    for (const item of await controlHints.locator('[data-control-hint="item"]').all()) {
-      await expectInsideViewport(item, viewport!);
-    }
-    await expectInsideViewport(controlHints.locator('[data-control-hints="close"]'), viewport!);
-    await controlHints.screenshot({ path: `${SCREENSHOT_DIR}/control-hints-card.png` });
-    await screenshot(page, 'landscape-control-hints');
-    await controlHints.locator('[data-control-hints="close"]').dispatchEvent('pointerdown', {
+    const angelCard = page.locator('.guidance-angel-card');
+    await expect(angelCard).toBeVisible({ timeout: 8000 });
+    await expect(angelCard).not.toHaveAttribute('aria-modal', 'true');
+    await expectInsideViewport(angelCard, viewport!);
+    await expectInsideViewport(angelCard.locator('[data-guidance="dismiss"]'), viewport!);
+    const angelOverlapsGameplayControl = await page.evaluate(() => {
+      const card = document.querySelector<HTMLElement>('.guidance-angel-card');
+      const cardRect = card?.getBoundingClientRect();
+      if (!cardRect) return true;
+      const targets = [
+        '#joy-zone',
+        '[data-btn="a"]',
+        '[data-btn="b"]',
+        '[data-btn="tf"]',
+        '[data-btn="sp"]',
+      ];
+      return targets.some((selector) => {
+        const rect = document.querySelector<HTMLElement>(selector)?.getBoundingClientRect();
+        return rect
+          ? cardRect.left < rect.right &&
+              cardRect.right > rect.left &&
+              cardRect.top < rect.bottom &&
+              cardRect.bottom > rect.top
+          : false;
+      });
+    });
+    expect(angelOverlapsGameplayControl).toBe(false);
+    await angelCard.screenshot({ path: `${SCREENSHOT_DIR}/guidance-angel-card.png` });
+    await screenshot(page, 'landscape-guidance-angel');
+    await angelCard.locator('[data-guidance="dismiss"]').dispatchEvent('pointerdown', {
       pointerId: 3,
       isPrimary: true,
     });
@@ -130,7 +148,7 @@ test.describe('手機 viewport-level 提示與設定截圖回歸', () => {
     expect(errors).toEqual([]);
   });
 
-  test('橫式：回訪方向更新提示卡完整可見', async ({ page, viewport }) => {
+  test('橫式：回訪不顯示重複方向提示', async ({ page, viewport }) => {
     test.skip(
       !viewport || viewport.height >= viewport.width || viewport.width >= 1024,
       '需要手機橫式 project',
@@ -154,20 +172,8 @@ test.describe('手機 viewport-level 提示與設定截圖回歸', () => {
     await page.goto('/');
     await waitForTitle(page);
 
-    const rotationCard = page.locator('.install-card', { hasText: '直持方向更新了' });
-    await expect(rotationCard).toBeVisible({ timeout: 7000 });
-    await expectInsideViewport(rotationCard, viewport!);
-    for (const button of await rotationCard.locator('button').all()) {
-      await expectInsideViewport(button, viewport!);
-    }
-    await rotationCard.screenshot({ path: `${SCREENSHOT_DIR}/rotation-notice-card.png` });
-    await screenshot(page, 'landscape-rotation-notice');
-    await rotationCard.getByRole('button', { name: '使用新方向' }).dispatchEvent('pointerdown', {
-      pointerId: 8,
-      isPrimary: true,
-    });
-    await expect(rotationCard).toHaveCount(0);
-    expect(await page.evaluate(() => localStorage.getItem('sp-rotation-notice'))).toBe('1');
+    await expect(page.locator('.orientation-coachmark')).toHaveCount(0);
+    await expect(page.locator('.install-card', { hasText: '直持方向更新了' })).toHaveCount(0);
     expect(errors).toEqual([]);
   });
 
@@ -214,13 +220,16 @@ test.describe('手機 viewport-level 提示與設定截圖回歸', () => {
       localStorage.setItem(
         'sp-settings',
         JSON.stringify({
-          schemaVersion: 1,
+          schemaVersion: 2,
           audioMuted: false,
           hapticsEnabled: true,
           wakeLockEnabled: true,
           reducedMotion: false,
           controlHintsEnabled: true,
           controlHintsPlayCount: 0,
+          guidedTutorialStatus: 'skipped',
+          guidanceEnabled: true,
+          guidanceCompletedLessons: [],
           screenShake: 'full',
           shellRotation: null,
           keyLayout: null,
@@ -272,13 +281,20 @@ test.describe('手機 viewport-level 提示與設定截圖回歸', () => {
     await page.goto('/');
     await waitForTitle(page);
 
-    const orientationCard = page.locator('.install-card', { hasText: '橫持遊玩體驗更佳' });
+    const orientationCard = page.locator('.orientation-coachmark');
     await expect(orientationCard).toBeVisible({ timeout: 7000 });
     await expectInsideViewport(orientationCard, viewport!);
     await expect(orientationCard).toHaveCSS('transform', 'none');
+    await expect(page.locator('.orientation-coachmark-layer')).toHaveCSS('pointer-events', 'none');
+    await expect(orientationCard).toHaveCSS('pointer-events', 'auto');
+    await expect(orientationCard).not.toHaveAttribute('aria-modal', 'true');
+    await expect(orientationCard).toContainText('轉 90°');
+    const orientationAnimation = page.locator('[data-orientation-animation="rotate-phone"]');
+    await expect(orientationAnimation).toBeVisible();
+    await expect(orientationAnimation).toHaveCSS('animation-name', 'orientation-phone-rotate');
     await orientationCard.screenshot({ path: `${SCREENSHOT_DIR}/portrait-orientation.png` });
     await screenshot(page, 'portrait-orientation');
-    await orientationCard.getByRole('button', { name: '知道了' }).dispatchEvent('pointerdown', {
+    await orientationCard.locator('[data-orientation-action]').dispatchEvent('pointerdown', {
       pointerId: 7,
       isPrimary: true,
     });
@@ -288,12 +304,12 @@ test.describe('手機 viewport-level 提示與設定截圖回歸', () => {
 
     await page.reload();
     await waitForTitle(page);
-    await expect(page.locator('.install-card', { hasText: '橫持遊玩體驗更佳' })).toBeVisible({
+    await expect(page.locator('.orientation-coachmark')).toBeVisible({
       timeout: 7000,
     });
 
     await page.setViewportSize({ width: 844, height: 390 });
-    await expect(page.locator('.install-card', { hasText: '橫持遊玩體驗更佳' })).toHaveCount(0);
+    await expect(page.locator('.orientation-coachmark')).toHaveCount(0);
     expect(await page.evaluate(() => localStorage.getItem('sp-orientation-landscape-seen'))).toBe(
       '1',
     );
