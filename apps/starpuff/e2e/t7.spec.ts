@@ -338,7 +338,7 @@ test('設定 migration（卡 4）：legacy 散鍵一次性吸收入 sp-settings 
   const stored = JSON.parse(
     await page.evaluate(() => localStorage.getItem('sp-settings') ?? '{}'),
   ) as Record<string, unknown>;
-  expect(stored).toMatchObject({ schemaVersion: 1, audioMuted: true, shellRotation: 'cw' });
+  expect(stored).toMatchObject({ schemaVersion: 2, audioMuted: true, shellRotation: 'cw' });
   // 單真相（審查 Should-fix）：升版落盤成功即刪 legacy，避免主鍵遺失時吸回過期偏好。
   expect(await page.evaluate(() => localStorage.getItem('sp-muted'))).toBeNull();
   expect(await page.evaluate(() => localStorage.getItem('sp-rotation'))).toBeNull();

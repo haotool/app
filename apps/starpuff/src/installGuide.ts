@@ -2,7 +2,12 @@
 // （platform／in-app browser／standalone），以純 TS＋DOM overlay 落地於 PWA 外殼層
 // （與 pwa.ts 同層，不進 Phaser Scene）。純偵測函式供 vitest node 環境驗證。
 
-import { showShellCard, whenShellIdle, type ShellCardButton } from './shellCards';
+import {
+  showShellCard,
+  whenShellIdle,
+  type ShellCardButton,
+  type ShellCardOptions,
+} from './shellCards';
 import { PWA_INSTALL_ILLUSTRATION_URL } from './onboardingAssets';
 
 export type PwaInstallPlatform = 'ios' | 'android' | 'desktop' | 'unknown';
@@ -34,18 +39,20 @@ export interface PwaInstallEnvironment {
 }
 
 // Messenger 須先於 facebook：其 UA 含 FBAN/FB_IAB，否則被 facebook 規則搶先命中。
-// Threads 2024+ 內建瀏覽器 UA 使用內部代號 Barcelona（非 Threads 字串）。
-const IN_APP_BROWSER_PATTERNS: [InAppBrowserKind, RegExp][] = [
-  ['threads', /\b(Threads|Barcelona)\b/i],
+// Threads 2024+ 內建瀏覽器常以 Threads 或內部代號 Barcelona 出現在 UA；只接受
+// token 邊界，避免把一般頁面字串誤當成 Threads。LINE 則要求正式 Line/<version>
+// token（Android 另允許 /IAB 後綴）；平台識別集中在這張表，文案與 UI 不得另寫第二份 UA 判斷。
+const IN_APP_BROWSER_PATTERNS: readonly [InAppBrowserKind, RegExp][] = [
+  ['threads', /(?:^|[\s;(])(?:Threads(?:App)?|Barcelona)(?:[/\s;)]|$)/i],
   ['messenger', /MessengerForiOS|FB_IAB\/MESSENGER|FB_IAB\/Orca|Orca-Android/i],
   ['instagram', /\bInstagram\b/i],
   ['facebook', /\b(FBAN|FBAV|FBIOS|FB_IAB|FB4A)\b/i],
-  ['line', /\bLine\//i],
+  ['line', /(?:^|[\s;(])Line\/[\d.]+(?:\/IAB)?(?:[\s;)]|$)/i],
   ['tiktok', /\b(TikTok|BytedanceWebview|musical_ly_[\d.]+|trill_[\d.]+)/i],
   ['x', /\b(Twitter|X-WebView)\b/i],
 ];
 
-function detectInAppBrowser(userAgent: string): InAppBrowserKind | null {
+export function detectInAppBrowser(userAgent: string): InAppBrowserKind | null {
   for (const [kind, pattern] of IN_APP_BROWSER_PATTERNS) {
     if (pattern.test(userAgent)) return kind;
   }
@@ -102,31 +109,57 @@ export function readPwaInstallEnvironmentFromBrowser(): PwaInstallEnvironment {
   });
 }
 
-// 指引文案（繁中、禁 emoji）：依環境分支——in-app 引導外開、iOS 分享加入主畫面、
-// Android 選單安裝（有 beforeinstallprompt 時另給原生安裝鈕）。
+// 指引文案（繁中、禁 emoji）：依環境分支——內建瀏覽器先外開、iOS 分享加入主畫面、
+// Android 選單安裝（有 beforeinstallprompt 時另給原生安裝鈕）。LINE／Threads
+// 必須分開描述，因為兩個 App 的入口位置與使用者看到的選單都不同。
+export type InstallGuideVariant = 'pwa-install' | 'embedded-browser';
+
 export interface InstallGuideCopy {
+  variant: InstallGuideVariant;
   title: string;
   description: string;
   steps: string[];
 }
 
 export function getInstallGuideCopy(environment: PwaInstallEnvironment): InstallGuideCopy {
+  if (environment.inAppBrowser === 'line') {
+    return {
+      variant: 'embedded-browser',
+      title: 'LINE 內建瀏覽器',
+      description: '改用 Safari 或 Chrome，橫向遊玩與雙指操作會更順。',
+      steps: ['點右下角「…」', '點「在瀏覽器中開啟」', '回到瀏覽器，再開始遊戲'],
+    };
+  }
+  if (environment.inAppBrowser === 'threads') {
+    return {
+      variant: 'embedded-browser',
+      title: 'Threads 內建瀏覽器',
+      description: '改用 Safari 或 Chrome，橫向遊玩與雙指操作會更順。',
+      steps: [
+        '開啟 Threads 內建瀏覽器的「…」選單',
+        '點「在瀏覽器中開啟」',
+        '回到瀏覽器，再開始遊戲',
+      ],
+    };
+  }
   if (environment.inAppBrowser) {
     return {
+      variant: 'embedded-browser',
       title: '請用外部瀏覽器開啟',
-      description:
-        'Threads、LINE 等內建瀏覽器無法安裝遊戲。請點右上角選單，選「以瀏覽器開啟」後再安裝。',
-      steps: ['點右上角選單', '以瀏覽器（Safari／Chrome）開啟', '回到本頁安裝星噗噗'],
+      description: '目前的 App 內建瀏覽器可能限制全螢幕與多指操作，建議改用 Safari 或 Chrome。',
+      steps: ['開啟目前 App 的「…」選單', '點「在瀏覽器中開啟」', '回到瀏覽器，再開始遊戲'],
     };
   }
   if (environment.platform === 'android') {
     return {
+      variant: 'pwa-install',
       title: '把星噗噗裝進手機',
       description: '安裝後全螢幕遊玩、離線也能玩，從主畫面一點即開。',
       steps: ['點瀏覽器右上角選單', '選「安裝應用程式」', '完成後從主畫面開啟'],
     };
   }
   return {
+    variant: 'pwa-install',
     title: '把星噗噗加到主畫面',
     description: '加入後全螢幕遊玩、離線也能玩，從主畫面一點即開。',
     steps: ['點 Safari 的分享按鈕', '往下找「加入主畫面」', '點右上角「加入」'],
@@ -162,11 +195,21 @@ const SHOW_DELAY_MS = 2500;
 // 掛載安裝指引（殼內卡片，隨旋轉殼轉向）：已安裝／已忽略／不支援平台不打擾；
 // 首次到站延遲 2.5 秒且僅在殼層安靜時刻顯示（遊戲進行中／配置中／暫停選單開啟時
 // 延後，杜絕戰鬥彈窗——審查 B1），關閉即記憶永不再主動出現。
-export function initInstallGuide(): void {
+export function initInstallGuide(
+  onEmbeddedBrowserGuideClosed?: (confirmedInSession?: boolean) => void,
+): void {
   const environment = readPwaInstallEnvironmentFromBrowser();
   if (!environment.shouldShowGuide || hasDismissedInstallGuide()) return;
 
   let closeCard: (() => void) | null = null;
+  let confirmedInSession = false;
+
+  const confirmGuide = (): void => {
+    // localStorage 可能因私密瀏覽或權限策略拒絕寫入；本次明確操作仍算完成，
+    // 避免卡片在同一工作階段反覆重排。重新載入後因無法持久化，會再次提供指引。
+    confirmedInSession = true;
+    rememberDismissedInstallGuide();
+  };
 
   // beforeinstallprompt 於 load 早期發射：先攔截保存，卡片建立時再取用。
   let deferredPrompt: BeforeInstallPromptEvent | null = null;
@@ -180,43 +223,66 @@ export function initInstallGuide(): void {
     closeCard = null;
   });
 
-  whenShellIdle(() => {
-    const copy = getInstallGuideCopy(environment);
-    const buttons: ShellCardButton[] = [];
-    // Android 原生安裝：beforeinstallprompt 可用時給一鍵安裝，成功即收卡。
-    if (deferredPrompt && environment.platform === 'android' && !environment.inAppBrowser) {
-      const prompt = deferredPrompt;
+  const scheduleGuide = (): void => {
+    if (hasDismissedInstallGuide()) return;
+
+    whenShellIdle(() => {
+      const copy = getInstallGuideCopy(environment);
+      const buttons: ShellCardButton[] = [];
+      // Android 原生安裝：beforeinstallprompt 可用時給一鍵安裝，成功即收卡。
+      if (deferredPrompt && environment.platform === 'android' && !environment.inAppBrowser) {
+        const prompt = deferredPrompt;
+        buttons.push({
+          label: '立即安裝',
+          primary: true,
+          onPress: (close) => {
+            void (async () => {
+              await prompt.prompt();
+              const choice = await prompt.userChoice;
+              if (choice.outcome === 'accepted') {
+                confirmGuide();
+                close();
+              }
+            })();
+          },
+        });
+      }
       buttons.push({
-        label: '立即安裝',
-        primary: true,
+        label: '知道了',
         onPress: (close) => {
-          void (async () => {
-            await prompt.prompt();
-            const choice = await prompt.userChoice;
-            if (choice.outcome === 'accepted') {
-              rememberDismissedInstallGuide();
-              close();
-            }
-          })();
+          confirmGuide();
+          close();
         },
       });
-    }
-    buttons.push({
-      label: '知道了',
-      onPress: (close) => {
-        rememberDismissedInstallGuide();
-        close();
-      },
-    });
-    closeCard = showShellCard({
-      title: copy.title,
-      description: copy.description,
-      illustration: {
-        src: PWA_INSTALL_ILLUSTRATION_URL,
-        alt: '噗噗示範在手機瀏覽器加入主畫面',
-      },
-      steps: copy.steps,
-      buttons,
-    });
-  }, SHOW_DELAY_MS);
+      const cardOptions: ShellCardOptions = {
+        variant: copy.variant,
+        title: copy.title,
+        description: copy.description,
+        steps: copy.steps,
+        buttons,
+      };
+      // 內建瀏覽器只需要外開步驟；不顯示「加入主畫面」插圖，避免把安裝動作
+      // 誤認成 LINE／Threads 的外開入口，也避開大手勢圖在小視窗造成額外遮擋。
+      if (copy.variant === 'pwa-install') {
+        cardOptions.illustration = {
+          src: PWA_INSTALL_ILLUSTRATION_URL,
+          alt: '噗噗示範在手機瀏覽器加入主畫面',
+        };
+      }
+      closeCard = showShellCard(cardOptions, () => {
+        closeCard = null;
+        if (environment.inAppBrowser === null) return;
+        if (confirmedInSession || hasDismissedInstallGuide()) {
+          // 外開卡完成「知道了」後，讓方向引導在同一個工作階段接續。
+          onEmbeddedBrowserGuideClosed?.(true);
+          return;
+        }
+        // 開始遊戲自動收卡或 Escape 關卡都不是明確略過；回到 Title 後重新排程
+        // 外開提示，避免 one-shot 的 whenShellIdle 讓 LINE／Threads 永久失去指引。
+        scheduleGuide();
+      });
+    }, SHOW_DELAY_MS);
+  };
+
+  scheduleGuide();
 }

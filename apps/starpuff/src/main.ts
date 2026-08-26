@@ -37,7 +37,7 @@ applyDesktopModeClass();
 // 方向解鎖引導＋桌機鍵位卡（#817）：直持與回訪方向說明統一為同一個 coachmark。
 initOrientationGuide();
 // PWA 安裝指引（§90）：已安裝／已忽略／不支援平台不打擾；viewport-level overlay 不進 Phaser Scene。
-initInstallGuide();
+initInstallGuide(initOrientationGuide);
 // 螢幕常亮（§91）：遊戲進行中取得、離開釋放；不支援或被拒靜默降級。
 initWakeLock();
 // 設定損毀恢復提示（審查 nit）：偏好已盡力自 legacy/預設恢復並回寫修復，

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getInstallGuideCopy, getPwaInstallEnvironment } from './installGuide';
+import { detectInAppBrowser, getInstallGuideCopy, getPwaInstallEnvironment } from './installGuide';
 
 // 偵測矩陣仿 RateWise pwaInstallGuide 測試（§90）：平台分支、in-app browser、standalone。
 describe('getPwaInstallEnvironment（§90 PWA 安裝偵測矩陣）', () => {
@@ -140,6 +140,15 @@ describe('getPwaInstallEnvironment（§90 PWA 安裝偵測矩陣）', () => {
     expect(environment.shouldShowGuide).toBe(true);
   });
 
+  it('Android LINE 的 /IAB 後綴仍命中 line，且不放寬到相鄰 token', () => {
+    expect(
+      detectInAppBrowser(
+        'Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 Chrome/142.0.0.0 Mobile Line/14.0.0/IAB',
+      ),
+    ).toBe('line');
+    expect(detectInAppBrowser('Mozilla/5.0 Mobile Line/14.0.0/IABX')).toBeNull();
+  });
+
   it('display-mode standalone（已安裝）不再打擾', () => {
     const environment = getPwaInstallEnvironment({
       userAgent:
@@ -168,7 +177,21 @@ describe('getPwaInstallEnvironment（§90 PWA 安裝偵測矩陣）', () => {
 describe('getInstallGuideCopy（§90 分平台文案）', () => {
   const base = { maxTouchPoints: 5 };
 
-  it('in-app browser 優先引導外開', () => {
+  it('LINE 使用右下角選單的外開步驟，且不混入 Threads 文案', () => {
+    const copy = getInstallGuideCopy(
+      getPwaInstallEnvironment({
+        ...base,
+        userAgent: 'Mozilla/5.0 (iPhone) AppleWebKit Mobile Line/14.0.0',
+        platform: 'iPhone',
+      }),
+    );
+    expect(copy.variant).toBe('embedded-browser');
+    expect(copy.title).toContain('LINE');
+    expect(copy.steps).toEqual(['點右下角「…」', '點「在瀏覽器中開啟」', '回到瀏覽器，再開始遊戲']);
+    expect(copy.steps.join('')).not.toContain('Threads');
+  });
+
+  it('Threads 使用自己的外開步驟，且不混入 LINE 位置', () => {
     const copy = getInstallGuideCopy(
       getPwaInstallEnvironment({
         ...base,
@@ -176,8 +199,17 @@ describe('getInstallGuideCopy（§90 分平台文案）', () => {
         platform: 'iPhone',
       }),
     );
-    expect(copy.title).toContain('外部瀏覽器');
-    expect(copy.steps.length).toBeGreaterThanOrEqual(3);
+    expect(copy.variant).toBe('embedded-browser');
+    expect(copy.title).toContain('Threads');
+    expect(copy.steps[0]).toContain('Threads');
+    expect(copy.steps[0]).not.toContain('右下角');
+    expect(copy.steps[1]).toBe('點「在瀏覽器中開啟」');
+  });
+
+  it('內建瀏覽器 token 只在邊界命中，避免猜錯平台', () => {
+    expect(detectInAppBrowser('Mozilla/5.0 BarcelonaX/1.0 Safari/604.1')).toBeNull();
+    expect(detectInAppBrowser('Mozilla/5.0 Line/14.0.0 Mobile Safari/604.1')).toBe('line');
+    expect(detectInAppBrowser('Mozilla/5.0 ThreadsApp/337.0 Mobile Safari/604.1')).toBe('threads');
   });
 
   it('iOS 給分享加入主畫面步驟', () => {
@@ -188,6 +220,7 @@ describe('getInstallGuideCopy（§90 分平台文案）', () => {
         platform: 'iPhone',
       }),
     );
+    expect(copy.variant).toBe('pwa-install');
     expect(copy.steps.join('')).toContain('加入主畫面');
   });
 
@@ -199,6 +232,7 @@ describe('getInstallGuideCopy（§90 分平台文案）', () => {
         platform: 'Linux armv8l',
       }),
     );
+    expect(copy.variant).toBe('pwa-install');
     expect(copy.steps.join('')).toContain('安裝應用程式');
   });
 });

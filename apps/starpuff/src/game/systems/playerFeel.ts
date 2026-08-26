@@ -1,5 +1,7 @@
 import type Phaser from 'phaser';
 import { PLAYER } from '../core/config';
+import { getLearningSpec } from '../core/learning';
+import { isHybridKeyboardEnvironment } from '../core/rotation';
 import { playSfx, stopSfx } from '../audio/sfx';
 import type { ControlsSystem } from './controls';
 import type { FxSystem } from './fx';
@@ -96,7 +98,20 @@ export function createPlayerFeel(groundTop: number, hooks: PlayerFeelHooks): Pla
       playSfx('inhale');
       if (!taughtInhaleHold) {
         taughtInhaleHold = true;
-        hooks.toasts().flavor('長按 B／X 可連續吸入；A／Z 也能同時按');
+        const touchTip = getLearningSpec('inhale').copy.tip ?? '食指長按珊瑚粉星形鈕可連吞。';
+        const desktop =
+          typeof document !== 'undefined' &&
+          document.documentElement.classList.contains('sp-desktop');
+        const hybridKeyboard = !desktop && isHybridKeyboardEnvironment();
+        hooks
+          .toasts()
+          .flavor(
+            desktop
+              ? '長按 X 可連吞；Z 可同時跳躍'
+              : hybridKeyboard
+                ? `可長按 X 連吞；觸控時${touchTip}`
+                : touchTip,
+          );
       }
     } else if (!inhaling && wasInhaling) {
       hooks.fx().stopInhale();

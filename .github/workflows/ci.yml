@@ -3,18 +3,22 @@ name: CI
 # 完整核心 CI Pipeline
 # 功能: lint / format / typecheck / test / build / security / e2e
 #
-# 更新時間: 2026-06-26
-# 依據: [CLAUDE.md:CI/CD 品質門檻][Playwright CI docs][GitHub Actions Best Practices 2025]
+# 更新時間: 2026-08-27
+# 依據: [CLAUDE.md:CI/CD 品質門檻][Playwright CI docs][GitHub Actions concurrency/cache]
 
 on:
   push:
     branches: [main]
   pull_request:
+  schedule:
+    # 每日台北時間 02:17 由 default branch 的最新版本跑完整 E2E。
+    - cron: '17 18 * * *'
   workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: false
+  # PR 只保留最新 head；main、nightly 與手動 release dispatch 保留完整訊號。
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -173,6 +177,8 @@ jobs:
     outputs:
       e2e: ${{ steps.filter.outputs.e2e }}
       apps: ${{ steps.select-apps.outputs.apps }}
+      non_starpuff_apps: ${{ steps.select-apps.outputs.non_starpuff_apps }}
+      starpuff: ${{ steps.app-filter.outputs.starpuff }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -188,7 +194,6 @@ jobs:
               - 'apps/shared/**'
               - 'pnpm-lock.yaml'
               - 'package.json'
-              - '.github/workflows/ci.yml'
               - '.github/actions/setup-playwright/**'
 
       # 非 ratewise app 的 e2e 閘門（#918）：starpuff／park-keeper／papertrade／split-meow
@@ -202,25 +207,21 @@ jobs:
             starpuff:
               - 'apps/starpuff/**'
               - 'pnpm-lock.yaml'
-              - '.github/workflows/ci.yml'
             park-keeper:
               - 'apps/park-keeper/**'
               - 'apps/shared/**'
               - 'pnpm-lock.yaml'
-              - '.github/workflows/ci.yml'
             papertrade:
               - 'apps/papertrade/**'
               - 'apps/shared/**'
               - 'pnpm-lock.yaml'
-              - '.github/workflows/ci.yml'
             split-meow:
               - 'apps/split-meow/**'
               - 'apps/shared/**'
               - 'pnpm-lock.yaml'
-              - '.github/workflows/ci.yml'
 
-      # main push／workflow_dispatch 一律全跑：PR 階段的路徑限縮是速度取捨，
-      # 但主幹不得留下「兩者皆無」的缺口（#918 驗收標準）。
+      # main／nightly／workflow_dispatch 一律全跑；PR 只選受影響 app。
+      # 非 ratewise app 的 PR 後續只進 smoke，主幹再跑完整套件。
       - name: Select apps to run
         id: select-apps
         run: |
@@ -229,17 +230,159 @@ jobs:
           else
             apps='["starpuff","park-keeper","papertrade","split-meow"]'
           fi
+          non_starpuff_apps=$(echo "${apps}" | jq -c '[.[] | select(. != "starpuff")]')
           echo "apps=${apps}" >> "$GITHUB_OUTPUT"
+          echo "non_starpuff_apps=${non_starpuff_apps}" >> "$GITHUB_OUTPUT"
           echo "選定 E2E app：${apps}"
+          echo "非 StarPuff app：${non_starpuff_apps}"
 
-  # 非 ratewise app 的 E2E（#918）：各 app 的 playwright.config 自帶 webServer，
-  # job 只需裝瀏覽器後執行；單一 app 失敗不取消其他 app，便於精準重跑。
+  # StarPuff PR smoke 是穩定的 required check 名稱；只有 StarPuff 受影響時執行。
+  # 它不依賴 quality，讓受影響 PR 一定產生真正的 success/failure check；無關 PR 才 skipped。
+  # 兩個 project 都只用 Chromium：Desktop + Mobile landscape，完整 portrait 留給主幹。
+  e2e-starpuff-smoke:
+    name: E2E starpuff
+    needs: [e2e-filter]
+    if: |
+      github.event_name == 'pull_request' &&
+      needs.e2e-filter.outputs.starpuff == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+        with:
+          version: 9.10.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup Playwright Chromium
+        uses: ./.github/actions/setup-playwright
+        with:
+          app-filter: '@app/starpuff'
+          browsers: chromium
+
+      - name: Run StarPuff Desktop + Mobile landscape smoke
+        env:
+          CI: true
+        run: |
+          pnpm --filter '@app/starpuff' exec playwright test e2e/pr-smoke.spec.ts \
+            --project='Mobile Chrome' \
+            --project='Desktop Chrome' \
+            --reporter=github,list
+
+      - name: Upload StarPuff smoke results
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2e-report-starpuff-smoke
+          path: |
+            apps/starpuff/playwright-report
+            apps/starpuff/test-results
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # 其他受影響 app 的 PR 也只跑核心 smoke；各 app 沿用自己的可用 project。
+  # StarPuff 使用上方固定 check，避免 matrix job 名稱漂移影響 required check。
+  e2e-app-smoke:
+    name: E2E smoke (${{ matrix.app }})
+    needs: [e2e-filter]
+    if: |
+      github.event_name == 'pull_request' &&
+      needs.e2e-filter.outputs.non_starpuff_apps != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        app: ${{ fromJSON(needs.e2e-filter.outputs.non_starpuff_apps) }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+        with:
+          version: 9.10.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # PR smoke 只安裝實際會使用的 Chromium；完整 main/nightly 仍由 app job 補齊 WebKit。
+      - name: Setup Playwright Chromium
+        uses: ./.github/actions/setup-playwright
+        with:
+          app-filter: '@app/${{ matrix.app }}'
+          browsers: chromium
+
+      - name: Run affected app smoke
+        env:
+          CI: true
+        run: |
+          case "${{ matrix.app }}" in
+            park-keeper)
+              pnpm --filter '@app/park-keeper' exec playwright test e2e/home.spec.ts \
+                --project=mobile-iphone \
+                --project=chromium-desktop \
+                --reporter=github,list
+              ;;
+            papertrade)
+              pnpm --filter '@app/papertrade' exec playwright test e2e/smoke.spec.ts \
+                --project=mobile-chrome \
+                --reporter=github,list
+              ;;
+            split-meow)
+              pnpm --filter '@app/split-meow' exec playwright test e2e/split-flow.spec.ts \
+                --project=mobile-chrome \
+                --reporter=github,list
+              ;;
+            *)
+              echo "未知的 smoke app: ${{ matrix.app }}"
+              exit 1
+              ;;
+          esac
+
+      - name: Upload affected app smoke results
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2e-report-smoke-${{ matrix.app }}
+          path: |
+            apps/${{ matrix.app }}/playwright-report
+            apps/${{ matrix.app }}/test-results
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # 非 StarPuff app 的完整 E2E（#918）：只在 main／nightly／release dispatch 執行。
+  # PR 改走下方受影響 app smoke，避免每次迭代重跑整套 app。
   e2e-apps:
     name: E2E ${{ matrix.app }}
     needs: [quality, e2e-filter]
     if: |
       needs.quality.result == 'success' &&
-      needs.e2e-filter.outputs.apps != '[]'
+      github.event_name != 'pull_request' &&
+      needs.e2e-filter.outputs.non_starpuff_apps != '[]'
     runs-on: ubuntu-latest
     # starpuff 全套 136 案在 workers:1／fullyParallel:false 下本機實測約 16 min，
     # CI 較慢且 retries:2，連同安裝與 build 抓 45 min 與 e2e-full 對齊。
@@ -249,7 +392,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: ${{ fromJSON(needs.e2e-filter.outputs.apps) }}
+        app: ${{ fromJSON(needs.e2e-filter.outputs.non_starpuff_apps) }}
 
     steps:
       - name: Checkout code
@@ -341,7 +484,7 @@ jobs:
         run: |
           pnpm --filter @app/ratewise preview --host 0.0.0.0 --port 4173 --strictPort &
           echo $! > .preview-server.pid
-          for i in {1..15}; do
+          for _ in {1..15}; do
             if curl --silent --fail http://127.0.0.1:4173 > /dev/null; then
               exit 0
             fi
@@ -378,7 +521,7 @@ jobs:
           path: apps/ratewise/playwright-report
           retention-days: 7
 
-  # main / workflow_dispatch：完整 E2E，2-way sharding + blob merge。
+  # main／nightly／workflow_dispatch：RateWise 完整 E2E，2-way sharding + blob merge。
   e2e-full:
     name: E2E Full (${{ matrix.shard }}/2)
     needs: [quality, e2e-filter]
@@ -430,7 +573,7 @@ jobs:
         run: |
           pnpm --filter @app/ratewise preview --host 0.0.0.0 --port 4173 --strictPort &
           echo $! > .preview-server.pid
-          for i in {1..15}; do
+          for _ in {1..15}; do
             if curl --silent --fail http://127.0.0.1:4173 > /dev/null; then
               exit 0
             fi
@@ -517,6 +660,115 @@ jobs:
         if: needs.e2e-full.result != 'success'
         run: exit 1
 
+  # StarPuff 主幹完整套件：2 shards 同時保留 Desktop、Mobile landscape、Mobile portrait
+  # 與完整情境教學；PR 不跑這個 job，避免把互動迭代拖成全量回歸等待。
+  e2e-starpuff-full:
+    name: E2E starpuff full (${{ matrix.shard }}/2)
+    needs: [quality, e2e-filter]
+    if: |
+      needs.quality.result == 'success' &&
+      github.event_name != 'pull_request' &&
+      contains(fromJSON(needs.e2e-filter.outputs.apps), 'starpuff')
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+        with:
+          version: 9.10.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup Playwright Chromium
+        uses: ./.github/actions/setup-playwright
+        with:
+          app-filter: '@app/starpuff'
+          browsers: chromium
+
+      - name: Run StarPuff full E2E (shard ${{ matrix.shard }}/2)
+        env:
+          CI: true
+        run: |
+          pnpm --filter '@app/starpuff' exec playwright test \
+            --shard=${{ matrix.shard }}/2 \
+            --reporter=blob,github,list
+
+      - name: Upload StarPuff blob report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: starpuff-blob-report-${{ matrix.shard }}
+          path: apps/starpuff/blob-report
+          retention-days: 1
+          if-no-files-found: ignore
+
+  e2e-starpuff-merge-reports:
+    name: E2E starpuff merge reports
+    needs: e2e-starpuff-full
+    if: ${{ always() && !cancelled() && needs.e2e-starpuff-full.result != 'skipped' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+        with:
+          version: 9.10.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Download StarPuff blob reports
+        uses: actions/download-artifact@v8
+        with:
+          path: apps/starpuff/all-blob-reports
+          pattern: starpuff-blob-report-*
+          merge-multiple: true
+
+      - name: Merge StarPuff Playwright reports
+        run: pnpm --filter '@app/starpuff' exec playwright merge-reports --reporter html ./all-blob-reports
+
+      - name: Upload merged StarPuff HTML report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report-starpuff-merged
+          path: apps/starpuff/playwright-report
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Propagate StarPuff shard failures
+        if: needs.e2e-starpuff-full.result != 'success'
+        run: exit 1
+
   lighthouse-changes:
     name: Detect Lighthouse scope
     runs-on: ubuntu-latest
@@ -546,7 +798,7 @@ jobs:
           # 端點狀態，會把「PR 開啟後 main 前進」的變更也算成差異。本 repo 每日有匯差 PR
           # 寫入 apps/ratewise/src/config/generated/，實測 PR #1023（完全未碰 lighthouse
           # 相關路徑）因此誤觸發並實際執行了 Lighthouse CI。three-dot 只取 PR 自身的變更。
-          if git diff --name-only "$BASE...$HEAD" | grep -Eq '^(apps/ratewise/|scripts/lighthouse-|\.github/workflows/(ci|lighthouse-production)\.yml|\.lighthouserc\.cjs|package\.json$|pnpm-lock\.yaml$)'; then
+          if git diff --name-only "$BASE...$HEAD" | grep -Eq '^(apps/ratewise/|scripts/lighthouse-|\.github/workflows/lighthouse-production\.yml|\.lighthouserc\.cjs|package\.json$|pnpm-lock\.yaml$)'; then
             echo "lighthouse=true" >> "$GITHUB_OUTPUT"
           else
             echo "lighthouse=false" >> "$GITHUB_OUTPUT"

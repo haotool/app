@@ -2,10 +2,11 @@ import type { MechanicId } from '../logic/levels';
 import type { TransformForm } from './types';
 import {
   TUTORIAL_TOUCH_CONTINUOUS_INHALE_ILLUSTRATION_URL,
+  TUTORIAL_TOUCH_DUAL_INPUT_ILLUSTRATION_URL,
   TUTORIAL_TOUCH_HOLD_INHALE_ILLUSTRATION_URL,
-  TUTORIAL_TOUCH_INHALE_ILLUSTRATION_URL,
   TUTORIAL_TOUCH_JUMP_ILLUSTRATION_URL,
   TUTORIAL_TOUCH_MOVE_ILLUSTRATION_URL,
+  TUTORIAL_TOUCH_SHOOT_ILLUSTRATION_URL,
   TUTORIAL_TOUCH_SLAM_ILLUSTRATION_URL,
   TUTORIAL_TOUCH_TRANSFORM_ILLUSTRATION_URL,
 } from '../../onboardingAssets';
@@ -28,6 +29,18 @@ export type LearningLessonId =
   | MechanicId
   | `form-${TransformForm}`;
 
+/**
+ * 行動版只用外觀與手指位置命名控制，不要求玩家先記住 A/B 字母。
+ * token 的圖形與顏色由 learningCoachmark 共用渲染，必須和真正的虛擬鍵同步。
+ */
+export type TouchControlToken = 'joystick' | 'jump' | 'action' | 'transform' | 'starburst';
+
+/**
+ * Coachmark 的版面偏好由 lesson SSOT 決定，呈現層只負責依視窗與控制區避讓。
+ * safe-top 用於需要看清場景目標的步驟（例如下砸 Shelly、三顆星變身）。
+ */
+export type LearningCoachmarkPlacement = 'auto' | 'top' | 'safe-top' | 'bottom';
+
 export interface LearningCopy {
   title: string;
   touch: string;
@@ -35,7 +48,9 @@ export interface LearningCopy {
   success: string;
   image?: string;
   tip?: string;
+  touchControls?: readonly TouchControlToken[];
   focus: string;
+  coachmarkPlacement?: LearningCoachmarkPlacement;
 }
 
 export interface PracticeTipCopy {
@@ -43,6 +58,7 @@ export interface PracticeTipCopy {
   touch: string;
   desktop: string;
   image: string;
+  touchControls?: readonly TouchControlToken[];
 }
 
 export interface PracticeCopy {
@@ -50,6 +66,7 @@ export interface PracticeCopy {
   desktop: string;
   success: string;
   image: string;
+  touchControls?: readonly TouchControlToken[];
   tip?: PracticeTipCopy;
 }
 
@@ -94,58 +111,64 @@ export const LEARNING_LESSONS: Partial<Record<LearningLessonId, LearningLessonSp
     'move',
     {
       title: '往前走走看',
-      touch: '左手大拇指輕推左側搖桿；左右移動都試一次。',
+      touch: '左手拇指輕推左側圓形搖桿；左右移動都試一次。',
       desktop: '按住 ←、→，左右移動都試一次。',
       success: '走位學會了！',
       image: TUTORIAL_TOUCH_MOVE_ILLUSTRATION_URL,
+      touchControls: ['joystick'],
       focus: '#joy-zone',
     },
     {
-      touch: '左手大拇指拖曳左側搖桿，向左、向右各走一小段。',
+      touch: '左手拇指拖曳左側搖桿，向左、向右各走一小段。',
       desktop: '按住 ←、→，向左、向右各走一小段。',
       success: '走位學會了！',
       image: TUTORIAL_TOUCH_MOVE_ILLUSTRATION_URL,
+      touchControls: ['joystick'],
     },
   ),
   jump: lesson(
     'jump',
     {
       title: '跳一下就好',
-      touch: '右手大拇指輕按右下 A，真的離地一次。',
+      touch: '右手大拇指輕按右下的薄荷綠跳躍鈕（白色上箭頭），真的離地一次。',
       desktop: '按 Z，真的離地跳一次。',
       success: '跳躍成功！',
       image: TUTORIAL_TOUCH_JUMP_ILLUSTRATION_URL,
+      touchControls: ['jump'],
       focus: '[data-btn="a"]',
     },
     {
-      touch: '用右手大拇指按右下 A，真的離地跳一次。',
+      touch: '右手大拇指按薄荷綠跳躍鈕，真的離地一次。',
       desktop: '按 Z，真的離地跳一次。',
       success: '跳躍成功！',
       image: TUTORIAL_TOUCH_JUMP_ILLUSTRATION_URL,
+      touchControls: ['jump'],
     },
   ),
   inhale: lesson(
     'inhale',
     {
       title: '把星星吸進來',
-      touch: '右手食指長按右上 B，讓附近的星星靠近嘴巴。',
+      touch: '靠近星星後，右手食指長按右側上方的珊瑚粉星形鈕，先吸入一顆。',
       desktop: '長按 X，讓附近的星星靠近嘴巴。',
       success: '吸入成功！',
       image: TUTORIAL_TOUCH_HOLD_INHALE_ILLUSTRATION_URL,
-      tip: 'B 可以一直按著連吞；右手大拇指也能同時按 A，邊跳邊吸。',
+      touchControls: ['action'],
+      tip: '食指長按珊瑚粉星形鈕可連吞；大拇指可同時按薄荷綠跳躍鈕。',
       focus: '[data-btn="b"]',
     },
     {
-      touch: '用右手食指長按右上 B，先讓一顆星星被吸入。',
+      touch: '靠近星星後，食指長按珊瑚粉星形鈕，先吸入一顆。',
       desktop: '長按 X，先讓一顆星星被吸入。',
       success: '吸入成功，彈匣有星星了！',
       image: TUTORIAL_TOUCH_HOLD_INHALE_ILLUSTRATION_URL,
+      touchControls: ['action'],
       tip: {
         title: '可以這樣連著玩',
-        touch:
-          'B 不用一直點：右手食指持續按住，就能一顆接一顆吸進來；右手大拇指也能同時按 A 跳躍。',
+        touch: '食指按住珊瑚粉星形鈕，星星會一顆接一顆進來；大拇指可同時按薄荷綠跳躍鈕。',
         desktop: 'X 持續按住即可連續吸入；Z 與 X 可以同時按，邊跳邊吸。',
         image: TUTORIAL_TOUCH_CONTINUOUS_INHALE_ILLUSTRATION_URL,
+        touchControls: ['action', 'jump'],
       },
     },
   ),
@@ -153,28 +176,29 @@ export const LEARNING_LESSONS: Partial<Record<LearningLessonId, LearningLessonSp
     'shoot',
     {
       title: '把星彈吐出去',
-      touch: 'B 輕點一下，把剛吸入的星星發射出去。',
+      touch: '右手食指輕點珊瑚粉星形鈕，把剛吸入的星星吐出去。',
       desktop: 'X 輕點一下，把剛吸入的星星發射出去。',
       success: '星彈發射成功！',
-      image: TUTORIAL_TOUCH_INHALE_ILLUSTRATION_URL,
+      image: TUTORIAL_TOUCH_SHOOT_ILLUSTRATION_URL,
+      touchControls: ['action'],
       focus: '[data-btn="b"]',
     },
     {
-      touch: '輕點 B，把剛吸入的星星吐出去。',
+      touch: '食指輕點珊瑚粉星形鈕，吐出剛吸入的星星。',
       desktop: '輕點 X，把剛吸入的星星吐出去。',
       success: '星彈發射成功！',
-      image: TUTORIAL_TOUCH_INHALE_ILLUSTRATION_URL,
+      image: TUTORIAL_TOUCH_SHOOT_ILLUSTRATION_URL,
+      touchControls: ['action'],
     },
   ),
   'inhale-shoot': lesson('inhale-shoot', {
     title: '吸入，再吐出',
-    touch: '右手食指長按 B 連吞，放開後輕點 B 發射。',
+    touch: '右手食指長按珊瑚粉星形鈕連吞，放開後再輕點同一顆鈕發射。',
     desktop: '長按 X 連續吸入，放開後輕點 X 發射。',
     success: '吸吐節奏學會了！',
-    // A+B 同按改用已修正手勢的連續吸入圖，避免舊 dual-input 版本的手腕／指節
-    // 變形再次出現在正式提示；按鈕名稱仍由 DOM 與實際雙 pointer 輸入呈現。
-    image: TUTORIAL_TOUCH_CONTINUOUS_INHALE_ILLUSTRATION_URL,
-    tip: 'A 與 B 可以同時按：大拇指跳、食指吸，移動時更靈活。',
+    image: TUTORIAL_TOUCH_DUAL_INPUT_ILLUSTRATION_URL,
+    touchControls: ['action', 'jump'],
+    tip: '大拇指按薄荷綠跳躍鈕、食指長按珊瑚粉星形鈕；兩指可同時操作。',
     focus: '[data-btn="b"]',
   }),
   'shell-shield': lesson('shell-shield', {
@@ -189,42 +213,49 @@ export const LEARNING_LESSONS: Partial<Record<LearningLessonId, LearningLessonSp
     'slam-shelly',
     {
       title: '遇到 Shelly 就下砸',
-      touch: '跳起後左搖桿往下，再按 A，從空中砸中 Shelly。',
+      touch: '空中下＋跳就是下砸：先跳起、搖桿往下，再按薄荷綠跳躍鈕砸中 Shelly。',
       desktop: '跳起後按住 ↓ 再按 Z，從空中砸中 Shelly。',
       success: '下砸命中！',
       image: TUTORIAL_TOUCH_SLAM_ILLUSTRATION_URL,
+      touchControls: ['joystick', 'jump'],
       tip: '失手不用怕：Shelly 會再出現，慢慢抓準落點。',
       focus: '#joy-zone',
+      coachmarkPlacement: 'safe-top',
     },
     {
-      touch: '先跳起，左搖桿往下，再按右下 A，從空中砸中 Shelly。',
+      touch: '空中下＋跳就是下砸：搖桿往下，再按薄荷綠跳躍鈕砸中 Shelly。',
       desktop: '先跳起，按住 ↓ 再按 Z，從空中砸中 Shelly。',
       success: '下砸命中！記住：空中「下＋跳」就是下砸。',
       image: TUTORIAL_TOUCH_SLAM_ILLUSTRATION_URL,
+      touchControls: ['joystick', 'jump'],
     },
   ),
   transform: lesson(
     'transform',
     {
       title: '三顆同味可以變身',
-      touch: '吸入三顆同味星後，按亮起的 TF。',
+      touch: '食指長按珊瑚粉星形鈕，搖桿靠近每顆同味星；吸滿三顆後按亮起的金色變身鈕。',
       desktop: '吸入三顆同味星後，按亮起的 V。',
       success: '真的變身成功！',
       image: TUTORIAL_TOUCH_TRANSFORM_ILLUSTRATION_URL,
+      touchControls: ['transform'],
       focus: '[data-btn="tf"]',
+      coachmarkPlacement: 'safe-top',
     },
     {
-      touch: '吸入三顆同味星後，按畫面上的 TF 變身鍵。',
+      touch: '食指長按珊瑚粉星形鈕，靠近同味星；吸滿三顆再按金色變身鈕。',
       desktop: '吸入三顆同味星後，按 V 變身。',
       success: '變身成功！接下來正式 L1 會用情境提示帶你認識更多技能。',
       image: TUTORIAL_TOUCH_TRANSFORM_ILLUSTRATION_URL,
+      touchControls: ['transform'],
     },
   ),
   starburst: lesson('starburst', {
     title: '蓄滿就放星暴',
-    touch: '星暴蓄能完成後，按 SP 釋放。',
+    touch: '星暴蓄能完成後，按亮起的金色星暴鈕釋放。',
     desktop: '星暴蓄能完成後，按 C 釋放。',
     success: '星暴成功！',
+    touchControls: ['starburst'],
     focus: '[data-btn="sp"]',
   }),
   updraft: lesson('updraft', {
@@ -250,9 +281,10 @@ export const LEARNING_LESSONS: Partial<Record<LearningLessonId, LearningLessonSp
   }),
   lowgrav: lesson('lowgrav', {
     title: '低重力跳得更遠',
-    touch: '按 A 跳起，感受飄浮時間，再移向下一塊平台。',
+    touch: '按右下薄荷綠上箭頭鈕跳起，感受飄浮時間，再移向下一塊平台。',
     desktop: '按 Z 跳起，感受飄浮時間，再移向下一塊平台。',
     success: '低重力掌握了！',
+    touchControls: ['jump'],
     focus: '[data-btn="a"]',
   }),
   meteor: lesson('meteor', {
@@ -285,10 +317,11 @@ export const LEARNING_LESSONS: Partial<Record<LearningLessonId, LearningLessonSp
   }),
   'form-volt': lesson('form-volt', {
     title: '雷化首次登場',
-    touch: '吸入同味星並按 TF 變成雷化，接著按 B 釋放雷束。',
+    touch: '吸入同味星並按亮起的金色變身鈕變成雷化，接著點按珊瑚粉星形鈕釋放雷束。',
     desktop: '吸入同味星並按 V 變成雷化，接著按 X 釋放雷束。',
     success: '雷化技能成功！',
     image: TUTORIAL_TOUCH_TRANSFORM_ILLUSTRATION_URL,
+    touchControls: ['transform', 'action'],
     focus: '[data-btn="tf"]',
   }),
   'form-gale': lesson('form-gale', {
@@ -309,10 +342,11 @@ export const LEARNING_LESSONS: Partial<Record<LearningLessonId, LearningLessonSp
   }),
   'form-ember': lesson('form-ember', {
     title: '焰化首次登場',
-    touch: '變身後按 B 發射焰彈，看看它如何處理冰晶敵人。',
+    touch: '變身後點按珊瑚粉星形鈕發射焰彈，看看它如何處理冰晶敵人。',
     desktop: '變身後按 X 發射焰彈，看看它如何處理冰晶敵人。',
     success: '焰化技能成功！',
     image: TUTORIAL_TOUCH_TRANSFORM_ILLUSTRATION_URL,
+    touchControls: ['action'],
     focus: '[data-btn="b"]',
   }),
   'form-tide': lesson('form-tide', {
@@ -325,10 +359,11 @@ export const LEARNING_LESSONS: Partial<Record<LearningLessonId, LearningLessonSp
   }),
   'form-prism': lesson('form-prism', {
     title: '稜化首次登場',
-    touch: '變身後用 B 長按彩虹光束，實際抵銷一次彈幕。',
+    touch: '變身後長按珊瑚粉星形鈕發出彩虹光束，實際抵銷一次彈幕。',
     desktop: '變身後用 X 長按彩虹光束，實際抵銷一次彈幕。',
     success: '稜化技能成功！',
     image: TUTORIAL_TOUCH_TRANSFORM_ILLUSTRATION_URL,
+    touchControls: ['action'],
     focus: '[data-btn="b"]',
   }),
   'form-gravity': lesson('form-gravity', {

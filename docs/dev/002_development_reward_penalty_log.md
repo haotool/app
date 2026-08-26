@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+0（reward 1、penalty 1、neutral 0）｜累計總分：+332
+> 本次分數變化：+10（reward 10、penalty 0、neutral 1）｜累計總分：+342
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,61 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-08-27
+- ID：reward-starpuff-tutorial-ux-ci-convergence
+- 原因：PR 教學提示仍有雙指圖與短橫向成功卡的可讀性缺口，且 StarPuff E2E 未按 PR smoke 與主幹完整套件分層
+- 解法：以真實按鈕色彩與單手雙指素材、成功狀態收斂及固定 smoke required check／主幹 2-way full shards 完成收斂
+
+- 日期：2026-08-26
+- ID：reward-starpuff-e2e-context-tutorial-state
+- 原因：Codex review 發現自建 Playwright context 未植入已略過教學狀態，完整 E2E 會被首次選擇卡阻塞
+- 解法：在 LINE／Threads 外開生命週期 context 以 init script 植入 `guidedTutorialStatus: skipped`，並補跑雙方向 headed 回歸
+
+- 日期：2026-08-26
+- ID：reward-starpuff-embedded-browser-storage-fallback
+- 原因：Codex review 發現儲存被私密模式或配額限制拒絕時，外開卡確認會反覆重排且方向提示無法接續
+- 解法：保留本次工作階段確認狀態、補儲存失敗 headed 回歸，讓方向提示仍能在本次接續並於重載後再次提供外開指引
+
+- 日期：2026-08-26
+- ID：reward-starpuff-embedded-browser-lifecycle
+- 原因：Codex review 發現 Android LINE 的 /IAB UA 會漏判，且外開卡因開始遊戲或 Escape 關閉後不會重新排程
+- 解法：補上 /IAB token 邊界、pending 外開提示重排與 headed LINE／Threads 生命週期回歸
+
+- 日期：2026-08-26
+- ID：reward-starpuff-guidance-copy-and-touch-target
+- 原因：Codex review 發現正常關卡指令仍被兩行裁切，直持作品說明摘要命中區也只有 28px
+- 解法：讓小天使指令完整自然換行，並將所有作品說明 summary 命中高度統一為 48px，補 headed 斷言
+
+- 日期：2026-08-26
+- ID：reward-starpuff-embedded-browser-orientation-resume
+- 原因：LINE／Threads 外開卡關閉後方向引導在同一工作階段與重新載入都被永久跳過
+- 解法：以外開卡 dismissed 狀態作接續門檻，關卡後與回訪重新初始化方向 coachmark，並補 UA headed 回歸
+
+- 日期：2026-08-26
+- ID：reward-starpuff-review-touch-target-and-copy
+- 原因：Codex review 發現短橫屏教學指令會被兩行截斷，作品說明摘要實際命中區也低於觸控標準
+- 解法：取消教學指令截斷並將摘要命中高度提升至 48px，補跑行動版 headed 回歸
+
+- 日期：2026-08-26
+- ID：reward-starpuff-review-convergence-fixes
+- 原因：Codex review 發現混合裝置提示、小天使 fallback、教學補給回收與測試 context 尚有可達性缺口
+- 解法：補上混合裝置鍵盤提示、最小重疊定位、補給回池與明確 baseURL，並補跑行動版回歸
+
+- 日期：2026-08-26
+- ID：neutral-starpuff-short-settings-scroll-contract
+- 原因：橫向緊湊設定版已能在短視窗完整收納內容，但回歸測試仍強制要求必須產生 scroll overflow，造成 CI 假性失敗
+- 解法：測試改為依實際內容驗證「完整可見或可垂直滾動」，保留有溢出時的真實 scrollTop 驗收
+
+- 日期：2026-08-26
+- ID：reward-starpuff-embedded-browser-guidance
+- 原因：LINE 與 Threads 共用內建瀏覽器文案且方向卡會殘留到教學中，造成外開操作錯誤與提示疊層
+- 解法：以單一 UA 分流 SSOT 提供平台專屬外開步驟，內建瀏覽器優先提示並在進入遊戲時收起方向卡
+
+- 日期：2026-08-26
+- ID：reward-starpuff-mobile-tutorial-ux
+- 原因：行動版教學仍以 A/B 字母與容易遮擋畫面的提示呈現，且手勢圖未充分對應真實按鈕色彩，造成新手難以理解或完成操作
+- 解法：以非阻塞小天使 coachmark、真實按鈕色形與雙指連吞提示收斂行動教學，補上安全定位、方向提示、救援補給、透明素材與作品聲明
 
 - 日期：2026-08-26
 - ID：penalty-per100-rescale-introduced-float-noise

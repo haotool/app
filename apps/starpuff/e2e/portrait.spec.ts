@@ -232,8 +232,9 @@ test('直持 390×844（D1/D2）：預設 A/B 在右下拇指帶、真觸控點 
 });
 
 // L30-UX：設定與按鈕配置是 viewport-level modal，不能被直持旋轉殼改變 layout 軸；
-// 短視窗則必須保留可操作的垂直 scroll container，避免完成/取消鈕落出畫面。
-test('直持設定：面板完整可見、短視窗可垂直滾動、按鈕配置不被旋轉殼擠出', async ({ page }) => {
+// 短視窗若內容超出則必須保留可操作的垂直 scroll container；內容若已由
+// 橫向緊湊版完整收納，則直接驗證所有操作列仍在 viewport 內。
+test('直持設定：短視窗完整可見或可垂直滾動、按鈕配置不被旋轉殼擠出', async ({ page }) => {
   const errors = collectErrors(page);
   // 殼層卡片抑制：本案驗設定面板版面，與 PWA／方向提示卡無關。卡片由
   // whenShellIdle 於 Title 安靜時刻浮現，CI 慢機時會趕在點擊前蓋住設定鈕。
@@ -251,6 +252,10 @@ test('直持設定：面板完整可見、短視窗可垂直滾動、按鈕配�
   await page.locator('[data-menu="settings"]').click();
   const settingsCard = page.locator('.settings-card');
   await expect(settingsCard).toBeVisible();
+  await expect(settingsCard.locator('[data-setting="creative-notice"] > summary')).toHaveCSS(
+    'min-height',
+    '48px',
+  );
   const fullMetrics = await page.evaluate(() => {
     const card = document.querySelector<HTMLElement>('.settings-card');
     const overlay = document.querySelector<HTMLElement>('.settings-overlay');
@@ -283,15 +288,19 @@ test('直持設定：面板完整可見、短視窗可垂直滾動、按鈕配�
   }
   expect(fullMetrics.touchAction).toBe('pan-y');
 
-  // 壓低 viewport 模擬手機瀏覽器可視區不足：內容超出時 scrollTop 必須真的可前進。
+  // 壓低 viewport 模擬手機瀏覽器可視區不足：內容超出時 scrollTop 必須真的可前進；
+  // 橫向緊湊版若已完整容納，則不強迫玩家進行無意義的捲動。
   await page.setViewportSize({ width: 390, height: 360 });
-  await expect
-    .poll(() => settingsCard.evaluate((card) => card.scrollHeight > card.clientHeight))
-    .toBe(true);
-  await settingsCard.evaluate((card) => {
-    card.scrollTop = card.scrollHeight;
-  });
-  expect(await settingsCard.evaluate((card) => card.scrollTop)).toBeGreaterThan(0);
+  const shortScrollMetrics = await settingsCard.evaluate((card) => ({
+    canScroll: card.scrollHeight > card.clientHeight,
+    scrollTop: card.scrollTop,
+  }));
+  if (shortScrollMetrics.canScroll) {
+    await settingsCard.evaluate((card) => {
+      card.scrollTop = card.scrollHeight;
+    });
+    expect(await settingsCard.evaluate((card) => card.scrollTop)).toBeGreaterThan(0);
+  }
   const shortButtonMetrics = await page.evaluate(() => {
     const card = document.querySelector<HTMLElement>('.settings-card');
     const button = document.querySelector<HTMLElement>('[data-setting="close"]');

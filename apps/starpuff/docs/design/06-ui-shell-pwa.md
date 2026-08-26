@@ -4,7 +4,7 @@
 >
 > **不在本檔**：虛擬鍵與按鈕配置頁（見 `01-controls-input.md`）；偏好持久化與更新套用閘（見 `05-save-settings.md` §118）。
 >
-> **命中紀律**：選單與 HUD 一律以 DOM 鈕承接命中（旋轉殼下 hit-test 天然正確），canvas 圖示僅保留視覺；命中短邊 48px 保底（§98）。全遊戲禁 emoji 與文字鍵帽。
+> **命中紀律**：選單與 HUD 一律以 DOM 鈕承接命中（旋轉殼下 hit-test 天然正確），canvas 圖示僅保留視覺；命中短邊 48px 保底（§98）。全遊戲禁 emoji 與文字鍵帽；教學 token 必須複製真實虛擬鍵的顏色與 glyph。
 >
 > **閱讀慣例**：每一句主文都是現行有效規則；被取代的舊規則一律降級為緊接其後的 `> **已廢止**` 附註，僅供追溯。索引與取代對照見 [`../GAME_DESIGN.md`](../GAME_DESIGN.md) 與 [`99-superseded.md`](99-superseded.md)。章號 §N 為全專案穩定識別碼（程式註解直接引用），拆檔不重新編號。
 
@@ -61,41 +61,60 @@
 
 ## 90. v14 PWA 安裝偵測與分平台指引
 
-- 偵測矩陣（installGuide.ts，移植 RateWise 模式）：platform
+- 偵測矩陣（`installGuide.ts` 單一 SSOT，移植 RateWise 模式）：platform
   （ios／android／desktop／unknown，含 iPadOS 桌面模式 maxTouchPoints 辨識）、
   in-app browser（Threads/Barcelona、Messenger 先於 Facebook、Instagram、
   LINE、TikTok/musical_ly/trill、X）、已安裝雙訊號
   （display-mode standalone＋navigator.standalone）。
 - 指引卡（§92 殼層卡片）：iOS 分享→加入主畫面步驟；Android
   beforeinstallprompt 一鍵安裝＋選單步驟 fallback；in-app 引導外部瀏覽器開啟。
+  LINE 與 Threads 不共用文案：LINE 明確指向右下角「…」→「在瀏覽器中開啟」；
+  Threads 指向其自身「…」選單→「在瀏覽器中開啟」。平台 chrome 會隨版本變動，
+  因此只把 UA token 用於分流，不假設網頁能替使用者按下外部選單。
 - 卡片共用 imagegen 生成的 StarPuff 風格教學插圖（`src/assets/ui/pwa-install-onboarding.webp`），
   以輕微漂浮動畫示範「瀏覽器 → 加入主畫面」；插圖是殼層資產，不進關卡 manifest。
 - 出現邏輯：已安裝／已忽略（localStorage `sp-install-dismissed`，不進 save
   schema）／桌面不打擾；首次到站延遲 2.5s 且僅 Title 安靜時刻顯示；
-  appinstalled 自動收卡並記憶。
+  appinstalled 自動收卡並記憶。內建瀏覽器外開卡不顯示加入主畫面插圖，直持固定在
+  safe-area 頂端；方向卡在內建瀏覽器中暫不啟動，避免兩張提示同時搶視線。
 
 ### 90.1 情境小天使提示（正常關卡）
 
 - 正常 `GameScene` 不再顯示中央模態操作卡或 WaveRunner 教學浮字；`guidanceDirector` 只建立
   一張以 `getBoundingClientRect()` 錨定在對應控制附近的 coachmark。外層 layer 為
-  `pointer-events: none`，只有卡片本身與「稍後再提醒」按鈕可互動，因此搖桿、A/B、SP、TF 與畫面
-  仍可操作；卡片會在 resize／orientationchange 後重新定位。
+  `pointer-events: none`，卡片本身也不攔截指標，只有明確的關閉／稍後再提醒按鈕可互動，因此
+  搖桿、A/B、SP、TF 與畫面仍可操作；卡片會在 resize／orientationchange 後重新定位。
 - 小卡依實際事件／狀態完成 lesson：移動需左右都走過、跳躍需離地、吸入／吐出需收到正式事件、
   下砸需同時有落地與 Shelly 命中、變身需讀到非 null 的 `transform.form`。可用 `×` 稍後提醒，
   設定的「情境操作提示」可永久關閉。
-- 觸控文案明確說明右手食指可長按 B 連吞，右手大拇指可同時按 A 跳躍；桌機以 X、Z 提供等價指引。
+- 觸控文案以「珊瑚粉星形鈕／薄荷綠上箭頭鈕」描述右側真實按鈕，明確說明右手食指可長按連吞、右手大拇指可同時按跳躍；桌機以 X、Z 提供等價指引。行動版不要求玩家先記住 A/B 字母。
 - 正常關卡 coachmark 只保留小天使、短文案與關閉鈕；對應動作插圖只在 guided practice 顯示，
   避免同一張提示同時堆兩張圖而遮住遊戲畫面。
 - 390×844 直持與 844×390 橫持只調整安全區與卡片寬度，不改變遊戲控制座標；控制焦點以柔和
   外框／最多兩輪的低頻 pulse 提示，不用全屏遮罩或改變 layout。`prefers-reduced-motion` 時停用
   pulse，仍保留靜態 focus ring 與文字提示。
 
+### 90.1.1 行動版小天使 v2（2026-08-26）
+
+- 教學卡是「一個目標＋一個真實控制 token」：練習區保留成功驗收與自動補怪，但不再以大面積「再試一次／離開教學」按鈕佔據視線；重試與離開收進小型工具列，未完成時不生成「下一步」。
+- 行動文案不使用 A/B/TF/SP 作為唯一線索。DOM token 以虛擬鍵同源的薄荷綠上箭頭、珊瑚粉五角星、金色技能鈕與圓形搖桿呈現；正常關卡小天使與 guided practice 共用 `core/learning.ts` 的文案、素材與 token metadata。
+- `learningCoachmark.ts` 以 viewport AABB 候選定位，避開整個 `#joy-zone` 與所有 `[data-btn]`，直持優先放在搖桿上方，橫持優先放在左半屏右側安全帶；旋轉／resize 後重算，提示層仍為 `pointer-events: none`。
+- 直持方向卡使用安全頂端（不貼住瀏覽器工具列）；PWA 安裝卡改為底部低優先小卡，避免首次到站蓋住標題主 CTA。方向卡的 90° 手機反轉動畫保留，只有實際觀測到橫持才寫入完成記憶。
+- 截圖回看（`screenshots/mobile-tutorial-ux/`，390×844／844×390，全步驟）：教學卡已避開
+  `#joy-zone` 與所有真實按鍵，但殼層安裝圖的手勢在外開情境不具語意，且 LINE／Threads
+  共用右上角文案會造成錯誤操作；現行修正為平台分流、無大圖外開卡、方向卡優先級互斥。
+  教學工具列仍保留 48px 實際命中區，視覺上維持輕量。
+- 作品說明與致敬／素材／虛構內容免責文字放在設定的 `details` 漸進揭露區，不打斷第一次操作。這遵循 Apple 建議的短、可略過、情境化 onboarding 與遊戲核心循環分段教學，以及 web.dev 對 48px 觸控目標與間距的建議：
+  - [Apple HIG：Onboarding](https://developer.apple.com/design/human-interface-guidelines/onboarding)
+  - [Apple：Onboarding for Games](https://developer.apple.com/app-store/onboarding-for-games/)
+  - [web.dev：Accessible tap targets](https://web.dev/articles/accessible-tap-targets?hl=en)
+
 ### 90.2 混合式互動 onboarding
 
 - 首次「開始遊戲」顯示選擇卡：`進入練習區` 進入 guided sandbox，`直接開始` 記為 skipped 並不再自動
   彈出；設定頁可用「重新進入練習區」重設為 unseen。完成後記為 completed。
 - guided practice 是低壓力訓練區，當前步驟完成前不顯示「下一步」；成功時顯示回饋並由玩家繼續。
-  目標失手／被打掉／離開可自動補怪或重置，目前步驟也提供「再試一次」，不會卡在半套教學。
+  目標失手／被打掉／離開可自動補怪或重置，目前步驟也提供小型「重試本步」工具，不會卡在半套教學。
 - 每步圖片是單一動作示意，中文／鍵位文案由 DOM 產生，不把文字烘焙進圖；小天使圖層不攔截底層
   遊戲控制。
 

@@ -139,10 +139,10 @@ body {
    dismiss／練習按鈕接收 pointer；搖桿與遊戲按鍵永遠維持可操作。 */
 .learning-coachmark-layer {
   position: fixed;
-  top: max(8px, env(safe-area-inset-top, 0px));
+  top: max(12px, env(safe-area-inset-top, 0px));
   left: 50%;
   z-index: var(--z-shell-card);
-  width: min(320px, calc(100vw - 16px));
+  width: min(320px, calc(100vw - 24px));
   height: auto;
   transform: translateX(-50%);
   pointer-events: none;
@@ -190,6 +190,127 @@ body {
   transform: translate(-50%, -50%);
 }
 
+/* 行動版控制 token：直接複製虛擬鍵的色彩與 glyph，讓文字不必依賴 A/B 字母。 */
+.learning-control-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  margin-top: 4px;
+}
+
+.learning-control-token {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 24px;
+  padding: 2px 6px 2px 3px;
+  border: 1px solid rgba(122, 95, 184, 0.22);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  color: #4d4660;
+  font:
+    700 9px/1.1 system-ui,
+    sans-serif;
+  white-space: nowrap;
+}
+
+.learning-control-glyph {
+  position: relative;
+  display: block;
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  border-radius: 50%;
+  box-shadow: inset 0 1px 2px rgba(58, 58, 74, 0.12);
+}
+
+.learning-control-token[data-control-token='joystick'] .learning-control-glyph {
+  border: 2px solid rgba(191, 243, 224, 0.95);
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.learning-control-token[data-control-token='joystick'] .learning-control-glyph::after {
+  position: absolute;
+  inset: 5px;
+  border-radius: 50%;
+  background: rgba(95, 194, 166, 0.78);
+  content: '';
+}
+
+.learning-control-token[data-control-token='jump'] .learning-control-glyph {
+  border-color: rgba(255, 255, 255, 0.9);
+  background: rgba(140, 224, 190, 0.55);
+}
+
+.learning-control-token[data-control-token='jump'] .learning-control-glyph::after {
+  position: absolute;
+  inset: 4px 5px;
+  background: rgba(255, 255, 255, 0.95);
+  clip-path: polygon(50% 0%, 100% 62%, 68% 62%, 68% 100%, 32% 100%, 32% 62%, 0% 62%);
+  content: '';
+}
+
+.learning-control-token[data-control-token='action'] .learning-control-glyph {
+  border-color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 160, 190, 0.55);
+}
+
+.learning-control-token[data-control-token='action'] .learning-control-glyph::after {
+  position: absolute;
+  inset: 4px;
+  background: rgba(255, 255, 255, 0.95);
+  clip-path: polygon(
+    50% 0%,
+    61% 35%,
+    98% 35%,
+    68% 57%,
+    79% 91%,
+    50% 70%,
+    21% 91%,
+    32% 57%,
+    2% 35%,
+    39% 35%
+  );
+  content: '';
+}
+
+.learning-control-token[data-control-token='transform'] .learning-control-glyph,
+.learning-control-token[data-control-token='starburst'] .learning-control-glyph {
+  border-color: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 214, 120, 0.82);
+}
+
+.learning-control-token[data-control-token='transform'] .learning-control-glyph::after {
+  position: absolute;
+  inset: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  border-radius: 50%;
+  background: rgba(200, 220, 245, 0.96);
+  content: '';
+}
+
+.learning-control-token[data-control-token='starburst'] .learning-control-glyph::after {
+  position: absolute;
+  inset: 4px;
+  background: rgba(255, 255, 255, 0.95);
+  clip-path: polygon(
+    50% 0%,
+    61% 35%,
+    98% 35%,
+    68% 57%,
+    79% 91%,
+    50% 70%,
+    21% 91%,
+    32% 57%,
+    2% 35%,
+    39% 35%
+  );
+  content: '';
+}
+
 @keyframes learning-focus-pulse {
   0%,
   100% {
@@ -233,10 +354,10 @@ body {
 /* 直持時用小型手機圖示示範「轉 90°」，不使用會遮住遊戲的全螢幕 modal。 */
 .orientation-coachmark-layer {
   position: fixed;
-  top: max(8px, env(safe-area-inset-top, 0px));
+  top: max(64px, calc(env(safe-area-inset-top, 0px) + 12px));
   left: 50%;
   z-index: var(--z-shell-card);
-  width: min(316px, calc(100vw - 16px));
+  width: min(300px, calc(100vw - 24px));
   transform: translateX(-50%);
   pointer-events: none;
   font-family: system-ui, sans-serif;
@@ -244,10 +365,10 @@ body {
 
 .orientation-coachmark {
   display: grid;
-  grid-template-columns: 48px minmax(0, 1fr) auto;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
   align-items: center;
   gap: 8px;
-  padding: 8px 9px;
+  padding: 7px 8px;
   border: 1px solid rgba(122, 95, 184, 0.24);
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.94);
@@ -259,8 +380,8 @@ body {
 .orientation-coachmark-visual {
   display: grid;
   place-items: center;
-  width: 48px;
-  height: 44px;
+  width: 42px;
+  height: 40px;
   border-radius: 12px;
   background: rgba(191, 243, 224, 0.42);
 }
@@ -328,7 +449,7 @@ body {
 
 .orientation-coachmark-title {
   display: block;
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.25;
 }
 
@@ -370,9 +491,12 @@ body {
 
 @media (orientation: landscape) {
   /* 左半屏是整片搖桿 hit area；提示縮進右側安全帶，不遮住實作手勢。 */
-  .learning-coachmark-layer.guided-tutorial-overlay,
+  .learning-coachmark-layer.guided-tutorial-overlay {
+    width: min(256px, calc(50vw - 20px));
+  }
+
   .learning-coachmark-layer.guidance-angel-layer {
-    width: min(204px, calc(50vw - 18px));
+    width: min(240px, calc(100vw - 24px));
   }
 }
 
@@ -380,10 +504,10 @@ body {
    搖桿／按鍵；提示靠近控制區但不覆蓋控制區。模態設定與練習區仍使用上方 z-index。 */
 .guidance-angel-layer {
   position: fixed;
-  top: max(8px, env(safe-area-inset-top, 0px));
+  top: max(12px, env(safe-area-inset-top, 0px));
   left: 50%;
   z-index: var(--z-shell-card);
-  width: min(300px, calc(100vw - 16px));
+  width: min(300px, calc(100vw - 24px));
   transform: translateX(-50%);
   pointer-events: none;
   font-family: system-ui, sans-serif;
@@ -396,6 +520,8 @@ body {
   column-gap: 6px;
   min-height: 52px;
   padding: 6px 7px;
+  /* 小天使是視覺提示，不得攔截底下的搖桿／按鍵；只有關閉鈕需要接收指標。 */
+  pointer-events: none;
 }
 
 .guidance-angel-card.is-success {
@@ -428,20 +554,21 @@ body {
   line-height: 1.25;
 }
 
-.guidance-angel-instruction,
-.guidance-angel-tip {
+.guidance-angel-instruction {
   margin-top: 2px;
-  overflow: hidden;
   font-size: 11px;
   line-height: 1.35;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  overflow-wrap: anywhere;
 }
 
 .guidance-angel-tip {
+  margin-top: 2px;
+  overflow: hidden;
   color: #6b5b82;
   font-size: 10px;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
   -webkit-line-clamp: 1;
 }
 
@@ -999,6 +1126,26 @@ html.sp-desktop #controls.is-active {
   pointer-events: auto;
 }
 
+/* 內建瀏覽器外開卡是高優先但低干擾提示：不用加入主畫面插圖，改用短步驟與
+   純 CSS 瀏覽器圖示，避免把舊安裝圖中的手勢誤讀成 LINE／Threads 的操作。 */
+.install-card-embedded-browser {
+  width: min(360px, calc(100vw - 24px));
+  gap: 7px;
+}
+
+.install-card-embedded-browser::before {
+  display: block;
+  width: 44px;
+  height: 30px;
+  border: 2px solid #7a5fb8;
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 8px 7px, #ffb7a0 0 2px, transparent 3px),
+    linear-gradient(to bottom, rgba(191, 243, 224, 0.9) 0 8px, rgba(255, 255, 255, 0.88) 8px);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.7);
+  content: '';
+}
+
 .install-title {
   font:
     700 20px system-ui,
@@ -1096,17 +1243,41 @@ html.sp-desktop #controls.is-active {
   touch-action: pan-y;
 }
 
-/* 設定內容可捲動、操作列黏在卡片底部（窄手機尤其重要）：避免「完成／按鈕配置」
-   跟著長內容一起捲出 viewport。背景遮住底下文字，讓按鈕在短視窗仍有清楚對比。 */
+/* 設定內容自然捲動，操作列不覆蓋作品說明（窄手機尤其重要）；短視窗仍保留清楚對比。 */
 .settings-actions {
-  position: sticky;
-  bottom: -14px;
-  z-index: 1;
+  position: relative;
   display: grid;
   gap: 8px;
-  margin: 2px -2px -14px;
-  padding: 10px 2px 14px;
+  margin: 2px -2px 0;
+  padding: 10px 2px 2px;
   background: linear-gradient(to bottom, rgba(253, 239, 246, 0.7), rgba(253, 239, 246, 0.99) 24%);
+}
+
+/* 作品說明採 details 漸進揭露：不在首次遊玩插入法律／致敬文字，但設定內可隨時查閱。 */
+.settings-notice {
+  display: grid;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 1px solid rgba(122, 95, 184, 0.18);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.52);
+  color: #5a5a6e;
+  font:
+    500 11px/1.45 system-ui,
+    sans-serif;
+}
+
+.settings-notice summary {
+  min-height: 48px;
+  padding: 12px 0;
+  line-height: 24px;
+  color: #4d4660;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.settings-notice p {
+  margin: 0;
 }
 
 /* 首次入口與練習區共用 coachmark；不建立 backdrop，讓玩家可以邊看提示邊實作。 */
@@ -1152,73 +1323,96 @@ html.sp-desktop #controls.is-active {
 
 .guided-tutorial-overlay {
   display: block;
+  width: min(292px, calc(100vw - 24px));
 }
 
 .guided-tutorial-card {
   display: grid;
-  grid-template-columns: 52px minmax(0, 1fr);
-  column-gap: 7px;
-  align-items: center;
+  grid-template-columns: 48px minmax(0, 1fr);
+  grid-template-rows: auto auto auto;
+  column-gap: 8px;
+  align-items: start;
   width: 100%;
-  padding: 8px;
+  padding: 9px 10px 7px;
+  /* 教學卡是小天使的視覺提示，不是模態層；遊戲控制可穿透，只有按鈕可點。 */
+  pointer-events: none;
+}
+
+.guided-tutorial-card button {
+  grid-column: 1 / -1;
   pointer-events: auto;
 }
 
 .guided-tutorial-card > .guided-tutorial-btn {
-  grid-column: 1 / -1;
-  margin-top: 6px;
+  margin-top: 5px;
 }
 
 .guided-tutorial-progress {
-  position: absolute;
-  top: 6px;
-  right: 8px;
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  min-width: 0;
+  margin: 0 0 2px;
   color: #7a5fb8;
   font:
     700 10px system-ui,
     sans-serif;
   text-align: right;
+  white-space: nowrap;
 }
 
 .guided-tutorial-art {
   grid-column: 1;
-  grid-row: 1 / span 2;
-  width: 52px;
-  height: 44px;
+  grid-row: 1 / span 3;
+  align-self: center;
+  width: 48px;
+  height: 46px;
   margin: 0;
   object-fit: contain;
 }
 
 .guided-tutorial-title {
   grid-column: 2;
-  grid-row: 1;
+  grid-row: 2;
+  min-width: 0;
   margin: 0;
   font:
-    700 15px/1.2 system-ui,
+    700 14px/1.25 system-ui,
     sans-serif;
+  overflow-wrap: anywhere;
 }
 
 .guided-tutorial-instruction {
   grid-column: 2;
-  grid-row: 2;
+  grid-row: 3;
   min-width: 0;
-  margin: 2px 0 0;
-  overflow: hidden;
+  margin: 3px 0 0;
   font:
-    500 11px/1.35 system-ui,
+    500 12px/1.35 system-ui,
     sans-serif;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
+  overflow-wrap: break-word;
+}
+
+.guided-tutorial-card > .learning-control-strip {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+}
+
+/* 完成後只保留回饋與下一步，避免成功卡把已完成的操作再次堆回畫面。 */
+.guided-tutorial-card.is-success .guided-tutorial-instruction,
+.guided-tutorial-card.is-success > .learning-control-strip,
+.guided-tutorial-card.is-success .guided-tutorial-tip {
+  display: none;
 }
 
 .guided-tutorial-tip {
-  display: flex;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   grid-column: 1 / -1;
   min-width: 0;
-  margin-top: 6px;
+  margin-top: 4px;
   padding: 5px 6px;
   border: 1px solid rgba(122, 95, 184, 0.22);
   border-radius: 10px;
@@ -1226,10 +1420,24 @@ html.sp-desktop #controls.is-active {
 }
 
 .guided-tutorial-tip-art {
-  flex: 0 0 42px;
-  width: 42px;
-  height: 32px;
+  grid-column: 1;
+  grid-row: 1;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 36px;
   object-fit: contain;
+}
+
+.guided-tutorial-tip > div {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+}
+
+.guided-tutorial-tip > .learning-control-strip {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  margin-top: 0;
 }
 
 .guided-tutorial-tip-title {
@@ -1241,19 +1449,16 @@ html.sp-desktop #controls.is-active {
 }
 
 .guided-tutorial-tip-text {
-  overflow: hidden;
   margin: 2px 0 0;
   font:
-    500 10px/1.3 system-ui,
+    500 11px/1.35 system-ui,
     sans-serif;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  overflow-wrap: break-word;
 }
 
 .guided-tutorial-success {
   grid-column: 1 / -1;
-  margin: 6px 0 0;
+  margin: 4px 0 0;
   color: #287c63;
   font:
     700 12px/1.35 system-ui,
@@ -1265,12 +1470,16 @@ html.sp-desktop #controls.is-active {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-column: 1 / -1;
   gap: 6px;
-  margin-top: 6px;
+  margin-top: 5px;
+}
+
+.guided-tutorial-actions .guided-tutorial-btn {
+  min-height: 44px;
 }
 
 .guided-tutorial-btn {
   min-height: 44px;
-  padding: 5px 8px;
+  padding: 4px 7px;
   border: 1px solid rgba(122, 95, 184, 0.34);
   border-radius: 11px;
   background: #ffffff;
@@ -1285,11 +1494,28 @@ html.sp-desktop #controls.is-active {
   background: #bff3e0;
 }
 
-.guided-tutorial-leave {
+.guided-tutorial-utility {
+  display: flex;
   grid-column: 1 / -1;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  min-width: 0;
+  margin-top: 3px;
+}
+
+.guided-tutorial-utility .guided-tutorial-btn {
+  /* 保留緊湊視覺，但實際命中區仍符合 48px 觸控目標。 */
+  min-height: 48px;
+  padding: 3px 7px;
+  border-radius: 9px;
+  font-size: 10px;
+}
+
+.guided-tutorial-secondary,
+.guided-tutorial-leave {
   min-height: 32px;
-  margin-top: 2px;
-  border: 0;
+  border: 1px solid rgba(122, 95, 184, 0.16);
   background: transparent;
   color: #7a5fb8;
   font-size: 11px;
@@ -1297,7 +1523,30 @@ html.sp-desktop #controls.is-active {
 
 @media (max-height: 520px) {
   .guided-tutorial-card {
-    padding: 7px;
+    padding: 7px 8px 5px;
+  }
+
+  .guided-tutorial-art {
+    width: 42px;
+    height: 40px;
+  }
+
+  .guided-tutorial-instruction {
+    font-size: 11px;
+  }
+
+  .guided-tutorial-tip-art {
+    width: 38px;
+    height: 32px;
+  }
+
+  .guided-tutorial-tip-text {
+    font-size: 10px;
+  }
+
+  .learning-control-token {
+    min-height: 22px;
+    font-size: 8px;
   }
 }
 
@@ -1404,6 +1653,7 @@ html.sp-desktop #controls.is-active {
   }
 
   .settings-card > .install-title,
+  .settings-card > .settings-notice,
   .settings-card > .settings-actions {
     grid-column: 1 / -1;
   }
@@ -1413,17 +1663,82 @@ html.sp-desktop #controls.is-active {
   }
 
   .settings-card .settings-actions {
-    margin-bottom: -14px;
+    margin-bottom: 0;
+  }
+}
+
+/* 短橫屏（例如 390×844 旋轉後的可視高度）：設定仍是完整模態，但三個底部
+   動作改成同列、收緊留白；每個控制按鈕保留 44px 以上，讓「完成」不必先捲動才看得到。 */
+@media (orientation: landscape) and (max-height: 520px) {
+  .settings-card {
+    gap: 4px 10px;
+    padding: 8px 12px;
+    max-height: calc(
+      100dvh - 16px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)
+    );
+  }
+
+  .settings-row {
+    gap: 6px;
+  }
+
+  .settings-label {
+    font-size: 13px;
+  }
+
+  .settings-seg {
+    gap: 4px;
+  }
+
+  .settings-btn {
+    min-height: 44px;
+    min-width: 52px;
+    padding: 0 8px;
+    font-size: 12px;
+  }
+
+  .settings-notice {
+    gap: 2px;
+    padding: 4px 8px;
+  }
+
+  .settings-notice summary {
+    /* 摘要仍保持緊湊，但實際觸控區不可低於 48px。 */
+    min-height: 48px;
+    padding: 8px 0;
+    font-size: 12px;
+  }
+
+  .settings-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 2px 2px;
+  }
+
+  .settings-actions .install-btn {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 44px;
+    padding: 0 8px;
+    font-size: 12px;
   }
 }
 
 @media (orientation: portrait) {
   /* 方向提示在直持時仍須保持可讀，不能跟著遊戲殼旋轉；所有殼層卡現在是 body-level。 */
-  .install-overlay {
+  .install-overlay.settings-overlay {
     display: grid;
     place-items: center;
     padding: max(12px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px))
       max(12px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
+  }
+
+  /* PWA 安裝是低優先提示：移到可視區底部並縮成一張可捲讀的小卡，避免首次到站
+     直接蓋住標題畫面或把玩家誤導成必須先安裝才能開始。 */
+  .install-overlay:not(.settings-overlay) {
+    display: block;
+    padding: 0;
   }
 
   .install-card {
@@ -1437,5 +1752,51 @@ html.sp-desktop #controls.is-active {
     max-height: calc(
       100dvh - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)
     );
+  }
+
+  .install-card:not(.settings-card) {
+    position: absolute;
+    top: auto;
+    right: max(12px, env(safe-area-inset-right, 0px));
+    bottom: max(12px, env(safe-area-inset-bottom, 0px));
+    left: max(12px, env(safe-area-inset-left, 0px));
+    width: auto;
+    max-width: none;
+    max-height: min(230px, calc(100dvh - 24px));
+    gap: 6px;
+    padding: 10px 12px;
+    border-radius: 16px;
+  }
+
+  .install-card:not(.settings-card) .install-title {
+    font-size: 16px;
+  }
+
+  .install-card:not(.settings-card) .install-desc {
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  .install-card:not(.settings-card) .install-illustration {
+    max-height: 56px;
+  }
+
+  .install-card:not(.settings-card) .install-steps {
+    gap: 2px;
+    padding-left: 18px;
+    font-size: 12px;
+    line-height: 1.3;
+  }
+
+  /* LINE／Threads 外開是唯一殼層提示，放在直持安全頂端；不與標題主 CTA 或底部
+     虛擬控制帶競爭，也不讓它和方向卡疊在一起。 */
+  .install-card.install-card-embedded-browser {
+    top: max(12px, env(safe-area-inset-top, 0px));
+    right: max(12px, env(safe-area-inset-right, 0px));
+    bottom: auto;
+    left: max(12px, env(safe-area-inset-left, 0px));
+    width: auto;
+    max-width: none;
+    max-height: min(260px, calc(100dvh - 24px));
   }
 }

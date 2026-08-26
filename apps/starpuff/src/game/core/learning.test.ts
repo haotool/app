@@ -36,5 +36,33 @@ describe('learning SSOT', () => {
   it('Shelly 機制映射到需要真實命中的下砸 lesson', () => {
     expect(mapMechanicToLearningLesson('slam')).toBe('slam-shelly');
     expect(getLearningSpec('slam-shelly').copy.focus).toBe('#joy-zone');
+    expect(getLearningSpec('slam-shelly').copy.coachmarkPlacement).toBe('safe-top');
+  });
+
+  it('變身步驟明確教靠近每顆星，且把場景目標留在提示下方', () => {
+    const copy = getLearningSpec('transform').copy;
+    expect(copy.touch).toContain('食指長按');
+    expect(copy.touch).toContain('靠近每顆');
+    expect(copy.touch).toContain('三顆');
+    expect(copy.coachmarkPlacement).toBe('safe-top');
+  });
+
+  it('行動版文案以位置、顏色與形狀描述控制，不依賴 A/B 字母', () => {
+    const latinButtonLabels = /\b(?:A|B|TF|SP)\b/;
+    for (const spec of Object.values(LEARNING_LESSONS)) {
+      if (!spec) continue;
+      expect(spec.copy.touch).not.toMatch(latinButtonLabels);
+      if (spec.practice) {
+        expect(spec.practice.touch).not.toMatch(latinButtonLabels);
+        if (spec.practice.tip) expect(spec.practice.tip.touch).not.toMatch(latinButtonLabels);
+      }
+    }
+  });
+
+  it('練習步驟都提供與實際虛擬鍵對應的行動版 token', () => {
+    for (const step of PRACTICE_STEPS) {
+      const spec = getLearningSpec(step);
+      expect(spec.practice?.touchControls ?? spec.copy.touchControls, step).toBeTruthy();
+    }
   });
 });
