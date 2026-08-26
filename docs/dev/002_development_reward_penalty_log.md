@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-1（reward 1、penalty 2、neutral 0）｜累計總分：+332
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+333
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-08-26
+- ID：reward-positioning-redraft-separates-all-in-from-guarantee
+- 原因：§14 初版以「無費用資料」為由排除 all-in 實得金額，該前提被後續查證的 fee=0 推翻——實際上界定情境內算得出 all-in，真正的限制是「算得出成本結構」不等於「保證拿得到」；初版等於低估自己的能力，與過度承諾同樣是定位失準
+- 解法：重新定稿為情境限定式，新增「是什麼」章節明示牌告換現鈔情境內可給 all-in，並補現場成交保證與牌告情境外來源兩項排除；新增可以說/不可以說對照表，其中「隱去 quoteAvailability 限定」一列直接對應稽核發現的人民幣 FAQ 矛盾
 
 - 日期：2026-08-26
 - ID：penalty-not-prohibited-mistaken-for-justified
