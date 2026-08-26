@@ -189,7 +189,6 @@ export function createGuidanceDirector(
     const player = hooks.player().sprite;
     if (Math.hypot(player.x - x, player.y - y) < 120) consumeObservation({ slamTargetHit: true });
   };
-  const onShield = (): void => consumeObservation({ featureUsed: 'shell-shield' });
   const onStarburst = ({ phase }: { phase: 'none' | 'charged' | 'detonating' }): void => {
     if (phase === 'detonating') consumeObservation({ featureUsed: 'starburst' });
   };
@@ -203,7 +202,6 @@ export function createGuidanceDirector(
   onGameEvent(scene.events, GameEvents.STAR_FIRED, onFired);
   onGameEvent(scene.events, GameEvents.SKILL_SLAM_LANDED, onSlam);
   onGameEvent(scene.events, GameEvents.ENEMY_KILLED, onKilled);
-  onGameEvent(scene.events, GameEvents.SKILL_SHIELD_BLOCK, onShield);
   onGameEvent(scene.events, GameEvents.STARBURST_CHANGED, onStarburst);
   onGameEvent(scene.events, GameEvents.SKILL_STARSTORM, onStarstorm);
   onGameEvent(scene.events, GameEvents.GUIDANCE_FEATURE_USED, onFeature);
@@ -213,7 +211,6 @@ export function createGuidanceDirector(
     () => offGameEvent(scene.events, GameEvents.STAR_FIRED, onFired),
     () => offGameEvent(scene.events, GameEvents.SKILL_SLAM_LANDED, onSlam),
     () => offGameEvent(scene.events, GameEvents.ENEMY_KILLED, onKilled),
-    () => offGameEvent(scene.events, GameEvents.SKILL_SHIELD_BLOCK, onShield),
     () => offGameEvent(scene.events, GameEvents.STARBURST_CHANGED, onStarburst),
     () => offGameEvent(scene.events, GameEvents.SKILL_STARSTORM, onStarstorm),
     () => offGameEvent(scene.events, GameEvents.GUIDANCE_FEATURE_USED, onFeature),
