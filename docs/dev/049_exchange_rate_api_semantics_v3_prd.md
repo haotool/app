@@ -1,7 +1,7 @@
 # 匯率 API 語意 v3 正名與 MoneyBox 上游遷移 PRD
 
 > **建立時間**: 2026-08-26T14:00:00+08:00
-> **版本**: v8.0（定案）
+> **版本**: v9.0（定案）
 > **狀態**: ✅ v3 欄位定案（§16）；PR 1 可立即實作；§17 有 6 項需外部資訊才能定案
 > **作者**: Claude Code（研究與盤點）+ Codex（獨立第二意見）
 > **上位文件**: `CLAUDE.md`、`AGENTS.md`
@@ -758,10 +758,98 @@ repo 既有文案佐證：`DEFAULT_DESCRIPTION`「顯示臺灣銀行牌告的**�
 
 ---
 
+## 18. 新 API 實測與最終修正（2026-08-26）
+
+### 18.1 MoneyBox 新 API 的完整表面
+
+端點探查：**只有 `/api/rates`**（`/api/rates/latest`、`/history`、`/currencies`、`/config`、`/branches` 皆 404）。
+
+```
+HTTP 200
+cache-control: public, max-age=14400      ← 上游自宣可快取 4 小時
+last-modified: Wed, 26 Aug 2026 13:05:24 GMT
+cf-cache-status: HIT / age: 21
+```
+
+```json
+{
+  "success": true,
+  "data": {
+    "publishedAt": "2026-08-26T13:02:18.268Z",
+    "rates": [{ "currencyCode": "TWD", "buyRate": 42.15, "sellRate": 42.3 }]
+  }
+}
+```
+
+19 幣別，每列**僅 3 欄位**。無 `base`、無 `spbuy`/`spsell`、無任何參考價。
+
+> 這使 `providerReferenceRate` 對 MoneyBox **恆為 `null`**——是結構性事實，非暫時缺漏。
+
+### 18.2 輪詢頻率：依上游快取契約，不依我方習慣
+
+我方 cron 每 5 分鐘（288 次/日），是上游自宣 TTL 的 **48 倍**；實測平日僅 25–34 次實際變動。
+
+**裁決：停用每 5 分鐘輪詢，改依 `max-age=14400` 排程，並帶 `If-Modified-Since` 條件式請求。**
+
+> **精準主張不受影響**——「精準」指的是**價格語意正確**（實際牌告買賣價而非中間價），不是輪詢頻率。
+
+欄位改名：`nextUpdateAt` → **`nextSourceCheckAt`**。前者暗示「上游必然會更新」，是不誠實的承諾；我方能保證的只有「下次檢查時間」。
+
+### 18.3 推導中價：可以做，但**不能取代**外部市場中價
+
+產品方向為「中價變成計算出來的參考」。可行，但有嚴格邊界：
+
+| 欄位                      | 定義                                   | 標記                                                                                |
+| ------------------------- | -------------------------------------- | ----------------------------------------------------------------------------------- |
+| `derivedQuoteMidpoint`    | 同一 provider 兩側牌告價的**數學中點** | `isMarketRate: false`、`derivation: "arithmetic_mean_of_published_two_sided_rates"` |
+| `derivedQuoteSpread`      | 兩側牌告價差                           | 同上                                                                                |
+| `marketMidCounterfactual` | 外部市場中價（Google/XE/Wise 顯示者）  | `purpose: "comparison_only"`（§16.3）                                               |
+
+**兩者不可互換。** `derivedQuoteMidpoint` 是**該 provider 自己**兩側報價的中點；`marketMidCounterfactual` 是**市場**中價。差異化敘事對照的是後者。
+
+既有 `seo-rate-examples.ts` 同時計算 `foreignAtBankMid`（雙重驗證）與 `foreignAtMarketMid`（對照敘事），**正說明兩者用途不同、都需要保留**。
+
+> **§17 #1 的授權阻塞未解除。** 期望「改用推導中價即可繞過授權問題」**不成立**——若仍要公開市場中價對照，條款確認、來源方法論公開、獨立 freshness 門檻仍是發佈前必要條件。未確認前 `marketMidCounterfactual: null`，**不得用推導中點頂替**。
+
+### 18.4 Decimal 精度規格
+
+實例：`(42.15 + 42.3) / 2` 在 JS 得到 **`42.224999999999994`**。
+
+| 項目           | 規格                                                            |
+| -------------- | --------------------------------------------------------------- |
+| 公開 JSON 表示 | **decimal string**（`"42.3"` 而非 `42.3`）                      |
+| 算術           | 十進位算術（decimal.js 等），**禁止** binary float 進入公開產物 |
+| 中點／spread   | 依輸入位數規則捨入，`ROUND_HALF_EVEN`                           |
+| canonical 倒數 | 保留 **12 位小數**                                              |
+| 金額           | 依幣別 **minor-unit** 捨入                                      |
+
+守門測試須斷言：
+
+- `mean("42.15", "42.3") === "42.225"`
+- 公開 JSON **不得出現** `42.224999999999994`
+- hash 可重建一致性
+- per-100 正規化仍走 decimal path
+
+### 18.5 上游只給 3 欄位下，必須為 null 的欄位
+
+| 欄位                      | 值                                    |
+| ------------------------- | ------------------------------------- |
+| `providerReferenceRate`   | `null`（上游不提供）                  |
+| `marketMidCounterfactual` | `null`（授權未確認前）                |
+| `marketMidExpectationGap` | `null`（依賴上者）                    |
+| `deliveryEstimation`      | `null`（無此資料）                    |
+| 優惠匯率資訊              | `null`（§15.1 `pricingScope` 已排除） |
+| `rateType`                | **`"unspecified"`** 而非 `null`       |
+
+> 最後一列是刻意區分：**`"unspecified"` = 已知有此概念但無資料；`null` = 此概念不適用。** 兩者不可混用。
+
+---
+
 ## 修訂紀錄
 
 | 日期       | 版本 | 變更                                                                                                                                                                                                                                                                               |
 | ---------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-08-26 | v9.0 | MoneyBox 新 API 完整實測（單一端點、3 欄位、max-age 4h）；輪詢改依上游快取契約並改名 nextSourceCheckAt；新增 derivedQuoteMidpoint 但裁定不可取代外部市場中價、授權阻塞未解除；decimal string 與十進位算術規格定案；列出上游僅 3 欄位下必須為 null 的欄位                           |
 | 2026-08-26 | v8.0 | 產品定位揭露（主打實際牌告價非中間價）推翻中間價 deferred 裁決；中間價改名 marketMidCounterfactual 並定位為對照組；主匯率數值改名 publishedRate 並以 quoteNature + quoteAvailability 平衡精準與不過度承諾；精準度落差升為一級欄位但只依附 amountTiers；列出 6 項需外部資訊的未定案 |
 | 2026-08-26 | v7.0 | 查證台銀免手續費推翻 feeCoverage=unknown，改 fee:0 + pricingScope；新增 comparisonProfile 取代 rateType 字串比對（避免錯殺唯一可比對）；十二項逐項裁決（5 採納 7 修正）；覆蓋範圍與可得性分離；新增 8 項續議與阻塞分析，確認 PR 1 不被阻塞                                         |
 | 2026-08-26 | v6.0 | 第二輪獨立審查推翻三項裁決：`amountTiers` 改為納入、`grossReceivedAmount` 否決、`comparisonBenchmark` 延後；新增 `comparablePairs` 強制欄位與 §13.3.4 只有一組可比對的實測；新增 §14 產品定位界定與 §15 十二項待對齊清單                                                           |

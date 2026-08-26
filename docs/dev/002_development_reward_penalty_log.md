@@ -14,6 +14,16 @@
 ## 條目（新→舊）
 
 - 日期：2026-08-26
+- ID：penalty-polled-upstream-48x-its-declared-cache-ttl
+- 原因：MoneyBox 新 API 回應標頭明載 cache-control public max-age=14400（4 小時）且提供 last-modified，我方 cron 卻每 5 分鐘輪詢（288 次/日，為上游自宣 TTL 的 48 倍）且未使用條件式請求；實測平日僅 25–34 次實際變動，等於把成本外部化給一個免費公開 API
+- 解法：改依上游 max-age 排程並帶 If-Modified-Since；欄位由 nextUpdateAt 改名 nextSourceCheckAt，因前者暗示上游必然更新而我方只能保證檢查時間；往後接取第三方來源時，輪詢頻率必須先讀對方的快取契約而非依我方習慣設定
+
+- 日期：2026-08-26
+- ID：reward-derived-midpoint-scoped-without-replacing-market-mid
+- 原因：期望以「由真實買賣價推導中價」取代外部市場中價，藉此解掉授權未確認的發佈阻塞——但推導中點是同一 provider 兩側牌告價的數學中點，與 Google/XE/Wise 顯示的市場中價是不同概念，用它頂替會讓差異化敘事失真
+- 解法：新增 derivedQuoteMidpoint 並強制標記 isMarketRate false 與 derivation 來源，同時保留 marketMidCounterfactual 供對照敘事，授權未確認前後者為 null 且不得由前者頂替；seo-rate-examples 早已同時計算兩者，正說明用途不可互換
+
+- 日期：2026-08-26
 - ID：penalty-designed-api-eight-rounds-without-knowing-product-positioning
 - 原因：連續八輪推敲 v3 欄位語意、查六個權威來源、與獨立審查往返五次，卻始終沒問「這個產品的差異化主張是什麼」；直到產品負責人主動揭露「主打實際牌告價非中間價」，才發現對中間價的整套處理（列為 deferred、擔心背書風險）建立在錯誤假設上——而該差異化模型早已完整實作在 seo-rate-examples.ts 只是沒進 API
 - 解法：中間價重新定位為對照組並改名 marketMidCounterfactual；往後設計對外契約前，必須先確認產品的差異化主張與既有實作，不得只從技術正確性推導欄位
