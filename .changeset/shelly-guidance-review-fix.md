@@ -1,4 +1,5 @@
 ---
+'@app/ratewise': patch
 '@app/starpuff': patch
 ---
 

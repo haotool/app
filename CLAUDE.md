@@ -347,7 +347,7 @@ gh pr merge <PR_NUMBER> --squash --delete-branch=false
 
 **MoneyBox `sell` 欄位全面回 0（上游停供）**：`cems.moneybox.or.kr` 自 2026-08-22 起對多數幣別回傳 `"sell": "0.0000"`（`parseFloat(...) || null` 會轉成 `null`）。腳本先判「上游停供」再判 TWD 個別數值，錯誤訊息為 `Upstream sell-quote outage: only N/M currencies carry a positive sell rate`；**不得**為了讓 CI 變綠而放寬 `TWD_SELL_MIN/MAX` 或由 `spbuy`／`spsell` 推導 `sell`——那等於對使用者輸出捏造的匯率。
 
-**排程資料 workflow 的持續中斷升級節流（SSOT）**：高頻排程（MoneyBox 每 5 分鐘、288 次/日）在持續中斷時若每次都 fail，會產生同質失敗通知洪水而降低事故可見度。標準做法是**以 GitHub issue 作為持久信號**：首次偵測建立帶 `outage:*` 標籤的 issue 並 fail；其後每 `ESCALATION_INTERVAL_HOURS` 才留言＋fail 一次，節流視窗內輸出 `::warning::` 並 `exit 0`；抓取恢復時由 workflow 自動關閉該 issue。**此節流不等於綠燈掩蓋**——中斷期間必須同時存在常駐 open issue 與週期性紅燈，兩者缺一即回到原本「每次都 fail」的行為。所有 issue 查詢失敗一律 fallback 到 `exit 1`（fail-safe 只能更常失敗，不能更少）。恢復時未關閉 issue 會使下一次中斷從第一次執行就被節流，失去首次曝光，故自動關閉是必要環節而非優化。
+**排程資料 workflow 的持續中斷升級節流（SSOT）**：高頻排程（MoneyBox 每 5 分鐘、288 次/日）在持續中斷時若每次都 fail，會產生同質失敗通知洪水而降低事故可見度。標準做法是**以 GitHub issue 作為持久信號**：MoneyBox 首次偵測建立同時帶 `outage:moneybox`、`severity:p1`、`bug` 的 issue，body 必須包含 `## 摘要`、`## 背景／證據`、`## 影響`、`## 範圍`、`## 驗收標準` 五段並 fail；其後每 `ESCALATION_INTERVAL_HOURS` 才留言＋fail 一次，節流視窗內輸出 `::warning::` 並 `exit 0`；抓取恢復時由 workflow 自動關閉該 issue。**此節流不等於綠燈掩蓋**——中斷期間必須同時存在常駐 open issue 與週期性紅燈，兩者缺一即回到原本「每次都 fail」的行為。所有 issue 查詢失敗一律 fallback 到 `exit 1`（fail-safe 只能更常失敗，不能更少）。恢復時未關閉 issue 會使下一次中斷從第一次執行就被節流，失去首次曝光，故自動關閉是必要環節而非優化。
 
 **Release workflow 顯示 success 但沒有語意升版**：先查 `.changeset/*.md` 是否仍存在，再查 release run log。若 `Create Release Pull Request` 在 `git commit` 階段被 commitlint 擋下，將 `changesets/action` 的 `commit` / `title` 改為 `chore(release): 更新版本套件`，且失敗回報步驟必須 `exit 1`，避免 release PR 未建立卻顯示綠燈。
 
