@@ -1,7 +1,7 @@
 # 匯率 API 語意 v3 正名與 MoneyBox 上游遷移 PRD
 
 > **建立時間**: 2026-08-26T14:00:00+08:00
-> **版本**: v10.1
+> **版本**: v11.0
 > **狀態**: ✅ 欄位語意定案；⚠️ SSOT 生成鏈未建立（§19.8 十一項）；PR 1 可立即實作
 > **作者**: Claude Code（研究與盤點）+ Codex（獨立第二意見）
 > **上位文件**: `CLAUDE.md`、`AGENTS.md`
@@ -972,10 +972,81 @@ CI 強制斷言 `apiAmountTierConfig` **不得 import** `seo-paths.config.mjs`�
 
 ---
 
+## 20. 全域漂移稽核（2026-08-26）
+
+### 20.1 確認漂移
+
+| #   | 位置                                          | 問題                                                                                                                                                                                                  |
+| --- | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `CLAUDE.md` MoneyBox 故障排除條目             | 以 `cems.moneybox.or.kr` 為**現行**來源；PR #1051 合併後即過期                                                                                                                                        |
+| 2   | `.github/workflows/update-moneybox-rates.yml` | outage issue body 與 step summary 指向**舊 API URL**——中斷時會把調查者導向錯誤端點                                                                                                                    |
+| 3   | `CLAUDE.md` 排程節流條文                      | 記載「MoneyBox 每 5 分鐘」為 SSOT，與 §18.2 裁決衝突                                                                                                                                                  |
+| 4   | `currency-landing.ts` 人民幣 FAQ              | 「線上結匯（如台銀 Easy 購）**匯率最優惠**」——與 §15.1 `pricingScope.excludedConditions: ["online_preferential_rate"]` **直接衝突**：文案推薦一個我方資料明確不涵蓋的管道，卻未標示顯示數字不適用於它 |
+| 5   | `.github/workflows/update-latest-rates.yml`   | 台銀（**92% 流量**）有 staleness gate（6h）但**無 outage issue routing**——#1039 的節流機制只套用在較小的 MoneyBox，較大的來源仍會在中斷時每 5 分鐘失敗一次                                            |
+
+> 第 5 項是我方自造：修了小來源的通知洪水，留下大來源的。
+
+### 20.2 我判定「不是漂移」但被獨立審查推翻
+
+| 項目                 | 我方判定     | 審查裁決                             | 我漏看了什麼                                                                                           |
+| -------------------- | ------------ | ------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| B1 台銀「每 5 分鐘」 | 適當，非漂移 | **部分同意，不同意「因此必然適當」** | `no-cache` 只是**重新驗證訊號**，不是頻率授權。我證明了「未被禁止」，不等於「已被證成」                |
+| B2「18 種貨幣」      | 已 SSOT 驅動 | **不同意判為非漂移**                 | regex 掃 `constants.ts` 是脆弱實作；且未區分 configured／可發布／可比較／當期可用四種「18」            |
+| B3「多幣別同時比較」 | app 內換算   | **部分同意，文案需修正**             | 「同時比較」對讀者與 AI 易誤讀為**跨 provider 比較**；應改為「以同一基準幣別同時檢視多種幣別換算結果」 |
+| B4 換錢所比較 FAQ    | 已限定 KRW   | **部分同意，尚不能判非漂移**         | 「現場約可換 M 韓元」可能超出資料事實——**牌告價 ≠ 現場成交／庫存／營業時間保證**                       |
+
+**B1 的正確判準**（非僅憑 `no-cache`）：
+
+1. workflow cron 與**實際成功更新紀錄**核對
+2. 台銀**實際變價頻率分布**觀測
+3. 明確 SLO（如「牌告更新後 95% 在 10 分鐘內反映」）
+4. 上游是否提供條件式請求，據以調整
+
+### 20.3 §14 排除宣稱應落成可執行斷言
+
+repo 已有「公開真相閘門」（`schema-truthfulness.test.ts`、`CurrencyLandingPage.truthfulness.test.tsx`），§14 四項排除宣稱應在此落地：
+
+| 斷言                                                                                       |
+| ------------------------------------------------------------------------------------------ |
+| `comparablePairs` 須為明確 **allowlist**，非由幣別交集自動生成                             |
+| `quoteAvailability` 固定枚舉，**禁止** guaranteed 類文案                                   |
+| `pricingScope.rateBasis` 必為 `"published_board_rate"`                                     |
+| `derivedQuoteMidpoint.isMarketRate` 必為 `false`                                           |
+| `marketMidCounterfactual.purpose` 必為 `"comparison_only"`                                 |
+| 非 `all_in` 時**禁止**輸出排名／最佳欄位                                                   |
+| `feeCoverage="complete"` 時必須綁定 `fee.amount="0"` + `spread_only` + 完整 `pricingScope` |
+
+> **§14 需重新定稿**：其「不保證 all-in 實得」的**絕對表述**已被 §15.1 的 `fee = 0` 新事實推翻，應改為**情境限定式**表述（限定牌告匯率換現鈔情境）。這是我方引入 fee=0 時未回頭修正 §14 造成的內部矛盾。
+
+### 20.4 過渡期處置：`llms.txt` 與 `openapi.json`
+
+**v3 發佈前不改 canonical 公開文件為 v3**，但**若現有描述與現行 endpoint 不一致必須立即修正**——不得以「快要 v3」為由保留錯誤。
+
+v3 contract／OpenAPI／LLM 文件可在 feature branch 建立，**不連 canonical URL**。硬切時同一次 build 原子生成全部產物，並以 5 項 gate 守門：欄位反漂移、OpenAPI `$ref` 一致、OpenData 生成、`schemaVersion` 一致、CDN probe 驗證同 `releaseId`。
+
+### 20.5 共識狀態：**否**
+
+仍有 **7 項未決**，且**皆需外部事實而非更多討論**：
+
+| #   | 未決項                              | 需要什麼                   |
+| --- | ----------------------------------- | -------------------------- |
+| 1   | 台銀 polling SLO                    | 變價頻率觀測資料           |
+| 2   | 外部市場中價授權與方法論            | `open.er-api.com` 條款確認 |
+| 3   | 既有 `diffTWD`／`diffPct` 精確公式  | 比對 fixture               |
+| 4   | MoneyBox 正式 rate type             | 產品類型定義證據           |
+| 5   | `currencyMinorUnits` SSOT 位置      | 內部決策                   |
+| 6   | 台銀／MoneyBox 再散布條款           | 條款盤點                   |
+| 7   | §14 四項文字因 `fee = 0` 需重新定稿 | 內部決策（可立即處理）     |
+
+> 第 1、2、3、4、6 項**無法靠再跑幾輪對抗式審查收斂**——它們缺的是外部事實。繼續討論只會產出更多推測。
+
+---
+
 ## 修訂紀錄
 
 | 日期       | 版本  | 變更                                                                                                                                                                                                                                                                               |
 | ---------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-08-26 | v11.0 | 新增 §20 全域漂移稽核：確認 5 項漂移（含台銀 workflow 缺 outage routing、人民幣 FAQ 推薦我方不涵蓋的管道）；記錄我方 4 項「非漂移」判定被推翻及正確判準；§14 因 fee=0 需重新定稿；共識狀態為否，7 項未決且 5 項需外部事實                                                          |
 | 2026-08-26 | v10.1 | reconcile 早期章節欄位名：§4.3 回填 publishedRate／marketMidCounterfactual／derivedQuoteMidpoint／quoteNature／quoteAvailability，§4.3.1 回填 $schema／nextSourceCheckAt／calculationRule；新增 §4.5 已汰換名稱對照表                                                              |
 | 2026-08-26 | v10.0 | 新增 §19 SSOT 架構：語意散落 6 表面且已證實漂移，llms.txt 散文欄位說明為定時炸彈；定案以版本化 JSON Schema 為 SSOT 並衍生全部產物；v3 移除 semanticFieldMapping 改用 $schema；llms.txt 散文與 schema 連結兩者都要；JSON-LD 改為已驗證 payload 的投影；誠實列出 11 項未達成         |
 | 2026-08-26 | v9.0  | MoneyBox 新 API 完整實測（單一端點、3 欄位、max-age 4h）；輪詢改依上游快取契約並改名 nextSourceCheckAt；新增 derivedQuoteMidpoint 但裁定不可取代外部市場中價、授權阻塞未解除；decimal string 與十進位算術規格定案；列出上游僅 3 欄位下必須為 null 的欄位                           |

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+333
+> 本次分數變化：-1（reward 1、penalty 2、neutral 0）｜累計總分：+332
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,21 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-08-26
+- ID：penalty-not-prohibited-mistaken-for-justified
+- 原因：稽核台銀「每 5 分鐘」宣稱時，查到上游回 cache-control no-cache no-store 便判定 288 次/日「適當、非漂移」——但 no-cache 只是重新驗證訊號，證明的是「未被禁止」而非「已被證成」；正當化高頻輪詢還需要實際變價頻率、明確 SLO 與上游負載責任三項判準
+- 解法：改判為「部分成立」並列出四項正確判準；往後以「上游沒禁止」為由維持任何高成本行為前，必須另外證明其效益與責任邊界
+
+- 日期：2026-08-26
+- ID：penalty-throttle-fixed-small-source-left-larger-one
+- 原因：#1039 為 MoneyBox 建立 outage issue 節流機制解決 288 次/日通知洪水，但台銀 workflow（佔 CDN 流量 92%、cron 同為每 5 分鐘）只有 staleness gate 沒有 outage routing——等於修了小來源的通知洪水、留下大來源的
+- 解法：稽核時列為確認漂移並記入 PRD §20.1；往後為單一 provider 建立營運機制時，必須同時盤點其餘同類 provider 是否有相同缺口
+
+- 日期：2026-08-26
+- ID：reward-global-drift-audit-caught-copy-contradicting-own-scope
+- 原因：全域稽核 SEO 文案時發現人民幣 FAQ 寫「線上結匯（如台銀 Easy 購）匯率最優惠」，而我方 pricingScope 明確把 online_preferential_rate 列為 excludedConditions——文案在推薦一個我方資料不涵蓋的管道，卻未標示顯示數字不適用於它
+- 解法：列為確認漂移；並確認四項原判「非漂移」中有兩項被獨立審查推翻，記錄正確判準避免下次再以單一訊號下結論
 
 - 日期：2026-08-26
 - ID：penalty-prd-carried-two-contradictory-field-tables
