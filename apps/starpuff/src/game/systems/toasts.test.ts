@@ -117,6 +117,26 @@ describe('彩蛋慶祝與星味提示（§24/§46）', () => {
     expect(chains.length).toBe(1);
     expect(toasts.lastAchievementToast()).toBe('');
   });
+
+  it('guided sandbox 可停用重複浮字，保留 coachmark 作為唯一教學回饋', () => {
+    const chains: TweenCapture[] = [];
+    const scene = {
+      add: { text: makeChain, image: makeChain },
+      scale: { width: 854, height: 480 },
+      cameras: { main: { worldView: { x: 0, right: 854 } } },
+      events: { on: vi.fn(), off: vi.fn(), once: vi.fn() },
+      tweens: { chain: vi.fn((config: TweenCapture) => chains.push(config)), add: vi.fn() },
+    } as unknown as Phaser.Scene;
+    const muted = createToasts(scene, {
+      fx: () => ({ starBurst: vi.fn() }) as unknown as FxSystem,
+      playerPos: () => ({ x: 400, y: 300 }),
+      suppressFlavor: () => true,
+    });
+
+    muted.flavor('同系星彈 ×3！按變身鍵立即變身');
+
+    expect(chains).toHaveLength(0);
+  });
 });
 
 function makeChain(): Record<string, unknown> {

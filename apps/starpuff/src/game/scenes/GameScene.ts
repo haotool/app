@@ -316,6 +316,7 @@ export class GameScene extends Phaser.Scene {
     this.toasts = createToasts(this, {
       fx: () => this.fx,
       playerPos: () => ({ x: this.player.sprite.x, y: this.player.sprite.y }),
+      suppressFlavor: () => this.guidedTutorialMode,
     });
     // 蓄能星生命週期（§109）：跨關持有/死亡清除/EX 清除/教學浮字委派 director（自清）。
     this.starburstDirector = createStarburstDirector(this, {

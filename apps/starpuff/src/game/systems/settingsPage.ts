@@ -8,6 +8,12 @@ import { vibratePattern } from '../audio/haptics';
 import { bindButtonActivation } from '../core/domButton';
 import { createFocusTrap, type FocusTrap } from '../core/focusTrap';
 import {
+  ASSET_NOTICE_BODY,
+  CREATIVE_NOTICE_BODY,
+  CREATIVE_NOTICE_TITLE,
+  FICTIONAL_CONTENT_NOTICE,
+} from '../core/legalCopy';
+import {
   loadSettings,
   resetGuidedTutorialForReplay,
   updateSettings,
@@ -126,6 +132,21 @@ function addShakeRow(card: HTMLElement): void {
   card.appendChild(row);
 }
 
+function addCreativeNotice(card: HTMLElement): void {
+  const details = document.createElement('details');
+  details.className = 'settings-notice';
+  details.dataset['setting'] = 'creative-notice';
+  const summary = document.createElement('summary');
+  summary.textContent = CREATIVE_NOTICE_TITLE;
+  details.appendChild(summary);
+  for (const text of [CREATIVE_NOTICE_BODY, ASSET_NOTICE_BODY, FICTIONAL_CONTENT_NOTICE]) {
+    const paragraph = document.createElement('p');
+    paragraph.textContent = text;
+    details.appendChild(paragraph);
+  }
+  card.appendChild(details);
+}
+
 export interface SettingsPageOptions {
   onReplayTutorial?: () => void;
 }
@@ -180,8 +201,9 @@ export function openSettingsPage(onClose?: () => void, options: SettingsPageOpti
 
   for (const spec of TOGGLES) addToggleRow(card, spec);
   addShakeRow(card);
+  addCreativeNotice(card);
 
-  // 操作列固定在卡片底部（§34）：內容可滾動，但配置與完成永遠留在可視區。
+  // 操作列跟隨設定內容自然排版；短視窗由卡片內捲動，避免覆蓋作品說明。
   const actions = document.createElement('div');
   actions.className = 'settings-actions';
 

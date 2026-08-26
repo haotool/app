@@ -75,10 +75,15 @@ test.describe('手機 viewport-level 提示與設定截圖回歸', () => {
     await expect(angelCard).not.toHaveAttribute('aria-modal', 'true');
     await expectInsideViewport(angelCard, viewport!);
     await expectInsideViewport(angelCard.locator('[data-guidance="dismiss"]'), viewport!);
-    const angelOverlapsGameplayControl = await page.evaluate(() => {
+    await expect(angelCard.locator('.guidance-angel-instruction')).toHaveCSS('display', 'block');
+    await expect(angelCard.locator('.guidance-angel-instruction')).toHaveCSS('overflow', 'visible');
+    const angelBlocksGameplayControl = await page.evaluate(() => {
       const card = document.querySelector<HTMLElement>('.guidance-angel-card');
       const cardRect = card?.getBoundingClientRect();
       if (!cardRect) return true;
+      // 小天使卡是非攔截提示：即使視覺上落在整片搖桿 hit area 上，實際
+      // pointer hit-test 必須穿透回遊戲控制；關閉鈕仍由自身 pointer-events:auto 接手。
+      if (getComputedStyle(card).pointerEvents === 'none') return false;
       const targets = [
         '#joy-zone',
         '[data-btn="a"]',
@@ -96,7 +101,7 @@ test.describe('手機 viewport-level 提示與設定截圖回歸', () => {
           : false;
       });
     });
-    expect(angelOverlapsGameplayControl).toBe(false);
+    expect(angelBlocksGameplayControl).toBe(false);
     await angelCard.screenshot({ path: `${SCREENSHOT_DIR}/guidance-angel-card.png` });
     await screenshot(page, 'landscape-guidance-angel');
     await angelCard.locator('[data-guidance="dismiss"]').dispatchEvent('pointerdown', {

@@ -9,6 +9,7 @@ export interface ShellCardButton {
 }
 
 export interface ShellCardOptions {
+  variant?: 'pwa-install' | 'embedded-browser';
   title: string;
   description: string;
   illustration?: {
@@ -68,7 +69,7 @@ export function showShellCard(options: ShellCardOptions, onClose?: () => void): 
   overlay.className = 'install-overlay';
 
   const card = document.createElement('div');
-  card.className = 'install-card';
+  card.className = `install-card${options.variant ? ` install-card-${options.variant}` : ''}`;
   card.setAttribute('role', 'dialog');
   card.setAttribute('aria-modal', 'false');
   card.setAttribute('aria-label', options.title);

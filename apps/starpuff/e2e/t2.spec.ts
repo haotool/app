@@ -261,3 +261,128 @@ test('#817 橫持：無方向解鎖提示、無桌機鍵位卡（互不誤觸）
   expect(await page.evaluate(() => localStorage.getItem('sp-orientation-hint'))).toBeNull();
   expect(await page.evaluate(() => localStorage.getItem('sp-desktop-keys'))).toBeNull();
 });
+
+// §90：以實際 UA 模擬社群 App 內建瀏覽器。平台卡片必須分流，且外開卡優先於
+// 方向提示；這是平台 chrome 無法由網頁自行控制時，唯一可可靠驗收的頁內契約。
+test('§90 LINE／Threads 內建瀏覽器顯示不同外開提示', async ({ browser }) => {
+  const scenarios = [
+    {
+      name: 'LINE',
+      userAgent:
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Line/14.0.0',
+      title: 'LINE 內建瀏覽器',
+      firstStep: '點右下角「…」',
+    },
+    {
+      name: 'Threads',
+      userAgent:
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Barcelona 431.0.0.25.69',
+      title: 'Threads 內建瀏覽器',
+      firstStep: 'Threads',
+    },
+  ] as const;
+
+  for (const scenario of scenarios) {
+    const context = await browser.newContext({
+      baseURL: `http://localhost:${process.env['SP_DEV_PORT'] || '3007'}/`,
+      userAgent: scenario.userAgent,
+      viewport: { width: 390, height: 844 },
+      isMobile: true,
+      hasTouch: true,
+    });
+    await context.addInitScript(() => {
+      // 這個 context 不使用 globalSetup 的 storageState；避免首次教學選擇卡
+      // 攔截本測試要驗證的外開提示與遊戲生命週期。
+      localStorage.setItem(
+        'sp-settings',
+        JSON.stringify({ schemaVersion: 2, guidedTutorialStatus: 'skipped' }),
+      );
+    });
+    const page = await context.newPage();
+    const errors = collectErrors(page);
+    try {
+      await page.goto('/');
+      const card = page.locator('.install-card-embedded-browser');
+      await expect(card).toBeVisible({ timeout: 10000 });
+      await expect(card).toContainText(scenario.title);
+      await expect(card).toContainText(scenario.firstStep);
+      await expect(card).toContainText('點「在瀏覽器中開啟」');
+      await expect(card.locator('.install-illustration')).toHaveCount(0);
+      await expect(page.locator('.orientation-coachmark')).toHaveCount(0);
+
+      // 玩家可先直接開始；外開卡的自動關閉不是明確略過，回到 Title 後必須重新排程。
+      await page
+        .locator('[data-menu="start"]')
+        .dispatchEvent('pointerdown', { pointerId: 13, isPrimary: true });
+      await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Game');
+      await expect(card).toHaveCount(0);
+      await page.keyboard.press('Escape');
+      await expect(page.locator('[data-pause="quit"]')).toBeVisible();
+      await page.locator('[data-pause="quit"]').dispatchEvent('pointerdown', {
+        pointerId: 14,
+        isPrimary: true,
+      });
+      await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Title');
+      await expect(card).toBeVisible({ timeout: 10000 });
+
+      // Escape 也不是明確略過；同一頁回到安靜時刻後仍可再次看到外開指引。
+      await page.keyboard.press('Escape');
+      await expect(card).toHaveCount(0);
+      await expect(card).toBeVisible({ timeout: 10000 });
+
+      // 外開卡完成後，方向提示可接續出現；重新載入也不應因外開卡 dismissed 而永久失去。
+      await card.getByRole('button', { name: '知道了' }).dispatchEvent('pointerdown', {
+        pointerId: 11,
+        isPrimary: true,
+      });
+      await expect(card).toHaveCount(0);
+      const orientationCard = page.locator('.orientation-coachmark');
+      await expect(orientationCard).toBeVisible({ timeout: 10000 });
+      await orientationCard.locator('[data-orientation-action]').dispatchEvent('pointerdown', {
+        pointerId: 12,
+        isPrimary: true,
+      });
+      await expect(orientationCard).toHaveCount(0);
+      await page.reload();
+      await expect(page.locator('.orientation-coachmark')).toBeVisible({ timeout: 10000 });
+      expect(errors).toEqual([]);
+    } finally {
+      await context.close();
+    }
+  }
+});
+
+test('§90 外開確認在儲存不可用時仍能於本次接續方向提示', async ({ browser }) => {
+  const context = await browser.newContext({
+    baseURL: `http://localhost:${process.env['SP_DEV_PORT'] || '3007'}/`,
+    userAgent:
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Line/14.0.0',
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+  });
+  await context.addInitScript(() => {
+    const setItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (key, value) {
+      if (key === 'sp-install-dismissed') throw new DOMException('blocked', 'QuotaExceededError');
+      setItem.call(this, key, value);
+    };
+  });
+  const page = await context.newPage();
+  const errors = collectErrors(page);
+  try {
+    await page.goto('/');
+    const card = page.locator('.install-card-embedded-browser');
+    await expect(card).toBeVisible({ timeout: 10000 });
+    await card.getByRole('button', { name: '知道了' }).dispatchEvent('pointerdown', {
+      pointerId: 15,
+      isPrimary: true,
+    });
+    await expect(card).toHaveCount(0);
+    await expect(page.locator('.orientation-coachmark')).toBeVisible({ timeout: 10000 });
+    expect(await page.evaluate(() => localStorage.getItem('sp-install-dismissed'))).toBeNull();
+    expect(errors).toEqual([]);
+  } finally {
+    await context.close();
+  }
+});

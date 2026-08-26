@@ -33,6 +33,7 @@ import type { StageHandle } from './stage';
 import type { TideHandle } from './tide';
 import {
   addLearningCoachmarkViewportListeners,
+  appendTouchControlTokens,
   clearLearningFocus,
   positionLearningCoachmark,
 } from './learningCoachmark';
@@ -129,6 +130,7 @@ export function createGuidanceDirector(
       instruction.className = 'guidance-angel-instruction';
       instruction.textContent = isDesktop() ? copy.desktop : copy.touch;
       body.appendChild(instruction);
+      if (!isDesktop()) appendTouchControlTokens(body, copy.touchControls);
       if (copy.tip) {
         const tip = document.createElement('p');
         tip.className = 'guidance-angel-tip';
@@ -152,7 +154,7 @@ export function createGuidanceDirector(
     });
     card.appendChild(dismiss);
     root.appendChild(card);
-    positionLearningCoachmark(root, copy.focus);
+    positionLearningCoachmark(root, copy.focus, copy.coachmarkPlacement);
     const selector = focusSelector();
     if (!complete && selector) document.querySelector(selector)?.classList.add('learning-focus');
   };
@@ -227,7 +229,11 @@ export function createGuidanceDirector(
   root.dataset['guidanceLayer'] = 'true';
   root.hidden = true;
   document.body.appendChild(root);
-  const removeViewportListeners = addLearningCoachmarkViewportListeners(root, focusSelector);
+  const removeViewportListeners = addLearningCoachmarkViewportListeners(root, focusSelector, () =>
+    state.activeLesson === null
+      ? 'auto'
+      : (copyFor(state.activeLesson).coachmarkPlacement ?? 'auto'),
+  );
   const handleSettingsChanged = (nextSettings: UserSettings): void => {
     if (guidanceEnabled === nextSettings.guidanceEnabled) return;
     guidanceEnabled = nextSettings.guidanceEnabled;

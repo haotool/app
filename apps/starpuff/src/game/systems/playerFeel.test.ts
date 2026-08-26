@@ -151,10 +151,32 @@ describe('playerFeel 吸入同步（§30）', () => {
     h.feel.syncInhale();
     expect(h.spies.startInhale).toHaveBeenCalledWith(h.feel.mouth());
     expect(playSfx).toHaveBeenCalledWith('inhale');
-    expect(h.spies.flavor).toHaveBeenCalledWith('長按 B／X 可連續吸入；A／Z 也能同時按');
+    expect(h.spies.flavor).toHaveBeenCalledWith(
+      '食指長按珊瑚粉星形鈕可連吞；大拇指可同時按薄荷綠跳躍鈕。',
+    );
     h.feel.syncInhale();
     expect(h.spies.startInhale).toHaveBeenCalledTimes(1);
     expect(h.spies.flavor).toHaveBeenCalledTimes(1);
+  });
+
+  it('混合觸控筆電以鍵盤 X 吸入時，同時保留鍵盤與觸控手勢提示', () => {
+    vi.stubGlobal('window', {
+      innerWidth: 1440,
+      matchMedia: vi.fn(() => ({ matches: true })),
+    });
+    vi.stubGlobal('navigator', { maxTouchPoints: 5 });
+
+    try {
+      const h = makeHarness();
+      h.state.inhaling = true;
+      h.feel.syncInhale();
+
+      expect(h.spies.flavor).toHaveBeenCalledWith(
+        '可長按 X 連吞；觸控時食指長按珊瑚粉星形鈕可連吞；大拇指可同時按薄荷綠跳躍鈕。',
+      );
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it('吸入下降沿：stopInhale + 止音；未吸入穩態無呼叫', () => {

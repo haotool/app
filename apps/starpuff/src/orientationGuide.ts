@@ -7,6 +7,7 @@
 import { bindButtonActivation } from './game/core/domButton';
 import { isDesktopMode, isHybridKeyboardEnvironment, isPortrait } from './game/core/rotation';
 import { positionLearningCoachmark } from './game/systems/learningCoachmark';
+import { hasDismissedInstallGuide, readPwaInstallEnvironmentFromBrowser } from './installGuide';
 import { showShellCard, whenShellIdle } from './shellCards';
 
 // 舊版此鍵在卡片「顯示」時就寫入，無法證明玩家真的轉過橫向；新鍵只代表已觀測到
@@ -16,6 +17,7 @@ const LEGACY_ORIENTATION_HINT_KEY = 'sp-orientation-hint';
 export const DESKTOP_KEYS_KEY = 'sp-desktop-keys';
 const SHOW_DELAY_MS = 2000;
 let orientationRoot: HTMLDivElement | null = null;
+let orientationGuideInitialized = false;
 
 function hasSeen(key: string): boolean {
   try {
@@ -99,7 +101,13 @@ function showOrientationCoachmark(onClose?: () => void): () => void {
   action.className = 'orientation-coachmark-button';
   action.dataset['orientationAction'] = 'unlock';
   action.textContent = canTryUnlockOrientation() ? '嘗試解除' : '知道了';
+  let closed = false;
+  let gameStartWatcher: MutationObserver | null = null;
   const close = (): void => {
+    if (closed) return;
+    closed = true;
+    gameStartWatcher?.disconnect();
+    gameStartWatcher = null;
     orientationRoot = null;
     root.remove();
     onClose?.();
@@ -118,7 +126,18 @@ function showOrientationCoachmark(onClose?: () => void): () => void {
   root.appendChild(card);
   document.body.appendChild(root);
   orientationRoot = root;
-  positionLearningCoachmark(root);
+  // 方向卡只屬於殼層入口提示；玩家一旦開始遊戲就自動收起，避免和 guided
+  // coachmark 疊在同一個視線區。若玩家仍維持直持，下一次重新載入／回訪再提示。
+  const controls = document.getElementById('controls');
+  if (controls) {
+    gameStartWatcher = new MutationObserver(() => {
+      if (controls.classList.contains('is-active')) close();
+    });
+    gameStartWatcher.observe(controls, { attributes: true, attributeFilter: ['class'] });
+  }
+  // 直持時避開瀏覽器頂端工具列與遊戲殼的視線焦點；不放在最上緣，讓提示在
+  // 行動裝置可視區內穩定可見，同時由 learningCoachmark 的控制區避讓邏輯校正。
+  positionLearningCoachmark(root, undefined, 'safe-top');
   return close;
 }
 
@@ -140,7 +159,17 @@ export function showDesktopKeysCard(onClose?: () => void): void {
   );
 }
 
-export function initOrientationGuide(): void {
+export function initOrientationGuide(embeddedGuideConfirmedInSession = false): void {
+  if (orientationGuideInitialized) return;
+
+  const { inAppBrowser } = readPwaInstallEnvironmentFromBrowser();
+  // 內建瀏覽器的第一優先任務是「外開」；不要同時先顯示方向卡，避免 LINE／Threads
+  // 使用者必須先關掉不相關提示才能找到正確的右下角選單操作。外開卡被使用者關閉
+  // 後則允許方向引導接續顯示，且以同一個 localStorage 記憶讓重新載入也能接續。
+  if (inAppBrowser !== null && !hasDismissedInstallGuide() && !embeddedGuideConfirmedInSession)
+    return;
+  orientationGuideInitialized = true;
+
   // 桌機：首次鍵位卡（一次性）；旋轉殼旁路與虛擬鍵隱藏由 sp-desktop class＋CSS 承擔。
   // 觸控筆電（#839 雙模並存）：虛擬鍵照舊，僅補同一張鍵位卡告知可用鍵盤。
   if (isDesktopMode() || isHybridKeyboardEnvironment()) {

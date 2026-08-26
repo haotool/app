@@ -50,10 +50,10 @@ jump、flap、inhale（迴圈）、swallow、shoot、hit、hurt、metal（皇冠
 
 ### 10.1 guided tutorial 手勢圖 prompt registry
 
-本批資產由內建 `image_gen` 逐張生成，交付至 `src/assets/ui/`，以 WebP q90 保存 alpha；不覆蓋
+本批資產由內建 `image_gen` 逐張生成，交付至 `src/assets/ui/`，以 WebP q88 保存 alpha；不覆蓋
 既有 `control-hints-onboarding.webp`。所有中文、鍵位與操作標籤由 DOM 渲染，圖片不得包含文字。
 
-共用 prompt：
+共用 prompt（v3 手勢圖沿用此 SSOT）：
 
 ```text
 Use case: scientific-educational. Asset type: StarPuff in-game interactive tutorial illustration.
@@ -65,23 +65,35 @@ Constraints: preserve the existing StarPuff silhouette and colors; no logos, wat
 letters or A/B/TF labels. Avoid photorealistic hands, extra characters, clutter and ambiguous arrows.
 ```
 
-| 資產                                    | prompt 差異與角色基準                                                                                                                               |
-| --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tutorial-touch-move.webp`              | 噗噗＋左手大拇指按左側搖桿，清楚呈現左右滑動；只保留單一噗噗與一隻手。                                                                              |
-| `tutorial-touch-jump.webp`              | 噗噗離地跳起＋右手大拇指按右下跳躍區，附上升弧線與落地陰影。                                                                                        |
-| `tutorial-touch-inhale.webp`            | 沿用 `hero-inhale-big-1` 張大嘴語彙；右手食指長按右上動作區，單顆星沿漩渦被吸入。                                                                   |
-| `tutorial-touch-hold-inhale.webp`       | 沿用 `hero-inhale-big-1` 張大嘴語彙；右手食指持續按住右上動作區，三顆不同顏色星星沿同一吸力軌跡接續靠近，強調「長按可連吞」。                       |
-| `tutorial-touch-dual-input.webp`        | 舊版 A＋B 雙指示意，保留作歷史相容資產；因手部輪廓不自然，**不得**作為現行正式提示的來源。                                                          |
-| `tutorial-touch-continuous-inhale.webp` | 現行 A＋B／連吞示意：右手食指持續按住上方動作區、三顆星沿吸力軌跡連續靠近，同畫面保留右手大拇指可同按跳躍區；雙指清楚分離、手腕自然收尾，不放文字。 |
-| `tutorial-touch-slam.webp`              | 噗噗空中垂直下砸一隻 `minion-shelly`，左搖桿向下、右拇指按跳躍區，落點有衝擊圈；Shelly 不受傷死亡。                                                 |
-| `tutorial-touch-transform.webp`         | 沿用 `hero-gale` 風化色彩；三顆同味星進入噗噗並形成風化光環，不使用文字流程圖。                                                                     |
-| `tutorial-angel-guide.webp`             | 薄荷色小天使噗噗，帶光環、翅膀與星星指揮棒；作為正常關卡非阻塞提示的固定小頭像。                                                                    |
+v3 雙指資產另外必須寫入「exactly one human right hand: one wrist, one palm, one thumb, one index
+finger」；食指按珊瑚粉星形吸入鈕，大拇指按薄荷綠上箭頭跳躍鈕，兩個按鈕要保持明確分離。連吞圖
+另外呈現三顆以上同色星星沿同一條吸入軌跡進入噗噗，讓玩家看懂「食指長按即可連吞」，而不是把
+畫面誤讀成連續點按。圖片不承擔文字說明，文字與控制 token 由 DOM 渲染。
+
+| 資產                                       | prompt 差異與角色基準                                                                                                         |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| `tutorial-touch-move-v2.webp`              | 噗噗＋左手拇指拖曳真實圓形搖桿，清楚呈現左右滑動；搖桿為半透明白／薄荷環，不放字母。                                          |
+| `tutorial-touch-jump-v2.webp`              | 噗噗離地跳起＋右手大拇指按真實薄荷綠圓鍵，中心為白色上箭頭，附上升弧線與落地陰影。                                            |
+| `tutorial-touch-hold-inhale-v2.webp`       | 沿用 `hero-inhale-big-1` 張大嘴語彙；右手食指長按真實珊瑚粉星形圓鍵，星星沿漩渦被吸入，強調按住而非連點。                     |
+| `tutorial-touch-shoot-v2.webp`             | 噗噗吐出星彈＋右手食指輕點真實珊瑚粉星形圓鍵，中心為白色五角星，附輕微 pulse。                                                |
+| `tutorial-touch-dual-input-v4.webp`        | **現行**：橫向單一右手、單一手腕與掌心；食指按珊瑚粉星形吸入鈕、大拇指按薄荷綠上箭頭跳躍鈕，兩指自然分離並可同時操作。        |
+| `tutorial-touch-continuous-inhale-v4.webp` | **現行**：橫向單一右手雙指構圖，三顆以上同色星星沿吸入軌跡連續進入噗噗，明確示範食指長按即可連吞、大拇指仍可跳躍。            |
+| `tutorial-touch-slam-v2.webp`              | 噗噗空中垂直下砸一隻完整 `minion-shelly`，左手拇指將圓形搖桿往下、右手拇指按薄荷綠上箭頭鈕，落點有衝擊圈；Shelly 不受傷死亡。 |
+| `tutorial-touch-transform-v2.webp`         | 沿用 `hero-gale` 風化色彩；三顆同味星進入噗噗並形成風化光環，底部有金色變身圓鈕與白色星化 glyph，不使用文字流程圖。           |
+| `tutorial-angel-guide.webp`                | 薄荷色小天使噗噗，帶光環、翅膀與星星指揮棒；作為正常關卡非阻塞提示的固定小頭像。                                              |
 
 角色色彩基準仍以噗噗薄荷 `#BFF3E0`、珊瑚腮紅 `#FFB7A0`、Shelly 藍綠 `#7FD8C8` 為準；
 Bearlet 與 Syrona 保留給後續危險方向／Boss 情境提示，不放入第一輪 onboarding。
 
-新圖資產以 `magick` 由生成結果的背景邊界轉為透明 alpha，再以 WebP q90 交付；入庫前必須檢查
-四角 alpha 為 0、尺寸與載入路徑，並不得把中文、A/B/TF 或任何按鈕文字烘焙到圖中。
+新圖資產先接受 imagegen 輸出，再以四角 fuzz floodfill 去除可能被誤渲染成棋盤格的背景，
+最後以 WebP 交付；入庫前必須檢查四角 alpha 為 0、尺寸與載入路徑，並不得把中文、
+A/B/TF 或任何按鈕文字烘焙到圖中。程式端另以 DOM token 呈現真實虛擬鍵的顏色與 glyph，
+圖片只負責手勢與動作示意。
+
+v4 交付驗證（2026-08-27）：兩個資產均為 1536×1024 RGBA WebP，四角 alpha 為 0；來源由內建
+`image_gen` 生成橫向單手雙指構圖，再以透明背景清理後交付。既有 v2 資產保留供歷史相容，v3
+生成稿已由 v4 橫向版本取代；程式現行匯入只指向 v4 雙指／連吞圖，避免教學素材分叉。v4 的圖像
+不烘焙文字，按鈕顏色與白色 glyph 對齊遊戲實際控制：珊瑚粉星形吸入鈕、薄荷綠上箭頭跳躍鈕。
 
 ## 18. 動畫流暢度打磨清單（全實體）
 

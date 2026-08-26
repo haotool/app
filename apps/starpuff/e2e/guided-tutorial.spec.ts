@@ -78,6 +78,8 @@ async function completeTouchMove(
 test.describe('混合式互動新手教學', () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
+      // 可選的 PWA 安裝卡不屬於教學契約；避免它在等待教學入口時攔截開始按鈕。
+      localStorage.setItem('sp-install-dismissed', '1');
       if (sessionStorage.getItem('sp-guided-test-seeded') === '1') return;
       const current = JSON.parse(localStorage.getItem('sp-settings') ?? '{}') as Record<
         string,
@@ -123,7 +125,7 @@ test.describe('混合式互動新手教學', () => {
     await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Game');
   });
 
-  test('右手食指長按 B 時，右手大拇指仍可同時按 A', async ({ page }) => {
+  test('右手食指長按珊瑚粉星形鈕時，右手大拇指仍可同時按跳躍鈕', async ({ page }) => {
     test.skip((page.viewportSize()?.width ?? 0) >= 1000, '僅在觸控專案驗證雙指標路徑');
     await page.goto('/');
     await page.locator('[data-menu="start"]').click();
@@ -147,7 +149,7 @@ test.describe('混合式互動新手教學', () => {
     await expect(jumpButton).not.toHaveClass(/is-pressed/);
   });
 
-  test('吸入步驟顯示長按連吞與 A+B 同按建議', async ({ page }) => {
+  test('吸入步驟顯示長按連吞與雙指同按建議', async ({ page }) => {
     test.skip((page.viewportSize()?.width ?? 0) >= 1000, '僅在觸控專案驗證觸控教學文案');
     await page.goto('/');
     await page.locator('[data-menu="start"]').dispatchEvent('pointerdown', {
@@ -159,6 +161,7 @@ test.describe('混合式互動新手教學', () => {
       isPrimary: true,
     });
     await expect(page.locator('.guided-tutorial-overlay')).toBeVisible();
+    await expect(page.locator('.orientation-coachmark')).toHaveCount(0);
 
     await completeTouchMove(page, 3);
     await page.getByRole('button', { name: '下一步' }).click();
@@ -174,14 +177,19 @@ test.describe('混合式互動新手教學', () => {
     await expect(page.getByRole('heading', { name: '把星星吸進來' })).toBeVisible();
     await expect(page.locator('.guided-tutorial-instruction')).toContainText('長按');
     await expect(page.locator('.guided-tutorial-tip')).toContainText('一顆接一顆');
-    await expect(page.locator('.guided-tutorial-tip')).toContainText('同時按 A');
+    await expect(page.locator('.guided-tutorial-tip')).toContainText('同時按薄荷綠跳躍鈕');
+    await expect(
+      page.locator('.guided-tutorial-card > .learning-control-strip [data-control-token="action"]'),
+    ).toBeVisible();
+    await expect(page.locator('.guided-tutorial-tip [data-control-token="action"]')).toBeVisible();
+    await expect(page.locator('.guided-tutorial-tip [data-control-token="jump"]')).toBeVisible();
     await expect(page.locator('.guided-tutorial-art')).toHaveAttribute(
       'src',
-      /tutorial-touch-hold-inhale/,
+      /tutorial-touch-hold-inhale-v2/,
     );
     await expect(page.locator('.guided-tutorial-tip-art')).toHaveAttribute(
       'src',
-      /tutorial-touch-continuous-inhale/,
+      /tutorial-touch-continuous-inhale-v4/,
     );
   });
 
@@ -194,6 +202,9 @@ test.describe('混合式互動新手教學', () => {
     await page.locator('[data-menu="pause"]').click();
     await page.locator('[data-pause="quit"]').click();
     await page.locator('[data-menu="settings"]').click();
+    await page.locator('[data-setting="creative-notice"] summary').click();
+    await expect(page.locator('[data-setting="creative-notice"]')).toContainText('獨立原創遊戲');
+    await expect(page.locator('[data-setting="creative-notice"]')).toContainText('致意');
     await page.locator('[data-setting="replay-tutorial"]').click();
     await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Game');
     await expect(page.locator('.guided-tutorial-overlay')).toBeVisible();
@@ -407,6 +418,13 @@ test.describe('混合式互動新手教學', () => {
       return {
         layerPointerEvents: layer ? getComputedStyle(layer).pointerEvents : null,
         cardPointerEvents: card ? getComputedStyle(card).pointerEvents : null,
+        withinViewport: cardRect
+          ? cardRect.left >= 0 &&
+            cardRect.top >= 0 &&
+            cardRect.right <= window.innerWidth &&
+            cardRect.bottom <= window.innerHeight
+          : false,
+        cardHeight: cardRect?.height ?? Number.POSITIVE_INFINITY,
         overlaps: cardRect
           ? targets.some((selector) => {
               const rect = document.querySelector<HTMLElement>(selector)?.getBoundingClientRect();
@@ -418,7 +436,9 @@ test.describe('混合式互動新手教學', () => {
       };
     });
     expect(coachmarkMetrics.layerPointerEvents).toBe('none');
-    expect(coachmarkMetrics.cardPointerEvents).toBe('auto');
+    expect(coachmarkMetrics.cardPointerEvents).toBe('none');
+    expect(coachmarkMetrics.withinViewport).toBe(true);
+    expect(coachmarkMetrics.cardHeight).toBeLessThan(190);
     expect(coachmarkMetrics.overlaps).toBe(false);
 
     // 直持旋轉殼的指標座標必須使用裝置座標：ccw 下滑動軸對應遊戲左右；橫持則直接左右。

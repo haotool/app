@@ -111,6 +111,7 @@ pnpm format:fix              # prettier --write .
 - pre-commit 第 6 步無條件執行、不以 `git diff` 判斷觸發（`git mv` 的 `--name-only` 只列新路徑會繞過）；條目區段 `## 條目` 必須唯一（多個等於替後續區段開永久盲區）。
 - `git merge` 的 merge commit 走 `pre-merge-commit` 而非 `pre-commit`，本 repo 未設前者故 hook 層不覆蓋——刻意不補（會讓 `git merge origin/main` 誤紅），由 CI 兜底。
 - CI `Quality Checks` 於 install 前跑守門（issue #661）：PR 事件用 `--base-ref <base sha>`，基準取 `merge-base(base, HEAD)`；**main push 事件用 `--base-commit <github.event.before>`**（全零時跳過），基準**直取該 commit 不走 merge-base**——force push 時 `before` 並非 HEAD 祖先，取 merge-base 會漏驗被改寫的條目。兩個 flag 互斥。守門不假設 branch protection 永遠有效。pre-commit 只看單一 commit，squash 聚合的檔頭記帳錯誤（逐 commit 各自合法、聚合後淨變化不符）只有 CI 端攔得到。
+- CI E2E 分層見 `docs/dev/039_ci_e2e_speed_optimization.md`：PR 只跑受影響 app smoke；StarPuff 的 `E2E starpuff` 是 Desktop + Mobile landscape 的穩定 required check；main/nightly/release dispatch 跑 2-way sharded full suite，保留 StarPuff portrait、方向提示與完整教學。PR `cancel-in-progress` 為 true，main/nightly/release 保持不取消；pnpm 與按 app／瀏覽器組合分層快取維持不變。
 - **一個 PR 的 002 條目必須集中在單一 commit**（`AGT-LOG-03`），檔頭直接寫 PR 聚合淨變化。在現行兩種語意下，002 分散多個 commit 時 pre-commit（逐 commit 對帳）與 CI（聚合對帳）互斥，無法同時綠燈。
 - 此為設計取捨非技術必然：已評估「pre-commit 也改用 `merge-base(<base>, HEAD)` 聚合語意」（可行、能保留逐 commit 寫法），因 **base 不恆為 main**（實驗線 PR base 指向 experiment 分支，硬寫 `origin/main` 會產生假紅／假綠）、本機無權威 base 來源，而 CI 已有零猜測的 `base.sha` 而不採用。詳見 `AGENTS.md` § `AGT-LOG-03` 已評估但不採用的替代方案。
 - 002 落盤後的審查修正 commit 不得新增條目（pre-commit 必紅）；補記併回同一個 002 commit——仍在 tip 用 `git commit --amend`，否則延到 rebase 時 fold。故盡量讓 002 commit 留在分支最後。

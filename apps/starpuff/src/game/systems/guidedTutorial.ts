@@ -18,6 +18,7 @@ import type { ControlsSystem } from './controls';
 import type { PlayerHandle } from './player';
 import {
   addLearningCoachmarkViewportListeners,
+  appendTouchControlTokens,
   clearLearningFocus,
   positionLearningCoachmark,
 } from './learningCoachmark';
@@ -75,9 +76,10 @@ export function createGuidedTutorial(
     clearLearningFocus();
     root.innerHTML = '';
     const card = document.createElement('section');
-    card.className = 'learning-coachmark-card guided-tutorial-card';
+    card.className = `learning-coachmark-card guided-tutorial-card${readyForNext ? ' is-success' : ''}`;
     card.dataset['learningCard'] = 'true';
     card.dataset['learningLesson'] = state.step;
+    card.dataset['guidanceState'] = readyForNext ? 'success' : 'active';
     card.setAttribute('aria-label', `新手教學：${copy.title}`);
     const progress = document.createElement('div');
     progress.className = 'guided-tutorial-progress';
@@ -89,7 +91,8 @@ export function createGuidedTutorial(
       image.className = 'guided-tutorial-art';
       image.src = imageSrc;
       image.alt = '';
-      image.loading = 'lazy';
+      // coachmark 是目前視線中的必要教學，不延遲載入，避免第一次出現時只剩空白框。
+      image.loading = 'eager';
       card.appendChild(image);
     }
     const title = document.createElement('h2');
@@ -102,6 +105,9 @@ export function createGuidedTutorial(
       ? (practice?.desktop ?? copy.desktop)
       : (practice?.touch ?? copy.touch);
     card.appendChild(instruction);
+    if (!isDesktop()) {
+      appendTouchControlTokens(card, practice?.touchControls ?? copy.touchControls);
+    }
     if (practice?.tip) {
       const tip = document.createElement('aside');
       tip.className = 'guided-tutorial-tip';
@@ -120,16 +126,19 @@ export function createGuidedTutorial(
       tipText.textContent = isDesktop() ? practice.tip.desktop : practice.tip.touch;
       tipContent.appendChild(tipText);
       tip.appendChild(tipContent);
+      if (!isDesktop()) appendTouchControlTokens(tip, practice.tip.touchControls);
       card.appendChild(tip);
     }
+    let readyActions: HTMLDivElement | null = null;
     if (readyForNext) {
       const success = document.createElement('p');
       success.className = 'guided-tutorial-success';
       success.textContent = practice?.success ?? copy.success;
       card.appendChild(success);
+      const actions = document.createElement('div');
+      actions.className = 'guided-tutorial-actions';
+      readyActions = actions;
       if (isLastTutorialStep(state)) {
-        const actions = document.createElement('div');
-        actions.className = 'guided-tutorial-actions';
         actions.appendChild(
           makeButton(
             '開始正式 L1',
@@ -140,15 +149,14 @@ export function createGuidedTutorial(
             'guided-tutorial-primary',
           ),
         );
-        actions.appendChild(
-          makeButton('回主選單', () => {
-            markGuidedTutorialCompleted();
-            scene.scene.start(SceneKeys.Title);
-          }),
-        );
-        card.appendChild(actions);
+        const finish = makeButton('回主選單', () => {
+          markGuidedTutorialCompleted();
+          scene.scene.start(SceneKeys.Title);
+        });
+        finish.classList.add('guided-tutorial-leave');
+        actions.appendChild(finish);
       } else {
-        card.appendChild(
+        actions.appendChild(
           makeButton(
             '下一步',
             () => {
@@ -163,18 +171,35 @@ export function createGuidedTutorial(
           ),
         );
       }
+      card.appendChild(actions);
     } else {
-      card.appendChild(makeButton('再試一次', () => retryCurrentStep()));
+      const retry = makeButton('重試本步', () => retryCurrentStep(), 'guided-tutorial-secondary');
+      retry.setAttribute('aria-label', '重新配置目前練習');
+      const utility = document.createElement('div');
+      utility.className = 'guided-tutorial-utility';
+      utility.appendChild(retry);
+      card.appendChild(utility);
     }
-    const leave = makeButton('離開教學', () => {
+    const leave = makeButton('離開', () => {
       if (window.confirm('要離開新手教學嗎？下次按開始會直接進入遊戲；需要時可從設定重新播放。')) {
         finishToTitle();
       }
     });
     leave.classList.add('guided-tutorial-leave');
-    card.appendChild(leave);
+    leave.setAttribute('aria-label', '離開教學');
+    if (readyActions && !isLastTutorialStep(state)) readyActions.appendChild(leave);
+    else if (!readyActions) {
+      const leaveUtility = card.querySelector<HTMLElement>('.guided-tutorial-utility');
+      if (leaveUtility) leaveUtility.appendChild(leave);
+      else {
+        const utility = document.createElement('div');
+        utility.className = 'guided-tutorial-utility';
+        utility.appendChild(leave);
+        card.appendChild(utility);
+      }
+    }
     root.appendChild(card);
-    positionLearningCoachmark(root, copy.focus);
+    positionLearningCoachmark(root, copy.focus, copy.coachmarkPlacement);
     if (!readyForNext) document.querySelector(copy.focus)?.classList.add('learning-focus');
   };
 
@@ -236,15 +261,31 @@ export function createGuidedTutorial(
     enemy.y > -80 &&
     enemy.y < 520;
 
-  const activeSupplyCount = (kind: 'jelly' | 'floaty'): number =>
-    tutorialSupplies.filter((enemy) => enemy.active && hooks.enemies().kindOf(enemy) === kind)
+  const reachableSupplyCount = (kind: 'jelly' | 'floaty'): number =>
+    tutorialSupplies.filter((enemy) => hooks.enemies().kindOf(enemy) === kind && isReachable(enemy))
       .length;
+
+  const retireUnreachableSupplies = (kind: 'jelly' | 'floaty'): void => {
+    const retained: Phaser.Physics.Arcade.Sprite[] = [];
+    for (const enemy of tutorialSupplies) {
+      if (!enemy.active) continue;
+      if (hooks.enemies().kindOf(enemy) === kind && !isReachable(enemy)) {
+        // 教學補給不是正式敵人：離開可及範圍就直接回池，不播死亡效果、不發擊殺事件，
+        // 讓下一輪能在玩家身邊補出替代目標，也不會持續佔滿共用 enemy pool。
+        hooks.enemies().removeInhaled(enemy);
+        continue;
+      }
+      if (!retained.includes(enemy)) retained.push(enemy);
+    }
+    tutorialSupplies = retained;
+  };
 
   const maintainPracticeSupplies = (deltaMs: number): void => {
     rescueCooldownMs = Math.max(0, rescueCooldownMs - deltaMs);
     if (rescueCooldownMs > 0) return;
     const x = hooks.player().sprite.x;
     if (state.step === 'inhale' && !inhaledThisStep) {
+      retireUnreachableSupplies('jelly');
       const available = tutorialSupplies.some(
         (enemy) => hooks.enemies().kindOf(enemy) === 'jelly' && isReachable(enemy),
       );
@@ -263,7 +304,10 @@ export function createGuidedTutorial(
       return;
     }
     if (state.step === 'transform' && floatyInhaled < 3) {
-      const missing = 3 - floatyInhaled - activeSupplyCount('floaty');
+      // 只把仍在玩家可及練習範圍內的怪算作供給；若玩家把怪追出畫面或誤殺，
+      // 原本 active 但已不可達的池物件不能阻止補怪，避免變身步驟卡死。
+      retireUnreachableSupplies('floaty');
+      const missing = 3 - floatyInhaled - reachableSupplyCount('floaty');
       if (missing <= 0) return;
       for (let index = 0; index < missing; index += 1) {
         spawn('floaty', x + 70 + index * 55, 330);
@@ -334,10 +378,14 @@ export function createGuidedTutorial(
   root.className = 'learning-coachmark-layer guided-tutorial-overlay';
   root.dataset['learningMode'] = 'practice';
   document.body.appendChild(root);
-  const removeViewportListeners = addLearningCoachmarkViewportListeners(root, () => {
-    const activeSpec = getLearningSpec(state.step);
-    return activeSpec.copy.focus;
-  });
+  const removeViewportListeners = addLearningCoachmarkViewportListeners(
+    root,
+    () => {
+      const activeSpec = getLearningSpec(state.step);
+      return activeSpec.copy.focus;
+    },
+    () => getLearningSpec(state.step).copy.coachmarkPlacement ?? 'auto',
+  );
   setupStep(state.step);
   render();
 

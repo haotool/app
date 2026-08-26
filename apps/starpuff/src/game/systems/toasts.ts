@@ -12,6 +12,9 @@ const clamp = (value: number, min: number, max: number): number =>
 export interface ToastHooks {
   fx(): FxSystem;
   playerPos(): { x: number; y: number };
+  // guided sandbox 由 coachmark 統一承擔教學回饋；停用重複 Canvas 浮字，
+  // 避免在小螢幕把操作卡與遊戲畫面一起遮住。
+  suppressFlavor?: () => boolean;
 }
 
 export interface ToastSystem {
@@ -112,6 +115,7 @@ export function createToasts(scene: Phaser.Scene, hooks: ToastHooks): ToastSyste
 
   return {
     flavor(message: string) {
+      if (hooks.suppressFlavor?.()) return;
       showFlavor(message);
     },
 
