@@ -1,6 +1,6 @@
 /**
  * 明洞換匯所（MoneyBox）匯率抓取腳本
- * 資料來源: https://cems.moneybox.or.kr/api/cmd.php?cmd=C011&key=U1D8I4W7V6S1L3U4F3I4
+ * 資料來源: https://moneybox-exchange.com/api/rates（2026-08 上游遷移，見 PRD 049 §2.1）
  * 更新頻率: 每5分鐘（由 GitHub Actions cron 觸發，見 .github/workflows/update-moneybox-rates.yml）
  */
 
@@ -33,6 +33,10 @@ const TWD_SELL_MIN = 30;
 const TWD_SELL_MAX = 70;
 // 突變熔斷預設閾值：TWD.sell 單次變動超過 15% 視為垃圾資料（可由 env 覆寫）。
 const DEFAULT_MUTATION_THRESHOLD = 0.15;
+// 上游停供 sell 報價的偵測門檻：健康狀態下 20 種幣別全數帶正的 sell。
+// 2026-08-22 起上游對 18/20 幣別回傳 "0.0000"（parseFloat 後經 `|| null` 轉成 null）。
+// 若只靠 TWD.sell 檢查，錯誤訊息會誤導成「TWD 單一幣別數值異常」，讓後續除錯往錯的方向查。
+const SELL_QUOTE_MIN_RATIO = 0.5;
 
 class AbortError extends Error {
   constructor(message, status) {
@@ -44,9 +48,19 @@ class AbortError extends Error {
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// MoneyBox 公開 API（韓國官方換匯所聯盟）
-const MONEYBOX_API_URL =
-  'https://cems.moneybox.or.kr/api/cmd.php?cmd=C011&key=U1D8I4W7V6S1L3U4F3I4';
+// MoneyBox 公開 API。
+// 2026-08 上游遷移：官網已完全改打自有 endpoint，舊 cems.moneybox.or.kr 雖仍回 200
+// 但 18/20 幣別的 sell 恆為 0（半殘）。以瀏覽器攔截官網請求確認新端點（PRD 049 §2.1）。
+const MONEYBOX_API_URL = 'https://moneybox-exchange.com/api/rates';
+
+// 新舊 API 的 buy/sell 語意**相反**：新 buyRate ≡ 舊 sell、新 sellRate ≡ 舊 buy。
+// 以官網買入/賣出欄位對照與價差方向三重驗證（PRD 049 §2.2）。
+// 照字面把 sell 對到 sellRate 會取到價差的錯誤那一側。
+const NEW_TO_LEGACY_FIELD = Object.freeze({ sell: 'buyRate', buy: 'sellRate' });
+
+// 舊 API 對小面額幣別採每 100 單位報價，新 API 一律每 1 單位。
+// 維持既有 per-100 慣例以保歷史資料連續（PRD 049 §2.3 / §4.1 軌道 A）。
+const PER_100_CURRENCIES = Object.freeze(new Set(['JPY', 'IDR', 'VND']));
 
 function writeCurrentFetchSnapshot(ratesData) {
   const output = process.env.MONEYBOX_FETCH_OUTPUT_FILE;
@@ -77,15 +91,76 @@ function isRetryableError(error) {
 }
 
 /**
- * 從 MoneyBox API 抓取所有貨幣匯率（帶重試機制）
- * 回應格式：{ result: true, data: [{ currency, base, buy, sell, spbuy, spsell }] }
- * - currency: 外幣代碼（如 "TWD"）
- * - base: 標準牌告中間價（1 KRW = X currency）
- * - buy: 換匯所買入價（客戶賣出，即客戶持外幣換 KRW 的匯率）
- * - sell: 換匯所賣出價（客戶買入，即客戶持外幣換取 KRW 的實際到手匯率）
- * - spbuy/spsell: 特殊買賣價（高額換匯）
+ * 二進位浮點防護：`8.72 * 100` 得 `872.0000000000001`、`(42.15+42.3)/2` 得
+ * `42.224999999999994`。上游原本直接提供這些值且乾淨，換算後若不收斂會使公開產物
+ * 出現浮點雜訊。此處以輸入位數推導輸出位數；完整 decimal 算術遷移見 PRD 049 §18.4（PR 2）。
+ */
+function countDecimals(value) {
+  const text = String(value);
+  const dot = text.indexOf('.');
+  return dot === -1 ? 0 : text.length - dot - 1;
+}
+
+function roundTo(value, decimals) {
+  return Number(value.toFixed(Math.max(0, Math.min(12, decimals))));
+}
+
+/** 將上游每 1 單位報價還原為既有的 per-100 慣例（僅 JPY/IDR/VND）。 */
+function toLegacyQuoteUnit(code, value) {
+  if (value === null) return null;
+  if (!PER_100_CURRENCIES.has(code)) return value;
+  // ×100 使小數點左移兩位，故輸出位數為輸入位數減 2
+  return roundTo(value * 100, countDecimals(value) - 2);
+}
+
+/** 兩側牌告價的算術中點；位數取兩者較多者加 1，避免除以 2 產生無盡尾數。 */
+function deriveMidpoint(buy, sell) {
+  if (buy === null || sell === null) return null;
+  return roundTo((buy + sell) / 2, Math.max(countDecimals(buy), countDecimals(sell)) + 1);
+}
+
+/**
+ * 將新 API 的一列轉為既有 legacy 欄位結構。
  *
- * 對台灣旅客而言：持 TWD 現金換 KRW，適用 sell 欄位（46.5 表示 1 TWD 可換 46.5 KRW）
+ * 新 API 每列僅 `currencyCode` / `buyRate` / `sellRate`，無 base 與 spbuy/spsell：
+ * - `base` 改由兩側牌告價的算術中點推導（上游不再提供市場參考價）
+ * - `spbuy` / `spsell` 上游已無此概念，一律 null——不得以其他欄位推導填補
+ */
+function mapUpstreamRow(item) {
+  const code = typeof item?.currencyCode === 'string' ? item.currencyCode.trim() : '';
+  if (!code) return null;
+
+  const readRate = (field) => {
+    const parsed = Number.parseFloat(item?.[field]);
+    // 0 與非有限值皆視為「上游未報價」，交由熔斷判定，不可當成有效匯率
+    return Number.isFinite(parsed) && parsed > 0 ? toLegacyQuoteUnit(code, parsed) : null;
+  };
+
+  const sell = readRate(NEW_TO_LEGACY_FIELD.sell);
+  const buy = readRate(NEW_TO_LEGACY_FIELD.buy);
+
+  return [
+    code,
+    {
+      currency: code,
+      base: deriveMidpoint(buy, sell),
+      buy,
+      sell,
+      spbuy: null,
+      spsell: null,
+    },
+  ];
+}
+
+/**
+ * 從 MoneyBox API 抓取所有貨幣匯率（帶重試機制）
+ * 回應格式：{ success: true, data: { publishedAt, rates: [{ currencyCode, buyRate, sellRate }] } }
+ *
+ * 欄位對應（**語意相反，勿照字面對接**）：
+ * - legacy `sell` ← 上游 `buyRate`（換匯所買入外幣＝旅客持外幣換 KRW 的到手匯率）
+ * - legacy `buy`  ← 上游 `sellRate`（換匯所賣出外幣）
+ *
+ * 對台灣旅客而言：持 TWD 現金換 KRW，適用 sell 欄位（42.15 表示 1 TWD 可換 42.15 KRW）
  */
 async function fetchMoneyBoxRates() {
   console.log('🔄 Fetching exchange rates from MoneyBox (明洞換匯所)...');
@@ -121,28 +196,16 @@ async function fetchMoneyBoxRates() {
       }
 
       const data = await response.json();
+      const upstreamRows = data?.data?.rates;
 
-      if (!data.result || !Array.isArray(data.data) || data.data.length === 0) {
+      if (data?.success !== true || !Array.isArray(upstreamRows) || upstreamRows.length === 0) {
         throw new AbortError(
-          `Invalid response format: result=${data.result}, data length=${data.data?.length ?? 0}`,
+          `Invalid response format: success=${data?.success}, rates length=${upstreamRows?.length ?? 0}`,
         );
       }
 
       // 解析所有幣別，以 currency 代碼為 key
-      const rates = {};
-      for (const item of data.data) {
-        const code = item.currency?.trim();
-        if (!code) continue;
-
-        rates[code] = {
-          currency: code,
-          base: parseFloat(item.base) || null,
-          buy: parseFloat(item.buy) || null,
-          sell: parseFloat(item.sell) || null,
-          spbuy: parseFloat(item.spbuy) || null,
-          spsell: parseFloat(item.spsell) || null,
-        };
-      }
+      const rates = Object.fromEntries(upstreamRows.map(mapUpstreamRow).filter(Boolean));
 
       if (Object.keys(rates).length === 0) {
         throw new AbortError('No valid rates found in response');
@@ -222,6 +285,18 @@ function assertMoneyBoxRatesIntegrity(
   if (currencyCount < minCurrencyCount) {
     throw new AbortError(
       `Currency count circuit breaker: parsed ${currencyCount} currencies (< ${minCurrencyCount}); refusing to write suspicious data`,
+    );
+  }
+
+  // 先判上游全面停供，再判單一幣別數值——否則系統性事故會被報成 TWD 個案而誤導除錯方向。
+  const quotedSellCount = Object.values(newRates ?? {}).filter(
+    (rate) => typeof rate?.sell === 'number' && rate.sell > 0,
+  ).length;
+  if (quotedSellCount < currencyCount * SELL_QUOTE_MIN_RATIO) {
+    throw new AbortError(
+      `Upstream sell-quote outage: only ${quotedSellCount}/${currencyCount} currencies carry a positive sell rate ` +
+        `(upstream returns "0.0000"); this is a source-side outage, not a per-currency anomaly. ` +
+        `Verify https://cems.moneybox.or.kr/ before touching sanity thresholds; refusing to write suspicious data`,
     );
   }
 
@@ -461,3 +536,4 @@ export { listRateChanges };
 export { needsSchemaMigration };
 export { extractSeoulSnapshotDate, shouldRefreshLatestSnapshot };
 export { assertMoneyBoxRatesIntegrity, resolveMutationThreshold };
+export { mapUpstreamRow, toLegacyQuoteUnit, deriveMidpoint };
