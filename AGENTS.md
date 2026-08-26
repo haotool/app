@@ -439,6 +439,7 @@ ls -la
 ### 流程 / CI / 部署變更
 
 - 修改 CI/CD 或 Git hooks → 更新 `AGENTS.md`、`CLAUDE.md`（必要時 `docs/DEPLOYMENT.md`）
+- MoneyBox 持續中斷升級節流以 `.github/workflows/update-moneybox-rates.yml` 為 SSOT：首次停供建立同時帶 `outage:moneybox`、`severity:p1`、`bug` 的正式 issue，body 必須包含摘要、背景／證據、影響、範圍與驗收標準；後續按節流視窗留言並保留週期性失敗訊號，恢復時自動關閉 issue，任何 issue 查詢失敗採 fail-safe `exit 1`。
 - 修改 commit 規範 → 同步 `commitlint.config.cjs` 與文件說明
 - 修改版本流程 → 同步 `AGENTS.md`、`CLAUDE.md`、Changesets / `CHANGELOG.md` 說明
 - `Release` workflow 若涉及 Cloudflare 邊緣行為，必須確認 app release、`security-headers` worker 與 CDN purge 的先後順序一致；缺 secret 時需明確回報 `skip`，不可假設正式站已同步
