@@ -1,7 +1,7 @@
 # 匯率 API 語意 v3 正名與 MoneyBox 上游遷移 PRD
 
 > **建立時間**: 2026-08-26T14:00:00+08:00
-> **版本**: v10.0
+> **版本**: v10.1
 > **狀態**: ✅ 欄位語意定案；⚠️ SSOT 生成鏈未建立（§19.8 十一項）；PR 1 可立即實作
 > **作者**: Claude Code（研究與盤點）+ Codex（獨立第二意見）
 > **上位文件**: `CLAUDE.md`、`AGENTS.md`
@@ -138,7 +138,7 @@ v2 套用在**文件面與單一 provider 檔**，卻沒套用在佔 92% 流量�
 
 三個本 PRD 先前未納入、但生產級 API 普遍具備的能力：
 
-1. **輪詢契約**：exchangerate-api 提供 `time_next_update_*`，明確告訴消費端何時再拉。本專案排程為每 5 分鐘，可直接換算為 `nextUpdateAt`，同時降低 CDN 負載。
+1. **輪詢契約**：exchangerate-api 提供 `time_next_update_*`，明確告訴消費端何時再拉。本專案應據此提供 `nextSourceCheckAt`（§18.2 已裁決改依上游 `max-age` 排程），同時降低 CDN 負載。
 2. **payload 內建出處**：exchangerate-api 在 payload 帶 `provider` / `documentation` / `terms_of_use` 連結。本專案已有 open-data 頁可指向。
 3. **端點生命週期訊號**：exchangerate-api 有 `time_eol_unix`；其 v4 甚至在 payload 內放 `WARNING_UPGRADE_TO_V6`。**版本轉換的訊號應在頻內（in-band），不能只靠文件。**
 
@@ -232,22 +232,28 @@ receivedAmount = paidAmount × rate      對所有 provider 恆成立，永不�
 
 ### 4.3 欄位表
 
-每筆 rate row 的維度與量值（維度對齊 ECB SDMX，語彙對齊 schema.org）：
+每筆 rate row 的維度與量值（維度對齊 ECB SDMX，語彙對齊 schema.org）。
 
-| 欄位                       | 型別                              | 定義                                                         | 缺值行為          | 權威依據                                    |
-| -------------------------- | --------------------------------- | ------------------------------------------------------------ | ----------------- | ------------------------------------------- |
-| `rateType`                 | `"cash"` \| `"spot"`              | **一級平行維度**，非巢狀於 rate 之下（受控詞彙）             | 必填              | ECB `EXR_TYPE`；ISO 20022 SPOT              |
-| `customerBuy.fromCurrency` | string                            | 客戶付出的幣別                                               | 必填              | ECB `CURRENCY_DENOM`；schema.org `currency` |
-| `customerBuy.toCurrency`   | string                            | 客戶取得的幣別                                               | 必填              | ECB `CURRENCY`；schema.org `priceCurrency`  |
-| `customerBuy.rate`         | number                            | `received = paid × rate`                                     | 必填              | schema.org `UnitPriceSpecification.price`   |
-| `customerBuy.rateUnit`     | `"TO_PER_1_FROM"`                 | 固定值，明示「每 1 單位來源幣換多少目標幣」                  | 必填              | FX `CCY1/CCY2 = X` 恆 per-1                 |
-| `customerSell.*`           | 同上                              | 反方向                                                       | 必填              | —                                           |
-| `spread`                   | number \| null                    | `customerSell.rate − customerBuy.rate`（同向表示）           | 無法計算時 `null` | schema.org `exchangeRateSpread`             |
-| `referenceRate`            | number \| null                    | 外部市場基準價                                               | 上游未提供 `null` | Stripe `reference_rate`                     |
-| `referenceRateProvider`    | string \| null                    | 基準價出處                                                   | 無基準時 `null`   | Stripe `reference_rate_provider`            |
-| `status`                   | ECB `CL_OBS_STATUS` 碼（見 §4.4） | **每筆值自帶狀態碼**，說明缺值或品質；禁止用 `null` 代表語意 | 必填              | **ECB `CL_OBS_STATUS`**                     |
-| `observedAt`               | ISO string                        | **我方抓取時間**                                             | 必填              | ECB series 屬性 `COLLECTION`                |
-| `publishedAt`              | ISO string \| null                | **上游宣告的發布時間**；缺值時**不得回填**，以 `status` 說明 | 上游未提供 `null` | ECB `TIME_PERIOD` 與屬性分離                |
+> **本表為欄位名的權威來源。** §16 與 §18 的後續裁決已回填於此；已汰換名稱見 §4.5。
+
+| 欄位                            | 型別                                     | 定義                                                                           | 缺值行為                                | 權威依據                                            |
+| ------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------ | --------------------------------------- | --------------------------------------------------- |
+| `rateType`                      | `"cash"` \| `"spot"` \| `"unspecified"`  | **一級平行維度**，非巢狀於 rate 之下（受控詞彙）                               | 必填                                    | ECB `EXR_TYPE`；ISO 20022 SPOT                      |
+| `customerBuy.fromCurrency`      | string                                   | 客戶付出的幣別                                                                 | 必填                                    | ECB `CURRENCY_DENOM`；schema.org `currency`         |
+| `customerBuy.toCurrency`        | string                                   | 客戶取得的幣別                                                                 | 必填                                    | ECB `CURRENCY`；schema.org `priceCurrency`          |
+| `customerBuy.publishedRate`     | **decimal string**                       | `received = paid × publishedRate`                                              | 必填                                    | schema.org `UnitPriceSpecification.price`           |
+| `customerBuy.rateUnit`          | `"TO_PER_1_FROM"`                        | 固定值，明示「每 1 單位來源幣換多少目標幣」                                    | 必填                                    | FX `CCY1/CCY2 = X` 恆 per-1                         |
+| `customerBuy.quoteNature`       | `"published_board_rate"`                 | **傳達精準**：牌告實際買賣價，非中間價                                         | 必填                                    | 本產品定位（§16.4）                                 |
+| `customerBuy.quoteAvailability` | `"indicative_not_transaction_guarantee"` | **防止過度承諾**：牌告價會變動、現場可得性不保證                               | 必填                                    | §14 排除清單                                        |
+| `customerSell.*`                | 同上                                     | 反方向                                                                         | 必填                                    | —                                                   |
+| `spread`                        | decimal string \| null                   | `customerSell.publishedRate − customerBuy.publishedRate`                       | 無法計算時 `null`                       | schema.org `exchangeRateSpread`                     |
+| `derivedQuoteMidpoint`          | decimal string \| null                   | 同一 provider 兩側牌告價的數學中點；須帶 `isMarketRate: false` 與 `derivation` | 任一側缺報價 `null`                     | §18.3                                               |
+| `derivedQuoteSpread`            | decimal string \| null                   | 兩側牌告價差                                                                   | 同上                                    | §18.3                                               |
+| `marketMidCounterfactual`       | object \| **null**                       | 外部市場中價**對照**（非基準）；須帶 `purpose: "comparison_only"` 與來源出處   | **授權確認前恆 `null`**（§17 #1）       | Stripe `reference_rate` + `reference_rate_provider` |
+| `providerReferenceRate`         | decimal string \| **null**               | **上游明示**的參考價；與 `marketMidCounterfactual` **不得混用**                | MoneyBox 結構性不提供 → `null`（§18.5） | Stripe `base_rate`                                  |
+| `status`                        | ECB `CL_OBS_STATUS` 碼（見 §4.4）        | **每筆值自帶狀態碼**，說明缺值或品質；禁止用 `null` 代表語意                   | 必填                                    | **ECB `CL_OBS_STATUS`**                             |
+| `observedAt`                    | ISO string                               | **我方抓取時間**                                                               | 必填                                    | ECB series 屬性 `COLLECTION`                        |
+| `publishedAt`                   | ISO string \| null                       | **上游宣告的發布時間**；缺值時**不得回填**，以 `status` 說明                   | 上游未提供 `null`                       | ECB `TIME_PERIOD` 與屬性分離                        |
 
 **`sourceDenominator` 移出公開 payload**，只留在轉換 manifest 供稽核。
 
@@ -255,15 +261,32 @@ receivedAmount = paidAmount × rate      對所有 provider 恆成立，永不�
 
 ### 4.3.1 payload 層級欄位（非 rate row）
 
-生產級 API 普遍具備、本專案應補上（依據 §2.9.1）：
+| 欄位                                        | 定義                                                           | 依據                                  |
+| ------------------------------------------- | -------------------------------------------------------------- | ------------------------------------- |
+| `$schema`                                   | 指向 canonical contract URL（**取代** `semanticFieldMapping`） | §19.3                                 |
+| `schemaVersion`                             | `"3.0"`                                                        | Google AIP-180：語意變更須 major 版本 |
+| `nextSourceCheckAt`                         | **下次檢查時間**（依上游 `max-age` 排程，非每 5 分鐘）         | §18.2                                 |
+| `calculationRule`                           | 供 LLM agent 直接套用的換算規則                                | §19.5                                 |
+| `comparablePairs`                           | **強制且顯著**；目前僅 `TWD↔KRW` 一組                          | §13.3.4                               |
+| `pricing.fee` / `pricing.pricingScope`      | `fee: 0` + `policy: "spread_only"` + 適用邊界宣告              | §15.1                                 |
+| `provider` / `documentation` / `termsOfUse` | 出處與條款連結（指向 open-data 頁）                            | exchangerate-api payload 內建出處     |
 
-| 欄位                                        | 定義                                    | 依據                                    |
-| ------------------------------------------- | --------------------------------------- | --------------------------------------- |
-| `schemaVersion`                             | `"3.0"`                                 | Google AIP-180：語意變更須 major 版本   |
-| `nextUpdateAt`                              | 下次排程更新時間（本專案排程每 5 分鐘） | exchangerate-api `time_next_update_utc` |
-| `provider` / `documentation` / `termsOfUse` | 出處與條款連結（指向 open-data 頁）     | exchangerate-api payload 內建出處       |
+> `nextSourceCheckAt` **不承諾上游必然更新**——我方能保證的只有下次檢查時間（§18.2）。
 
-> `nextUpdateAt` 對本專案有額外效益：明確的輪詢契約可降低 CDN 拉取次數（現況主匯率檔 69,487 hits/月）。
+### 4.5 已汰換名稱對照
+
+早期章節曾使用下列名稱，**均已汰換**。實作一律以 §4.3／§4.3.1 為準：
+
+| 已汰換                  | 現行                                                              | 汰換原因                                    |
+| ----------------------- | ----------------------------------------------------------------- | ------------------------------------------- |
+| `customerBuy.rate`      | `customerBuy.publishedRate`                                       | `rate` 過於中性，無法傳達「牌告實際成交價」 |
+| `referenceRate`         | `marketMidCounterfactual`                                         | `reference` 暗示權威基準，實為**對照組**    |
+| `referenceRateProvider` | 併入 `marketMidCounterfactual` 物件                               | 出處應與值同層，避免兩欄位失聯              |
+| `referenceRateStatus`   | 通用 `status`（ECB `CL_OBS_STATUS`）                              | ECB `OBS_STATUS` 是每筆觀測值的通用狀態碼   |
+| `nextUpdateAt`          | `nextSourceCheckAt`                                               | 前者暗示上游必然更新，是不誠實的承諾        |
+| `midMarketRate`         | `derivedQuoteMidpoint`（自算）／`marketMidCounterfactual`（外部） | 算術中點不得冒充市場價                      |
+| `grossReceivedAmount`   | `rateAppliedReceiveAmount` + `allInReceivedAmount`                | 會把 rate 層的誤導搬到 amount 層            |
+| `semanticFieldMapping`  | `$schema`                                                         | 與 OpenAPI 重複，造成 payload 內第二份事實  |
 
 ### 4.4 `status` 受控詞彙：直接採用 ECB `CL_OBS_STATUS`
 
@@ -287,7 +310,7 @@ ECB 官方碼表（實測 `data-api.ecb.europa.eu/service/codelist/ECB/CL_OBS_ST
 
 **輸出。** schema.org 將 `exchangeRateSpread` 定義為一級屬性（「broker 買賣外幣的價差」），而我方 JSON-LD 目前未輸出（§2.10）。v3 一併補上，使 JSON-LD 成為資料模型的直接投影。
 
-同向表示以避免符號歧義：`spread = customerSell.rate − customerBuy.rate`，恆為非負。
+同向表示以避免符號歧義：`spread = customerSell.publishedRate − customerBuy.publishedRate`，恆為非負。
 
 ---
 
@@ -347,7 +370,7 @@ ECB 官方碼表（實測 `data-api.ecb.europa.eu/service/codelist/ECB/CL_OBS_ST
 | **跨 provider 換算不變式**：同一筆 `1000 TWD` 走台銀與換錢所，由**同一消費函式**計算並驗證數值 | §2.5 同名反運算（現行只驗公式字串） |
 | 映射方向斷言（`customerBuy` 來自 `buyRate`）                                                   | 欄位反轉再次發生                    |
 | JPY/IDR/VND 單位健全性（非 TWD 專屬區間）                                                      | 100 倍錯誤靜默通過                  |
-| `referenceRate` 不可由 buy/sell 平均生成                                                       | 算術中點冒充市場價                  |
+| `marketMidCounterfactual` 不可由 buy/sell 平均生成                                             | 算術中點冒充市場價                  |
 | 419 檔遷移完整性（逐檔 hash 比對 manifest）                                                    | 轉換遺漏或污染                      |
 | `observedAt` / `publishedAt` 不可互相代入                                                      | 時間語意混用                        |
 
@@ -367,26 +390,26 @@ ECB 官方碼表（實測 `data-api.ecb.europa.eu/service/codelist/ECB/CL_OBS_ST
 
 ### 9.1 已識別
 
-| #   | 風險                            | 緩解                                              |
-| --- | ------------------------------- | ------------------------------------------------- |
-| 1   | 欄位反轉取到價差錯誤側          | 映射方向守門測試 + §2.2 三重驗證                  |
-| 2   | JPY/IDR/VND 100 倍錯誤          | 非 TWD 專屬的單位健全性檢查                       |
-| 3   | 算術中點誤稱市場價              | 移除 `midMarketRate`，改 `referenceRate` + status |
-| 4   | 上游再次改 schema 無人察覺      | 20 幣別快照 + manifest 分母守門                   |
-| 5   | 兩軌混合發佈導致無法歸因        | 強制拆 PR（§3.2）                                 |
-| 6   | v3 欄位再被「只驗文件」測試掩護 | 跨 provider 換算不變式數值測試                    |
+| #   | 風險                            | 緩解                                                          |
+| --- | ------------------------------- | ------------------------------------------------------------- |
+| 1   | 欄位反轉取到價差錯誤側          | 映射方向守門測試 + §2.2 三重驗證                              |
+| 2   | JPY/IDR/VND 100 倍錯誤          | 非 TWD 專屬的單位健全性檢查                                   |
+| 3   | 算術中點誤稱市場價              | 移除 `midMarketRate`，改 `marketMidCounterfactual` + `status` |
+| 4   | 上游再次改 schema 無人察覺      | 20 幣別快照 + manifest 分母守門                               |
+| 5   | 兩軌混合發佈導致無法歸因        | 強制拆 PR（§3.2）                                             |
+| 6   | v3 欄位再被「只驗文件」測試掩護 | 跨 provider 換算不變式數值測試                                |
 
 ### 9.2 Codex 補充（我未想到）
 
-| #   | 風險                                                   | 緩解                                          |
-| --- | ------------------------------------------------------ | --------------------------------------------- |
-| 7   | **CDN 混合版本快取**導致 schema 不一致                 | PR 3 原子化發布 + 發布後強制 purge            |
-| 8   | 台銀 `rateType`（cash/spot）攤平時**遺失語意**         | v3 結構須保留 rateType 維度                   |
-| 9   | 歷史檔缺欄**不得補洞**                                 | 一律留 `null`，禁止推導填值                   |
-| 10  | `sell` 取倒數的**浮點精度／捨入漂移**                  | 轉換 manifest 記錄原值，比對容差              |
-| 11  | 新 MoneyBox 無 `base` 時**不得用 `(buy+sell)/2` 冒充** | `referenceRateStatus: not_provided_by_source` |
-| 12  | `publishedAt` 與 `observedAt` **混用**                 | 兩者皆為必填欄位，守門測試禁止互相代入        |
-| 13  | **app 仍讀 legacy `getSellRate`**，PR 3 硬切會斷       | PR 3 前置：先改讀 v3 並驗證等價               |
+| #   | 風險                                                   | 緩解                                    |
+| --- | ------------------------------------------------------ | --------------------------------------- |
+| 7   | **CDN 混合版本快取**導致 schema 不一致                 | PR 3 原子化發布 + 發布後強制 purge      |
+| 8   | 台銀 `rateType`（cash/spot）攤平時**遺失語意**         | v3 結構須保留 rateType 維度             |
+| 9   | 歷史檔缺欄**不得補洞**                                 | 一律留 `null`，禁止推導填值             |
+| 10  | `sell` 取倒數的**浮點精度／捨入漂移**                  | 轉換 manifest 記錄原值，比對容差        |
+| 11  | 新 MoneyBox 無 `base` 時**不得用 `(buy+sell)/2` 冒充** | `status: "M"`（ECB：data cannot exist） |
+| 12  | `publishedAt` 與 `observedAt` **混用**                 | 兩者皆為必填欄位，守門測試禁止互相代入  |
+| 13  | **app 仍讀 legacy `getSellRate`**，PR 3 硬切會斷       | PR 3 前置：先改讀 v3 並驗證等價         |
 
 ---
 
@@ -953,6 +976,7 @@ CI 強制斷言 `apiAmountTierConfig` **不得 import** `seo-paths.config.mjs`�
 
 | 日期       | 版本  | 變更                                                                                                                                                                                                                                                                               |
 | ---------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-08-26 | v10.1 | reconcile 早期章節欄位名：§4.3 回填 publishedRate／marketMidCounterfactual／derivedQuoteMidpoint／quoteNature／quoteAvailability，§4.3.1 回填 $schema／nextSourceCheckAt／calculationRule；新增 §4.5 已汰換名稱對照表                                                              |
 | 2026-08-26 | v10.0 | 新增 §19 SSOT 架構：語意散落 6 表面且已證實漂移，llms.txt 散文欄位說明為定時炸彈；定案以版本化 JSON Schema 為 SSOT 並衍生全部產物；v3 移除 semanticFieldMapping 改用 $schema；llms.txt 散文與 schema 連結兩者都要；JSON-LD 改為已驗證 payload 的投影；誠實列出 11 項未達成         |
 | 2026-08-26 | v9.0  | MoneyBox 新 API 完整實測（單一端點、3 欄位、max-age 4h）；輪詢改依上游快取契約並改名 nextSourceCheckAt；新增 derivedQuoteMidpoint 但裁定不可取代外部市場中價、授權阻塞未解除；decimal string 與十進位算術規格定案；列出上游僅 3 欄位下必須為 null 的欄位                           |
 | 2026-08-26 | v8.0  | 產品定位揭露（主打實際牌告價非中間價）推翻中間價 deferred 裁決；中間價改名 marketMidCounterfactual 並定位為對照組；主匯率數值改名 publishedRate 並以 quoteNature + quoteAvailability 平衡精準與不過度承諾；精準度落差升為一級欄位但只依附 amountTiers；列出 6 項需外部資訊的未定案 |

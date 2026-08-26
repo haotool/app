@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+0（reward 1、penalty 1、neutral 0）｜累計總分：+334
+> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+333
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-08-26
+- ID：penalty-prd-carried-two-contradictory-field-tables
+- 原因：PRD 049 在 §16 與 §18 多次改名欄位（rate→publishedRate、referenceRate→marketMidCounterfactual、nextUpdateAt→nextSourceCheckAt），卻從未回填 §4.3／§4.3.1 的原始欄位表，使同一份文件同時存在兩套規範性欄位名——照前段實作的人會用到已被推翻的名字，正是本 PRD 花整份篇幅在防的「同名不同義」問題出現在自己身上
+- 解法：以 §4.3 為唯一權威欄位表並回填所有後續裁決，新增 §4.5 已汰換名稱對照表保留可追溯性，並逐一驗證殘留出現處皆為對照或說明用途；往後文件內改名必須同步回填前段定義，不得只在新章節宣告
 
 - 日期：2026-08-26
 - ID：penalty-llms-txt-prose-schema-is-a-timebomb-for-ai-crawlers
