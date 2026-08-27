@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-08-27T02:15:03.253Z",
-  "updateTime": "2026/08/27 11:15:03",
+  "timestamp": "2026-08-27T12:51:57.237Z",
+  "updateTime": "2026/08/27 21:51:57",
   "source": "MoneyBox (明洞換匯所聯盟)",
   "sourceUrl": "https://moneybox-exchange.com/zh-CHT/exchange",
   "apiUrl": "https://moneybox-exchange.com/api/rates",
@@ -8,16 +8,16 @@
   "rates": {
     "AED": {
       "currency": "AED",
-      "base": 373.075,
-      "buy": 396.15,
+      "base": 373.45,
+      "buy": 396.9,
       "sell": 350,
       "spbuy": null,
       "spsell": null
     },
     "AUD": {
       "currency": "AUD",
-      "base": 989,
-      "buy": 998,
+      "base": 987.5,
+      "buy": 995,
       "sell": 980,
       "spbuy": null,
       "spsell": null
@@ -40,49 +40,49 @@
     },
     "CNY": {
       "currency": "CNY",
-      "base": 204.35,
+      "base": 204.5,
       "buy": 205,
-      "sell": 203.7,
+      "sell": 204,
       "spbuy": null,
       "spsell": null
     },
     "EUR": {
       "currency": "EUR",
-      "base": 1602.5,
+      "base": 1600,
       "buy": 1610,
-      "sell": 1595,
+      "sell": 1590,
       "spbuy": null,
       "spsell": null
     },
     "GBP": {
       "currency": "GBP",
-      "base": 1872.5,
-      "buy": 1885,
+      "base": 1870,
+      "buy": 1880,
       "sell": 1860,
       "spbuy": null,
       "spsell": null
     },
     "HKD": {
       "currency": "HKD",
-      "base": 175.85,
+      "base": 175.75,
       "buy": 176.5,
-      "sell": 175.2,
+      "sell": 175,
       "spbuy": null,
       "spsell": null
     },
     "IDR": {
       "currency": "IDR",
-      "base": 8.25,
-      "buy": 8.8,
+      "base": 8.1,
+      "buy": 8.5,
       "sell": 7.7,
       "spbuy": null,
       "spsell": null
     },
     "JPY": {
       "currency": "JPY",
-      "base": 867.5,
-      "buy": 870,
-      "sell": 865,
+      "base": 865.5,
+      "buy": 867,
+      "sell": 864,
       "spbuy": null,
       "spsell": null
     },
@@ -104,9 +104,9 @@
     },
     "PHP": {
       "currency": "PHP",
-      "base": 22.9,
-      "buy": 23.2,
-      "sell": 22.6,
+      "base": 22.7,
+      "buy": 22.9,
+      "sell": 22.5,
       "spbuy": null,
       "spsell": null
     },
@@ -136,9 +136,9 @@
     },
     "TWD": {
       "currency": "TWD",
-      "base": 42.275,
-      "buy": 42.4,
-      "sell": 42.15,
+      "base": 42.35,
+      "buy": 42.5,
+      "sell": 42.2,
       "spbuy": null,
       "spsell": null
     },
