@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+10（reward 10、penalty 0、neutral 1）｜累計總分：+342
+> 本次分數變化：+0（reward 0、penalty 0、neutral 1）｜累計總分：+342
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-08-30
+- ID：neutral-vercel-monorepo-origin-migration
+- 原因：Vercel 靜態 origin 遷移需要可回退的單一 Docker image 與 Cloudflare Worker 責任界面
+- 解法：以 `Dockerfile.vercel`、嚴格驗證的 `VERCEL_ORIGIN` 與 origin/main 候選驗證建立可追溯遷移路徑
 
 - 日期：2026-08-27
 - ID：reward-starpuff-tutorial-ux-ci-convergence

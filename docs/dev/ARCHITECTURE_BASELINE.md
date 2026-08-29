@@ -1,7 +1,7 @@
 # 架構基線與目標藍圖
 
-> **最後更新**: 2026-02-11T00:00:00+08:00
-> **版本**: v3.0 (全面更新：加入狀態機、流程圖、最新架構)
+> **最後更新**: 2026-08-30T00:00:00+08:00
+> **版本**: v3.1 (補充 Vercel 靜態 origin 與 Cloudflare API 邊界)
 > **狀態**: ✅ 現況完整，已達成大部分藍圖目標
 
 ---
@@ -184,6 +184,21 @@ apps/ratewise/src/
 ```
 
 ---
+
+### 2.1 部署與流量責任界面
+
+```text
+使用者
+  ↓
+Cloudflare security-headers Worker
+  ├─ /ratewise/api/ratings* → rating-api Worker + KV
+  └─ 其他路徑 → Zeabur（預設）或 Vercel `VERCEL_ORIGIN`
+                    └─ 單一 Docker image → Nginx → 多個靜態 app
+```
+
+Vercel 只承接根目錄 `Dockerfile.vercel` 產生的靜態多 app image；不得把
+`docker-compose.yml`、Cloudflare API token 或 KV secret 放進 Vercel。正式切換前以
+Vercel `*.vercel.app` URL 驗證完整路由，移除 `VERCEL_ORIGIN` 即回到 Zeabur origin。
 
 ## 3. 狀態管理架構
 
