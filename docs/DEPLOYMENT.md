@@ -67,6 +67,37 @@ docker-compose down
 docker stop ratewise && docker rm ratewise
 ```
 
+### Vercel Docker 部署（GitHub monorepo）
+
+Vercel 使用根目錄的 `Dockerfile.vercel` 建置同一個多 app Nginx image；不要把
+`docker-compose.yml` 當成 Vercel 部署目標。Vercel container 使用 port `80`，而 Zeabur
+既有 Dockerfile 維持 port `8080`，兩者共用同一份 `nginx.conf` 路由政策。
+
+#### Vercel Project 設定
+
+1. 從 GitHub 匯入 `haotool/app`，Root Directory 保持 repo root。
+2. Framework Preset 選 `Other`，讓 Vercel 使用 `Dockerfile.vercel`。
+3. Production Branch 設為 `main`；Pull Request 與其他 branch 保留 Preview Deployment。
+4. 僅設定必要的公開 build variables；不得放入 Cloudflare token、KV secret 或其他私密值。
+5. 先使用 Vercel `*.vercel.app` Production URL 做 origin 驗證，不要先把公開網域直連 Vercel。
+
+#### GitHub 自動部署
+
+連結 GitHub 後，Vercel 會在 push 與 Pull Request 建立 deployment。主網域仍由 Cloudflare
+`security-headers` Worker 接收；完成 Preview／Production 驗證後，才在 Worker Variables
+設定非機密的 `VERCEL_ORIGIN=https://<vercel-project>.vercel.app`。
+
+#### Vercel origin 切換與回退
+
+```text
+使用者 → Cloudflare security-headers → Vercel Dockerfile.vercel → Nginx 多 app 靜態站
+                         └──────────→ Cloudflare rating-api Worker + KV
+```
+
+切換前必須驗證根站、所有子 app、SEO 文件、PWA service worker、`/health`、404、redirect、
+CSP／HSTS 與 `/ratewise/api/ratings`。移除 `VERCEL_ORIGIN` 並重新部署
+`security-headers` 即可回到原 Zeabur origin。
+
 ## 技術規格
 
 ### 環境要求

@@ -1,0 +1,98 @@
+# syntax=docker/dockerfile:1
+
+# Vercel detects this file and deploys the resulting HTTP image as a
+# Vercel Function. Keep the application build inputs aligned with Dockerfile;
+# nginx.conf remains the single routing and cache-policy source of truth.
+
+FROM node:24-alpine AS builder
+
+ARG GIT_COMMIT_COUNT
+ARG GIT_COMMIT_HASH
+ARG BUILD_TIME
+ARG VITE_HAOTOOL_BASE_PATH=/
+ARG VITE_RATEWISE_BASE_PATH=/ratewise/
+ARG VITE_NIHONNAME_BASE_PATH=/nihonname/
+ARG VITE_QUAKE_SCHOOL_BASE_PATH=/quake-school/
+ARG VITE_PARK_KEEPER_BASE_PATH=/park-keeper/
+ARG VITE_SPLIT_MEOW_BASE_PATH=/split-meow/
+ARG VITE_SITE_URL
+
+RUN corepack enable && corepack prepare pnpm@9.10.0 --activate
+
+WORKDIR /app
+
+ENV PNPM_HOME=/pnpm
+ENV PATH=$PNPM_HOME:$PATH
+ENV GIT_COMMIT_COUNT=$GIT_COMMIT_COUNT
+ENV GIT_COMMIT_HASH=$GIT_COMMIT_HASH
+ENV BUILD_TIME=$BUILD_TIME
+ENV CI=true
+
+COPY .npmrc package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY patches ./patches
+COPY apps/ratewise/package.json ./apps/ratewise/
+COPY apps/nihonname/package.json ./apps/nihonname/
+COPY apps/haotool/package.json ./apps/haotool/
+COPY apps/quake-school/package.json ./apps/quake-school/
+COPY apps/park-keeper/package.json ./apps/park-keeper/
+COPY apps/split-meow/package.json ./apps/split-meow/
+COPY apps/shared/package.json ./apps/shared/
+
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+  NODE_ENV= HUSKY=0 pnpm install --frozen-lockfile
+
+COPY . .
+
+RUN set -eux; \
+  if [ -z "${VITE_SITE_URL:-}" ]; then unset VITE_SITE_URL; fi; \
+  VITE_HAOTOOL_BASE_PATH=/ pnpm build:haotool && \
+  VITE_RATEWISE_BASE_PATH=/ratewise/ pnpm build:ratewise && \
+  VITE_NIHONNAME_BASE_PATH=/nihonname/ pnpm build:nihonname && \
+  VITE_QUAKE_SCHOOL_BASE_PATH=/quake-school/ pnpm build:quake-school && \
+  VITE_PARK_KEEPER_BASE_PATH=/park-keeper/ pnpm build:park-keeper && \
+  VITE_SPLIT_MEOW_BASE_PATH=/split-meow/ pnpm build:split-meow
+
+RUN test -f /app/apps/haotool/dist/sitemap.xml && \
+  test -f /app/apps/ratewise/dist/sitemap.xml && \
+  test -f /app/apps/nihonname/dist/sitemap.xml && \
+  test -f /app/apps/quake-school/dist/sitemap.xml && \
+  test -f /app/apps/park-keeper/dist/sitemap.xml
+
+FROM nginx:stable
+
+RUN apt-get update && \
+  apt-get upgrade -y && \
+  apt-get install -y --no-install-recommends wget && \
+  apt-get install -y --only-upgrade libssh2-1t64 && \
+  rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /app/apps/haotool/dist /usr/share/nginx/html
+COPY --from=builder /app/apps/ratewise/dist /usr/share/nginx/html/ratewise-app
+COPY --from=builder /app/apps/nihonname/dist /usr/share/nginx/html/nihonname-app
+COPY --from=builder /app/apps/quake-school/dist /usr/share/nginx/html/quake-school-app
+COPY --from=builder /app/apps/park-keeper/dist /usr/share/nginx/html/park-keeper-app
+COPY --from=builder /app/apps/split-meow/dist /usr/share/nginx/html/split-meow-app
+
+RUN ln -s /usr/share/nginx/html/ratewise-app /usr/share/nginx/html/ratewise && \
+  ln -s /usr/share/nginx/html/nihonname-app /usr/share/nginx/html/nihonname && \
+  ln -s /usr/share/nginx/html/quake-school-app /usr/share/nginx/html/quake-school && \
+  ln -s /usr/share/nginx/html/park-keeper-app /usr/share/nginx/html/park-keeper && \
+  ln -s /usr/share/nginx/html/split-meow-app /usr/share/nginx/html/split-meow
+
+# Vercel's default container port is 80. Reuse the existing nginx routing
+# policy while adapting only the listener for the Vercel runtime.
+COPY nginx.conf /etc/nginx/nginx.conf
+RUN sed -i 's/listen 8080;/listen 80;/' /etc/nginx/nginx.conf
+
+RUN groupadd --system --gid 1001 nodejs && \
+  useradd --system --uid 1001 --gid 1001 nodejs && \
+  chown -R nodejs:nodejs /usr/share/nginx/html /var/cache/nginx /var/run /var/log/nginx
+
+ENV PORT=80
+EXPOSE 80
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:80/ || exit 1
+
+USER nodejs
+CMD ["nginx", "-g", "daemon off;"]

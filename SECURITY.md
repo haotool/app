@@ -116,6 +116,12 @@ Technology Stack:
 - Alpine Linux-based minimal images
 - Read-only filesystem where possible
 
+When the static monorepo origin is moved from Zeabur to Vercel, the Cloudflare
+`security-headers` Worker remains the public security and routing boundary. The
+optional `VERCEL_ORIGIN` value is validated as an HTTPS origin and is kept out of
+the repository and client bundle. The `rating-api` Worker and KV remain on
+Cloudflare; no Cloudflare credential is required by the Vercel Docker image.
+
 ### Continuous Security Monitoring
 
 **Automated Security Scanning**:
@@ -285,7 +291,7 @@ If you have reported a security vulnerability and would like to be listed here, 
 
 ---
 
-**Last Updated**: 2026-02-07
+**Last Updated**: 2026-08-30
 **Version**: 2.2.5
 **License**: GPL-3.0
 

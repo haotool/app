@@ -24,7 +24,7 @@ pnpm exec wrangler deploy
 
 ## 本版重點
 
-- Worker 版本：`4.1`
+- Worker 版本：`6.0`
 - HSTS 改由 Cloudflare Edge 管理，Worker 不再寫入
 - `app.haotool.org/*` 全域納入 Worker
 - `www.haotool.org/*` 由 Worker 永久轉址到 apex
@@ -32,6 +32,18 @@ pnpm exec wrangler deploy
 - `csp-report` 改為 `POST` only
 - 分享圖 CORS 白名單改為精準檔名
 - `haotool` 首頁改為程序化 3D environment，避免執行期依賴遠端 HDR preset
+
+## Vercel origin 切換
+
+`VERCEL_ORIGIN` 是非機密的 Cloudflare Worker plain variable，用來在不改變公開網域與
+既有 route 的情況下切換靜態 origin。值必須是沒有 path、帳號或密碼的 HTTPS origin，
+例如 `https://<vercel-project>.vercel.app`。
+
+設定前先以 Vercel Preview 驗證完整路由；切換時在 Cloudflare Worker 的 Variables 中設定
+`VERCEL_ORIGIN`，部署 Worker 後再執行下列檢查。移除該變數即可回退到原 origin。
+
+若 Vercel origin 未設定或格式不合法，Worker 會保留原 origin 並記錄警告，方便安全回退。
+`VERCEL_ORIGIN` 不可放入 repo、`.env`、Vercel 前端環境變數或任何 client bundle。
 
 ## 部署後驗證
 

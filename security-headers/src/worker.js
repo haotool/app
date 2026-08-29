@@ -1,13 +1,14 @@
 /* global HTMLRewriter, performance */
 
 /**
- * 安全標頭 Worker v5.9
+ * 安全標頭 Worker v6.0
  *
  * 處理 Cloudflare 無法以固定規則精準表達的安全邏輯。
  * 固定站點級政策由 Cloudflare Edge 管理，Worker 專注於路由分層 CSP、
  * CSP report、分享圖 CORS 與 ratewise 跨域隔離。
  *
  * 變更記錄：
+ * - v6.0: 支援以 VERCEL_ORIGIN 將靜態 origin 切換至 Vercel，並移除 upstream Host routing header
  * - v5.9: haotool 根站 img-src 允許 app.haotool.org，修復 canonical 站工具卡圖示被 CSP 擋下
  * - v5.8: papertrade CSP 移除未使用的 Google Fonts style/font 白名單，收斂攻擊面
  * - v5.7: 新增 papertrade CSP profile，connect-src 允許 Bybit 公開行情 WS 與 REST
@@ -35,7 +36,7 @@
  * - v3.6: 改用 HTMLRewriter 解析 inline script
  */
 
-const SECURITY_POLICY_VERSION = '5.9';
+const SECURITY_POLICY_VERSION = '6.0';
 const CSP_REPORT_MAX_BYTES = 16 * 1024;
 const HASHED_ASSET_PATH = /^\/(?:[^/]+\/)?assets\/[^/]+-[A-Za-z0-9_-]{6,12}\.(?:js|css|mjs)$/;
 
@@ -772,8 +773,52 @@ function buildServerTiming(timings) {
 	return entries.join(', ');
 }
 
+/**
+ * 解析可選的 Vercel origin。未設定或設定不合法時保留目前 origin，
+ * 讓正式切換可以先以回退模式驗證，不會因空白環境變數中斷既有服務。
+ * @param {Record<string, unknown>|undefined} env
+ * @returns {URL|null}
+ */
+function resolveVercelOrigin(env) {
+	const configuredOrigin = typeof env?.VERCEL_ORIGIN === 'string' ? env.VERCEL_ORIGIN.trim() : '';
+	if (configuredOrigin === '') {
+		return null;
+	}
+
+	try {
+		const origin = new URL(configuredOrigin);
+		if (origin.protocol !== 'https:' || origin.username !== '' || origin.password !== '' || !['', '/'].includes(origin.pathname)) {
+			throw new Error('VERCEL_ORIGIN must be an https origin without credentials or a path');
+		}
+		origin.pathname = '/';
+		origin.search = '';
+		origin.hash = '';
+		return origin;
+	} catch (error) {
+		globalThis.console.warn('invalid-vercel-origin', String(error));
+		return null;
+	}
+}
+
+/**
+ * 將公開請求路徑套用到設定好的 Vercel origin；未設定時沿用舊 origin。
+ * @param {URL} requestedUrl
+ * @param {URL|null} vercelOrigin
+ * @returns {URL}
+ */
+function resolveUpstreamUrl(requestedUrl, vercelOrigin) {
+	if (vercelOrigin === null) {
+		return requestedUrl;
+	}
+
+	const upstreamUrl = new URL(vercelOrigin);
+	upstreamUrl.pathname = requestedUrl.pathname;
+	upstreamUrl.search = requestedUrl.search;
+	return upstreamUrl;
+}
+
 export default {
-	async fetch(request) {
+	async fetch(request, env) {
 		const workerStart = performance.now();
 		const url = new URL(request.url);
 		const isRatewisePath = url.pathname.startsWith('/ratewise/');
@@ -781,7 +826,9 @@ export default {
 		const isStaticAsset = isStaticAssetPath(url.pathname);
 		const markdownMirrorPath = resolveMarkdownMirrorPath(request, url);
 		const isMarkdownNegotiation = markdownMirrorPath !== null;
-		const upstreamUrl = isMarkdownNegotiation ? new URL(markdownMirrorPath, request.url) : url;
+		const requestedUpstreamUrl = isMarkdownNegotiation ? new URL(markdownMirrorPath, request.url) : url;
+		const vercelOrigin = resolveVercelOrigin(env);
+		const upstreamUrl = resolveUpstreamUrl(requestedUpstreamUrl, vercelOrigin);
 
 		if (url.host === WWW_HOST) {
 			url.host = CANONICAL_ROOT_HOST;
@@ -819,6 +866,12 @@ export default {
 		const fetchStart = performance.now();
 		const shouldRewriteRobotsTxt = isRootSiteHost && url.pathname === '/robots.txt';
 		const upstreamHeaders = new globalThis.Headers(request.headers);
+		if (vercelOrigin !== null) {
+			// Let fetch derive Host from the Vercel URL; forwarding the public host
+			// would route the request back to the Cloudflare edge or fail Vercel host validation.
+			upstreamHeaders.delete('host');
+			upstreamHeaders.delete('x-forwarded-host');
+		}
 		if (shouldRewriteRobotsTxt) {
 			upstreamHeaders.delete('if-none-match');
 			upstreamHeaders.delete('if-modified-since');

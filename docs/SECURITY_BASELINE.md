@@ -1,8 +1,8 @@
 # 雲端與應用安全基線
 
-> **最後更新**: 2025-10-26T03:43:36+08:00  
+> **最後更新**: 2026-08-30T00:00:00+08:00
 > **執行者**: LINUS_GUIDE Agent (Linus Torvalds 風格)  
-> **版本**: v2.0 (完整超級技術債掃描產出)  
+> **版本**: v2.1 (補充 Vercel 靜態 origin 切換責任界面)
 > **安全評分**: 75/100 🟡 良好 (可提升至 85/100)  
 > **分層防禦**: Cloudflare 管邊界，前端保持最小攻擊面
 
@@ -26,6 +26,14 @@
 - WAF / DDoS / Bot Management
 - CSP、HSTS、Permissions-Policy、Rate Limiting
 - TLS 終結、憑證更新
+- `security-headers` Worker 可透過嚴格驗證的 `VERCEL_ORIGIN` 將靜態 origin
+  切換至 Vercel；未設定或不合法時回退既有 origin
+
+### Origin 與 API
+
+- Zeabur 或 Vercel origin 只提供建置後的靜態多 app image，不存放 Cloudflare secret
+- `rating-api` Worker 與 KV 維持在 Cloudflare，不能由 Vercel Docker image 取代
+- `VERCEL_ORIGIN` 是 Worker 端的非機密設定，不得進入 repo、Vercel client bundle 或前端環境變數
 
 ### 應用層（Vite + React）
 
@@ -36,17 +44,19 @@
 
 > 原則：已於 Cloudflare 處理的標頭不在 Nginx / React 重複設定，僅保留最小 fallback。
 
-## 2. 當前狀態（2025-10-12）
+## 2. 當前狀態（2026-08-30）
 
-| 項目           | 現況                                                                                    |
-| -------------- | --------------------------------------------------------------------------------------- |
-| Error Boundary | ✅ `apps/ratewise/src/components/ErrorBoundary.tsx` 已上線                              |
-| Logger         | ✅ `apps/ratewise/src/utils/logger.ts`，待串接遠端 sink                                 |
-| 安全標頭       | ✅ `nginx.conf` 僅保留 `X-Content-Type-Options`、`X-Frame-Options`，其餘交由 Cloudflare |
-| `.env` 管理    | ✅ `.env.example` 已提供                                                                |
-| Secrets 掃描   | ❌ 尚未導入（建議 git-secrets / TruffleHog）                                            |
-| 日誌外送       | ❌ 未上傳至遠端（Phase 0 計畫處理）                                                     |
-| `.env` 漏掃    | ⚠️ 無 CI 步驟自動檢查                                                                   |
+| 項目            | 現況                                                                          |
+| --------------- | ----------------------------------------------------------------------------- |
+| Error Boundary  | ✅ `apps/ratewise/src/components/ErrorBoundary.tsx` 已上線                    |
+| Logger          | ✅ `apps/ratewise/src/utils/logger.ts`，待串接遠端 sink                       |
+| 安全標頭        | ✅ `security-headers` Worker 處理 CSP／路由，`nginx.conf` 僅保留最小 fallback |
+| `.env` 管理     | ✅ `.env.example` 已提供                                                      |
+| Secrets 掃描    | ✅ CI 使用固定版本 Gitleaks CLI 掃描 repo                                     |
+| 日誌外送        | ❌ 未上傳至遠端（Phase 0 計畫處理）                                           |
+| `.env` 漏掃     | ✅ Gitleaks 覆蓋 repo；執行期 provider variables 仍需平台權限控管             |
+| Vercel origin   | ⚠️ 已支援可回退切換；尚未切換正式流量                                         |
+| Rating API 邊界 | ✅ 維持 Cloudflare Worker + KV，不納入 Vercel image                           |
 
 ## 3. Cloudflare 推薦設定
 
@@ -66,7 +76,7 @@ Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'
 
 ### 🔴 Critical (M1 - 1週內完成)
 
-- [ ] **Secrets 掃描** - 加入 gitleaks 至 CI
+- [x] **Secrets 掃描** - CI 已使用固定版本 Gitleaks CLI
 
   ```yaml
   # .github/workflows/security.yml
@@ -90,7 +100,7 @@ Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'
 ### 🟡 Medium (M2 - 2週內完成)
 
 - [ ] **Request ID 追蹤** - 加入請求追蹤機制
-- [ ] **Cloudflare 安全標頭** - 透過 Workers 設定
+- [x] **Cloudflare 安全標頭** - 由 `security-headers` Worker 處理，並保留 origin 回退能力
 - [ ] **依賴安全審計** - CI 加入 `pnpm audit --prod`
 
 ### 🟢 Low (M3 - 可選)
