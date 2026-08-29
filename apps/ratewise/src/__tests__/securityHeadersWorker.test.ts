@@ -638,4 +638,32 @@ describe('security-headers worker', () => {
     expect(response.headers.get('location')).toBe('https://haotool.org/projects/?ref=nav');
     expect(globalThis.fetch).not.toHaveBeenCalled();
   });
+
+  it('Vercel origin 的同源 redirect 應改寫回公開 host', async () => {
+    const fetchSpy = vi.fn().mockResolvedValue(
+      new Response(null, {
+        status: 301,
+        headers: {
+          location: 'https://haotool-app.vercel.app/ratewise/',
+        },
+      }),
+    );
+    globalThis.fetch = fetchSpy;
+
+    const response = await worker.fetch(new Request('https://app.haotool.org/ratewise'), {
+      VERCEL_ORIGIN: 'https://haotool-app.vercel.app',
+    });
+
+    const init = fetchSpy.mock.calls[0]?.[1] as RequestInit | undefined;
+    const forwardedHeaders = new Headers(init?.headers);
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      'https://haotool-app.vercel.app/ratewise',
+      expect.objectContaining({ method: 'GET' }),
+    );
+    expect(forwardedHeaders.get('host')).toBeNull();
+    expect(forwardedHeaders.get('x-forwarded-host')).toBeNull();
+    expect(response.status).toBe(301);
+    expect(response.headers.get('location')).toBe('https://app.haotool.org/ratewise/');
+  });
 });

@@ -24,7 +24,7 @@ pnpm exec wrangler deploy
 
 ## 本版重點
 
-- Worker 版本：`6.0`
+- Worker 版本：`6.1`
 - HSTS 改由 Cloudflare Edge 管理，Worker 不再寫入
 - `app.haotool.org/*` 全域納入 Worker
 - `www.haotool.org/*` 由 Worker 永久轉址到 apex
