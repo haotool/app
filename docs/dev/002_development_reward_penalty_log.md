@@ -18,6 +18,11 @@
 - 原因：Vercel 靜態 origin 遷移需要可回退的單一 Docker image 與 Cloudflare Worker 責任界面
 - 解法：以 `Dockerfile.vercel`、嚴格驗證的 `VERCEL_ORIGIN` 與 origin/main 候選驗證建立可追溯遷移路徑
 
+- 日期：2026-08-30
+- ID：neutral-vercel-redirect-origin-normalization
+- 原因：Vercel origin 的 canonical redirect 會暴露 Vercel host，造成公開網址脫離 Cloudflare 邊界
+- 解法：Worker 改寫 Vercel 同源 redirect 回目前公開 host，並以公開 smoke 驗證修復
+
 - 日期：2026-08-27
 - ID：reward-starpuff-tutorial-ux-ci-convergence
 - 原因：PR 教學提示仍有雙指圖與短橫向成功卡的可讀性缺口，且 StarPuff E2E 未按 PR smoke 與主幹完整套件分層

@@ -1,13 +1,14 @@
 /* global HTMLRewriter, performance */
 
 /**
- * 安全標頭 Worker v6.0
+ * 安全標頭 Worker v6.1
  *
  * 處理 Cloudflare 無法以固定規則精準表達的安全邏輯。
  * 固定站點級政策由 Cloudflare Edge 管理，Worker 專注於路由分層 CSP、
  * CSP report、分享圖 CORS 與 ratewise 跨域隔離。
  *
  * 變更記錄：
+ * - v6.1: 將 Vercel origin 產生的同源 redirect 改寫回公開 host，避免 canonical URL 暴露 Vercel alias
  * - v6.0: 支援以 VERCEL_ORIGIN 將靜態 origin 切換至 Vercel，並移除 upstream Host routing header
  * - v5.9: haotool 根站 img-src 允許 app.haotool.org，修復 canonical 站工具卡圖示被 CSP 擋下
  * - v5.8: papertrade CSP 移除未使用的 Google Fonts style/font 白名單，收斂攻擊面
@@ -36,7 +37,7 @@
  * - v3.6: 改用 HTMLRewriter 解析 inline script
  */
 
-const SECURITY_POLICY_VERSION = '6.0';
+const SECURITY_POLICY_VERSION = '6.1';
 const CSP_REPORT_MAX_BYTES = 16 * 1024;
 const HASHED_ASSET_PATH = /^\/(?:[^/]+\/)?assets\/[^/]+-[A-Za-z0-9_-]{6,12}\.(?:js|css|mjs)$/;
 
@@ -817,6 +818,42 @@ function resolveUpstreamUrl(requestedUrl, vercelOrigin) {
 	return upstreamUrl;
 }
 
+/**
+ * 將 Vercel origin 發出的同源 redirect 改寫回目前公開 host。
+ * 否則 nginx 會把 /ratewise 等 canonical redirect 指向 Vercel alias，
+ * 使公開網址脫離 Cloudflare Worker 的安全與路由邊界。
+ * @param {Response} response
+ * @param {URL} requestedUrl
+ * @param {URL|null} vercelOrigin
+ * @returns {Response}
+ */
+function rewriteOriginRedirect(response, requestedUrl, vercelOrigin) {
+	if (vercelOrigin === null || response.status < 300 || response.status >= 400) {
+		return response;
+	}
+
+	const location = response.headers.get('Location');
+	if (location === null) {
+		return response;
+	}
+
+	try {
+		const redirectUrl = new URL(location, vercelOrigin);
+		if (redirectUrl.origin !== vercelOrigin.origin) {
+			return response;
+		}
+
+		redirectUrl.protocol = requestedUrl.protocol;
+		redirectUrl.host = requestedUrl.host;
+		const rewrittenResponse = new Response(response.body, response);
+		rewrittenResponse.headers.set('Location', redirectUrl.toString());
+		return rewrittenResponse;
+	} catch (error) {
+		globalThis.console.warn('invalid-upstream-redirect', String(error));
+		return response;
+	}
+}
+
 export default {
 	async fetch(request, env) {
 		const workerStart = performance.now();
@@ -886,7 +923,8 @@ export default {
 			upstreamRequestInit.body = request.body;
 		}
 
-		const upstreamResponse = await fetch(upstreamUrl.toString(), upstreamRequestInit);
+		let upstreamResponse = await fetch(upstreamUrl.toString(), upstreamRequestInit);
+		upstreamResponse = rewriteOriginRedirect(upstreamResponse, url, vercelOrigin);
 		const fetchDuration = performance.now() - fetchStart;
 
 		const contentType = upstreamResponse.headers.get('content-type') || '';
