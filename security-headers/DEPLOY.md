@@ -24,7 +24,7 @@ pnpm exec wrangler deploy
 
 ## 本版重點
 
-- Worker 版本：`6.2`
+- Worker 版本：`6.3`
 - HSTS 改由 Cloudflare Edge 管理，Worker 不再寫入
 - `app.haotool.org/*` 全域納入 Worker
 - `www.haotool.org/*` 由 Worker 永久轉址到 apex
@@ -44,6 +44,20 @@ pnpm exec wrangler deploy
 
 若 Vercel origin 未設定或格式不合法，Worker 會保留原 origin 並記錄警告，方便安全回退。
 `VERCEL_ORIGIN` 不可放入 repo、`.env`、Vercel 前端環境變數或任何 client bundle。
+
+### Vercel 自訂網域 vs Cloudflare 代理（重要）
+
+本架構的公開網域 **必須** 維持 Cloudflare 橘雲（Proxied），由 `security-headers` Worker
+接收流量；靜態內容則透過 Worker 變數 `VERCEL_ORIGIN=https://<project>.vercel.app` 回源。
+
+因此：
+
+- Vercel Dashboard 若顯示「偵測到代理／Invalid Configuration」，在 **未直連 Vercel DNS**
+  的遷移期是預期現象，**不要** 為了消除警告而把 `www` CNAME 改成灰雲直連 Vercel。
+- **不要** 在 Vercel 專案加入 `haotool.org` / `www.haotool.org` 作為對外自訂網域，
+  除非已完全移除 Worker 前置層；否則 Vercel 會將 apex 308 到 www，與 Worker 的
+  `www → haotool.org` 規則互撞，造成無限重導。
+- 正確做法：Vercel 僅用 `*.vercel.app` 作為 `VERCEL_ORIGIN`；Cloudflare DNS 維持現狀。
 
 ## 部署後驗證
 

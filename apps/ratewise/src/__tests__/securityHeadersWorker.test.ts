@@ -666,4 +666,23 @@ describe('security-headers worker', () => {
     expect(response.status).toBe(301);
     expect(response.headers.get('location')).toBe('https://app.haotool.org/ratewise/');
   });
+
+  it('上游 apex→www 308 應改寫回 apex，避免與 Worker www→apex 互撞', async () => {
+    const fetchSpy = vi.fn().mockResolvedValue(
+      new Response(null, {
+        status: 308,
+        headers: {
+          location: 'https://www.haotool.org/tools/',
+        },
+      }),
+    );
+    globalThis.fetch = fetchSpy;
+
+    const response = await worker.fetch(new Request('https://haotool.org/tools/'), {
+      VERCEL_ORIGIN: 'https://haotool-app.vercel.app',
+    });
+
+    expect(response.status).toBe(308);
+    expect(response.headers.get('location')).toBe('https://haotool.org/tools/');
+  });
 });
