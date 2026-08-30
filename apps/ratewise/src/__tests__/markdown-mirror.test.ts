@@ -47,6 +47,7 @@ describe('Markdown mirrors', () => {
     expect(content).toMatch(/localStorage/);
     expect(content).toMatch(/Google Analytics/);
     expect(content).toMatch(/Cloudflare/);
+    expect(content).toMatch(/Vercel Web Analytics/);
   });
 
   it('guide.md 含使用流程與快速金額按鈕說明', () => {

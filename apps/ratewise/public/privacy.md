@@ -23,6 +23,7 @@ HaoRate 重視資料最小化原則。本服務不要求註冊帳號，也不建
 - **臺灣銀行牌告匯率**：讀取公開匯率資料，用於顯示現金與即期報價。
 - **Google Analytics**：匿名流量分析與功能使用統計，Google 可能依其服務機制設定分析所需 Cookie 或識別資訊。
 - **Cloudflare**：CDN 加速、安全防護與基礎營運記錄，可能記錄匿名技術資訊以支援流量管理與防護。
+- **Vercel Web Analytics**：匿名 page view 統計（僅在 Vercel 部署且 Dashboard 啟用時生效），不含個人識別或跨站追蹤畫像。
 
 ## 你可以怎麼管理資料
 

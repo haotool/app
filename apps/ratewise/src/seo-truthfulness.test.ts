@@ -53,6 +53,7 @@ describe('SEO 內容真實性與 SSOT', () => {
     const privacyContent = read('src/pages/Privacy.tsx');
 
     expect(privacyContent).toContain('Google Analytics');
+    expect(privacyContent).toContain('Vercel Web Analytics');
     expect(privacyContent).not.toContain('不使用追蹤 Cookie');
   });
 

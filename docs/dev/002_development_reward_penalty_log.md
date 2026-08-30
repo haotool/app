@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+2（reward 2、penalty 0、neutral 0）｜累計總分：+344
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+345
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-08-30
+- ID：reward-vercel-analytics-privacy-followup
+- 原因：PR #1060 合併後 Codex P2 指出 nihonname、ratewise、park-keeper 隱私承諾與 Vercel Analytics 矛盾
+- 解法：同步 FAQ/JSON-LD、Privacy 頁與 markdown mirror、三語 i18n 揭露匿名 page view 範圍
 
 - 日期：2026-08-30
 - ID：reward-vercel-analytics-codex-review
