@@ -17,6 +17,7 @@
     "lint:fix": "eslint src --ext .ts,.tsx --fix"
   },
   "dependencies": {
+    "@app/shared": "workspace:^",
     "boring-avatars": "^2.0.4",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",

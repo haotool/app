@@ -188,7 +188,10 @@ export default function About() {
               隱私權政策
             </h2>
             <ul className="mt-6 list-disc space-y-3 pl-5 text-[15px] leading-[1.7] text-text">
-              <li>本站不收集任何個人識別資訊，不使用第三方追蹤工具或廣告 SDK。</li>
+              <li>
+                本站不收集個人識別資訊，不使用廣告 SDK。Vercel Web Analytics 僅統計匿名 page
+                view（不含姓名、email 或跨站追蹤畫像）。
+              </li>
               <li>
                 使用技術聲明：localStorage（僅用戶偏好，資料留在瀏覽器）、Service Worker（PWA
                 離線快取，不傳輸個人資料）。

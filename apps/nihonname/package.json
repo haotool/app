@@ -27,6 +27,7 @@
     "format": "prettier --write \"src/**/*.{ts,tsx}\""
   },
   "dependencies": {
+    "@app/shared": "workspace:^",
     "@tsparticles/confetti": "^3.9.1",
     "@tsparticles/fireworks": "^3.9.1",
     "lucide-react": "^0.563.0",

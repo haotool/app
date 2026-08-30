@@ -108,7 +108,7 @@ const CRAFT_PROOFS = [
     overline: 'HONESTY',
     data: <>GPL-3.0</>,
     title: '程式碼公開，歡迎檢視。',
-    description: '零廣告、零追蹤、零個資收集。',
+    description: '零廣告、不收集個資；Vercel 匿名 page view 統計。',
     evidenceLabel: '查看授權條款',
     evidenceHref: APP_INFO.licenseUrl,
   },

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+0（reward 0、penalty 0、neutral 1）｜累計總分：+342
+> 本次分數變化：+2（reward 2、penalty 0、neutral 0）｜累計總分：+344
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-08-30
+- ID：reward-vercel-analytics-codex-review
+- 原因：Codex P2 指出 haotool「零追蹤」文案與 Vercel Analytics 矛盾，且 Dockerfile.vercel 未建置 starpuff/papertrade 使 analytics 無效
+- 解法：同步 About/Home 隱私揭露、Dockerfile.vercel 對齊主 Dockerfile 納入 8 app 建置與 dist 複製
+
+- 日期：2026-08-30
+- ID：reward-vercel-analytics-monorepo
+- 原因：Vercel monorepo 部署已上 main，但全站無 @vercel/analytics 接線且 CSP 未放行 vitals.vercel-insights.com
+- 解法：@app/shared 匯出 VercelAnalytics、8 個 app 接線（starpuff 用 inject）、Worker v6.2 connect-src 白名單
 
 - 日期：2026-08-30
 - ID：neutral-vercel-monorepo-origin-migration

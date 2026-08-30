@@ -5,6 +5,7 @@
  */
 import { Outlet, useLocation } from 'react-router-dom';
 import { HelmetProvider } from '../utils/helmet';
+import { VercelAnalytics } from '@app/shared/analytics';
 
 export function Layout() {
   const location = useLocation();
@@ -35,6 +36,7 @@ export function Layout() {
       >
         <Outlet />
       </main>
+      <VercelAnalytics />
     </HelmetProvider>
   );
 }

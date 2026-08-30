@@ -23,6 +23,7 @@
     "lint:fix": "eslint src --ext .ts,.tsx --fix"
   },
   "dependencies": {
+    "@app/shared": "workspace:^",
     "lucide-react": "^0.563.0",
     "motion": "^12.42.2",
     "react": "^19.2.7",
