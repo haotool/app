@@ -81,6 +81,11 @@ export default function Privacy() {
                 用於 CDN 加速、安全防護與基礎營運記錄。Cloudflare
                 可能記錄匿名技術資訊以支援流量管理與防護。
               </p>
+              <p>
+                <strong className="text-text">Vercel Web Analytics：</strong>
+                用於匿名 page view 統計（僅在 Vercel 部署且 Dashboard
+                啟用時生效），不含個人識別或跨站追蹤畫像。
+              </p>
             </div>
           </section>
 

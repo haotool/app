@@ -354,7 +354,7 @@ const FAQ_DATA: FAQEntry[] = [
   {
     question: '我的資料會被上傳到伺服器嗎？',
     answer:
-      '完全不會。所有資料（自訂諧音名、瀏覽紀錄）都儲存在你的瀏覽器 localStorage，不會傳送到任何伺服器。我們無法存取你的個人資料。',
+      '個人資料（自訂諧音名、瀏覽紀錄）都儲存在你的瀏覽器 localStorage，不會傳送到我們的伺服器，我們無法存取。部署於 Vercel 且啟用分析時，Vercel Web Analytics 僅統計匿名 page view（不含個人識別或跨站追蹤）。',
   },
   {
     question: '這個生成器可以離線使用嗎？',

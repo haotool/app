@@ -109,7 +109,7 @@ const resources = {
         'Built as a PWA — keep using saved records even without network access.',
       'about.privacy_heading': 'Privacy Policy',
       'about.privacy_p1':
-        'All data from this app is stored locally on your device and never uploaded to any server. We do not collect, track, or share your personal information.',
+        'All app data is stored locally on your device and is not uploaded to our servers. We do not collect or share your personal information. When deployed on Vercel, anonymous page views may be counted via Vercel Web Analytics (no names, emails, or cross-site profiles).',
       'about.privacy_p2':
         'Parking records (plate number, floor, photos, coordinates, etc.) are for your personal use only and remain fully under your control. You can clear all records anytime in Settings.',
       'about.privacy_p3':
@@ -272,7 +272,7 @@ const resources = {
       'about.feature.offline.desc': 'PWA 技術，無網路時也能使用已儲存的紀錄',
       'about.privacy_heading': '隱私政策',
       'about.privacy_p1':
-        '本應用程式所有資料均儲存於您的裝置本機，不會上傳至任何伺服器。我們不收集、不追蹤、不分享您的個人資訊。',
+        '本應用程式的停車紀錄等資料均儲存於您的裝置本機，不會上傳至我們的伺服器。我們不收集、不分享您的個人資訊。部署於 Vercel 時，可能透過 Vercel Web Analytics 統計匿名 page view（不含姓名、email 或跨站追蹤畫像）。',
       'about.privacy_p2':
         '停車紀錄（車牌、樓層、照片、座標等）僅供您個人使用，完全由您掌控。您可隨時在設定中清除所有紀錄。',
       'about.privacy_p3': '若使用 GPS 定位功能，定位資料僅在應用程式內使用，不會傳輸至第三方。',
@@ -436,7 +436,7 @@ const resources = {
         'PWA技術により、ネットワークがない場合でも保存済みの記録を利用できます',
       'about.privacy_heading': 'プライバシーポリシー',
       'about.privacy_p1':
-        '本アプリのすべてのデータはお使いの端末内にのみ保存され、サーバーにアップロードされることはありません。個人情報の収集、追跡、共有は行いません。',
+        '駐車記録などのアプリデータは端末内にのみ保存され、当社サーバーにはアップロードされません。個人情報の収集・共有は行いません。Vercel デプロイ時は Vercel Web Analytics により匿名 page view を集計する場合があります（氏名・メール・クロスサイト追跡は含みません）。',
       'about.privacy_p2':
         '駐車記録（ナンバープレート、階数、写真、座標など）はご本人のみが利用でき、完全にご自身で管理いただけます。設定からいつでもすべての記録を削除できます。',
       'about.privacy_p3':
