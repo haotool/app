@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-08-29T14:01:04.736Z",
-  "updateTime": "2026/08/29 23:01:04",
+  "timestamp": "2026-08-30T00:39:20.619Z",
+  "updateTime": "2026/08/30 09:39:20",
   "source": "MoneyBox (明洞換匯所聯盟)",
   "sourceUrl": "https://moneybox-exchange.com/zh-CHT/exchange",
   "apiUrl": "https://moneybox-exchange.com/api/rates",
@@ -16,9 +16,9 @@
     },
     "AUD": {
       "currency": "AUD",
-      "base": 987.5,
-      "buy": 995,
-      "sell": 980,
+      "base": 983,
+      "buy": 988,
+      "sell": 978,
       "spbuy": null,
       "spsell": null
     },
@@ -40,33 +40,33 @@
     },
     "CNY": {
       "currency": "CNY",
-      "base": 204.35,
-      "buy": 204.7,
-      "sell": 204,
+      "base": 204.25,
+      "buy": 205,
+      "sell": 203.5,
       "spbuy": null,
       "spsell": null
     },
     "EUR": {
       "currency": "EUR",
-      "base": 1593.5,
-      "buy": 1602,
-      "sell": 1585,
+      "base": 1590,
+      "buy": 1600,
+      "sell": 1580,
       "spbuy": null,
       "spsell": null
     },
     "GBP": {
       "currency": "GBP",
-      "base": 1866,
-      "buy": 1880,
-      "sell": 1852,
+      "base": 1864,
+      "buy": 1878,
+      "sell": 1850,
       "spbuy": null,
       "spsell": null
     },
     "HKD": {
       "currency": "HKD",
-      "base": 175.75,
+      "base": 175.6,
       "buy": 176.5,
-      "sell": 175,
+      "sell": 174.7,
       "spbuy": null,
       "spsell": null
     },
@@ -80,9 +80,9 @@
     },
     "JPY": {
       "currency": "JPY",
-      "base": 861.5,
-      "buy": 865,
-      "sell": 858,
+      "base": 864.5,
+      "buy": 870,
+      "sell": 859,
       "spbuy": null,
       "spsell": null
     },
@@ -144,8 +144,8 @@
     },
     "USD": {
       "currency": "USD",
-      "base": 1380,
-      "buy": 1382,
+      "base": 1379,
+      "buy": 1380,
       "sell": 1378,
       "spbuy": null,
       "spsell": null
