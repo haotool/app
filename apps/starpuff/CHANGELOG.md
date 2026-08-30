@@ -1,5 +1,11 @@
 # @app/starpuff
 
+## 0.34.3
+
+### Patch Changes
+
+- 921746c: 全 monorepo 接入 Vercel Web Analytics，Vercel 部署後可在 Dashboard 查看各 app 訪客與 page view。
+
 ## 0.34.2
 
 ### Patch Changes
