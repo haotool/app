@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+345
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+346
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-08-30
+- ID：reward-worker-vercel-www-redirect-canonical
+- 原因：Vercel 自訂網域 apex→www 與 Worker www→apex 互撞，haotool.org 無限重導；Vercel「偵測到代理」為 CF 前置預期現象
+- 解法：Worker v6.3 改寫上游 www Location 回 apex、DEPLOY.md 補 Vercel/CF 分工；生產設定 VERCEL_ORIGIN 指向 vercel.app
 
 - 日期：2026-08-30
 - ID：reward-vercel-analytics-privacy-followup

@@ -1,13 +1,14 @@
 /* global HTMLRewriter, performance */
 
 /**
- * 安全標頭 Worker v6.2
+ * 安全標頭 Worker v6.3
  *
  * 處理 Cloudflare 無法以固定規則精準表達的安全邏輯。
  * 固定站點級政策由 Cloudflare Edge 管理，Worker 專注於路由分層 CSP、
  * CSP report、分享圖 CORS 與 ratewise 跨域隔離。
  *
  * 變更記錄：
+ * - v6.3: 上游若將 apex 308 到 www.haotool.org，改寫回 apex，避免與 Worker www→apex 規則互撞
  * - v6.2: 全站 HTML profile connect-src 允許 vitals.vercel-insights.com，支援 @vercel/analytics
  * - v6.1: 將 Vercel origin 產生的同源 redirect 改寫回公開 host，避免 canonical URL 暴露 Vercel alias
  * - v6.0: 支援以 VERCEL_ORIGIN 將靜態 origin 切換至 Vercel，並移除 upstream Host routing header
@@ -38,7 +39,7 @@
  * - v3.6: 改用 HTMLRewriter 解析 inline script
  */
 
-const SECURITY_POLICY_VERSION = '6.2';
+const SECURITY_POLICY_VERSION = '6.3';
 const CSP_REPORT_MAX_BYTES = 16 * 1024;
 const HASHED_ASSET_PATH = /^\/(?:[^/]+\/)?assets\/[^/]+-[A-Za-z0-9_-]{6,12}\.(?:js|css|mjs)$/;
 
@@ -831,7 +832,7 @@ function resolveUpstreamUrl(requestedUrl, vercelOrigin) {
  * @returns {Response}
  */
 function rewriteOriginRedirect(response, requestedUrl, vercelOrigin) {
-	if (vercelOrigin === null || response.status < 300 || response.status >= 400) {
+	if (response.status < 300 || response.status >= 400) {
 		return response;
 	}
 
@@ -841,15 +842,30 @@ function rewriteOriginRedirect(response, requestedUrl, vercelOrigin) {
 	}
 
 	try {
-		const redirectUrl = new URL(location, vercelOrigin);
-		if (redirectUrl.origin !== vercelOrigin.origin) {
+		const redirectUrl = new URL(location, requestedUrl);
+
+		// Vercel 自訂網域常將 apex 308 到 www；公開 canonical 為 apex（Worker 亦將 www→apex）。
+		if (redirectUrl.host === WWW_HOST && requestedUrl.host === CANONICAL_ROOT_HOST) {
+			redirectUrl.protocol = requestedUrl.protocol;
+			redirectUrl.host = CANONICAL_ROOT_HOST;
+			const rewrittenResponse = new Response(response.body, response);
+			rewrittenResponse.headers.set('Location', redirectUrl.toString());
+			return rewrittenResponse;
+		}
+
+		if (vercelOrigin === null) {
 			return response;
 		}
 
-		redirectUrl.protocol = requestedUrl.protocol;
-		redirectUrl.host = requestedUrl.host;
+		const redirectUrlFromOrigin = new URL(location, vercelOrigin);
+		if (redirectUrlFromOrigin.origin !== vercelOrigin.origin) {
+			return response;
+		}
+
+		redirectUrlFromOrigin.protocol = requestedUrl.protocol;
+		redirectUrlFromOrigin.host = requestedUrl.host;
 		const rewrittenResponse = new Response(response.body, response);
-		rewrittenResponse.headers.set('Location', redirectUrl.toString());
+		rewrittenResponse.headers.set('Location', redirectUrlFromOrigin.toString());
 		return rewrittenResponse;
 	} catch (error) {
 		globalThis.console.warn('invalid-upstream-redirect', String(error));
