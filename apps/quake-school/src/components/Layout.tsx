@@ -4,6 +4,7 @@
 import { Outlet } from 'react-router-dom';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
 import { VercelAnalytics } from '@app/shared/analytics';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 const Layout: React.FC = () => {
   return (
@@ -20,6 +21,7 @@ const Layout: React.FC = () => {
         <Outlet />
       </main>
       <VercelAnalytics />
+      <SpeedInsights />
     </HelmetProvider>
   );
 };

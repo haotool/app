@@ -182,5 +182,8 @@
     "patchedDependencies": {
       "vite-react-ssg@0.8.9": "patches/vite-react-ssg@0.8.9.patch"
     }
+  },
+  "dependencies": {
+    "@vercel/speed-insights": "^2.0.0"
   }
 }

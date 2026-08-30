@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { inject } from '@vercel/analytics';
+import { injectSpeedInsights } from '@vercel/speed-insights';
 import './pwa';
 import './style.css';
 import { initInstallGuide } from './installGuide';
@@ -33,6 +34,7 @@ import { isGamePaused, openPauseMenu } from './game/systems/pause';
 
 restoreMutePreference();
 inject();
+injectSpeedInsights();
 // 桌機正置（#817）：boot 一次判定掛 sp-desktop class——旋轉殼旁路（CSS transform 免除
 // ＋getShellRotation 恆 none）、虛擬鍵隱藏；Phaser boot 前套用使殼量測即為正置尺寸。
 applyDesktopModeClass();
@@ -460,7 +462,7 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
         state: string | null;
         safeSupply: boolean;
       }[] = [];
-      // 場景轉換瞬間（Result/restart）內部系統短暫不可用：防禦回空（審查修復）。
+      // 場景轉換瞬間（Result/restart）內部系統短暫不可用：防禦回空（審查修復）���
       try {
         for (const child of internals().enemies.getGroup().getChildren()) {
           const kind = internals().enemies.kindOf(child);

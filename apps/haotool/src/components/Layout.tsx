@@ -9,6 +9,7 @@ import { LazyMotion, MotionConfig } from 'motion/react';
 import Header from './Header';
 import Footer from './Footer';
 import { VercelAnalytics } from '@app/shared/analytics';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 const loadMotionFeatures = () => import('./motion-features').then((module) => module.default);
 
@@ -49,6 +50,7 @@ export default function Layout() {
             prefers-reduced-motion。 */}
         <ScrollRestoration />
         <VercelAnalytics />
+        <SpeedInsights />
       </MotionConfig>
     </LazyMotion>
   );
