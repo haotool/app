@@ -1,13 +1,14 @@
 /* global HTMLRewriter, performance */
 
 /**
- * 安全標頭 Worker v6.1
+ * 安全標頭 Worker v6.2
  *
  * 處理 Cloudflare 無法以固定規則精準表達的安全邏輯。
  * 固定站點級政策由 Cloudflare Edge 管理，Worker 專注於路由分層 CSP、
  * CSP report、分享圖 CORS 與 ratewise 跨域隔離。
  *
  * 變更記錄：
+ * - v6.2: 全站 HTML profile connect-src 允許 vitals.vercel-insights.com，支援 @vercel/analytics
  * - v6.1: 將 Vercel origin 產生的同源 redirect 改寫回公開 host，避免 canonical URL 暴露 Vercel alias
  * - v6.0: 支援以 VERCEL_ORIGIN 將靜態 origin 切換至 Vercel，並移除 upstream Host routing header
  * - v5.9: haotool 根站 img-src 允許 app.haotool.org，修復 canonical 站工具卡圖示被 CSP 擋下
@@ -37,7 +38,7 @@
  * - v3.6: 改用 HTMLRewriter 解析 inline script
  */
 
-const SECURITY_POLICY_VERSION = '6.1';
+const SECURITY_POLICY_VERSION = '6.2';
 const CSP_REPORT_MAX_BYTES = 16 * 1024;
 const HASHED_ASSET_PATH = /^\/(?:[^/]+\/)?assets\/[^/]+-[A-Za-z0-9_-]{6,12}\.(?:js|css|mjs)$/;
 
@@ -59,6 +60,7 @@ const RATEWISE_REPORT_ONLY =
 	"require-trusted-types-for 'script'; trusted-types default ratewise#default goog#html 'allow-duplicates'; report-uri /ratewise/csp-report;";
 const RATEWISE_REPORTING_ENDPOINT = 'csp-endpoint';
 const CLOUDFLARE_INSIGHTS_SCRIPT = 'https://static.cloudflareinsights.com';
+const VERCEL_ANALYTICS_CONNECT = 'https://vitals.vercel-insights.com';
 
 const APP_HOST = 'app.haotool.org';
 const ROOT_SITE_HOSTS = new Set(['haotool.org', 'www.haotool.org', APP_HOST]);
@@ -469,7 +471,7 @@ const FALLBACK_HTML_PROFILE = createHtmlProfile({
 	styleSources: ['https://fonts.googleapis.com', 'https://unpkg.com'],
 	fontSources: ['https://fonts.gstatic.com'],
 	imgSources: ['https:'],
-	connectSources: [CLOUDFLARE_INSIGHTS_SCRIPT],
+	connectSources: [CLOUDFLARE_INSIGHTS_SCRIPT, VERCEL_ANALYTICS_CONNECT],
 });
 
 const HAOTOOL_HTML_PROFILE = createHtmlProfile({
@@ -479,7 +481,7 @@ const HAOTOOL_HTML_PROFILE = createHtmlProfile({
 	fontSources: ['https://fonts.gstatic.com'],
 	// 根站（haotool.org）工具卡圖示解析為 app.haotool.org 絕對 URL，需納入 img-src。
 	imgSources: ['https://app.haotool.org'],
-	connectSources: [CLOUDFLARE_INSIGHTS_SCRIPT],
+	connectSources: [CLOUDFLARE_INSIGHTS_SCRIPT, VERCEL_ANALYTICS_CONNECT],
 });
 
 const NIHONNAME_HTML_PROFILE = createHtmlProfile({
@@ -488,7 +490,7 @@ const NIHONNAME_HTML_PROFILE = createHtmlProfile({
 	styleSources: ['https://fonts.googleapis.com'],
 	fontSources: ['https://fonts.gstatic.com'],
 	imgSources: ['https://www.transparenttextures.com'],
-	connectSources: [CLOUDFLARE_INSIGHTS_SCRIPT],
+	connectSources: [CLOUDFLARE_INSIGHTS_SCRIPT, VERCEL_ANALYTICS_CONNECT],
 });
 
 const PARK_KEEPER_HTML_PROFILE = createHtmlProfile({
@@ -497,7 +499,7 @@ const PARK_KEEPER_HTML_PROFILE = createHtmlProfile({
 	styleSources: ['https://fonts.googleapis.com', 'https://unpkg.com'],
 	fontSources: ['https://fonts.gstatic.com'],
 	imgSources: ['https://wmts.nlsc.gov.tw', 'https://*.basemaps.cartocdn.com'],
-	connectSources: [CLOUDFLARE_INSIGHTS_SCRIPT, 'https://wmts.nlsc.gov.tw', 'https://*.basemaps.cartocdn.com'],
+	connectSources: [CLOUDFLARE_INSIGHTS_SCRIPT, VERCEL_ANALYTICS_CONNECT, 'https://wmts.nlsc.gov.tw', 'https://*.basemaps.cartocdn.com'],
 	permissionsPolicy: PARK_KEEPER_PERMISSIONS_POLICY,
 });
 
@@ -506,7 +508,7 @@ const QUAKE_SCHOOL_HTML_PROFILE = createHtmlProfile({
 	scriptSources: [CLOUDFLARE_INSIGHTS_SCRIPT],
 	styleSources: ['https://fonts.googleapis.com'],
 	fontSources: ['https://fonts.gstatic.com'],
-	connectSources: [CLOUDFLARE_INSIGHTS_SCRIPT],
+	connectSources: [CLOUDFLARE_INSIGHTS_SCRIPT, VERCEL_ANALYTICS_CONNECT],
 });
 
 const SPLIT_MEOW_HTML_PROFILE = createHtmlProfile({
@@ -517,7 +519,7 @@ const SPLIT_MEOW_HTML_PROFILE = createHtmlProfile({
 	// 保留 fallback 的遠端頭像白名單：Split Meow 成員頭像可能來自 legacy https 來源，
 	// 未帶 img-src https: 會在專屬 profile 下被 CSP 擋下。
 	imgSources: ['https:'],
-	connectSources: [CLOUDFLARE_INSIGHTS_SCRIPT, 'https://cdn.jsdelivr.net'],
+	connectSources: [CLOUDFLARE_INSIGHTS_SCRIPT, VERCEL_ANALYTICS_CONNECT, 'https://cdn.jsdelivr.net'],
 });
 
 const PAPERTRADE_HTML_PROFILE = createHtmlProfile({
@@ -525,7 +527,7 @@ const PAPERTRADE_HTML_PROFILE = createHtmlProfile({
 	scriptSources: [CLOUDFLARE_INSIGHTS_SCRIPT],
 	// papertrade 使用系統字型堆疊，不載入外部字型，不開 Google Fonts 白名單。
 	// Bybit 公開行情：WS 即時推送與 REST 歷史 K 線。
-	connectSources: [CLOUDFLARE_INSIGHTS_SCRIPT, 'wss://stream.bybit.com', 'https://api.bybit.com'],
+	connectSources: [CLOUDFLARE_INSIGHTS_SCRIPT, VERCEL_ANALYTICS_CONNECT, 'wss://stream.bybit.com', 'https://api.bybit.com'],
 });
 
 const RATEWISE_HTML_PROFILE = createHtmlProfile({
@@ -536,6 +538,7 @@ const RATEWISE_HTML_PROFILE = createHtmlProfile({
 		'https://cdn.jsdelivr.net',
 		'https://raw.githubusercontent.com',
 		'https://static.cloudflareinsights.com',
+		VERCEL_ANALYTICS_CONNECT,
 		'https://www.google-analytics.com',
 		'https://region1.google-analytics.com',
 		'https://analytics.google.com',

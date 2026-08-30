@@ -8,3 +8,4 @@ export {
   detectAiSource,
 } from './ga';
 export { RouteAnalytics } from './RouteAnalytics';
+export { VercelAnalytics } from './VercelAnalytics';

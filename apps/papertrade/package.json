@@ -17,6 +17,7 @@
     "lint:fix": "eslint src --ext .ts,.tsx --fix"
   },
   "dependencies": {
+    "@app/shared": "workspace:^",
     "clsx": "^2.1.1",
     "lightweight-charts": "^5.2.0",
     "lucide-react": "^0.546.0",

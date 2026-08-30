@@ -3,6 +3,7 @@
  */
 import { Outlet } from 'react-router-dom';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
+import { VercelAnalytics } from '@app/shared/analytics';
 
 const Layout: React.FC = () => {
   return (
@@ -18,6 +19,7 @@ const Layout: React.FC = () => {
       <main className="min-h-screen bg-white">
         <Outlet />
       </main>
+      <VercelAnalytics />
     </HelmetProvider>
   );
 };

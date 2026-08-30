@@ -8,6 +8,7 @@ import { Outlet, ScrollRestoration } from 'react-router-dom';
 import { LazyMotion, MotionConfig } from 'motion/react';
 import Header from './Header';
 import Footer from './Footer';
+import { VercelAnalytics } from '@app/shared/analytics';
 
 const loadMotionFeatures = () => import('./motion-features').then((module) => module.default);
 
@@ -47,6 +48,7 @@ export default function Layout() {
             scrollIntoView 尊重錨點的 scroll-margin-top（80px），instant 捲動天然符合
             prefers-reduced-motion。 */}
         <ScrollRestoration />
+        <VercelAnalytics />
       </MotionConfig>
     </LazyMotion>
   );

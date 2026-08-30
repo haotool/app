@@ -36,6 +36,8 @@ COPY apps/haotool/package.json ./apps/haotool/
 COPY apps/quake-school/package.json ./apps/quake-school/
 COPY apps/park-keeper/package.json ./apps/park-keeper/
 COPY apps/split-meow/package.json ./apps/split-meow/
+COPY apps/starpuff/package.json ./apps/starpuff/
+COPY apps/papertrade/package.json ./apps/papertrade/
 COPY apps/shared/package.json ./apps/shared/
 
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
@@ -50,7 +52,9 @@ RUN set -eux; \
   VITE_NIHONNAME_BASE_PATH=/nihonname/ pnpm build:nihonname && \
   VITE_QUAKE_SCHOOL_BASE_PATH=/quake-school/ pnpm build:quake-school && \
   VITE_PARK_KEEPER_BASE_PATH=/park-keeper/ pnpm build:park-keeper && \
-  VITE_SPLIT_MEOW_BASE_PATH=/split-meow/ pnpm build:split-meow
+  VITE_SPLIT_MEOW_BASE_PATH=/split-meow/ pnpm build:split-meow && \
+  pnpm build:starpuff && \
+  pnpm build:papertrade
 
 RUN test -f /app/apps/haotool/dist/sitemap.xml && \
   test -f /app/apps/ratewise/dist/sitemap.xml && \
@@ -72,12 +76,16 @@ COPY --from=builder /app/apps/nihonname/dist /usr/share/nginx/html/nihonname-app
 COPY --from=builder /app/apps/quake-school/dist /usr/share/nginx/html/quake-school-app
 COPY --from=builder /app/apps/park-keeper/dist /usr/share/nginx/html/park-keeper-app
 COPY --from=builder /app/apps/split-meow/dist /usr/share/nginx/html/split-meow-app
+COPY --from=builder /app/apps/starpuff/dist /usr/share/nginx/html/starpuff-app
+COPY --from=builder /app/apps/papertrade/dist /usr/share/nginx/html/papertrade-app
 
 RUN ln -s /usr/share/nginx/html/ratewise-app /usr/share/nginx/html/ratewise && \
   ln -s /usr/share/nginx/html/nihonname-app /usr/share/nginx/html/nihonname && \
   ln -s /usr/share/nginx/html/quake-school-app /usr/share/nginx/html/quake-school && \
   ln -s /usr/share/nginx/html/park-keeper-app /usr/share/nginx/html/park-keeper && \
-  ln -s /usr/share/nginx/html/split-meow-app /usr/share/nginx/html/split-meow
+  ln -s /usr/share/nginx/html/split-meow-app /usr/share/nginx/html/split-meow && \
+  ln -s /usr/share/nginx/html/starpuff-app /usr/share/nginx/html/starpuff && \
+  ln -s /usr/share/nginx/html/papertrade-app /usr/share/nginx/html/papertrade
 
 # Vercel's default container port is 80. Reuse the existing nginx routing
 # policy while adapting only the listener for the Vercel runtime.
