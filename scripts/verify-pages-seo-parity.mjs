@@ -67,14 +67,17 @@ function extractAssetReferences(html) {
 }
 
 function normalizeAssetReference(value) {
-  return value.replace(/(^|\/)([^/]+)-[A-Za-z0-9_-]{6,}(\.[A-Za-z0-9]+)(?=[?#]|$)/, '$1:hashed$3');
+  return value.replace(
+    /(^|\/)([^/]+)-[A-Za-z0-9_-]{6,}(\.[A-Za-z0-9]+)(?=[?#]|$)/,
+    (_match, prefix, _hash, extension) => `${prefix}:hashed${extension}`,
+  );
 }
 
 function extractVisibleText(html) {
   return html
-    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, ' ')
-    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, ' ')
-    .replace(/<noscript\b[^>]*>[\s\S]*?<\/noscript>/gi, ' ')
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script\b[^>]*>/gi, ' ')
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style\b[^>]*>/gi, ' ')
+    .replace(/<noscript\b[^>]*>[\s\S]*?<\/noscript\b[^>]*>/gi, ' ')
     .replace(/<[^>]+>/g, ' ')
     .replace(/&nbsp;/gi, ' ')
     .replace(/&amp;/gi, '&')

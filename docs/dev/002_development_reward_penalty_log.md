@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+347
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+348
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-09-01
+- ID：reward-pages-seo-verifier-codeql-fix
+- 原因：CodeQL 發現 Pages SEO parity verifier 的 asset replacement 與 HTML script/style stripping 可能產生誤判或不完整過濾。
+- 解法：改用 replacement callback 避免特殊字元語義，並允許 script/style/noscript 結束標籤帶合法尾端空白或屬性。
 
 - 日期：2026-09-01
 - ID：reward-pages-migration-security-convergence
