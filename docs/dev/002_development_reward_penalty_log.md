@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+5（reward 5、penalty 0、neutral 0）｜累計總分：+351
+> 本次分數變化：+7（reward 7、penalty 0、neutral 0）｜累計總分：+353
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-09-01
+- ID：reward-pages-review-wrangler-package-boundary
+- 原因：Codex review 發現 security-headers 不在 pnpm workspace，pnpm filter 執行部署工具實際為 no-op。
+- 解法：改用 security-headers/package-lock.json 安裝並直接呼叫其 Wrangler binary，涵蓋 preview 與 production deploy。
+
+- 日期：2026-09-01
+- ID：reward-pages-review-build-path-scope
+- 原因：Codex review 發現 scripts/\*\* 會讓獨立 Cloudflare 維運腳本變更觸發完整 Pages build 與 secret-bearing deploy。
+- 解法：將 Pages workflow path filter 收斂至 assembly、build 依賴與共用 library 的明確清單。
 
 - 日期：2026-09-01
 - ID：reward-pages-review-contract-deploy-gate

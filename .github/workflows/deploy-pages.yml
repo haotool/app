@@ -5,7 +5,11 @@ on:
     branches: [main]
     paths:
       - 'apps/**'
-      - 'scripts/**'
+      - 'scripts/build-pages.mjs'
+      - 'scripts/generate-sitemap-2026.mjs'
+      - 'scripts/verify-image-resources.mjs'
+      - 'scripts/verify-ssot-sync.mjs'
+      - 'scripts/lib/**'
       - 'package.json'
       - 'pnpm-lock.yaml'
       - 'pnpm-workspace.yaml'
@@ -14,7 +18,11 @@ on:
   pull_request:
     paths:
       - 'apps/**'
-      - 'scripts/**'
+      - 'scripts/build-pages.mjs'
+      - 'scripts/generate-sitemap-2026.mjs'
+      - 'scripts/verify-image-resources.mjs'
+      - 'scripts/verify-ssot-sync.mjs'
+      - 'scripts/lib/**'
       - 'package.json'
       - 'pnpm-lock.yaml'
       - 'pnpm-workspace.yaml'
@@ -63,8 +71,11 @@ jobs:
       - name: Build Pages assets
         run: pnpm build:pages
 
+      - name: Install Wrangler CLI
+        run: npm ci --prefix security-headers --ignore-scripts
+
       - name: Validate Wrangler CLI
-        run: pnpm --filter security-headers exec wrangler --version
+        run: security-headers/node_modules/.bin/wrangler --version
 
       - name: Verify Pages output contract
         run: |
@@ -97,7 +108,7 @@ jobs:
           else
             DEPLOY_BRANCH="candidate-$GITHUB_SHA"
           fi
-          DEPLOY_OUTPUT="$(pnpm --filter security-headers exec wrangler pages deploy .pages-dist \
+          DEPLOY_OUTPUT="$(security-headers/node_modules/.bin/wrangler pages deploy .pages-dist \
             --project-name "$PAGES_PROJECT_NAME" \
             --branch "$DEPLOY_BRANCH" \
             --commit-hash "$GITHUB_SHA" \
@@ -123,7 +134,7 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
           set -euo pipefail
-          pnpm --filter security-headers exec wrangler pages deploy .pages-dist \
+          security-headers/node_modules/.bin/wrangler pages deploy .pages-dist \
             --project-name "$PAGES_PROJECT_NAME" \
             --branch main \
             --commit-hash "$GITHUB_SHA" \
