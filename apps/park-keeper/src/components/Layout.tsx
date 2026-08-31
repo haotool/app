@@ -5,6 +5,7 @@ import { getStoredLanguage } from '../services/i18n';
 import { SITE_CONFIG } from '../../app.config.mjs';
 import { UpdatePrompt } from './UpdatePrompt';
 import { VercelAnalytics } from '@app/shared/analytics';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 const APP_NAME = SITE_CONFIG.name;
 const CURRENT_YEAR = 2026;
@@ -37,6 +38,7 @@ export default function Layout() {
       {/* 全域掛載：確保 /add 捷徑、/guide、/about 等非 Home 路由也能自動消費 waiting SW（issue #725 pre-release 稽核 C-P0）。 */}
       <UpdatePrompt />
       <VercelAnalytics />
+      <SpeedInsights />
       {showFooter && (
         <footer className="py-4 px-6 text-center border-t border-black/5">
           {/* slate-600（R6 review /about 處方）：slate-500 on 白 4.76 壓線、slate-400 僅 2.45:1。 */}
