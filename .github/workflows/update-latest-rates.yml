@@ -37,7 +37,7 @@ jobs:
 
     steps:
       - name: Checkout data branch
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: data
           fetch-depth: 0
@@ -60,7 +60,7 @@ jobs:
           git checkout ${{ github.sha }} -- public/rates/ 2>/dev/null || mkdir -p public/rates
 
       - name: Setup Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: '24'
 

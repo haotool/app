@@ -24,6 +24,8 @@ export default tseslint.config(
       '**/.playwright-mcp/**',
       '**/.next/**',
       '**/.turbo/**',
+      '**/.pages-dist/**',
+      '**/.wrangler/**',
       '**/vendor/**',
       '**/screenshots/**',
       '**/public/**',

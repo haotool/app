@@ -1,9 +1,9 @@
 # 雲端與應用安全基線
 
-> **最後更新**: 2026-08-30T00:00:00+08:00
+> **最後更新**: 2026-09-01T00:00:00+08:00
 > **執行者**: LINUS_GUIDE Agent (Linus Torvalds 風格)  
-> **版本**: v2.1 (補充 Vercel 靜態 origin 切換責任界面)
-> **安全評分**: 75/100 🟡 良好 (可提升至 85/100)  
+> **版本**: v2.3 (補充 CI secret scope、immutable Actions 與 production audit 狀態)
+> **安全評分**: 82/100 🟡 良好 (React Router moderate advisories 尚待處理)
 > **分層防禦**: Cloudflare 管邊界，前端保持最小攻擊面
 
 ---
@@ -26,14 +26,15 @@
 - WAF / DDoS / Bot Management
 - CSP、HSTS、Permissions-Policy、Rate Limiting
 - TLS 終結、憑證更新
-- `security-headers` Worker 可透過嚴格驗證的 `VERCEL_ORIGIN` 將靜態 origin
-  切換至 Vercel；未設定或不合法時回退既有 origin
+- `security-headers` Worker 優先以嚴格驗證的 `STATIC_ORIGIN` 將靜態 origin
+  切換至 Cloudflare Pages；觀察期可用 `VERCEL_ORIGIN` 回退，未設定或不合法時回到既有 origin
 
 ### Origin 與 API
 
-- Zeabur 或 Vercel origin 只提供建置後的靜態多 app image，不存放 Cloudflare secret
+- Cloudflare Pages、Zeabur 或 Vercel origin 只提供建置後的靜態多 app 資產，不存放 Cloudflare secret
 - `rating-api` Worker 與 KV 維持在 Cloudflare，不能由 Vercel Docker image 取代
-- `VERCEL_ORIGIN` 是 Worker 端的非機密設定，不得進入 repo、Vercel client bundle 或前端環境變數
+- `STATIC_ORIGIN`／`VERCEL_ORIGIN` 是 Worker 端的非機密設定，不得進入 repo、client bundle 或前端環境變數
+- Web Analytics 由 Cloudflare Pages 自動注入；前端不依賴 Vercel Analytics intake route
 
 ### 應用層（Vite + React）
 
@@ -44,7 +45,7 @@
 
 > 原則：已於 Cloudflare 處理的標頭不在 Nginx / React 重複設定，僅保留最小 fallback。
 
-## 2. 當前狀態（2026-08-30）
+## 2. 當前狀態（2026-09-01）
 
 | 項目            | 現況                                                                          |
 | --------------- | ----------------------------------------------------------------------------- |
@@ -52,10 +53,12 @@
 | Logger          | ✅ `apps/ratewise/src/utils/logger.ts`，待串接遠端 sink                       |
 | 安全標頭        | ✅ `security-headers` Worker 處理 CSP／路由，`nginx.conf` 僅保留最小 fallback |
 | `.env` 管理     | ✅ `.env.example` 已提供                                                      |
-| Secrets 掃描    | ✅ CI 使用固定版本 Gitleaks CLI 掃描 repo                                     |
+| Secrets 掃描    | ✅ CI 使用固定版本 Gitleaks CLI 與 checksum 掃描 repo                         |
+| 依賴安全審計    | ⚠️ production 0 high/critical、3 moderate React Router advisories 待處理      |
 | 日誌外送        | ❌ 未上傳至遠端（Phase 0 計畫處理）                                           |
 | `.env` 漏掃     | ✅ Gitleaks 覆蓋 repo；執行期 provider variables 仍需平台權限控管             |
-| Vercel origin   | ⚠️ 已支援可回退切換；尚未切換正式流量                                         |
+| Pages origin    | ⚠️ 已支援可回退切換；尚未切換正式流量                                         |
+| Vercel origin   | ⚠️ 保留作觀察期回退；尚未切換正式流量                                         |
 | Rating API 邊界 | ✅ 維持 Cloudflare Worker + KV，不納入 Vercel image                           |
 
 ## 3. Cloudflare 推薦設定
@@ -76,12 +79,12 @@ Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'
 
 ### 🔴 Critical (M1 - 1週內完成)
 
-- [x] **Secrets 掃描** - CI 已使用固定版本 Gitleaks CLI
+- [x] **Secrets 掃描** - CI 已使用固定版本 Gitleaks CLI 與 checksum 驗證
 
   ```yaml
   # .github/workflows/security.yml
   - name: Run Gitleaks
-    uses: gitleaks/gitleaks-action@v2
+    run: gitleaks detect --source . --config .gitleaks.toml --redact --no-banner
   ```
 
 - [ ] **Logger 串接遠端服務** - 整合 Sentry
@@ -101,7 +104,9 @@ Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'
 
 - [ ] **Request ID 追蹤** - 加入請求追蹤機制
 - [x] **Cloudflare 安全標頭** - 由 `security-headers` Worker 處理，並保留 origin 回退能力
-- [ ] **依賴安全審計** - CI 加入 `pnpm audit --prod`
+- [x] **依賴安全審計** - CI 執行 `pnpm audit --prod --audit-level=high`；目前仍有 3 個 production moderate advisory 待處理
+- [x] **CI secret scope** - Cloudflare secrets 僅在 deploy／purge step 注入
+- [x] **Workflow supply chain** - 第三方 Actions 固定至完整 commit SHA
 
 ### 🟢 Low (M3 - 可選)
 

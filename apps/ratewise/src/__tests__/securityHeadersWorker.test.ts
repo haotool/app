@@ -101,6 +101,7 @@ describe('security-headers worker', () => {
     expect(csp).toContain("script-src 'self' 'nonce-");
     expect(csp).not.toContain('sha256-');
     expect(scriptSrcDirective).not.toContain("'unsafe-inline'");
+    expect(csp).not.toContain('vitals.vercel-insights.com');
     expect(nonceMatch).not.toBeNull();
     expect(body.match(/nonce="/g)).toHaveLength(2);
     expect(body).not.toMatch(/<script[^>]*src="\/ratewise\/assets\/app-abcdef\.js"[^>]*nonce="/);
@@ -665,6 +666,61 @@ describe('security-headers worker', () => {
     expect(forwardedHeaders.get('x-forwarded-host')).toBeNull();
     expect(response.status).toBe(301);
     expect(response.headers.get('location')).toBe('https://app.haotool.org/ratewise/');
+  });
+
+  it('STATIC_ORIGIN 優先於 VERCEL_ORIGIN，且不轉送公開 Host', async () => {
+    const fetchSpy = vi
+      .fn()
+      .mockResolvedValue(createHtmlResponse('<!doctype html><html><body>ok</body></html>'));
+    globalThis.fetch = fetchSpy;
+
+    await worker.fetch(new Request('https://app.haotool.org/ratewise/'), {
+      STATIC_ORIGIN: 'https://haotool-static.pages.dev',
+      VERCEL_ORIGIN: 'https://haotool-app.vercel.app',
+    });
+
+    const init = fetchSpy.mock.calls[0]?.[1] as RequestInit | undefined;
+    const forwardedHeaders = new Headers(init?.headers);
+    expect(fetchSpy).toHaveBeenCalledWith(
+      'https://haotool-static.pages.dev/ratewise/',
+      expect.objectContaining({ method: 'GET' }),
+    );
+    expect(forwardedHeaders.get('host')).toBeNull();
+    expect(forwardedHeaders.get('x-forwarded-host')).toBeNull();
+  });
+
+  it('STATIC_ORIGIN 的同源 redirect 應改寫回公開 host', async () => {
+    const fetchSpy = vi.fn().mockResolvedValue(
+      new Response(null, {
+        status: 301,
+        headers: {
+          location: 'https://haotool-static.pages.dev/ratewise/',
+        },
+      }),
+    );
+    globalThis.fetch = fetchSpy;
+
+    const response = await worker.fetch(new Request('https://app.haotool.org/ratewise'), {
+      STATIC_ORIGIN: 'https://haotool-static.pages.dev',
+    });
+
+    expect(response.status).toBe(301);
+    expect(response.headers.get('location')).toBe('https://app.haotool.org/ratewise/');
+  });
+
+  it('非法 STATIC_ORIGIN 不得改變既有 origin，也不得採用 Vercel fallback', async () => {
+    const fetchSpy = vi.fn().mockResolvedValue(createHtmlResponse('<html><body>ok</body></html>'));
+    globalThis.fetch = fetchSpy;
+
+    await worker.fetch(new Request('https://app.haotool.org/ratewise/'), {
+      STATIC_ORIGIN: 'http://evil.example/path',
+      VERCEL_ORIGIN: 'https://haotool-app.vercel.app',
+    });
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      'https://app.haotool.org/ratewise/',
+      expect.objectContaining({ method: 'GET' }),
+    );
   });
 
   it('上游 apex→www 308 應改寫回 apex，避免與 Worker www→apex 互撞', async () => {

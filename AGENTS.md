@@ -444,6 +444,7 @@ ls -la
 - 修改版本流程 → 同步 `AGENTS.md`、`CLAUDE.md`、Changesets / `CHANGELOG.md` 說明
 - `Release` workflow 若涉及 Cloudflare 邊緣行為，必須確認 app release、`security-headers` worker 與 CDN purge 的先後順序一致；缺 secret 時需明確回報 `skip`，不可假設正式站已同步
 - `security-headers` worker 部署見下方「security-headers Worker 部署 SOP」
+- Cloudflare Pages 靜態部署以 `.github/workflows/deploy-pages.yml` 與 `scripts/build-pages.mjs` 為 SSOT：`main` 建立 production、同 repo PR 建立 preview，`data` branch 與獨立 Worker/API/Docker 變更不得觸發 Pages；正式 DNS 不直指 Pages，須由 `security-headers` Worker 以 `STATIC_ORIGIN` 控制切換與回退。詳見 `docs/DEPLOYMENT.md` § Cloudflare Pages Direct Upload
 - Zeabur 服務層 `spec.source.dockerfile` 非空時**完全覆蓋** repo `Dockerfile`（不合併、不自動同步）；排障期間貼入的臨時覆寫收工時**必須**以 `updateDockerfile(serviceID, dockerfile: "")` 清空恢復 repo SSOT 後 redeploy；部署顯示 success 但新路徑 404 時，必須以 `rg "pnpm build:" Dockerfile` 對照 Zeabur build log 建置鏈。詳見 `docs/DEPLOYMENT.md` § Zeabur 服務層 Dockerfile 覆寫治理
 
 ### 量測工具同步（#961）
@@ -607,6 +608,8 @@ git push origin main     # pre-push 自動驗證
 - Node 24 workflow 優先使用官方 action 內建快取（例如 `actions/setup-node@v6` 的 `cache: pnpm`）。
 - 若 action 已被內建快取取代，禁止額外加入 `actions/cache@v4` 等 Node 20 JavaScript action，避免 release run 產生可預防的 deprecation warning。
 - secret scan 使用固定版本 Gitleaks CLI + checksum 驗證；組織 repo 不使用 `gitleaks/gitleaks-action@v2`，避免 license secret 缺失與 Node 20 action warning。
+- `.github/workflows/` 的第三方 Actions 必須固定至完整 40 字元 commit SHA，並保留原始版本註解；新增或升級 action 時不得只使用可變 tag。
+- Cloudflare secrets 只能注入實際部署／purge step；任何 `npm install`、`pnpm install`、build 或 parity step 必須在 secret scope 外完成。含 `workflow_dispatch` 的發版 workflow 必須拒絕非 `main` ref。
 
 ### Dependabot 安全警告處理流程
 

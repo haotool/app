@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+346
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+347
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-09-01
+- ID：reward-pages-migration-security-convergence
+- 原因：開源專案稽核發現 Cloudflare secret scope、手動 release ref、可變 GitHub Actions 與互動式 Token 輸入仍有可收斂的供應鏈與憑證處理風險。
+- 解法：依賴安裝移出 Cloudflare secret step、release dispatch 限定 main、第三方 Actions 固定完整 SHA，並將 Cloudflare Token 輸入改為隱藏模式。
 
 - 日期：2026-08-30
 - ID：reward-worker-vercel-www-redirect-canonical

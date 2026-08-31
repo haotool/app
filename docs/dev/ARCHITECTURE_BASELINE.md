@@ -1,10 +1,23 @@
 # 架構基線與目標藍圖
 
-> **最後更新**: 2026-08-30T00:00:00+08:00
-> **版本**: v3.1 (補充 Vercel 靜態 origin 與 Cloudflare API 邊界)
+> **最後更新**: 2026-09-01T00:00:00+08:00
+> **版本**: v3.2 (補充 Cloudflare Pages 靜態 origin 與 Direct Upload 邊界)
 > **狀態**: ✅ 現況完整，已達成大部分藍圖目標
 
 ---
+
+## 0.1 Cloudflare Pages 遷移目標
+
+靜態前端的目標部署為 Cloudflare Pages Direct Upload 專案 `haotool-static`。
+GitHub Actions 先執行現有 8 個 app 的 production build，再由
+`scripts/build-pages.mjs` 組裝 `.pages-dist/`；`main` 只產生一次 production
+deployment，Pull Request 產生 preview，`data` branch 不部署前端。
+
+正式網域不直接改指 Pages。`security-headers` Worker 維持公開路由、安全標頭與
+`rating-api`／KV 責任邊界，待 Pages preview 的 URL、SEO、PWA、404、header 與 API
+驗證完成後，才將 Worker 的 `STATIC_ORIGIN` 切至 Pages。Vercel 與 Zeabur 在觀察期
+保留，任何 origin fetch、canonical、sitemap、PWA 或 API 回歸都可移除
+`STATIC_ORIGIN` 回退。
 
 ## Linus 架構哲學
 
@@ -192,13 +205,14 @@ apps/ratewise/src/
   ↓
 Cloudflare security-headers Worker
   ├─ /ratewise/api/ratings* → rating-api Worker + KV
-  └─ 其他路徑 → Zeabur（預設）或 Vercel `VERCEL_ORIGIN`
-                    └─ 單一 Docker image → Nginx → 多個靜態 app
+  └─ 其他路徑 → Pages `STATIC_ORIGIN`（遷移目標）
+                    └─ `.pages-dist/` → 多個靜態 app
 ```
 
-Vercel 只承接根目錄 `Dockerfile.vercel` 產生的靜態多 app image；不得把
-`docker-compose.yml`、Cloudflare API token 或 KV secret 放進 Vercel。正式切換前以
-Vercel `*.vercel.app` URL 驗證完整路由，移除 `VERCEL_ORIGIN` 即回到 Zeabur origin。
+觀察期可由 Vercel 承接根目錄 `Dockerfile.vercel` 產生的靜態多 app image，Zeabur 保留作為
+回退 origin；不得把 `docker-compose.yml`、Cloudflare API token 或 KV secret 放進 Pages／
+Vercel。正式切換前以 Pages `*.pages.dev` URL 驗證完整路由，移除 `STATIC_ORIGIN` 即回到
+觀察期的 Vercel origin，兩者皆未設定則回到 Zeabur。
 
 ## 3. 狀態管理架構
 

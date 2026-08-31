@@ -7,7 +7,6 @@ import { DisclaimerDialog } from './DisclaimerDialog';
 import { useAutoUpdate } from '../hooks/useAutoUpdate';
 import { startMarketFeed } from '../services/marketFeed';
 import { unlockAudio } from '../lib/sound';
-import { VercelAnalytics } from '@app/shared/analytics';
 
 export function AppShell() {
   useEffect(() => startMarketFeed(), []);
@@ -24,7 +23,6 @@ export function AppShell() {
       <BottomNav />
       <ToastHost />
       <DisclaimerDialog />
-      <VercelAnalytics />
     </div>
   );
 }

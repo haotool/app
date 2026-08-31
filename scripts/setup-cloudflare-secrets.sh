@@ -62,7 +62,8 @@ case $choice in
             exit 1
         fi
         
-        read -p "請輸入 CLOUDFLARE_API_TOKEN: " api_token
+        read -r -s -p "請輸入 CLOUDFLARE_API_TOKEN: " api_token
+        printf '\n'
         if [ -z "$api_token" ]; then
             echo "❌ API Token 不能為空"
             exit 1
@@ -136,4 +137,3 @@ esac
 echo ""
 echo "=================================================="
 echo "完成!"
-

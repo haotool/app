@@ -12,7 +12,6 @@ import { CatCompanion } from './components/CatCompanion';
 import { CatPlayLayer, type Particle } from './components/CatPlayLayer';
 import { makePawParticle, makeCelebrateParticles } from './lib/catPlay';
 import { useCurrencyAutoDetect } from './hooks/useCurrencyAutoDetect';
-import { VercelAnalytics } from '@app/shared/analytics';
 
 function ShareButton() {
   const { t } = useTranslation();
@@ -139,7 +138,6 @@ export default function App() {
       />
       <BottomNav />
       <UpdatePrompt />
-      <VercelAnalytics />
 
       {/* Cat Play Mode overlays */}
       {catPlayMode && <CatCompanion />}
