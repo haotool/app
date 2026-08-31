@@ -15,6 +15,7 @@ const requestedTimeoutMs = Number(readArg('--timeout-ms') ?? 30000);
 const timeoutMs =
   Number.isFinite(requestedTimeoutMs) && requestedTimeoutMs > 0 ? requestedTimeoutMs : 30000;
 const apiUrl = readArg('--api-url');
+const contractOnly = process.argv.includes('--contract-only');
 const REQUIRED_STATIC_HEADERS = ['content-type', 'cache-control'];
 const PWA_FIELDS = ['scope', 'start_url', 'display', 'name', 'short_name'];
 const DYNAMIC_VISIBLE_TEXT_PATHS = new Set(['/quake-school/quiz/']);
@@ -303,6 +304,28 @@ function compareHtml(path, baseline, candidate, failures) {
   assertStaticHeaders(path, candidate, failures);
 }
 
+function compareHtmlContract(path, candidate, expectedCanonicalUrl, failures) {
+  if (candidate.status !== 200) failures.push(`${path}: status ${candidate.status} != 200`);
+  if (normalizeFinalPath(candidate.finalUrl) !== normalizeFinalPath(expectedCanonicalUrl))
+    failures.push(`${path}: final URL path differs from configured canonical path`);
+
+  const title = extractFirst(candidate.body, /<title[^>]*>([\s\S]*?)<\/title>/i);
+  const description = extractMeta(candidate.body, 'name', 'description');
+  const canonical = extractCanonical(candidate.body);
+  if (!title) failures.push(`${path}: title is missing`);
+  if (!description) failures.push(`${path}: description is missing`);
+  if (canonical) {
+    if (canonical !== expectedCanonicalUrl) failures.push(`${path}: canonical differs from SSOT`);
+  }
+
+  const ogUrl = extractMeta(candidate.body, 'property', 'og:url');
+  if (ogUrl && ogUrl !== expectedCanonicalUrl) failures.push(`${path}: og:url differs from SSOT`);
+  if (!candidate.body.trim()) failures.push(`${path}: empty HTML response`);
+  if (candidate.body.includes(new URL(candidateUrl).hostname))
+    failures.push(`${path}: candidate host leaked into HTML`);
+  assertStaticHeaders(path, candidate, failures);
+}
+
 function normalizeTextResource(body) {
   return body
     .replace(/^Content-Signal:.*$/gim, '')
@@ -320,6 +343,14 @@ async function compareResource(path, baseline, candidate, failures) {
   }
 }
 
+async function compareResourceContract(path, candidate, failures) {
+  if (candidate.status !== 200)
+    failures.push(`${path}: resource status ${candidate.status} != 200`);
+  if (candidate.body.includes(new URL(candidateUrl).hostname))
+    failures.push(`${path}: candidate host leaked into resource`);
+  assertStaticHeaders(path, candidate, failures);
+}
+
 function compareManifest(path, baseline, candidate, failures) {
   try {
     const expected = JSON.parse(baseline.body);
@@ -332,8 +363,20 @@ function compareManifest(path, baseline, candidate, failures) {
   }
 }
 
+function validateManifestContract(path, candidate, failures) {
+  try {
+    const manifest = JSON.parse(candidate.body);
+    for (const field of PWA_FIELDS) {
+      if (typeof manifest[field] !== 'string' || !manifest[field].trim())
+        failures.push(`${path}: manifest ${field} is missing`);
+    }
+  } catch {
+    failures.push(`${path}: invalid manifest JSON`);
+  }
+}
+
 function extractPrecacheUrls(body) {
-  return [...body.matchAll(/\burl:\s*["']([^"']+)["']/g)]
+  return [...body.matchAll(/["']?url["']?\s*:\s*["']([^"']+)["']/g)]
     .map(([, url]) => normalizeAssetReference(url))
     .sort();
 }
@@ -344,6 +387,11 @@ function compareServiceWorker(path, baseline, candidate, failures) {
     JSON.stringify(extractPrecacheUrls(candidate.body))
   )
     failures.push(`${path}: precache URLs differ`);
+}
+
+function validateServiceWorkerContract(path, candidate, failures) {
+  if (!extractPrecacheUrls(candidate.body).length)
+    failures.push(`${path}: precache URLs are missing`);
 }
 
 async function verifyApiContract(failures) {
@@ -386,8 +434,13 @@ async function verifyApiContract(failures) {
 }
 
 async function verifyHealthContract(baselineUrl, candidateBase, failures) {
-  const baseline = await fetchText(joinUrl(baselineUrl, '/health'));
   const candidate = await fetchText(joinUrl(candidateBase, '/health'));
+  if (contractOnly) {
+    if (candidate.status !== 200) failures.push(`/health: status ${candidate.status} != 200`);
+    if (!candidate.body.trim()) failures.push('/health: response body is empty');
+    return 1;
+  }
+  const baseline = await fetchText(joinUrl(baselineUrl, '/health'));
   if (baseline.status !== candidate.status)
     failures.push(`/health: status ${baseline.status} != ${candidate.status}`);
   if (baseline.status === 200 && baseline.body.trim() !== candidate.body.trim())
@@ -411,66 +464,94 @@ async function main() {
     const appBasePath = configuredUrl.pathname.replace(/\/+$/, '');
     for (const seoPath of app.config.seoPaths ?? []) {
       const path = joinPath(appBasePath, seoPath);
-      const baseline = await fetchText(joinUrl(configuredUrl.origin + appBasePath, seoPath));
       const candidate = await fetchText(joinUrl(candidateBase, path));
-      compareHtml(path, baseline, candidate, failures);
+      const expectedCanonicalUrl = joinUrl(configuredUrl.origin + appBasePath, seoPath);
+      if (contractOnly) compareHtmlContract(path, candidate, expectedCanonicalUrl, failures);
+      else {
+        const baseline = await fetchText(expectedCanonicalUrl);
+        compareHtml(path, baseline, candidate, failures);
+      }
       checks += 1;
     }
 
     for (const file of app.config.resources?.seoFiles ?? []) {
       const path = joinPath(appBasePath, file);
-      const baseline = await fetchText(joinUrl(configuredUrl.origin + appBasePath, file));
       const candidate = await fetchText(joinUrl(candidateBase, path));
-      await compareResource(path, baseline, candidate, failures);
+      if (contractOnly) await compareResourceContract(path, candidate, failures);
+      else {
+        const baseline = await fetchText(joinUrl(configuredUrl.origin + appBasePath, file));
+        await compareResource(path, baseline, candidate, failures);
+      }
       checks += 1;
     }
 
     for (const file of app.config.resources?.images ?? []) {
       const path = joinPath(appBasePath, file);
-      const baseline = await fetchText(joinUrl(configuredUrl.origin + appBasePath, file));
       const candidate = await fetchText(joinUrl(candidateBase, path));
-      await compareResource(path, baseline, candidate, failures);
+      if (contractOnly) await compareResourceContract(path, candidate, failures);
+      else {
+        const baseline = await fetchText(joinUrl(configuredUrl.origin + appBasePath, file));
+        await compareResource(path, baseline, candidate, failures);
+      }
       checks += 1;
     }
 
     const manifestPath = joinPath(appBasePath, '/manifest.webmanifest');
-    const manifestBaseline = await fetchText(
-      joinUrl(configuredUrl.origin + appBasePath, '/manifest.webmanifest'),
-    );
     const manifestCandidate = await fetchText(joinUrl(candidateBase, manifestPath));
-    await compareResource(manifestPath, manifestBaseline, manifestCandidate, failures);
-    if (manifestBaseline.status === 200 && manifestCandidate.status === 200)
-      compareManifest(manifestPath, manifestBaseline, manifestCandidate, failures);
+    if (contractOnly) {
+      await compareResourceContract(manifestPath, manifestCandidate, failures);
+      if (manifestCandidate.status === 200)
+        validateManifestContract(manifestPath, manifestCandidate, failures);
+    } else {
+      const manifestBaseline = await fetchText(
+        joinUrl(configuredUrl.origin + appBasePath, '/manifest.webmanifest'),
+      );
+      await compareResource(manifestPath, manifestBaseline, manifestCandidate, failures);
+      if (manifestBaseline.status === 200 && manifestCandidate.status === 200)
+        compareManifest(manifestPath, manifestBaseline, manifestCandidate, failures);
+    }
     checks += 1;
 
     const serviceWorkerPath = joinPath(appBasePath, '/sw.js');
-    const serviceWorkerBaseline = await fetchText(
-      joinUrl(configuredUrl.origin + appBasePath, '/sw.js'),
-    );
     const serviceWorkerCandidate = await fetchText(joinUrl(candidateBase, serviceWorkerPath));
-    await compareResource(
-      serviceWorkerPath,
-      serviceWorkerBaseline,
-      serviceWorkerCandidate,
-      failures,
-    );
-    if (serviceWorkerBaseline.status === 200 && serviceWorkerCandidate.status === 200)
-      compareServiceWorker(
+    if (contractOnly) {
+      await compareResourceContract(serviceWorkerPath, serviceWorkerCandidate, failures);
+      if (serviceWorkerCandidate.status === 200)
+        validateServiceWorkerContract(serviceWorkerPath, serviceWorkerCandidate, failures);
+    } else {
+      const serviceWorkerBaseline = await fetchText(
+        joinUrl(configuredUrl.origin + appBasePath, '/sw.js'),
+      );
+      await compareResource(
         serviceWorkerPath,
         serviceWorkerBaseline,
         serviceWorkerCandidate,
         failures,
       );
+      if (serviceWorkerBaseline.status === 200 && serviceWorkerCandidate.status === 200)
+        compareServiceWorker(
+          serviceWorkerPath,
+          serviceWorkerBaseline,
+          serviceWorkerCandidate,
+          failures,
+        );
+    }
     checks += 1;
 
     const offlinePath = joinPath(appBasePath, '/offline.html');
-    const offlineBaseline = await fetchText(
-      joinUrl(configuredUrl.origin + appBasePath, '/offline.html'),
-    );
     const offlineCandidate = await fetchText(joinUrl(candidateBase, offlinePath));
-    if (offlineBaseline.status === 200 || offlineCandidate.status === 200) {
-      await compareResource(offlinePath, offlineBaseline, offlineCandidate, failures);
+    if (contractOnly) {
+      if (offlineCandidate.status === 200)
+        await compareResourceContract(offlinePath, offlineCandidate, failures);
       checks += 1;
+    } else {
+      const offlineBaseline = await fetchText(
+        joinUrl(configuredUrl.origin + appBasePath, '/offline.html'),
+      );
+      if (offlineBaseline.status === 200 || offlineCandidate.status === 200) {
+        await compareResource(offlinePath, offlineBaseline, offlineCandidate, failures);
+        checks += 1;
+      }
     }
   }
 

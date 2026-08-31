@@ -30,7 +30,10 @@ concurrency:
 jobs:
   deploy:
     name: Build and deploy Pages
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    if: >-
+      github.event_name != 'pull_request' ||
+      (github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.login != 'dependabot[bot]')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -60,6 +63,9 @@ jobs:
       - name: Build Pages assets
         run: pnpm build:pages
 
+      - name: Validate Wrangler CLI
+        run: pnpm --filter security-headers exec wrangler --version
+
       - name: Verify Pages output contract
         run: |
           set -euo pipefail
@@ -82,12 +88,16 @@ jobs:
           DEPLOY_REF: ${{ github.head_ref || github.ref_name }}
         run: |
           set -euo pipefail
+          test -n "${CLOUDFLARE_API_TOKEN:-}" || {
+            echo '::error::CLOUDFLARE_API_TOKEN is unavailable for this trusted deployment context.'
+            exit 1
+          }
           if [ "$DEPLOY_EVENT_NAME" = "pull_request" ]; then
             DEPLOY_BRANCH="$DEPLOY_REF"
           else
-            DEPLOY_BRANCH="main"
+            DEPLOY_BRANCH="candidate-$GITHUB_SHA"
           fi
-          DEPLOY_OUTPUT="$(npx --yes wrangler@4.127.1 pages deploy .pages-dist \
+          DEPLOY_OUTPUT="$(pnpm --filter security-headers exec wrangler pages deploy .pages-dist \
             --project-name "$PAGES_PROJECT_NAME" \
             --branch "$DEPLOY_BRANCH" \
             --commit-hash "$GITHUB_SHA" \
@@ -103,7 +113,21 @@ jobs:
         run: |
           pnpm exec node scripts/verify-pages-seo-parity.mjs \
             --candidate-url="$CANDIDATE_URL" \
+            --contract-only \
             --api-url=https://app.haotool.org/ratewise/api/ratings
+
+      - name: Promote Pages production
+        if: github.event_name == 'push'
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          pnpm --filter security-headers exec wrangler pages deploy .pages-dist \
+            --project-name "$PAGES_PROJECT_NAME" \
+            --branch main \
+            --commit-hash "$GITHUB_SHA" \
+            --commit-message "$GITHUB_SHA"
 
       - name: Publish deployment summary
         if: always()

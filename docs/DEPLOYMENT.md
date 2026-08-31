@@ -114,10 +114,12 @@ npx wrangler pages deploy .pages-dist \
 ```
 
 `.github/workflows/deploy-pages.yml` 僅讓 `main` push 建立 production deployment，
-同 repo Pull Request 建立 preview deployment；`data` branch、單獨的 Worker／API、
-Docker 或其他 CI workflow 變更不會觸發 Pages 前端部署。Fork PR 會安全略過部署，
-避免把 Cloudflare secret 暴露給不受信任的工作流程；Cloudflare secrets 只在部署 step
-注入，build 與 parity step 無法讀取。
+同 repo 非 Dependabot Pull Request 建立 preview deployment；`data` branch、單獨的 Worker／API、
+Docker 或其他 CI workflow 變更不會觸發 Pages 前端部署。Fork 與 Dependabot PR 會安全略過部署，
+避免把 Cloudflare secret 暴露給無法取得或不受信任的工作流程；Cloudflare secrets 只在實際
+Wrangler deploy step 注入，Wrangler 安裝／驗證、build 與 parity step 無法讀取。main push
+會先部署 `candidate-<commit-sha>` branch，contract-only parity 通過後才第二次部署 `main` production，
+避免未驗證產物先成為正式 alias。
 
 Vercel 仍可在觀察期保留原有 GitHub deployment；根目錄 `vercel.json` 會讓
 `data` branch 的 Vercel build 以 exit code 0 略過，其他 branch 維持建置。這個設定
@@ -142,12 +144,15 @@ parity；Analytics 供應商文案應在實際啟用 Pages Analytics 後另開�
 node scripts/build-pages.mjs
 pnpm exec node scripts/verify-pages-seo-parity.mjs \
   --candidate-url=https://<pages-preview>.pages.dev \
+  --contract-only \
   --api-url=https://app.haotool.org/ratewise/api/ratings
 ```
 
-驗證器從各 app config 與 RateWise SEO SSOT 動態取得 URL，檢查 title、canonical、
-JSON-LD、sitemap、robots、llms、PWA 與安全標頭；它不以 Pages hostname 取代正式
-canonical，也不將未知路徑導向首頁。
+驗證器從各 app config 與 RateWise SEO SSOT 動態取得 URL，contract-only 模式檢查
+canonical／og:url host、狀態碼、HTML metadata 存在性、sitemap、robots、llms、PWA、
+precache 與安全標頭；它不以 Pages hostname 取代正式 canonical，也不將未知路徑導向首頁。
+不帶 `--contract-only` 時仍可做一次性 candidate 與既有 production 的內容 parity 比對；CI
+不使用該模式，避免合法的同 PR SEO 內容變更被 live baseline 錯誤阻擋。
 
 ## 技術規格
 

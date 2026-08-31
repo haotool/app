@@ -200,9 +200,10 @@ changesets release PR，需先確認較早的 production deployment 已完成，
 SHA 之後才變成 active，造成正式站版本回退。Release 後以
 `app-version`、GitHub deployment status 與 live precache 驗證作為完成證據。
 
-Cloudflare Pages 與 Vercel 的公開流量均先經 `security-headers` Worker；只有完成 Preview
+Cloudflare Pages 與 Vercel 的公開流量均先經 `security-headers` Worker；Pages main push
+會先部署 candidate branch，通過 contract-only parity 後才更新 production。只有完成 Preview
 與 Production parity 驗證後，才設定 Worker 的 `STATIC_ORIGIN`。Cloudflare `rating-api`
-與 KV 維持獨立，Pages／Vercel 都不需要任何 Cloudflare secret。
+與 KV 維持獨立；Pages GitHub Actions 的 Cloudflare API token 僅在實際部署 step 使用。
 
 ### 專案結構
 

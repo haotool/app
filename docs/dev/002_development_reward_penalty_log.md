@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+3（reward 3、penalty 0、neutral 0）｜累計總分：+349
+> 本次分數變化：+5（reward 5、penalty 0、neutral 0）｜累計總分：+351
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-09-01
+- ID：reward-pages-review-contract-deploy-gate
+- 原因：Codex review 發現 Pages parity 逐字比對 live production 會誤擋合法內容變更，且 main deploy 在 parity 前已更新 production alias。
+- 解法：新增 contract-only 驗證模式，main 先部署 candidate branch，通過驗證後才 promote 至 production。
+
+- 日期：2026-09-01
+- ID：reward-pages-review-secret-install-boundary
+- 原因：Codex review 發現部署 step 以 npx 動態安裝 Wrangler，並未排除無法取得 Actions secrets 的 Dependabot PR。
+- 解法：改用 lockfile 安裝後的 Wrangler binary，並排除 Dependabot deploy job，保留最小 secret scope。
 
 - 日期：2026-09-01
 - ID：reward-pages-seo-verifier-codeql-entity-fix
