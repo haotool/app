@@ -79,12 +79,24 @@ function extractVisibleText(html) {
     .replace(/<style\b[^>]*>[\s\S]*?<\/style\b[^>]*>/gi, ' ')
     .replace(/<noscript\b[^>]*>[\s\S]*?<\/noscript\b[^>]*>/gi, ' ')
     .replace(/<[^>]+>/g, ' ')
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/&amp;/gi, '&')
-    .replace(/&lt;/gi, '<')
-    .replace(/&gt;/gi, '>')
+    .replace(/&(?:nbsp|amp|lt|gt);/gi, decodeVisibleTextEntity)
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+function decodeVisibleTextEntity(entity) {
+  switch (entity.toLowerCase()) {
+    case '&nbsp;':
+      return ' ';
+    case '&amp;':
+      return String.fromCharCode(38);
+    case '&lt;':
+      return String.fromCharCode(60);
+    case '&gt;':
+      return String.fromCharCode(62);
+    default:
+      return entity;
+  }
 }
 
 function normalizeVisibleText(value) {

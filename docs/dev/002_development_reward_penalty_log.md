@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+348
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+349
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-09-01
+- ID：reward-pages-seo-verifier-codeql-entity-fix
+- 原因：CodeQL 仍將 parity verifier 的 HTML entity replacement 判定為可能的 double unescape。
+- 解法：改用單一 callback 與明確字元碼 mapping，保留可見文字正規化且消除安全掃描告警。
 
 - 日期：2026-09-01
 - ID：reward-pages-seo-verifier-codeql-fix
