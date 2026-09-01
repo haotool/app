@@ -314,9 +314,9 @@ function compareHtmlContract(path, candidate, expectedCanonicalUrl, failures) {
   const canonical = extractCanonical(candidate.body);
   if (!title) failures.push(`${path}: title is missing`);
   if (!description) failures.push(`${path}: description is missing`);
-  if (canonical) {
-    if (canonical !== expectedCanonicalUrl) failures.push(`${path}: canonical differs from SSOT`);
-  }
+  if (!canonical) failures.push(`${path}: canonical is missing`);
+  else if (canonical !== expectedCanonicalUrl)
+    failures.push(`${path}: canonical differs from SSOT`);
 
   const ogUrl = extractMeta(candidate.body, 'property', 'og:url');
   if (ogUrl && ogUrl !== expectedCanonicalUrl) failures.push(`${path}: og:url differs from SSOT`);

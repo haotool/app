@@ -6,6 +6,7 @@ on:
     paths:
       - 'apps/**'
       - 'scripts/build-pages.mjs'
+      - 'scripts/generate-sitemap-2025.mjs'
       - 'scripts/generate-sitemap-2026.mjs'
       - 'scripts/verify-image-resources.mjs'
       - 'scripts/verify-ssot-sync.mjs'
@@ -19,6 +20,7 @@ on:
     paths:
       - 'apps/**'
       - 'scripts/build-pages.mjs'
+      - 'scripts/generate-sitemap-2025.mjs'
       - 'scripts/generate-sitemap-2026.mjs'
       - 'scripts/verify-image-resources.mjs'
       - 'scripts/verify-ssot-sync.mjs'

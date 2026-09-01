@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+10（reward 10、penalty 0、neutral 0）｜累計總分：+356
+> 本次分數變化：+11（reward 11、penalty 0、neutral 0）｜累計總分：+357
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-09-01
+- ID：reward-pages-review-sitemap-dependency-filter
+- 原因：Pages workflow path filter 遺漏 generate-sitemap-2026 所依賴的 generate-sitemap-2025，可能讓 sitemap 邏輯變更不觸發部署。
+- 解法：將直接的 sitemap 生成依賴加入 push 與 pull request 的 Pages 觸發範圍。
 
 - 日期：2026-09-01
 - ID：reward-pages-review-rating-api-build-config
