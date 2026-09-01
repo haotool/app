@@ -98,7 +98,7 @@
     "jsdom": "^30.0.1",
     "knip": "^5.88.1",
     "lighthouse": "^13.4.0",
-    "lint-staged": "^16.4.0",
+    "lint-staged": "^17.4.1",
     "prettier": "3.8.1",
     "ts-prune": "^0.10.3",
     "typescript": "^5.9.3",
