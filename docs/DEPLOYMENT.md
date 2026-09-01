@@ -121,6 +121,12 @@ Wrangler deploy step 注入，Wrangler 安裝／驗證、build 與 parity step �
 會先部署 `candidate-<commit-sha>` branch，contract-only parity 通過後才第二次部署 `main` production，
 避免未驗證產物先成為正式 alias。
 
+`haotool-static` 保留 GitHub repository 連線作為狀態與權限整合，但 Cloudflare Pages Git
+integration 的自動 Production／Preview deployment 必須停用；否則會與本 workflow 產生
+雙重 build。需要手動重跑目前 `main` 時，使用 workflow dispatch 並限定 `main` ref。
+Pages Git integration 的保留設定仍對齊 `pnpm build:pages` 與 `.pages-dist/`，避免日後誤開自動部署時
+回到錯誤的 root `npm run build`／`dist`。
+
 Vercel 仍可在觀察期保留原有 GitHub deployment；根目錄 `vercel.json` 會讓
 `data` branch 的 Vercel build 以 exit code 0 略過，其他 branch 維持建置。這個設定
 必須在變更合併至 GitHub 後才會對遠端 Vercel 專案生效。

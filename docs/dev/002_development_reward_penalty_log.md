@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+373
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+374
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-09-01
+- ID：reward-cf-pages-single-deployer-hotfix
+- 原因：Pages Git 自動建置與 GitHub Actions Direct Upload 同時啟用，且 Worker origin 只依賴不可重現的 Dashboard 變數。
+- 解法：停用 Pages Git 自動 Production／Preview deployment，固定 Pages build 設定與 Worker origin，並提供僅限 main 的手動 workflow dispatch。
 
 - 日期：2026-09-01
 - ID：reward-dependabot-react-router-major-guard

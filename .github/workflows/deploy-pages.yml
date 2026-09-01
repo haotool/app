@@ -32,6 +32,7 @@ on:
       - 'pnpm-workspace.yaml'
       - 'patches/**'
       - '.github/workflows/deploy-pages.yml'
+  workflow_dispatch:
 permissions:
   contents: read
 
@@ -43,9 +44,10 @@ jobs:
   deploy:
     name: Build and deploy Pages
     if: >-
-      github.event_name != 'pull_request' ||
+      (github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main') &&
+      (github.event_name != 'pull_request' ||
       (github.event.pull_request.head.repo.full_name == github.repository &&
-      github.event.pull_request.user.login != 'dependabot[bot]')
+      github.event.pull_request.user.login != 'dependabot[bot]'))
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -137,7 +139,7 @@ jobs:
             --api-url=https://app.haotool.org/ratewise/api/ratings
 
       - name: Promote Pages production
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

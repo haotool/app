@@ -33,7 +33,7 @@
 
 - Cloudflare Pages、Zeabur 或 Vercel origin 只提供建置後的靜態多 app 資產，不存放 Cloudflare secret
 - `rating-api` Worker 與 KV 維持在 Cloudflare，不能由 Vercel Docker image 取代
-- `STATIC_ORIGIN`／`VERCEL_ORIGIN` 是 Worker 端的非機密設定，不得進入 repo、client bundle 或前端環境變數
+- `STATIC_ORIGIN`／`VERCEL_ORIGIN` 是 Worker 端的非機密 origin 設定，可由 `wrangler.jsonc` 固定但不得進入 client bundle 或前端環境變數；Cloudflare API token 與 KV secret 不得進 repo
 - Web Analytics 由 Cloudflare Pages 自動注入；前端不依賴 Vercel Analytics intake route
 
 ### 應用層（Vite + React）
