@@ -326,6 +326,18 @@ function compareHtmlContract(path, candidate, expectedCanonicalUrl, failures) {
   assertStaticHeaders(path, candidate, failures);
 }
 
+function compareClientRouteContract(path, candidate, expectedCanonicalUrl, failures) {
+  if (candidate.status !== 200) failures.push(`${path}: status ${candidate.status} != 200`);
+  const canonical = extractCanonical(candidate.body);
+  if (!canonical) failures.push(`${path}: canonical is missing`);
+  else if (canonical !== expectedCanonicalUrl)
+    failures.push(`${path}: canonical differs from app root SSOT`);
+  if (!candidate.body.trim()) failures.push(`${path}: empty HTML response`);
+  if (candidate.body.includes(new URL(candidateUrl).hostname))
+    failures.push(`${path}: candidate host leaked into HTML`);
+  assertStaticHeaders(path, candidate, failures);
+}
+
 function normalizeTextResource(body) {
   return body
     .replace(/^Content-Signal:.*$/gim, '')
@@ -487,6 +499,18 @@ async function main() {
       if (contractOnly) compareHtmlContract(path, candidate, expectedCanonicalUrl, failures);
       else {
         const baseline = await fetchText(expectedCanonicalUrl);
+        compareHtml(path, baseline, candidate, failures);
+      }
+      checks += 1;
+    }
+
+    for (const clientRoutePath of app.config.clientRoutePaths ?? []) {
+      const path = joinPath(appBasePath, clientRoutePath);
+      const candidate = await fetchText(joinUrl(candidateBase, path));
+      const expectedCanonicalUrl = joinUrl(configuredUrl.origin + appBasePath, '/');
+      if (contractOnly) compareClientRouteContract(path, candidate, expectedCanonicalUrl, failures);
+      else {
+        const baseline = await fetchText(joinUrl(configuredUrl.origin + appBasePath, '/'));
         compareHtml(path, baseline, candidate, failures);
       }
       checks += 1;

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+13（reward 13、penalty 0、neutral 0）｜累計總分：+359
+> 本次分數變化：+15（reward 15、penalty 0、neutral 0）｜累計總分：+361
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-09-01
+- ID：reward-pages-review-papertrade-route-contract
+- 原因：Codex review 發現 PaperTrade 尾斜線 client route 未被 Pages fallback 覆蓋，既有深層入口可能回傳 404。
+- 解法：補上尾斜線與 wildcard fallback，並由 PaperTrade app config 提供 client route paths 給 parity contract 驗證。
+
+- 日期：2026-09-01
+- ID：reward-pages-review-parity-trigger-filter
+- 原因：Codex review 發現 Pages workflow path filter 未包含實際執行的 parity verifier，腳本變更可能漏觸發驗證。
+- 解法：將 parity verifier 加入 push 與 pull request 的 Pages 觸發範圍。
 
 - 日期：2026-09-01
 - ID：reward-pages-review-manifest-cache-control

@@ -59,8 +59,14 @@ const REDIRECTS = `# Cloudflare Pages routing SSOT for the assembled multi-app s
 /papertrade/chart /papertrade/ 200
 /papertrade/chart/* /papertrade/ 200
 /papertrade/trade /papertrade/ 200
+/papertrade/trade/ /papertrade/ 200
+/papertrade/trade/* /papertrade/ 200
 /papertrade/portfolio /papertrade/ 200
+/papertrade/portfolio/ /papertrade/ 200
+/papertrade/portfolio/* /papertrade/ 200
 /papertrade/settings /papertrade/ 200
+/papertrade/settings/ /papertrade/ 200
+/papertrade/settings/* /papertrade/ 200
 `;
 
 const STATIC_HEADERS = [
