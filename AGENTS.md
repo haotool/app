@@ -444,7 +444,7 @@ ls -la
 - 修改版本流程 → 同步 `AGENTS.md`、`CLAUDE.md`、Changesets / `CHANGELOG.md` 說明
 - `Release` workflow 若涉及 Cloudflare 邊緣行為，必須確認 app release、`security-headers` worker 與 CDN purge 的先後順序一致；缺 secret 時需明確回報 `skip`，不可假設正式站已同步
 - `security-headers` worker 部署見下方「security-headers Worker 部署 SOP」
-- Cloudflare Pages 靜態部署以 `.github/workflows/deploy-pages.yml` 與 `scripts/build-pages.mjs` 為 SSOT：同 repo 非 Dependabot PR 建立 preview，`main` 先部署 immutable candidate、通過 contract-only parity 後才更新 production；`data` branch 與獨立 Worker/API/Docker 變更不得觸發 Pages；正式 DNS 不直指 Pages，須由 `security-headers` Worker 以 `STATIC_ORIGIN` 控制切換與回退。詳見 `docs/DEPLOYMENT.md` § Cloudflare Pages Direct Upload
+- Cloudflare Pages 靜態部署以 `.github/workflows/deploy-pages.yml` 與 `scripts/build-pages.mjs` 為 SSOT：同 repo 非 Dependabot PR 建立 preview，`main` 先部署 immutable candidate、通過 contract-only parity 後才更新 production；Pages Git integration 僅保留 GitHub 連線並停用自動 Production／Preview deployment，避免與 Direct Upload 重複；`data` branch 與獨立 Worker/API/Docker 變更不得觸發 Pages；正式 DNS 不直指 Pages，須由 `security-headers` Worker 以 `STATIC_ORIGIN` 控制切換與回退。詳見 `docs/DEPLOYMENT.md` § Cloudflare Pages Direct Upload
 - Zeabur 服務層 `spec.source.dockerfile` 非空時**完全覆蓋** repo `Dockerfile`（不合併、不自動同步）；排障期間貼入的臨時覆寫收工時**必須**以 `updateDockerfile(serviceID, dockerfile: "")` 清空恢復 repo SSOT 後 redeploy；部署顯示 success 但新路徑 404 時，必須以 `rg "pnpm build:" Dockerfile` 對照 Zeabur build log 建置鏈。詳見 `docs/DEPLOYMENT.md` § Zeabur 服務層 Dockerfile 覆寫治理
 
 ### 量測工具同步（#961）

@@ -286,7 +286,7 @@ gh pr merge <PR_NUMBER> --squash --delete-branch=false
 
 - **CI/CD / Hooks / commitlint** 變更 → 更新 `AGENTS.md`、`CLAUDE.md`
 - **部署 / Docker / Nginx** 變更 → 更新 `docs/DEPLOYMENT.md` 與相關配置註解
-- **Cloudflare Pages**：靜態 8-app 產物由 `scripts/build-pages.mjs` 組裝，GitHub Actions 以 lockfile 安裝的 Wrangler Direct Upload 先部署 immutable candidate，通過 contract-only parity 後才更新 `haotool-static` production；正式網域仍由 `security-headers` Worker 控制，未完成 preview／SEO／PWA／header／API 驗證前不得切換 `STATIC_ORIGIN`
+- **Cloudflare Pages**：靜態 8-app 產物由 `scripts/build-pages.mjs` 組裝，GitHub Actions 以 lockfile 安裝的 Wrangler Direct Upload 先部署 immutable candidate，通過 contract-only parity 後才更新 `haotool-static` production；Pages Git integration 僅保留連線、停用自動 Production／Preview deployment；正式網域仍由 `security-headers` Worker 控制，未完成 preview／SEO／PWA／header／API 驗證前不得切換 `STATIC_ORIGIN`
 - **安全策略** 變更 → 更新 `SECURITY.md` / `docs/SECURITY_BASELINE.md`
 - **架構調整** → 更新 `docs/dev/ARCHITECTURE_BASELINE.md`
 - **新長期決策** → 建立 `docs/dev/00X_*.md`

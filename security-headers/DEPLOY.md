@@ -41,13 +41,13 @@ pnpm exec wrangler deploy
 origin，例如 `https://<pages-project>.pages.dev`。`STATIC_ORIGIN` 優先於舊的
 `VERCEL_ORIGIN`；未設定前者時，後者仍可作為 Vercel 觀察期回退。
 
-設定前先以 Pages Preview 驗證完整路由；切換時在 Cloudflare Worker 的 Variables 中設定
-`STATIC_ORIGIN`，部署 Worker 後再執行下列檢查。移除該變數即可回退至
+設定前先以 Pages Preview 驗證完整路由；正式值由 `wrangler.jsonc` 的 `vars` 固定，部署 Worker
+後再執行下列檢查。移除 `STATIC_ORIGIN` 或回滾 Worker 版本即可回退至
 `VERCEL_ORIGIN`，若兩者皆未設定則回到原 origin。
 
 若 Vercel origin 未設定或格式不合法，Worker 會保留原 origin 並記錄警告，方便安全回退。
-`STATIC_ORIGIN` 與 `VERCEL_ORIGIN` 不可放入 repo、`.env`、Vercel 前端環境變數或任何
-client bundle。
+兩者是公開 origin 名稱，不是 secret；可以存在 Worker 的 `wrangler.jsonc`，但不可放入
+`.env`、Vercel 前端環境變數或 client bundle。Cloudflare API token 與 KV secret 仍不可進 repo。
 
 ### Vercel 自訂網域 vs Cloudflare 代理（重要）
 
