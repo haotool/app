@@ -1,5 +1,4 @@
 import Phaser from 'phaser';
-import { inject } from '@vercel/analytics';
 import './pwa';
 import './style.css';
 import { initInstallGuide } from './installGuide';
@@ -32,7 +31,6 @@ import { restoreMutePreference } from './game/systems/hud';
 import { isGamePaused, openPauseMenu } from './game/systems/pause';
 
 restoreMutePreference();
-inject();
 // 桌機正置（#817）：boot 一次判定掛 sp-desktop class——旋轉殼旁路（CSS transform 免除
 // ＋getShellRotation 恆 none）、虛擬鍵隱藏；Phaser boot 前套用使殼量測即為正置尺寸。
 applyDesktopModeClass();

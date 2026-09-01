@@ -180,6 +180,8 @@ git push origin main            # pre-push 自動跑 typecheck + test + build
 - GitHub release 建立必須先查既有 release；除「已存在」外，不得把 `gh release create` 失敗吞成 warning
 - Node 24 workflow 優先使用 `actions/setup-node@v6` 內建 pnpm cache；不要再額外加入 `actions/cache@v4` 造成 Node 20 action warning
 - secret scan 使用固定版本 Gitleaks CLI 並驗證 release checksum；組織 repo 不使用需要 license secret 的 `gitleaks/gitleaks-action@v2`
+- `.github/workflows/` 第三方 Actions 必須使用完整 40 字元 commit SHA 並保留版本註解；禁止新增可變 tag。
+- Cloudflare secrets 只能進入實際 deploy／purge step；依賴安裝、build、測試與 parity 必須先完成。含 `workflow_dispatch` 的 release workflow 必須限制為 `main` ref。
 - 若 main 累積 changeset 但版本未變，先查 `gh run view <RUN_ID> --log` 是否卡在 `Create Release Pull Request`
 - README 同步規則：公開指令、workflow、部署、版本流程或使用者可見行為變更時，必須更新 root `README.md` 與受影響 app README
 - 連續合併一般 PR 與 release PR 時，release PR 前先確認較早 main SHA 的 Zeabur production deployment 已完成；若舊 SHA 在 release SHA 之後 active，會讓正式站版本回退
@@ -283,6 +285,7 @@ gh pr merge <PR_NUMBER> --squash --delete-branch=false
 
 - **CI/CD / Hooks / commitlint** 變更 → 更新 `AGENTS.md`、`CLAUDE.md`
 - **部署 / Docker / Nginx** 變更 → 更新 `docs/DEPLOYMENT.md` 與相關配置註解
+- **Cloudflare Pages**：靜態 8-app 產物由 `scripts/build-pages.mjs` 組裝，GitHub Actions 以 lockfile 安裝的 Wrangler Direct Upload 先部署 immutable candidate，通過 contract-only parity 後才更新 `haotool-static` production；正式網域仍由 `security-headers` Worker 控制，未完成 preview／SEO／PWA／header／API 驗證前不得切換 `STATIC_ORIGIN`
 - **安全策略** 變更 → 更新 `SECURITY.md` / `docs/SECURITY_BASELINE.md`
 - **架構調整** → 更新 `docs/dev/ARCHITECTURE_BASELINE.md`
 - **新長期決策** → 建立 `docs/dev/00X_*.md`

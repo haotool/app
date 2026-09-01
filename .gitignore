@@ -168,3 +168,7 @@ skills-lock.json
 .cursor/
 .mcp.json
 .dev/worktree/
+
+# Cloudflare Pages assembled deployment output
+.pages-dist/
+.wrangler/

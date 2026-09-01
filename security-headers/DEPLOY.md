@@ -24,7 +24,7 @@ pnpm exec wrangler deploy
 
 ## 本版重點
 
-- Worker 版本：`6.3`
+- Worker 版本：`6.5`
 - HSTS 改由 Cloudflare Edge 管理，Worker 不再寫入
 - `app.haotool.org/*` 全域納入 Worker
 - `www.haotool.org/*` 由 Worker 永久轉址到 apex
@@ -32,23 +32,27 @@ pnpm exec wrangler deploy
 - `csp-report` 改為 `POST` only
 - 分享圖 CORS 白名單改為精準檔名
 - `haotool` 首頁改為程序化 3D environment，避免執行期依賴遠端 HDR preset
+- Pages 由 Cloudflare Web Analytics 自動注入 beacon；前端不再載入失效的 Vercel Analytics 路由
 
-## Vercel origin 切換
+## 靜態 origin 切換（Cloudflare Pages／Vercel）
 
-`VERCEL_ORIGIN` 是非機密的 Cloudflare Worker plain variable，用來在不改變公開網域與
-既有 route 的情況下切換靜態 origin。值必須是沒有 path、帳號或密碼的 HTTPS origin，
-例如 `https://<vercel-project>.vercel.app`。
+`STATIC_ORIGIN` 是非機密的 Cloudflare Worker plain variable，用來在不改變公開網域與
+既有 route 的情況下切換至 Cloudflare Pages。值必須是沒有 path、帳號或密碼的 HTTPS
+origin，例如 `https://<pages-project>.pages.dev`。`STATIC_ORIGIN` 優先於舊的
+`VERCEL_ORIGIN`；未設定前者時，後者仍可作為 Vercel 觀察期回退。
 
-設定前先以 Vercel Preview 驗證完整路由；切換時在 Cloudflare Worker 的 Variables 中設定
-`VERCEL_ORIGIN`，部署 Worker 後再執行下列檢查。移除該變數即可回退到原 origin。
+設定前先以 Pages Preview 驗證完整路由；切換時在 Cloudflare Worker 的 Variables 中設定
+`STATIC_ORIGIN`，部署 Worker 後再執行下列檢查。移除該變數即可回退至
+`VERCEL_ORIGIN`，若兩者皆未設定則回到原 origin。
 
 若 Vercel origin 未設定或格式不合法，Worker 會保留原 origin 並記錄警告，方便安全回退。
-`VERCEL_ORIGIN` 不可放入 repo、`.env`、Vercel 前端環境變數或任何 client bundle。
+`STATIC_ORIGIN` 與 `VERCEL_ORIGIN` 不可放入 repo、`.env`、Vercel 前端環境變數或任何
+client bundle。
 
 ### Vercel 自訂網域 vs Cloudflare 代理（重要）
 
 本架構的公開網域 **必須** 維持 Cloudflare 橘雲（Proxied），由 `security-headers` Worker
-接收流量；靜態內容則透過 Worker 變數 `VERCEL_ORIGIN=https://<project>.vercel.app` 回源。
+接收流量；靜態內容則透過 Worker 變數 `STATIC_ORIGIN=https://<project>.pages.dev` 回源。
 
 因此：
 
@@ -57,7 +61,8 @@ pnpm exec wrangler deploy
 - **不要** 在 Vercel 專案加入 `haotool.org` / `www.haotool.org` 作為對外自訂網域，
   除非已完全移除 Worker 前置層；否則 Vercel 會將 apex 308 到 www，與 Worker 的
   `www → haotool.org` 規則互撞，造成無限重導。
-- 正確做法：Vercel 僅用 `*.vercel.app` 作為 `VERCEL_ORIGIN`；Cloudflare DNS 維持現狀。
+- 正確做法：Pages 僅用 `*.pages.dev` 作為 `STATIC_ORIGIN`；Cloudflare DNS 維持現狀。
+- 觀察期可保留 `VERCEL_ORIGIN`；回退時移除 `STATIC_ORIGIN` 即恢復 Vercel origin。
 
 ## 部署後驗證
 

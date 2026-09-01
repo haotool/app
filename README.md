@@ -101,16 +101,16 @@ GPS 輔助的停車場路徑指引工具
 
 ### 技術棧
 
-| 類別         | 技術                          |
-| ------------ | ----------------------------- |
-| **框架**     | React 19.2 + TypeScript 5.9   |
-| **建置工具** | Vite 8.0 + vite-react-ssg     |
-| **樣式**     | Tailwind CSS 3.4              |
-| **測試**     | Vitest 4.1 + Playwright 1.57  |
-| **套件管理** | pnpm 9.10.0 (Monorepo)        |
-| **CI/CD**    | GitHub Actions (13 workflows) |
-| **部署**     | Docker + Zeabur / Vercel      |
-| **安全**     | Gitleaks CLI + Trivy + SARIF  |
+| 類別         | 技術                                                   |
+| ------------ | ------------------------------------------------------ |
+| **框架**     | React 19.2 + TypeScript 5.9                            |
+| **建置工具** | Vite 8.0 + vite-react-ssg                              |
+| **樣式**     | Tailwind CSS 3.4                                       |
+| **測試**     | Vitest 4.1 + Playwright 1.57                           |
+| **套件管理** | pnpm 9.10.0 (Monorepo)                                 |
+| **CI/CD**    | GitHub Actions (13 workflows)                          |
+| **部署**     | Cloudflare Pages + Worker（Vercel／Zeabur 觀察期保留） |
+| **安全**     | Gitleaks CLI + Trivy + SARIF                           |
 
 ### 品質指標
 
@@ -193,15 +193,17 @@ protection 把關），並補派 main 上的 `release.yml` / `ci.yml` 完成 tag
 全程無需人工介入。若設定 `RELEASE_PAT` secret（fine-grained PAT，Actions/Contents/
 Pull requests Read&Write），changesets 會改以 PAT 開 PR，CI 全原生觸發。
 
-正式站目前由 Zeabur production deployment 接 GitHub main；Vercel 可透過根目錄
-`Dockerfile.vercel` 作為相同 monorepo 的替代 origin。合併一般 PR 後若會再合併
+正式站目前仍由 Zeabur production deployment 接 GitHub main；Cloudflare Pages
+`haotool-static` 是本次遷移目標，Vercel 可透過根目錄 `Dockerfile.vercel` 作為觀察期
+替代 origin。合併一般 PR 後若會再合併
 changesets release PR，需先確認較早的 production deployment 已完成，避免舊 SHA 在 release
 SHA 之後才變成 active，造成正式站版本回退。Release 後以
 `app-version`、GitHub deployment status 與 live precache 驗證作為完成證據。
 
-Vercel 的公開流量仍先經 Cloudflare `security-headers` Worker；只有完成 Preview 與
-Production parity 驗證後，才設定 Worker 的 `VERCEL_ORIGIN`。Cloudflare `rating-api`
-與 KV 維持獨立，Vercel 不需要任何 Cloudflare secret。
+Cloudflare Pages 與 Vercel 的公開流量均先經 `security-headers` Worker；Pages main push
+會先部署 candidate branch，通過 contract-only parity 後才更新 production。只有完成 Preview
+與 Production parity 驗證後，才設定 Worker 的 `STATIC_ORIGIN`。Cloudflare `rating-api`
+與 KV 維持獨立；Pages GitHub Actions 的 Cloudflare API token 僅在實際部署 step 使用。
 
 ### 專案結構
 
@@ -292,7 +294,7 @@ haotool Apps is a professional pnpm Monorepo containing multiple high-quality Re
 - **Testing**: Vitest 4.1 + Playwright 1.57
 - **Package Manager**: pnpm 9.10.0 (Monorepo)
 - **CI/CD**: GitHub Actions (13 workflows)
-- **Deployment**: Docker + Zeabur / Vercel
+- **Deployment**: Cloudflare Pages + Worker（Zeabur／Vercel 觀察期保留）
 - **Security**: Gitleaks CLI + Trivy + SARIF
 
 ### Quick Start
@@ -315,8 +317,9 @@ Every PR must include a changeset. GitHub Actions creates the release PR with
 `pnpm changeset:version`; release tags and GitHub releases are generated from
 `scripts/get-release-metadata.mjs --changed`.
 
-Production is currently deployed by Zeabur from GitHub main. Vercel can use the root
-`Dockerfile.vercel` as an alternative origin for the same monorepo. Before merging a release PR
+Production is currently deployed by Zeabur from GitHub main. Cloudflare Pages
+`haotool-static` is the migration target; Vercel can use the root `Dockerfile.vercel` as an
+observation-period origin for the same monorepo. Before merging a release PR
 right after another main PR, confirm the earlier production deployment has
 finished so an older SHA cannot become active after the release SHA.
 

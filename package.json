@@ -26,6 +26,8 @@
     "build:starpuff": "pnpm --filter @app/starpuff build",
     "build:papertrade": "pnpm --filter @app/papertrade build",
     "build:all": "pnpm build:haotool && pnpm build:ratewise && pnpm build:nihonname && pnpm build:quake-school && pnpm build:park-keeper && pnpm build:split-meow && pnpm build:starpuff && pnpm build:papertrade",
+    "build:pages": "pnpm build:all && node scripts/build-pages.mjs",
+    "verify:pages-seo-parity": "node scripts/verify-pages-seo-parity.mjs",
     "preview": "pnpm --filter @app/ratewise preview",
     "lint": "eslint . --ext .ts,.tsx",
     "lint:fix": "eslint . --ext .ts,.tsx --fix",

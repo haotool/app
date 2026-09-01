@@ -14,7 +14,7 @@ import { APP_INFO } from '../config/app-info';
 import { HOMEPAGE_SEO } from '../config/seo-metadata';
 import { navigationTokens } from '../config/design-tokens';
 import { getTopLevelTransitionDirection } from '../config/animations';
-import { RouteAnalytics, VercelAnalytics } from '@shared/analytics';
+import { RouteAnalytics } from '@shared/analytics';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { performFullRefresh } from '../utils/swUtils';
 import { useUrlNormalization } from '../hooks/useUrlNormalization';
@@ -197,7 +197,6 @@ export function AppLayout() {
       <SplashScreen />
       {/* SPA 路由變更時送出 GA4 page_view */}
       <RouteAnalytics />
-      <VercelAnalytics />
       {/* 根容器：固定視口高度，啟用 flex 滾動
        * 使用 --app-height（由 JS 設定）而非 100dvh，確保 WebView 環境高度正確。
        * Fallback：100dvh（JS 尚未執行時，或 SSG 初始渲染）。 */}

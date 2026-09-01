@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+346
+> 本次分數變化：+26（reward 26、penalty 0、neutral 0）｜累計總分：+372
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,136 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-09-01
+- ID：reward-pages-review-papertrade-spa-fallback
+- 原因：Codex review 發現 PaperTrade 未知深層連結未保留原有整體 SPA fallback，與 requireTrue404=false 契約不一致。
+- 解法：加入限定 /papertrade/ scope 的通配 app-shell fallback，並保留靜態資產自代理規則。
+
+- 日期：2026-09-01
+- ID：reward-pages-review-papertrade-deep-link-parity
+- 原因：Codex review 發現 parity 只驗證已知路由，未知 PaperTrade deep link 可能回傳 404 而未被發現。
+- 解法：依 app config 自動驗證 scoped SPA fallback deep link 與全站真正 404 的邊界。
+
+- 日期：2026-09-01
+- ID：reward-pages-review-papertrade-static-priority
+- 原因：Cloudflare Pages redirect 先於靜態檔案套用，通配 SPA fallback 可能攔截 PaperTrade 資產。
+- 解法：以 assets、icons、根層副檔名檔案 self-proxy 置於通配 fallback 前，並執行 Wrangler runtime smoke test。
+
+- 日期：2026-09-01
+- ID：reward-pages-review-papertrade-scope-boundary
+- 原因：SPA fallback 若未限定 app scope，可能污染根站與其他子 app 的 404 行為。
+- 解法：僅對 /papertrade/\* 做 proxy，並保留根層未知路徑必須 404 的 parity gate。
+
+- 日期：2026-09-01
+- ID：reward-pages-review-papertrade-spa-scope
+- 原因：Codex review 發現 PaperTrade 僅覆蓋已知 client route，未知深層連結未保留原有整體 SPA fallback。
+- 解法：加入受限於 /papertrade/ 的通配 fallback，並以 static self-proxy 規則保護資產與根層檔案。
+
+- 日期：2026-09-01
+- ID：reward-pages-review-papertrade-spa-parity
+- 原因：Codex review 發現 parity 未驗證 requireTrue404=false app 的未知 SPA deep link 行為。
+- 解法：依 app config 自動加入 scoped SPA fallback contract，確保 PaperTrade 未知路徑仍回傳 app shell。
+
+- 日期：2026-09-01
+- ID：reward-pages-review-papertrade-static-proxy
+- 原因：Cloudflare Pages redirect 會先於靜態檔案套用，通配 SPA fallback 可能攔截 PaperTrade 資產。
+- 解法：在通配 fallback 前加入 assets、icons 與根層副檔名檔案的 self-proxy 規則並以 Wrangler 驗證。
+
+- 日期：2026-09-01
+- ID：reward-pages-review-papertrade-fallback-boundary
+- 原因：Pages rewrite fallback 必須維持 app scope，避免未知 PaperTrade 路徑污染根站或其他子 app。
+- 解法：fallback source 僅使用 /papertrade/\*，parity 同時保留全站真正 404 檢查。
+
+- 日期：2026-09-01
+- ID：reward-pages-review-analytics-beacon-csp
+- 原因：Codex review 發現 Cloudflare Web Analytics beacon 上傳 origin 未在 connect-src 白名單，RUM 可能被 CSP 阻擋。
+- 解法：將 cloudflareinsights.com 納入所有 HTML profile 的 connect-src，並同步升版 Worker 安全政策。
+
+- 日期：2026-09-01
+- ID：reward-pages-review-api-preflight-methods
+- 原因：Codex review 發現 API preflight 只驗證 GET，未確認瀏覽器評分 POST 被 CORS 允許。
+- 解法：將 allow-methods 解析為方法集合並強制要求 GET 與 POST。
+
+- 日期：2026-09-01
+- ID：reward-pages-review-offline-shell-contract
+- 原因：Codex review 發現必要 offline.html 缺失時 contract-only 仍放行，PWA 離線導覽可能失效。
+- 解法：以 app config 標記必要 offline shell，Split Meow 與 PaperTrade 缺失時直接 fail。
+
+- 日期：2026-09-01
+- ID：reward-pages-review-papertrade-route-contract
+- 原因：Codex review 發現 PaperTrade 尾斜線 client route 未被 Pages fallback 覆蓋，既有深層入口可能回傳 404。
+- 解法：補上尾斜線與 wildcard fallback，並由 PaperTrade app config 提供 client route paths 給 parity contract 驗證。
+
+- 日期：2026-09-01
+- ID：reward-pages-review-parity-trigger-filter
+- 原因：Codex review 發現 Pages workflow path filter 未包含實際執行的 parity verifier，腳本變更可能漏觸發驗證。
+- 解法：將 parity verifier 加入 push 與 pull request 的 Pages 觸發範圍。
+
+- 日期：2026-09-01
+- ID：reward-pages-review-manifest-cache-control
+- 原因：Codex review 發現 manifest 使用 24 小時 max-age，PWA 設定更新可能被瀏覽器或中介快取延遲採用。
+- 解法：將根與子 app manifest 改為 no-cache 並保留 must-revalidate，讓每次請求重新驗證內容。
+
+- 日期：2026-09-01
+- ID：reward-pages-review-release-dispatch-guard
+- 原因：Codex review 發現 release job-level if 會讓非 main workflow_dispatch 被 skipped，無法明確拒絕錯誤 ref。
+- 解法：移除 job-level gate，保留 step-level guard 讓非 main 手動發版實際 fail。
+
+- 日期：2026-09-01
+- ID：reward-pages-review-sitemap-dependency-filter
+- 原因：Pages workflow path filter 遺漏 generate-sitemap-2026 所依賴的 generate-sitemap-2025，可能讓 sitemap 邏輯變更不觸發部署。
+- 解法：將直接的 sitemap 生成依賴加入 push 與 pull request 的 Pages 觸發範圍。
+
+- 日期：2026-09-01
+- ID：reward-pages-review-rating-api-build-config
+- 原因：Codex review 發現 Pages build 未注入公開 Rating API，導致評分提交與 build-time snapshot 靜默停用。
+- 解法：在無 secrets 的 Pages build step 明確注入同一個公開 API URL 給 Vite 與 snapshot builder。
+
+- 日期：2026-09-01
+- ID：reward-pages-review-canonical-contract
+- 原因：Codex review 發現 contract-only verifier 對缺少 canonical 的頁面會放行，且既有 PaperTrade／Split Meow root 缺少 canonical。
+- 解法：要求 canonical 存在並符合 SSOT，補上兩個 root app 的 canonical 標籤與回歸驗證。
+
+- 日期：2026-09-01
+- ID：reward-pages-review-manifest-scope-contract
+- 原因：Codex review 發現 contract-only verifier 只檢查 manifest 欄位非空，未阻止 scope／start_url 跨出 app base path。
+- 解法：依 app production base path 驗證 manifest URL origin 與路徑邊界。
+
+- 日期：2026-09-01
+- ID：reward-pages-review-wrangler-package-boundary
+- 原因：Codex review 發現 security-headers 不在 pnpm workspace，pnpm filter 執行部署工具實際為 no-op。
+- 解法：改用 security-headers/package-lock.json 安裝並直接呼叫其 Wrangler binary，涵蓋 preview 與 production deploy。
+
+- 日期：2026-09-01
+- ID：reward-pages-review-build-path-scope
+- 原因：Codex review 發現 scripts/\*\* 會讓獨立 Cloudflare 維運腳本變更觸發完整 Pages build 與 secret-bearing deploy。
+- 解法：將 Pages workflow path filter 收斂至 assembly、build 依賴與共用 library 的明確清單。
+
+- 日期：2026-09-01
+- ID：reward-pages-review-contract-deploy-gate
+- 原因：Codex review 發現 Pages parity 逐字比對 live production 會誤擋合法內容變更，且 main deploy 在 parity 前已更新 production alias。
+- 解法：新增 contract-only 驗證模式，main 先部署 candidate branch，通過驗證後才 promote 至 production。
+
+- 日期：2026-09-01
+- ID：reward-pages-review-secret-install-boundary
+- 原因：Codex review 發現部署 step 以 npx 動態安裝 Wrangler，並未排除無法取得 Actions secrets 的 Dependabot PR。
+- 解法：改用 lockfile 安裝後的 Wrangler binary，並排除 Dependabot deploy job，保留最小 secret scope。
+
+- 日期：2026-09-01
+- ID：reward-pages-seo-verifier-codeql-entity-fix
+- 原因：CodeQL 仍將 parity verifier 的 HTML entity replacement 判定為可能的 double unescape。
+- 解法：改用單一 callback 與明確字元碼 mapping，保留可見文字正規化且消除安全掃描告警。
+
+- 日期：2026-09-01
+- ID：reward-pages-seo-verifier-codeql-fix
+- 原因：CodeQL 發現 Pages SEO parity verifier 的 asset replacement 與 HTML script/style stripping 可能產生誤判或不完整過濾。
+- 解法：改用 replacement callback 避免特殊字元語義，並允許 script/style/noscript 結束標籤帶合法尾端空白或屬性。
+
+- 日期：2026-09-01
+- ID：reward-pages-migration-security-convergence
+- 原因：開源專案稽核發現 Cloudflare secret scope、手動 release ref、可變 GitHub Actions 與互動式 Token 輸入仍有可收斂的供應鏈與憑證處理風險。
+- 解法：依賴安裝移出 Cloudflare secret step、release dispatch 限定 main、第三方 Actions 固定完整 SHA，並將 Cloudflare Token 輸入改為隱藏模式。
 
 - 日期：2026-08-30
 - ID：reward-worker-vercel-www-redirect-canonical

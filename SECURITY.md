@@ -116,11 +116,12 @@ Technology Stack:
 - Alpine Linux-based minimal images
 - Read-only filesystem where possible
 
-When the static monorepo origin is moved from Zeabur to Vercel, the Cloudflare
-`security-headers` Worker remains the public security and routing boundary. The
-optional `VERCEL_ORIGIN` value is validated as an HTTPS origin and is kept out of
-the repository and client bundle. The `rating-api` Worker and KV remain on
-Cloudflare; no Cloudflare credential is required by the Vercel Docker image.
+When the static monorepo origin is moved from Zeabur to Vercel or Cloudflare Pages,
+the Cloudflare `security-headers` Worker remains the public security and routing
+boundary. The optional `STATIC_ORIGIN`／`VERCEL_ORIGIN` values are validated as HTTPS
+origins and kept out of the repository and client bundle. The `rating-api` Worker and
+KV remain on Cloudflare; no Cloudflare credential is required by the Pages asset
+upload or Vercel Docker image.
 
 ### Continuous Security Monitoring
 
@@ -184,6 +185,13 @@ Before committing code, verify:
 - [ ] Tests pass with 80%+ coverage
 
 ### Secret Management
+
+#### CI/CD Secret Boundary
+
+- Cloudflare API tokens must be stored only as GitHub Actions secrets and injected only into the required Cloudflare deployment or cache purge step.
+- Dependency installation, build, test, and parity verification steps must run before Cloudflare secrets are present in the environment.
+- Release `workflow_dispatch` executions are restricted to the `main` ref.
+- Third-party GitHub Actions are pinned to full commit SHAs with version comments to reduce supply-chain drift.
 
 **PROHIBITED**:
 

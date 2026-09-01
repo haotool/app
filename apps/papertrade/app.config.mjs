@@ -1,5 +1,7 @@
 export const SEO_PATHS = ['/'];
 
+export const CLIENT_ROUTE_PATHS = ['/chart/', '/trade/', '/portfolio/', '/settings/'];
+
 export const SEO_FILES = ['/sitemap.xml', '/robots.txt', '/llms.txt'];
 
 export const IMAGE_RESOURCES = [
@@ -30,12 +32,15 @@ export const APP_CONFIG = {
   },
 
   seoPaths: SEO_PATHS,
+  clientRoutePaths: CLIENT_ROUTE_PATHS,
   siteUrl: SITE_CONFIG.url,
 
   build: {
     ssg: false,
     pwa: true,
   },
+
+  offlineRequired: true,
 
   // client-side routing：nginx 對未知路徑 fallback 至 index.html（見 nginx.conf papertrade 區塊）。
   seoValidation: {

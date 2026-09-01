@@ -1,15 +1,18 @@
 /* global HTMLRewriter, performance */
 
 /**
- * 安全標頭 Worker v6.3
+ * 安全標頭 Worker v6.6
  *
  * 處理 Cloudflare 無法以固定規則精準表達的安全邏輯。
  * 固定站點級政策由 Cloudflare Edge 管理，Worker 專注於路由分層 CSP、
  * CSP report、分享圖 CORS 與 ratewise 跨域隔離。
  *
  * 變更記錄：
+ * - v6.6: Cloudflare Web Analytics beacon 上傳 origin 納入所有 HTML profile 的 connect-src
+ * - v6.5: Pages 由 Cloudflare Web Analytics 自動注入 beacon，移除失效的 Vercel Analytics CSP 依賴
+ * - v6.4: 支援以 STATIC_ORIGIN 切換至 Cloudflare Pages，並保留 VERCEL_ORIGIN 作為回退
  * - v6.3: 上游若將 apex 308 到 www.haotool.org，改寫回 apex，避免與 Worker www→apex 規則互撞
- * - v6.2: 全站 HTML profile connect-src 允許 vitals.vercel-insights.com，支援 @vercel/analytics
+ * - v6.2: 全站 HTML profile connect-src 曾允許 Vercel Analytics（已由 v6.5 移除）
  * - v6.1: 將 Vercel origin 產生的同源 redirect 改寫回公開 host，避免 canonical URL 暴露 Vercel alias
  * - v6.0: 支援以 VERCEL_ORIGIN 將靜態 origin 切換至 Vercel，並移除 upstream Host routing header
  * - v5.9: haotool 根站 img-src 允許 app.haotool.org，修復 canonical 站工具卡圖示被 CSP 擋下
@@ -39,7 +42,7 @@
  * - v3.6: 改用 HTMLRewriter 解析 inline script
  */
 
-const SECURITY_POLICY_VERSION = '6.3';
+const SECURITY_POLICY_VERSION = '6.6';
 const CSP_REPORT_MAX_BYTES = 16 * 1024;
 const HASHED_ASSET_PATH = /^\/(?:[^/]+\/)?assets\/[^/]+-[A-Za-z0-9_-]{6,12}\.(?:js|css|mjs)$/;
 
@@ -61,7 +64,7 @@ const RATEWISE_REPORT_ONLY =
 	"require-trusted-types-for 'script'; trusted-types default ratewise#default goog#html 'allow-duplicates'; report-uri /ratewise/csp-report;";
 const RATEWISE_REPORTING_ENDPOINT = 'csp-endpoint';
 const CLOUDFLARE_INSIGHTS_SCRIPT = 'https://static.cloudflareinsights.com';
-const VERCEL_ANALYTICS_CONNECT = 'https://vitals.vercel-insights.com';
+const CLOUDFLARE_INSIGHTS_BEACON = 'https://cloudflareinsights.com';
 
 const APP_HOST = 'app.haotool.org';
 const ROOT_SITE_HOSTS = new Set(['haotool.org', 'www.haotool.org', APP_HOST]);
@@ -472,7 +475,7 @@ const FALLBACK_HTML_PROFILE = createHtmlProfile({
 	styleSources: ['https://fonts.googleapis.com', 'https://unpkg.com'],
 	fontSources: ['https://fonts.gstatic.com'],
 	imgSources: ['https:'],
-	connectSources: [CLOUDFLARE_INSIGHTS_SCRIPT, VERCEL_ANALYTICS_CONNECT],
+	connectSources: [CLOUDFLARE_INSIGHTS_SCRIPT],
 });
 
 const HAOTOOL_HTML_PROFILE = createHtmlProfile({
@@ -482,7 +485,7 @@ const HAOTOOL_HTML_PROFILE = createHtmlProfile({
 	fontSources: ['https://fonts.gstatic.com'],
 	// 根站（haotool.org）工具卡圖示解析為 app.haotool.org 絕對 URL，需納入 img-src。
 	imgSources: ['https://app.haotool.org'],
-	connectSources: [CLOUDFLARE_INSIGHTS_SCRIPT, VERCEL_ANALYTICS_CONNECT],
+	connectSources: [CLOUDFLARE_INSIGHTS_SCRIPT],
 });
 
 const NIHONNAME_HTML_PROFILE = createHtmlProfile({
@@ -491,7 +494,7 @@ const NIHONNAME_HTML_PROFILE = createHtmlProfile({
 	styleSources: ['https://fonts.googleapis.com'],
 	fontSources: ['https://fonts.gstatic.com'],
 	imgSources: ['https://www.transparenttextures.com'],
-	connectSources: [CLOUDFLARE_INSIGHTS_SCRIPT, VERCEL_ANALYTICS_CONNECT],
+	connectSources: [CLOUDFLARE_INSIGHTS_SCRIPT],
 });
 
 const PARK_KEEPER_HTML_PROFILE = createHtmlProfile({
@@ -500,7 +503,7 @@ const PARK_KEEPER_HTML_PROFILE = createHtmlProfile({
 	styleSources: ['https://fonts.googleapis.com', 'https://unpkg.com'],
 	fontSources: ['https://fonts.gstatic.com'],
 	imgSources: ['https://wmts.nlsc.gov.tw', 'https://*.basemaps.cartocdn.com'],
-	connectSources: [CLOUDFLARE_INSIGHTS_SCRIPT, VERCEL_ANALYTICS_CONNECT, 'https://wmts.nlsc.gov.tw', 'https://*.basemaps.cartocdn.com'],
+	connectSources: [CLOUDFLARE_INSIGHTS_SCRIPT, 'https://wmts.nlsc.gov.tw', 'https://*.basemaps.cartocdn.com'],
 	permissionsPolicy: PARK_KEEPER_PERMISSIONS_POLICY,
 });
 
@@ -509,7 +512,7 @@ const QUAKE_SCHOOL_HTML_PROFILE = createHtmlProfile({
 	scriptSources: [CLOUDFLARE_INSIGHTS_SCRIPT],
 	styleSources: ['https://fonts.googleapis.com'],
 	fontSources: ['https://fonts.gstatic.com'],
-	connectSources: [CLOUDFLARE_INSIGHTS_SCRIPT, VERCEL_ANALYTICS_CONNECT],
+	connectSources: [CLOUDFLARE_INSIGHTS_SCRIPT],
 });
 
 const SPLIT_MEOW_HTML_PROFILE = createHtmlProfile({
@@ -520,7 +523,7 @@ const SPLIT_MEOW_HTML_PROFILE = createHtmlProfile({
 	// 保留 fallback 的遠端頭像白名單：Split Meow 成員頭像可能來自 legacy https 來源，
 	// 未帶 img-src https: 會在專屬 profile 下被 CSP 擋下。
 	imgSources: ['https:'],
-	connectSources: [CLOUDFLARE_INSIGHTS_SCRIPT, VERCEL_ANALYTICS_CONNECT, 'https://cdn.jsdelivr.net'],
+	connectSources: [CLOUDFLARE_INSIGHTS_SCRIPT, 'https://cdn.jsdelivr.net'],
 });
 
 const PAPERTRADE_HTML_PROFILE = createHtmlProfile({
@@ -528,7 +531,7 @@ const PAPERTRADE_HTML_PROFILE = createHtmlProfile({
 	scriptSources: [CLOUDFLARE_INSIGHTS_SCRIPT],
 	// papertrade 使用系統字型堆疊，不載入外部字型，不開 Google Fonts 白名單。
 	// Bybit 公開行情：WS 即時推送與 REST 歷史 K 線。
-	connectSources: [CLOUDFLARE_INSIGHTS_SCRIPT, VERCEL_ANALYTICS_CONNECT, 'wss://stream.bybit.com', 'https://api.bybit.com'],
+	connectSources: [CLOUDFLARE_INSIGHTS_SCRIPT, 'wss://stream.bybit.com', 'https://api.bybit.com'],
 });
 
 const RATEWISE_HTML_PROFILE = createHtmlProfile({
@@ -539,7 +542,6 @@ const RATEWISE_HTML_PROFILE = createHtmlProfile({
 		'https://cdn.jsdelivr.net',
 		'https://raw.githubusercontent.com',
 		'https://static.cloudflareinsights.com',
-		VERCEL_ANALYTICS_CONNECT,
 		'https://www.google-analytics.com',
 		'https://region1.google-analytics.com',
 		'https://analytics.google.com',
@@ -606,7 +608,7 @@ function buildContentSecurityPolicy(profile, nonce = null) {
 		`style-src ${joinSources(["'self'", "'unsafe-inline'", ...profile.styleSources])}`,
 		`font-src ${joinSources(["'self'", ...profile.fontSources])}`,
 		`img-src ${joinSources(["'self'", 'data:', 'blob:', ...profile.imgSources])}`,
-		`connect-src ${joinSources(["'self'", ...profile.connectSources])}`,
+		`connect-src ${joinSources(["'self'", ...profile.connectSources, CLOUDFLARE_INSIGHTS_BEACON])}`,
 		"worker-src 'self' blob:",
 		"manifest-src 'self'",
 		"frame-ancestors 'self'",
@@ -779,13 +781,14 @@ function buildServerTiming(timings) {
 }
 
 /**
- * 解析可選的 Vercel origin。未設定或設定不合法時保留目前 origin，
+ * 解析可選的靜態 origin。STATIC_ORIGIN 優先於 VERCEL_ORIGIN；未設定或設定不合法時保留目前 origin，
  * 讓正式切換可以先以回退模式驗證，不會因空白環境變數中斷既有服務。
  * @param {Record<string, unknown>|undefined} env
  * @returns {URL|null}
  */
-function resolveVercelOrigin(env) {
-	const configuredOrigin = typeof env?.VERCEL_ORIGIN === 'string' ? env.VERCEL_ORIGIN.trim() : '';
+function resolveStaticOrigin(env) {
+	const configuredName = typeof env?.STATIC_ORIGIN === 'string' && env.STATIC_ORIGIN.trim() !== '' ? 'STATIC_ORIGIN' : 'VERCEL_ORIGIN';
+	const configuredOrigin = typeof env?.[configuredName] === 'string' ? env[configuredName].trim() : '';
 	if (configuredOrigin === '') {
 		return null;
 	}
@@ -793,45 +796,45 @@ function resolveVercelOrigin(env) {
 	try {
 		const origin = new URL(configuredOrigin);
 		if (origin.protocol !== 'https:' || origin.username !== '' || origin.password !== '' || !['', '/'].includes(origin.pathname)) {
-			throw new Error('VERCEL_ORIGIN must be an https origin without credentials or a path');
+			throw new Error(`${configuredName} must be an https origin without credentials or a path`);
 		}
 		origin.pathname = '/';
 		origin.search = '';
 		origin.hash = '';
 		return origin;
 	} catch (error) {
-		globalThis.console.warn('invalid-vercel-origin', String(error));
+		globalThis.console.warn(`invalid-${configuredName.toLowerCase()}`, String(error));
 		return null;
 	}
 }
 
 /**
- * 將公開請求路徑套用到設定好的 Vercel origin；未設定時沿用舊 origin。
+ * 將公開請求路徑套用到設定好的靜態 origin；未設定時沿用舊 origin。
  * @param {URL} requestedUrl
- * @param {URL|null} vercelOrigin
+ * @param {URL|null} staticOrigin
  * @returns {URL}
  */
-function resolveUpstreamUrl(requestedUrl, vercelOrigin) {
-	if (vercelOrigin === null) {
+function resolveUpstreamUrl(requestedUrl, staticOrigin) {
+	if (staticOrigin === null) {
 		return requestedUrl;
 	}
 
-	const upstreamUrl = new URL(vercelOrigin);
+	const upstreamUrl = new URL(staticOrigin);
 	upstreamUrl.pathname = requestedUrl.pathname;
 	upstreamUrl.search = requestedUrl.search;
 	return upstreamUrl;
 }
 
 /**
- * 將 Vercel origin 發出的同源 redirect 改寫回目前公開 host。
- * 否則 nginx 會把 /ratewise 等 canonical redirect 指向 Vercel alias，
+ * 將靜態 origin 發出的同源 redirect 改寫回目前公開 host。
+ * 否則上游會把 /ratewise 等 canonical redirect 指向 Pages／Vercel alias，
  * 使公開網址脫離 Cloudflare Worker 的安全與路由邊界。
  * @param {Response} response
  * @param {URL} requestedUrl
- * @param {URL|null} vercelOrigin
+ * @param {URL|null} staticOrigin
  * @returns {Response}
  */
-function rewriteOriginRedirect(response, requestedUrl, vercelOrigin) {
+function rewriteOriginRedirect(response, requestedUrl, staticOrigin) {
 	if (response.status < 300 || response.status >= 400) {
 		return response;
 	}
@@ -853,12 +856,12 @@ function rewriteOriginRedirect(response, requestedUrl, vercelOrigin) {
 			return rewrittenResponse;
 		}
 
-		if (vercelOrigin === null) {
+		if (staticOrigin === null) {
 			return response;
 		}
 
-		const redirectUrlFromOrigin = new URL(location, vercelOrigin);
-		if (redirectUrlFromOrigin.origin !== vercelOrigin.origin) {
+		const redirectUrlFromOrigin = new URL(location, staticOrigin);
+		if (redirectUrlFromOrigin.origin !== staticOrigin.origin) {
 			return response;
 		}
 
@@ -883,8 +886,8 @@ export default {
 		const markdownMirrorPath = resolveMarkdownMirrorPath(request, url);
 		const isMarkdownNegotiation = markdownMirrorPath !== null;
 		const requestedUpstreamUrl = isMarkdownNegotiation ? new URL(markdownMirrorPath, request.url) : url;
-		const vercelOrigin = resolveVercelOrigin(env);
-		const upstreamUrl = resolveUpstreamUrl(requestedUpstreamUrl, vercelOrigin);
+		const staticOrigin = resolveStaticOrigin(env);
+		const upstreamUrl = resolveUpstreamUrl(requestedUpstreamUrl, staticOrigin);
 
 		if (url.host === WWW_HOST) {
 			url.host = CANONICAL_ROOT_HOST;
@@ -922,9 +925,9 @@ export default {
 		const fetchStart = performance.now();
 		const shouldRewriteRobotsTxt = isRootSiteHost && url.pathname === '/robots.txt';
 		const upstreamHeaders = new globalThis.Headers(request.headers);
-		if (vercelOrigin !== null) {
-			// Let fetch derive Host from the Vercel URL; forwarding the public host
-			// would route the request back to the Cloudflare edge or fail Vercel host validation.
+		if (staticOrigin !== null) {
+			// Let fetch derive Host from the static origin; forwarding the public host
+			// would route the request back to the Cloudflare edge or fail origin host validation.
 			upstreamHeaders.delete('host');
 			upstreamHeaders.delete('x-forwarded-host');
 		}
@@ -943,7 +946,7 @@ export default {
 		}
 
 		let upstreamResponse = await fetch(upstreamUrl.toString(), upstreamRequestInit);
-		upstreamResponse = rewriteOriginRedirect(upstreamResponse, url, vercelOrigin);
+		upstreamResponse = rewriteOriginRedirect(upstreamResponse, url, staticOrigin);
 		const fetchDuration = performance.now() - fetchStart;
 
 		const contentType = upstreamResponse.headers.get('content-type') || '';

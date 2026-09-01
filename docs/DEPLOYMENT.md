@@ -98,6 +98,62 @@ Vercel 使用根目錄的 `Dockerfile.vercel` 建置同一個多 app Nginx image
 CSP／HSTS 與 `/ratewise/api/ratings`。移除 `VERCEL_ORIGIN` 並重新部署
 `security-headers` 即可回到原 Zeabur origin。
 
+### Cloudflare Pages Direct Upload（目前遷移目標）
+
+靜態前端使用根目錄 `scripts/build-pages.mjs` 將 8 個 app 組裝至單一
+`.pages-dist/`，再由 GitHub Actions 以 Wrangler Pages Direct Upload 部署至
+`haotool-static`。這條流程不使用 `docker-compose.yml`，也不把
+`rating-api` 或 Cloudflare KV 搬入 Pages。
+
+```bash
+pnpm install --frozen-lockfile
+pnpm build:pages
+npx wrangler pages deploy .pages-dist \
+  --project-name haotool-static \
+  --branch main
+```
+
+`.github/workflows/deploy-pages.yml` 僅讓 `main` push 建立 production deployment，
+同 repo 非 Dependabot Pull Request 建立 preview deployment；`data` branch、單獨的 Worker／API、
+Docker 或其他 CI workflow 變更不會觸發 Pages 前端部署。Fork 與 Dependabot PR 會安全略過部署，
+避免把 Cloudflare secret 暴露給無法取得或不受信任的工作流程；Cloudflare secrets 只在實際
+Wrangler deploy step 注入，Wrangler 安裝／驗證、build 與 parity step 無法讀取。main push
+會先部署 `candidate-<commit-sha>` branch，contract-only parity 通過後才第二次部署 `main` production，
+避免未驗證產物先成為正式 alias。
+
+Vercel 仍可在觀察期保留原有 GitHub deployment；根目錄 `vercel.json` 會讓
+`data` branch 的 Vercel build 以 exit code 0 略過，其他 branch 維持建置。這個設定
+必須在變更合併至 GitHub 後才會對遠端 Vercel 專案生效。
+
+Pages 不直接接正式 DNS。正式請求仍由 Cloudflare `security-headers` Worker
+接收，Worker 的靜態 origin 在 preview、SEO、PWA、header 與 API 驗證完成後才切換；
+`STATIC_ORIGIN` 保留前一個 origin 作為回退，且 Vercel 與 Zeabur 至少觀察 24–48 小時。
+
+Pages assembly 另外保留 `/health` 的 `healthy` 回應，與現有 Nginx health check 相容；此端點
+不代表 Worker、Rating API 或 KV 已健康，三者仍須分開驗證。
+
+Cloudflare Web Analytics 必須在 Cloudflare Dashboard 的 Pages project → Metrics → Web Analytics
+啟用；Cloudflare 會在下一次 Pages deployment 自動注入 beacon。由於正式流量仍會經過
+`security-headers` Worker，切換後必須以公開網域的 GET 確認 beacon、CSP 與 `/cdn-cgi/rum` 沒有被
+Worker 的 HTML rewrite 或快取政策阻擋。這個 infrastructure 變更保留既有隱私文案以維持 SEO
+parity；Analytics 供應商文案應在實際啟用 Pages Analytics 後另開內容變更同步。
+
+### Pages 驗證
+
+```bash
+node scripts/build-pages.mjs
+pnpm exec node scripts/verify-pages-seo-parity.mjs \
+  --candidate-url=https://<pages-preview>.pages.dev \
+  --contract-only \
+  --api-url=https://app.haotool.org/ratewise/api/ratings
+```
+
+驗證器從各 app config 與 RateWise SEO SSOT 動態取得 URL，contract-only 模式檢查
+canonical／og:url host、狀態碼、HTML metadata 存在性、sitemap、robots、llms、PWA、
+precache 與安全標頭；它不以 Pages hostname 取代正式 canonical，也不將未知路徑導向首頁。
+不帶 `--contract-only` 時仍可做一次性 candidate 與既有 production 的內容 parity 比對；CI
+不使用該模式，避免合法的同 PR SEO 內容變更被 live baseline 錯誤阻擋。
+
 ## 技術規格
 
 ### 環境要求
@@ -196,6 +252,7 @@ curl -I http://localhost:8080/park-keeper/about/ | head -n 5
 ### Release Workflow 與 Cloudflare Worker 同步
 
 - `Release` workflow 在 `main` push 時，會先嘗試部署 `security-headers/wrangler.jsonc` 對應的 Cloudflare Worker，再執行 CDN purge；有版本變更時則會一併建立 GitHub release/tag。
+- Release workflow 會先完成 root 與 `security-headers` 依賴安裝；Cloudflare secrets 只注入 Worker deploy／cache purge step，且手動 `workflow_dispatch` 僅允許 `main` ref。
 - 依 Cloudflare Workers CI/CD 官方做法，非互動部署必須提供 `CLOUDFLARE_API_TOKEN` 與 `CLOUDFLARE_ACCOUNT_ID`；缺任一 secret 時 workflow 會明確 `skip`，不會假裝正式站標頭已同步。
 - 若只看到 app release 成功，但正式站 `Permissions-Policy` / CSP 等標頭仍為舊值，優先檢查 `security-headers` worker 是否已成功部署，而不是誤判為 app bundle 回退。
 - 正式站若出現重複 `CSP Report-Only`、舊 `Permissions-Policy` 或 `__network_probe__` 重導，請依 [038_ratewise_cloudflare_audit_workflow.md](/Users/azlife.eth/Tools/app/docs/dev/038_ratewise_cloudflare_audit_workflow.md) 逐步稽核 Worker、Transform Rules、Snippets 與 Cache Rules。

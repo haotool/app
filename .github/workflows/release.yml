@@ -28,26 +28,36 @@ jobs:
       HAS_RELEASE_PAT: ${{ secrets.RELEASE_PAT != '' }}
 
     steps:
+      - name: Guard manual dispatch ref
+        if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::Release workflow_dispatch must run from main"
+          exit 1
+
       - name: Checkout Repo
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           # 需要完整歷史記錄來生成完整的 changelog
           fetch-depth: 0
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v5
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5
         with:
           version: 9.10.0
           run_install: false
 
       - name: Setup Node.js 24
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: '24'
           cache: 'pnpm'
 
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
+
+      # 先完成 worker 依賴安裝，後續帶 Cloudflare secret 的 step 不得執行 npm install。
+      - name: Install security-headers dependencies
+        run: npm ci --prefix security-headers
 
       - name: Check for Changeset Files
         id: check_changesets
@@ -99,7 +109,7 @@ jobs:
         id: changesets
         if: steps.check_changesets.outputs.has_changesets == 'true'
         continue-on-error: true
-        uses: changesets/action@v1
+        uses: changesets/action@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1
         with:
           version: pnpm changeset:version
           commit: 'chore(release): 更新版本套件'
@@ -347,7 +357,6 @@ jobs:
           fi
 
           echo "🔐 Deploying security-headers worker for app.haotool.org/ratewise/* ..."
-          npm ci --prefix security-headers
           npx --prefix security-headers wrangler deploy --config security-headers/wrangler.jsonc
 
       - name: Wait for RateWise production deployment
@@ -412,7 +421,7 @@ jobs:
       # 如果未來需要發布，可以新增以下步驟：
       # - name: Publish to npm
       #   if: steps.changesets.outputs.hasChangesets == 'false'
-      #   uses: changesets/action@v1
+      #   uses: changesets/action@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1
       #   with:
       #     publish: pnpm changeset:publish
       #   env:
