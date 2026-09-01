@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+18（reward 18、penalty 0、neutral 0）｜累計總分：+364
+> 本次分數變化：+26（reward 26、penalty 0、neutral 0）｜累計總分：+372
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,46 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-09-01
+- ID：reward-pages-review-papertrade-spa-fallback
+- 原因：Codex review 發現 PaperTrade 未知深層連結未保留原有整體 SPA fallback，與 requireTrue404=false 契約不一致。
+- 解法：加入限定 /papertrade/ scope 的通配 app-shell fallback，並保留靜態資產自代理規則。
+
+- 日期：2026-09-01
+- ID：reward-pages-review-papertrade-deep-link-parity
+- 原因：Codex review 發現 parity 只驗證已知路由，未知 PaperTrade deep link 可能回傳 404 而未被發現。
+- 解法：依 app config 自動驗證 scoped SPA fallback deep link 與全站真正 404 的邊界。
+
+- 日期：2026-09-01
+- ID：reward-pages-review-papertrade-static-priority
+- 原因：Cloudflare Pages redirect 先於靜態檔案套用，通配 SPA fallback 可能攔截 PaperTrade 資產。
+- 解法：以 assets、icons、根層副檔名檔案 self-proxy 置於通配 fallback 前，並執行 Wrangler runtime smoke test。
+
+- 日期：2026-09-01
+- ID：reward-pages-review-papertrade-scope-boundary
+- 原因：SPA fallback 若未限定 app scope，可能污染根站與其他子 app 的 404 行為。
+- 解法：僅對 /papertrade/\* 做 proxy，並保留根層未知路徑必須 404 的 parity gate。
+
+- 日期：2026-09-01
+- ID：reward-pages-review-papertrade-spa-scope
+- 原因：Codex review 發現 PaperTrade 僅覆蓋已知 client route，未知深層連結未保留原有整體 SPA fallback。
+- 解法：加入受限於 /papertrade/ 的通配 fallback，並以 static self-proxy 規則保護資產與根層檔案。
+
+- 日期：2026-09-01
+- ID：reward-pages-review-papertrade-spa-parity
+- 原因：Codex review 發現 parity 未驗證 requireTrue404=false app 的未知 SPA deep link 行為。
+- 解法：依 app config 自動加入 scoped SPA fallback contract，確保 PaperTrade 未知路徑仍回傳 app shell。
+
+- 日期：2026-09-01
+- ID：reward-pages-review-papertrade-static-proxy
+- 原因：Cloudflare Pages redirect 會先於靜態檔案套用，通配 SPA fallback 可能攔截 PaperTrade 資產。
+- 解法：在通配 fallback 前加入 assets、icons 與根層副檔名檔案的 self-proxy 規則並以 Wrangler 驗證。
+
+- 日期：2026-09-01
+- ID：reward-pages-review-papertrade-fallback-boundary
+- 原因：Pages rewrite fallback 必須維持 app scope，避免未知 PaperTrade 路徑污染根站或其他子 app。
+- 解法：fallback source 僅使用 /papertrade/\*，parity 同時保留全站真正 404 檢查。
 
 - 日期：2026-09-01
 - ID：reward-pages-review-analytics-beacon-csp

@@ -67,6 +67,13 @@ const REDIRECTS = `# Cloudflare Pages routing SSOT for the assembled multi-app s
 /papertrade/settings /papertrade/ 200
 /papertrade/settings/ /papertrade/ 200
 /papertrade/settings/* /papertrade/ 200
+# Protect PaperTrade static files before the scoped SPA fallback. Pages applies
+# redirects before serving matching assets, so these self-proxy rules are required.
+/papertrade/assets/* /papertrade/assets/:splat 200
+/papertrade/icons/* /papertrade/icons/:splat 200
+/papertrade/:file.:ext /papertrade/:file.:ext 200
+# PaperTrade is an SPA: preserve the app shell for any scoped deep link.
+/papertrade/* /papertrade/ 200
 `;
 
 const STATIC_HEADERS = [

@@ -521,6 +521,18 @@ async function main() {
       checks += 1;
     }
 
+    if (app.config.seoValidation?.requireTrue404 === false) {
+      const path = joinPath(appBasePath, '/__pages-spa-fallback__/');
+      const candidate = await fetchText(joinUrl(candidateBase, path));
+      const expectedCanonicalUrl = joinUrl(configuredUrl.origin + appBasePath, '/');
+      if (contractOnly) compareClientRouteContract(path, candidate, expectedCanonicalUrl, failures);
+      else {
+        const baseline = await fetchText(joinUrl(configuredUrl.origin + appBasePath, '/'));
+        compareHtml(path, baseline, candidate, failures);
+      }
+      checks += 1;
+    }
+
     for (const file of app.config.resources?.seoFiles ?? []) {
       const path = joinPath(appBasePath, file);
       const candidate = await fetchText(joinUrl(candidateBase, path));
