@@ -69,6 +69,11 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build Pages assets
+        env:
+          # This is a public application endpoint, not a credential. Keep it explicit so
+          # both the client bundle and the build-time rating snapshot use the same API.
+          VITE_RATING_API_URL: https://app.haotool.org/ratewise/api/ratings
+          RATING_API_URL: https://app.haotool.org/ratewise/api/ratings
         run: pnpm build:pages
 
       - name: Install Wrangler CLI

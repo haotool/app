@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+7（reward 7、penalty 0、neutral 0）｜累計總分：+353
+> 本次分數變化：+10（reward 10、penalty 0、neutral 0）｜累計總分：+356
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,21 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-09-01
+- ID：reward-pages-review-rating-api-build-config
+- 原因：Codex review 發現 Pages build 未注入公開 Rating API，導致評分提交與 build-time snapshot 靜默停用。
+- 解法：在無 secrets 的 Pages build step 明確注入同一個公開 API URL 給 Vite 與 snapshot builder。
+
+- 日期：2026-09-01
+- ID：reward-pages-review-canonical-contract
+- 原因：Codex review 發現 contract-only verifier 對缺少 canonical 的頁面會放行，且既有 PaperTrade／Split Meow root 缺少 canonical。
+- 解法：要求 canonical 存在並符合 SSOT，補上兩個 root app 的 canonical 標籤與回歸驗證。
+
+- 日期：2026-09-01
+- ID：reward-pages-review-manifest-scope-contract
+- 原因：Codex review 發現 contract-only verifier 只檢查 manifest 欄位非空，未阻止 scope／start_url 跨出 app base path。
+- 解法：依 app production base path 驗證 manifest URL origin 與路徑邊界。
 
 - 日期：2026-09-01
 - ID：reward-pages-review-wrangler-package-boundary

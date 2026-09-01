@@ -363,12 +363,30 @@ function compareManifest(path, baseline, candidate, failures) {
   }
 }
 
-function validateManifestContract(path, candidate, failures) {
+function normalizeBasePath(path) {
+  const normalized = `/${path.replace(/^\/+|\/+$/g, '')}`;
+  return normalized === '/' ? '/' : `${normalized}/`;
+}
+
+function isWithinBasePath(path, basePath) {
+  const normalizedPath = path.endsWith('/') ? path : `${path}/`;
+  return basePath === '/' || normalizedPath === basePath || normalizedPath.startsWith(basePath);
+}
+
+function validateManifestContract(path, candidate, expectedCanonicalUrl, appBasePath, failures) {
   try {
     const manifest = JSON.parse(candidate.body);
     for (const field of PWA_FIELDS) {
       if (typeof manifest[field] !== 'string' || !manifest[field].trim())
         failures.push(`${path}: manifest ${field} is missing`);
+    }
+    const expectedOrigin = new URL(expectedCanonicalUrl).origin;
+    const expectedBasePath = normalizeBasePath(appBasePath);
+    for (const field of ['scope', 'start_url']) {
+      if (typeof manifest[field] !== 'string' || !manifest[field].trim()) continue;
+      const value = new URL(manifest[field], expectedCanonicalUrl);
+      if (value.origin !== expectedOrigin || !isWithinBasePath(value.pathname, expectedBasePath))
+        failures.push(`${path}: manifest ${field} escapes app base path ${expectedBasePath}`);
     }
   } catch {
     failures.push(`${path}: invalid manifest JSON`);
@@ -501,7 +519,13 @@ async function main() {
     if (contractOnly) {
       await compareResourceContract(manifestPath, manifestCandidate, failures);
       if (manifestCandidate.status === 200)
-        validateManifestContract(manifestPath, manifestCandidate, failures);
+        validateManifestContract(
+          manifestPath,
+          manifestCandidate,
+          joinUrl(configuredUrl.origin + appBasePath, '/'),
+          appBasePath,
+          failures,
+        );
     } else {
       const manifestBaseline = await fetchText(
         joinUrl(configuredUrl.origin + appBasePath, '/manifest.webmanifest'),
