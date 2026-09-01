@@ -48,6 +48,8 @@ export const APP_CONFIG = {
     pwa: true,
   },
 
+  offlineRequired: true,
+
   resources: {
     seoFiles: SEO_FILES,
     images: IMAGE_RESOURCES,

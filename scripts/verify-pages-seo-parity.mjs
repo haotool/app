@@ -438,8 +438,13 @@ async function verifyApiContract(failures) {
   if (options.status !== 204) failures.push(`API OPTIONS: status ${options.status} != 204`);
   if (options.headers.get('access-control-allow-origin') !== origin)
     failures.push('API OPTIONS: CORS origin differs');
-  if (!options.headers.get('access-control-allow-methods')?.includes('GET'))
-    failures.push('API OPTIONS: GET is not allowed');
+  const allowMethods = options.headers
+    .get('access-control-allow-methods')
+    ?.toUpperCase()
+    .split(/[\s,]+/)
+    .filter(Boolean);
+  if (!allowMethods?.includes('GET')) failures.push('API OPTIONS: GET is not allowed');
+  if (!allowMethods?.includes('POST')) failures.push('API OPTIONS: POST is not allowed');
 
   const get = await fetchText(apiUrl, { headers: { Origin: origin } });
   if (get.status !== 200) failures.push(`API GET: status ${get.status} != 200`);
@@ -589,6 +594,10 @@ async function main() {
     const offlinePath = joinPath(appBasePath, '/offline.html');
     const offlineCandidate = await fetchText(joinUrl(candidateBase, offlinePath));
     if (contractOnly) {
+      if (app.config.offlineRequired === true && offlineCandidate.status !== 200)
+        failures.push(
+          `${offlinePath}: required offline shell status ${offlineCandidate.status} != 200`,
+        );
       if (offlineCandidate.status === 200)
         await compareResourceContract(offlinePath, offlineCandidate, failures);
       checks += 1;

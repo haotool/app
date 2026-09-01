@@ -1,13 +1,14 @@
 /* global HTMLRewriter, performance */
 
 /**
- * 安全標頭 Worker v6.5
+ * 安全標頭 Worker v6.6
  *
  * 處理 Cloudflare 無法以固定規則精準表達的安全邏輯。
  * 固定站點級政策由 Cloudflare Edge 管理，Worker 專注於路由分層 CSP、
  * CSP report、分享圖 CORS 與 ratewise 跨域隔離。
  *
  * 變更記錄：
+ * - v6.6: Cloudflare Web Analytics beacon 上傳 origin 納入所有 HTML profile 的 connect-src
  * - v6.5: Pages 由 Cloudflare Web Analytics 自動注入 beacon，移除失效的 Vercel Analytics CSP 依賴
  * - v6.4: 支援以 STATIC_ORIGIN 切換至 Cloudflare Pages，並保留 VERCEL_ORIGIN 作為回退
  * - v6.3: 上游若將 apex 308 到 www.haotool.org，改寫回 apex，避免與 Worker www→apex 規則互撞
@@ -41,7 +42,7 @@
  * - v3.6: 改用 HTMLRewriter 解析 inline script
  */
 
-const SECURITY_POLICY_VERSION = '6.5';
+const SECURITY_POLICY_VERSION = '6.6';
 const CSP_REPORT_MAX_BYTES = 16 * 1024;
 const HASHED_ASSET_PATH = /^\/(?:[^/]+\/)?assets\/[^/]+-[A-Za-z0-9_-]{6,12}\.(?:js|css|mjs)$/;
 
@@ -63,6 +64,7 @@ const RATEWISE_REPORT_ONLY =
 	"require-trusted-types-for 'script'; trusted-types default ratewise#default goog#html 'allow-duplicates'; report-uri /ratewise/csp-report;";
 const RATEWISE_REPORTING_ENDPOINT = 'csp-endpoint';
 const CLOUDFLARE_INSIGHTS_SCRIPT = 'https://static.cloudflareinsights.com';
+const CLOUDFLARE_INSIGHTS_BEACON = 'https://cloudflareinsights.com';
 
 const APP_HOST = 'app.haotool.org';
 const ROOT_SITE_HOSTS = new Set(['haotool.org', 'www.haotool.org', APP_HOST]);
@@ -606,7 +608,7 @@ function buildContentSecurityPolicy(profile, nonce = null) {
 		`style-src ${joinSources(["'self'", "'unsafe-inline'", ...profile.styleSources])}`,
 		`font-src ${joinSources(["'self'", ...profile.fontSources])}`,
 		`img-src ${joinSources(["'self'", 'data:', 'blob:', ...profile.imgSources])}`,
-		`connect-src ${joinSources(["'self'", ...profile.connectSources])}`,
+		`connect-src ${joinSources(["'self'", ...profile.connectSources, CLOUDFLARE_INSIGHTS_BEACON])}`,
 		"worker-src 'self' blob:",
 		"manifest-src 'self'",
 		"frame-ancestors 'self'",

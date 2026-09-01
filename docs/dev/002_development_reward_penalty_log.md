@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+15（reward 15、penalty 0、neutral 0）｜累計總分：+361
+> 本次分數變化：+18（reward 18、penalty 0、neutral 0）｜累計總分：+364
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,21 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-09-01
+- ID：reward-pages-review-analytics-beacon-csp
+- 原因：Codex review 發現 Cloudflare Web Analytics beacon 上傳 origin 未在 connect-src 白名單，RUM 可能被 CSP 阻擋。
+- 解法：將 cloudflareinsights.com 納入所有 HTML profile 的 connect-src，並同步升版 Worker 安全政策。
+
+- 日期：2026-09-01
+- ID：reward-pages-review-api-preflight-methods
+- 原因：Codex review 發現 API preflight 只驗證 GET，未確認瀏覽器評分 POST 被 CORS 允許。
+- 解法：將 allow-methods 解析為方法集合並強制要求 GET 與 POST。
+
+- 日期：2026-09-01
+- ID：reward-pages-review-offline-shell-contract
+- 原因：Codex review 發現必要 offline.html 缺失時 contract-only 仍放行，PWA 離線導覽可能失效。
+- 解法：以 app config 標記必要 offline shell，Split Meow 與 PaperTrade 缺失時直接 fail。
 
 - 日期：2026-09-01
 - ID：reward-pages-review-papertrade-route-contract
