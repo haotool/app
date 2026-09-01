@@ -1,7 +1,7 @@
 /**
- * 五工具行動截圖腳本（快照制：手動 refresh、產物 commit，build 不抓 live 站）。
+ * 七工具行動截圖腳本（快照制：手動 refresh、產物 commit，build 不抓 live 站）。
  *
- * 產物：public/screenshots/<toolId>-mobile.avif ＋ .webp ×5（hero 舞台／ToolCard 用）。
+ * 產物：public/screenshots/<toolId>-mobile.avif ＋ .webp ×7（hero 舞台／ToolCard 用）。
  * 規格：iPhone 13 viewport（390×844 @2x）對 live 站首屏截圖；輸出寬 520px；
  * AVIF 品質 60–70、單張 ≤60KB；等待 networkidle＋動畫靜置後再截。
  * SSOT：src/config/tools.ts（toolId 與 URL）。
@@ -306,7 +306,7 @@ try {
   await workPage.close();
   await context.close();
   await verifyOutputs(browser);
-  console.log(`🎉 五工具行動截圖完成（${OUTPUT_WIDTH}×${OUTPUT_HEIGHT}，AVIF＋WebP）`);
+  console.log(`🎉 七工具行動截圖完成（${OUTPUT_WIDTH}×${OUTPUT_HEIGHT}，AVIF＋WebP）`);
 } finally {
   await browser.close();
   rmSync(tmpDir, { recursive: true, force: true });

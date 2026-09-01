@@ -25,7 +25,7 @@ pnpm --filter @app/haotool generate:sitemap # 重新生成 sitemap/robots/llms
 ```bash
 node apps/haotool/scripts/generate-icons.mjs       # brand-src/logomark.png SSOT → PWA icons + favicon.ico
 node apps/haotool/scripts/generate-og.mjs          # HTML 模板＋logomark → og-image.png（1200×630，≤200KB）
-node apps/haotool/scripts/capture-screenshots.mjs  # live 站 5 工具行動截圖 → AVIF+WebP（520px 寬，單張 ≤60KB）
+node apps/haotool/scripts/capture-screenshots.mjs  # live 站 7 工具行動截圖 → AVIF+WebP（520px 寬，單張 ≤60KB）
 ```
 
 素材 SSOT 對照（`brand-src/` = build-time 源檔不入 dist；`public/brand/` = runtime 引用資產）：

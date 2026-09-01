@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+374
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+375
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-09-01
+- ID：reward-haotool-papertrade-screenshot-asset
+- 原因：工具 SSOT 已包含 PaperTrade，但根站缺少對應 AVIF／WebP 快照，造成少量正式頁面資產 404。
+- 解法：補齊 PaperTrade 快照素材、加入所有工具素材存在性測試，並同步截圖腳本的七工具說明。
 
 - 日期：2026-09-01
 - ID：reward-cf-pages-single-deployer-hotfix
