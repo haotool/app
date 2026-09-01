@@ -17,8 +17,6 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
-    # 手動派送只能從 main 執行；push 事件本身已限制為 main。
-    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
     permissions:
       contents: write
       pull-requests: write

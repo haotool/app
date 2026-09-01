@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+11（reward 11、penalty 0、neutral 0）｜累計總分：+357
+> 本次分數變化：+13（reward 13、penalty 0、neutral 0）｜累計總分：+359
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-09-01
+- ID：reward-pages-review-manifest-cache-control
+- 原因：Codex review 發現 manifest 使用 24 小時 max-age，PWA 設定更新可能被瀏覽器或中介快取延遲採用。
+- 解法：將根與子 app manifest 改為 no-cache 並保留 must-revalidate，讓每次請求重新驗證內容。
+
+- 日期：2026-09-01
+- ID：reward-pages-review-release-dispatch-guard
+- 原因：Codex review 發現 release job-level if 會讓非 main workflow_dispatch 被 skipped，無法明確拒絕錯誤 ref。
+- 解法：移除 job-level gate，保留 step-level guard 讓非 main 手動發版實際 fail。
 
 - 日期：2026-09-01
 - ID：reward-pages-review-sitemap-dependency-filter
