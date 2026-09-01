@@ -627,6 +627,8 @@ git push origin main     # pre-push 自動驗證
 4. **套用並鎖定**：`pnpm install --no-frozen-lockfile`
 5. **提交修復**：`fix(security): 修復 <package> 安全漏洞（<CVE-ID>）`
 
+React Router v7 屬於跨 workspace 的 major 遷移，已由 `.github/dependabot.yml` 暫停自動提出；必須另開相容性遷移 PR，同步更新 root `pnpm.overrides`、lockfile 與路由／SSG 測試。
+
 ### PR Rebase 與版本衝突解決（#156 實例）
 
 1. **診斷衝突**：`gh pr view <NUMBER> --json mergeStateStatus,mergeable`

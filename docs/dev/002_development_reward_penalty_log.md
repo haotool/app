@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+26（reward 26、penalty 0、neutral 0）｜累計總分：+372
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+373
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-09-01
+- ID：reward-dependabot-react-router-major-guard
+- 原因：Dependabot 的 React Router v7 PR 未同步 root pnpm.overrides，導致 frozen install 正確阻擋。
+- 解法：忽略 react-router-dom semver-major，改由專用相容性遷移 PR 同步 workspace、override、lockfile 與測試。
 
 - 日期：2026-09-01
 - ID：reward-pages-review-papertrade-spa-fallback
