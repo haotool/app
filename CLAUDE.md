@@ -210,6 +210,7 @@ git push origin main            # pre-push 自動跑 typecheck + test + build
 - 唯一在運作的依賴機器人是 **Dependabot**；`renovate.json` 已刪除（Renovate App 從未安裝，該設定自 2025-12-26 建立起零生效）。
 - 自動化規則一律寫進 `.github/dependabot.yml`，**禁止**再引入第二套機器人設定造成重複 PR。
 - minor/patch 由 `.github/workflows/dependabot-automerge.yml` 掛 GitHub auto-merge；major 只加 `major-update` 標籤，需人工評估相容性。
+- React Router v7 是跨 workspace major 遷移，`.github/dependabot.yml` 暫停 `react-router-dom` major；須另開相容性 PR，同步 root `pnpm.overrides`、lockfile 與路由／SSG 測試。
 - 該 workflow 以 `pull_request_target` 取得寫入權限，**不得**在其中 checkout PR 分支或執行 PR 內程式碼。
 
 **PR Rebase 與合併**（處理版本衝突）：

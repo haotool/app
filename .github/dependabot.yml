@@ -31,6 +31,10 @@ updates:
       # 待 runtime 整體升版後再一併解除（PR #969 因此關閉）。
       - dependency-name: '@types/node'
         update-types: ['version-update:semver-major']
+      # React Router v7 需要同步驗證 vite-react-ssg、路由 API 與所有 workspace；
+      # 不允許 Dependabot 只改各 app 與 lockfile，卻遺漏 root pnpm.overrides。
+      - dependency-name: 'react-router-dom'
+        update-types: ['version-update:semver-major']
 
   # security-headers Worker 自帶 npm + package-lock.json，不在 pnpm workspace 內，
   # 沒有這個 entry 就只會在漏洞警報觸發時被動冒出 security update PR（例：PR #979）。
