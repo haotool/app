@@ -1,8 +1,13 @@
 /**
  * Tools SSOT Tests — 7 工具、連結格式、分類 enum
  */
+import { existsSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, it, expect } from 'vitest';
 import { TOOLS, TOOL_CATEGORIES, getActiveCategories, getToolIconUrl, getToolUrl } from './tools';
+
+const HAOTOOL_PUBLIC_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../../public');
 
 describe('TOOLS SSOT', () => {
   it('包含 7 個工具', () => {
@@ -43,6 +48,17 @@ describe('TOOLS SSOT', () => {
       expect(tool.iconPath.startsWith('/')).toBe(true);
       expect(tool.techChips.length).toBeGreaterThan(0);
       expect(tool.status).toBe('live');
+    }
+  });
+
+  it('每個工具皆有快照素材，避免首頁產生靜態資產 404', () => {
+    for (const tool of TOOLS) {
+      expect(existsSync(resolve(HAOTOOL_PUBLIC_DIR, `screenshots/${tool.id}-mobile.avif`))).toBe(
+        true,
+      );
+      expect(existsSync(resolve(HAOTOOL_PUBLIC_DIR, `screenshots/${tool.id}-mobile.webp`))).toBe(
+        true,
+      );
     }
   });
 
