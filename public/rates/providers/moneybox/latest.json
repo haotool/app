@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-09-03T09:52:26.880Z",
-  "updateTime": "2026/09/03 18:52:26",
+  "timestamp": "2026-09-03T14:00:05.438Z",
+  "updateTime": "2026/09/03 23:00:05",
   "source": "MoneyBox (明洞換匯所聯盟)",
   "sourceUrl": "https://moneybox-exchange.com/zh-CHT/exchange",
   "apiUrl": "https://moneybox-exchange.com/api/rates",
@@ -8,14 +8,14 @@
   "rates": {
     "AED": {
       "currency": "AED",
-      "base": 367.515,
-      "buy": 390.03,
+      "base": 367.33,
+      "buy": 389.66,
       "sell": 345,
       "spbuy": null,
       "spsell": null,
       "customerBuyForeignRate": 345,
-      "customerSellForeignRate": 390.03,
-      "midMarketRate": 367.515,
+      "customerSellForeignRate": 389.66,
+      "midMarketRate": 367.33,
       "quoteUnit": "TWD_PER_FOREIGN",
       "quotePerBaseUnit": 0.00289855
     },
@@ -60,16 +60,16 @@
     },
     "CNY": {
       "currency": "CNY",
-      "base": 203.4,
+      "base": 203.15,
       "buy": 203.8,
-      "sell": 203,
+      "sell": 202.5,
       "spbuy": null,
       "spsell": null,
-      "customerBuyForeignRate": 203,
+      "customerBuyForeignRate": 202.5,
       "customerSellForeignRate": 203.8,
-      "midMarketRate": 203.4,
+      "midMarketRate": 203.15,
       "quoteUnit": "TWD_PER_FOREIGN",
-      "quotePerBaseUnit": 0.00492611
+      "quotePerBaseUnit": 0.00493827
     },
     "EUR": {
       "currency": "EUR",
@@ -125,16 +125,16 @@
     },
     "JPY": {
       "currency": "JPY",
-      "base": 865,
+      "base": 865.5,
       "buy": 870,
-      "sell": 860,
+      "sell": 861,
       "spbuy": null,
       "spsell": null,
-      "customerBuyForeignRate": 860,
+      "customerBuyForeignRate": 861,
       "customerSellForeignRate": 870,
-      "midMarketRate": 865,
+      "midMarketRate": 865.5,
       "quoteUnit": "TWD_PER_FOREIGN",
-      "quotePerBaseUnit": 0.00116279
+      "quotePerBaseUnit": 0.00116144
     },
     "MYR": {
       "currency": "MYR",
@@ -255,7 +255,7 @@
     }
   },
   "schemaVersion": "2.0",
-  "asOf": "2026-09-03T09:52:26.880Z",
+  "asOf": "2026-09-03T14:00:05.438Z",
   "semanticFieldMapping": {
     "schemaVersion": "2.0",
     "semanticsDoc": "https://app.haotool.org/ratewise/open-data/",
