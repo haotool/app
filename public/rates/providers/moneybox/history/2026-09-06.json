@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-09-05T12:54:35.416Z",
-  "updateTime": "2026/09/05 21:54:35",
+  "timestamp": "2026-09-06T01:05:08.238Z",
+  "updateTime": "2026/09/06 10:05:08",
   "source": "MoneyBox (明洞換匯所聯盟)",
   "sourceUrl": "https://moneybox-exchange.com/zh-CHT/exchange",
   "apiUrl": "https://moneybox-exchange.com/api/rates",
@@ -16,8 +16,8 @@
     },
     "AUD": {
       "currency": "AUD",
-      "base": 970,
-      "buy": 980,
+      "base": 966.5,
+      "buy": 973,
       "sell": 960,
       "spbuy": null,
       "spsell": null
@@ -40,17 +40,17 @@
     },
     "CNY": {
       "currency": "CNY",
-      "base": 201.1,
-      "buy": 201.7,
-      "sell": 200.5,
+      "base": 200.75,
+      "buy": 201.5,
+      "sell": 200,
       "spbuy": null,
       "spsell": null
     },
     "EUR": {
       "currency": "EUR",
-      "base": 1556,
+      "base": 1555,
       "buy": 1565,
-      "sell": 1547,
+      "sell": 1545,
       "spbuy": null,
       "spsell": null
     },
@@ -64,9 +64,9 @@
     },
     "HKD": {
       "currency": "HKD",
-      "base": 172.25,
-      "buy": 173.5,
-      "sell": 171,
+      "base": 171.5,
+      "buy": 173,
+      "sell": 170,
       "spbuy": null,
       "spsell": null
     },
@@ -80,9 +80,9 @@
     },
     "JPY": {
       "currency": "JPY",
-      "base": 864,
-      "buy": 868,
-      "sell": 860,
+      "base": 865.5,
+      "buy": 870,
+      "sell": 861,
       "spbuy": null,
       "spsell": null
     },
@@ -104,8 +104,8 @@
     },
     "PHP": {
       "currency": "PHP",
-      "base": 22.5,
-      "buy": 22.9,
+      "base": 22.55,
+      "buy": 23,
       "sell": 22.1,
       "spbuy": null,
       "spsell": null
@@ -136,25 +136,25 @@
     },
     "TWD": {
       "currency": "TWD",
-      "base": 41.5,
-      "buy": 41.8,
+      "base": 41.6,
+      "buy": 42,
       "sell": 41.2,
       "spbuy": null,
       "spsell": null
     },
     "USD": {
       "currency": "USD",
-      "base": 1353.5,
-      "buy": 1357,
-      "sell": 1350,
+      "base": 1353,
+      "buy": 1358,
+      "sell": 1348,
       "spbuy": null,
       "spsell": null
     },
     "VND": {
       "currency": "VND",
-      "base": 5.35,
+      "base": 5.45,
       "buy": 5.6,
-      "sell": 5.1,
+      "sell": 5.3,
       "spbuy": null,
       "spsell": null
     }
