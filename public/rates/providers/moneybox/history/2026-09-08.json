@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-09-07T09:44:55.245Z",
-  "updateTime": "2026/09/07 18:44:55",
+  "timestamp": "2026-09-07T15:17:54.879Z",
+  "updateTime": "2026/09/08 00:17:54",
   "source": "MoneyBox (明洞換匯所聯盟)",
   "sourceUrl": "https://moneybox-exchange.com/zh-CHT/exchange",
   "apiUrl": "https://moneybox-exchange.com/api/rates",
@@ -8,17 +8,17 @@
   "rates": {
     "AED": {
       "currency": "AED",
-      "base": 363.075,
-      "buy": 386.15,
+      "base": 363.39,
+      "buy": 386.78,
       "sell": 340,
       "spbuy": null,
       "spsell": null
     },
     "AUD": {
       "currency": "AUD",
-      "base": 969,
+      "base": 970,
       "buy": 980,
-      "sell": 958,
+      "sell": 960,
       "spbuy": null,
       "spsell": null
     },
@@ -48,17 +48,17 @@
     },
     "EUR": {
       "currency": "EUR",
-      "base": 1551,
+      "base": 1553.5,
       "buy": 1557,
-      "sell": 1545,
+      "sell": 1550,
       "spbuy": null,
       "spsell": null
     },
     "GBP": {
       "currency": "GBP",
-      "base": 1807.5,
-      "buy": 1825,
-      "sell": 1790,
+      "base": 1812.5,
+      "buy": 1830,
+      "sell": 1795,
       "spbuy": null,
       "spsell": null
     },
@@ -80,17 +80,17 @@
     },
     "JPY": {
       "currency": "JPY",
-      "base": 869.5,
+      "base": 870,
       "buy": 875,
-      "sell": 864,
+      "sell": 865,
       "spbuy": null,
       "spsell": null
     },
     "MYR": {
       "currency": "MYR",
-      "base": 337.5,
+      "base": 335,
       "buy": 340,
-      "sell": 335,
+      "sell": 330,
       "spbuy": null,
       "spsell": null
     },
@@ -120,9 +120,9 @@
     },
     "SGD": {
       "currency": "SGD",
-      "base": 1055,
-      "buy": 1065,
-      "sell": 1045,
+      "base": 1056.5,
+      "buy": 1063,
+      "sell": 1050,
       "spbuy": null,
       "spsell": null
     },
@@ -144,9 +144,9 @@
     },
     "USD": {
       "currency": "USD",
-      "base": 1349.5,
-      "buy": 1352,
-      "sell": 1347,
+      "base": 1348,
+      "buy": 1350,
+      "sell": 1346,
       "spbuy": null,
       "spsell": null
     },
