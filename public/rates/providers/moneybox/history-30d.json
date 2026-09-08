@@ -1,12 +1,12 @@
 {
   "providerId": "moneybox",
-  "generatedAt": "2026-09-08T04:49:52.033Z",
+  "generatedAt": "2026-09-08T09:10:50.520Z",
   "snapshots": [
     {
       "date": "2026-09-08",
       "raw": {
-        "timestamp": "2026-09-08T04:49:50.867Z",
-        "updateTime": "2026/09/08 13:49:50",
+        "timestamp": "2026-09-08T09:10:47.299Z",
+        "updateTime": "2026/09/08 18:10:47",
         "source": "MoneyBox (明洞換匯所聯盟)",
         "sourceUrl": "https://moneybox-exchange.com/zh-CHT/exchange",
         "apiUrl": "https://moneybox-exchange.com/api/rates",
@@ -14,8 +14,8 @@
         "rates": {
           "AED": {
             "currency": "AED",
-            "base": 362.695,
-            "buy": 385.39,
+            "base": 363.13,
+            "buy": 386.26,
             "sell": 340,
             "spbuy": null,
             "spsell": null
@@ -46,16 +46,16 @@
           },
           "CNY": {
             "currency": "CNY",
-            "base": 200.25,
+            "base": 200.35,
             "buy": 201,
-            "sell": 199.5,
+            "sell": 199.7,
             "spbuy": null,
             "spsell": null
           },
           "EUR": {
             "currency": "EUR",
-            "base": 1555,
-            "buy": 1560,
+            "base": 1557.5,
+            "buy": 1565,
             "sell": 1550,
             "spbuy": null,
             "spsell": null
@@ -70,9 +70,9 @@
           },
           "HKD": {
             "currency": "HKD",
-            "base": 171.5,
+            "base": 171.75,
             "buy": 172,
-            "sell": 171,
+            "sell": 171.5,
             "spbuy": null,
             "spsell": null
           },
@@ -86,9 +86,9 @@
           },
           "JPY": {
             "currency": "JPY",
-            "base": 873,
-            "buy": 875,
-            "sell": 871,
+            "base": 874,
+            "buy": 876,
+            "sell": 872,
             "spbuy": null,
             "spsell": null
           },
@@ -150,9 +150,9 @@
           },
           "USD": {
             "currency": "USD",
-            "base": 1345.5,
-            "buy": 1348,
-            "sell": 1343,
+            "base": 1347.5,
+            "buy": 1350,
+            "sell": 1345,
             "spbuy": null,
             "spsell": null
           },
