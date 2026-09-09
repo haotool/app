@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-09-09T20:02:53.411Z",
-  "updateTime": "2026/09/10 05:02:53",
+  "timestamp": "2026-09-09T22:28:41.797Z",
+  "updateTime": "2026/09/10 07:28:41",
   "source": "MoneyBox (明洞換匯所聯盟)",
   "sourceUrl": "https://moneybox-exchange.com/zh-CHT/exchange",
   "apiUrl": "https://moneybox-exchange.com/api/rates",
@@ -8,14 +8,14 @@
   "rates": {
     "AED": {
       "currency": "AED",
-      "base": 362.53,
-      "buy": 385.06,
+      "base": 362.605,
+      "buy": 385.21,
       "sell": 340,
       "spbuy": null,
       "spsell": null,
       "customerBuyForeignRate": 340,
-      "customerSellForeignRate": 385.06,
-      "midMarketRate": 362.53,
+      "customerSellForeignRate": 385.21,
+      "midMarketRate": 362.605,
       "quoteUnit": "TWD_PER_FOREIGN",
       "quotePerBaseUnit": 0.00294118
     },
@@ -255,7 +255,7 @@
     }
   },
   "schemaVersion": "2.0",
-  "asOf": "2026-09-09T20:02:53.411Z",
+  "asOf": "2026-09-09T22:28:41.797Z",
   "semanticFieldMapping": {
     "schemaVersion": "2.0",
     "semanticsDoc": "https://app.haotool.org/ratewise/open-data/",
