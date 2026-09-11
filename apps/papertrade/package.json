@@ -23,7 +23,7 @@
     "lucide-react": "^0.546.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "react-router-dom": "^6.30.4",
+    "react-router-dom": "^7.18.3",
     "zod": "^4.4.3",
     "zustand": "^5.0.14"
   },

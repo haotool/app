@@ -55,7 +55,7 @@
     "react-dom": "^19.2.7",
     "react-error-boundary": "^6.1.2",
     "react-i18next": "^17.0.10",
-    "react-router-dom": "^6.30.4",
+    "react-router-dom": "^7.18.3",
     "tailwind-merge": "^3.6.0",
     "zustand": "^5.0.14"
   },
