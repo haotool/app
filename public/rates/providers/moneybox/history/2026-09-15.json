@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-09-15T09:37:09.832Z",
-  "updateTime": "2026/09/15 18:37:09",
+  "timestamp": "2026-09-15T14:27:12.884Z",
+  "updateTime": "2026/09/15 23:27:12",
   "source": "MoneyBox (明洞換匯所聯盟)",
   "sourceUrl": "https://moneybox-exchange.com/zh-CHT/exchange",
   "apiUrl": "https://moneybox-exchange.com/api/rates",
@@ -8,8 +8,8 @@
   "rates": {
     "AED": {
       "currency": "AED",
-      "base": 365.76,
-      "buy": 391.52,
+      "base": 365.225,
+      "buy": 390.45,
       "sell": 340,
       "spbuy": null,
       "spsell": null
@@ -48,8 +48,8 @@
     },
     "EUR": {
       "currency": "EUR",
-      "base": 1562.5,
-      "buy": 1570,
+      "base": 1565,
+      "buy": 1575,
       "sell": 1555,
       "spbuy": null,
       "spsell": null
@@ -64,8 +64,8 @@
     },
     "HKD": {
       "currency": "HKD",
-      "base": 172.6,
-      "buy": 172.6,
+      "base": 173.3,
+      "buy": 174,
       "sell": 172.6,
       "spbuy": null,
       "spsell": null
@@ -80,9 +80,9 @@
     },
     "JPY": {
       "currency": "JPY",
-      "base": 877,
+      "base": 876.5,
       "buy": 880,
-      "sell": 874,
+      "sell": 873,
       "spbuy": null,
       "spsell": null
     },
@@ -136,9 +136,9 @@
     },
     "TWD": {
       "currency": "TWD",
-      "base": 41.9,
+      "base": 41.8,
       "buy": 42,
-      "sell": 41.8,
+      "sell": 41.6,
       "spbuy": null,
       "spsell": null
     },
