@@ -1,12 +1,12 @@
 {
   "providerId": "moneybox",
-  "generatedAt": "2026-09-18T04:46:39.990Z",
+  "generatedAt": "2026-09-18T09:14:16.359Z",
   "snapshots": [
     {
       "date": "2026-09-18",
       "raw": {
-        "timestamp": "2026-09-18T04:46:38.727Z",
-        "updateTime": "2026/09/18 13:46:38",
+        "timestamp": "2026-09-18T09:14:15.073Z",
+        "updateTime": "2026/09/18 18:14:15",
         "source": "MoneyBox (明洞換匯所聯盟)",
         "sourceUrl": "https://moneybox-exchange.com/zh-CHT/exchange",
         "apiUrl": "https://moneybox-exchange.com/api/rates",
@@ -14,33 +14,33 @@
         "rates": {
           "AED": {
             "currency": "AED",
-            "base": 373.97,
-            "buy": 397.94,
+            "base": 373.825,
+            "buy": 397.65,
             "sell": 350,
             "spbuy": null,
             "spsell": null
           },
           "AUD": {
             "currency": "AUD",
-            "base": 979.5,
-            "buy": 985,
-            "sell": 974,
+            "base": 982.5,
+            "buy": 990,
+            "sell": 975,
             "spbuy": null,
             "spsell": null
           },
           "CAD": {
             "currency": "CAD",
-            "base": 985.5,
+            "base": 986,
             "buy": 990,
-            "sell": 981,
+            "sell": 982,
             "spbuy": null,
             "spsell": null
           },
           "CHF": {
             "currency": "CHF",
-            "base": 1668.5,
+            "base": 1667.5,
             "buy": 1680,
-            "sell": 1657,
+            "sell": 1655,
             "spbuy": null,
             "spsell": null
           },
@@ -54,25 +54,25 @@
           },
           "EUR": {
             "currency": "EUR",
-            "base": 1585,
+            "base": 1582.5,
             "buy": 1590,
-            "sell": 1580,
+            "sell": 1575,
             "spbuy": null,
             "spsell": null
           },
           "GBP": {
             "currency": "GBP",
-            "base": 1835,
-            "buy": 1845,
+            "base": 1837.5,
+            "buy": 1850,
             "sell": 1825,
             "spbuy": null,
             "spsell": null
           },
           "HKD": {
             "currency": "HKD",
-            "base": 176.3,
+            "base": 176.25,
             "buy": 177,
-            "sell": 175.6,
+            "sell": 175.5,
             "spbuy": null,
             "spsell": null
           },
@@ -86,9 +86,9 @@
           },
           "JPY": {
             "currency": "JPY",
-            "base": 883,
-            "buy": 885,
-            "sell": 881,
+            "base": 877,
+            "buy": 879,
+            "sell": 875,
             "spbuy": null,
             "spsell": null
           },
@@ -102,9 +102,9 @@
           },
           "NZD": {
             "currency": "NZD",
-            "base": 792.5,
+            "base": 791.5,
             "buy": 805,
-            "sell": 780,
+            "sell": 778,
             "spbuy": null,
             "spsell": null
           },
@@ -126,16 +126,16 @@
           },
           "SGD": {
             "currency": "SGD",
-            "base": 1083,
+            "base": 1081.5,
             "buy": 1090,
-            "sell": 1076,
+            "sell": 1073,
             "spbuy": null,
             "spsell": null
           },
           "THB": {
             "currency": "THB",
-            "base": 42,
-            "buy": 42.5,
+            "base": 42.1,
+            "buy": 42.7,
             "sell": 41.5,
             "spbuy": null,
             "spsell": null
@@ -150,17 +150,17 @@
           },
           "USD": {
             "currency": "USD",
-            "base": 1383,
-            "buy": 1387,
-            "sell": 1379,
+            "base": 1381.5,
+            "buy": 1383,
+            "sell": 1380,
             "spbuy": null,
             "spsell": null
           },
           "VND": {
             "currency": "VND",
-            "base": 5.375,
+            "base": 5.35,
             "buy": 5.5,
-            "sell": 5.25,
+            "sell": 5.2,
             "spbuy": null,
             "spsell": null
           }
