@@ -1,12 +1,12 @@
 {
   "providerId": "moneybox",
-  "generatedAt": "2026-09-18T17:12:18.920Z",
+  "generatedAt": "2026-09-18T19:38:14.561Z",
   "snapshots": [
     {
       "date": "2026-09-19",
       "raw": {
-        "timestamp": "2026-09-18T17:12:17.429Z",
-        "updateTime": "2026/09/19 02:12:17",
+        "timestamp": "2026-09-18T19:38:10.794Z",
+        "updateTime": "2026/09/19 04:38:10",
         "source": "MoneyBox (明洞換匯所聯盟)",
         "sourceUrl": "https://moneybox-exchange.com/zh-CHT/exchange",
         "apiUrl": "https://moneybox-exchange.com/api/rates",
@@ -14,8 +14,8 @@
         "rates": {
           "AED": {
             "currency": "AED",
-            "base": 376.135,
-            "buy": 398.27,
+            "base": 376.005,
+            "buy": 398.01,
             "sell": 354,
             "spbuy": null,
             "spsell": null
