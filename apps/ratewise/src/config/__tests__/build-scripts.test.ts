@@ -681,10 +681,11 @@ describe('ratewise build scripts', () => {
     const workflowSource = await readMoneyBoxWorkflow();
 
     expect(workflowSource).toContain('branches:\n      - main');
-    expect(workflowSource).toContain('git fetch origin main');
-    expect(workflowSource).toContain('git checkout origin/main -- scripts/fetch-moneybox-rates.js');
-    expect(workflowSource).toContain(
-      'git checkout origin/main -- apps/ratewise/src/config/api-semantics-v2.ts',
+    expect(workflowSource).toContain('Checkout the complete publisher at the triggering code SHA');
+    expect(workflowSource).toContain('path: _fx-code');
+    expect(workflowSource).toContain('corepack pnpm generate:fx --check');
+    expect(workflowSource).not.toContain(
+      'git checkout origin/main -- scripts/fetch-moneybox-rates.js',
     );
     expect(workflowSource).not.toContain('SOURCE_REF="${GITHUB_REF_NAME:-main}"');
     expect(workflowSource).not.toContain(
@@ -726,6 +727,21 @@ describe('ratewise build scripts', () => {
     );
     expect(workflowSource).toContain(
       'HISTORY_PURGE_URL="${MONEYBOX_PURGE_DATA_BASE}/${MONEYBOX_HISTORY_DIR}/${CURRENT_DATE}.json"',
+    );
+  });
+
+  it('should publish a failed v3 provider status without overwriting legacy data', async () => {
+    const latestWorkflow = await readLatestRatesWorkflow();
+    const moneyBoxWorkflow = await readMoneyBoxWorkflow();
+
+    for (const workflow of [latestWorkflow, moneyBoxWorkflow]) {
+      expect(workflow).toContain("if: vars.RATEWISE_FX_V3_ENABLED == 'true'");
+      expect(workflow).toContain('FX_FETCH_FAILED:');
+      expect(workflow).toContain('public/rates/v3/');
+    }
+    expect(latestWorkflow).toContain('git diff --quiet public/rates/latest.json || changed=true');
+    expect(moneyBoxWorkflow).toContain(
+      'if [[ "${{ steps.fetch-rates.outcome }}" == "success" ]]; then',
     );
   });
 
@@ -1004,7 +1020,9 @@ describe('ratewise build scripts', () => {
     expect(typeof fixture.updateTime).toBe('string');
     expect(fixture.details).not.toHaveProperty('TWD');
 
-    expect(openApiGenerator).toContain("const API_VERSION = '2.1.0'");
+    expect(openApiGenerator).toContain("const API_VERSION = '3.0.0'");
+    expect(openApiGenerator).toContain("schemaVersion: '3.0'");
+    expect(openApiGenerator).toContain("'/public/rates/v3/current.json'");
     expect(openApiGenerator).toContain('ExchangeShopRateV2');
     expect(openApiGenerator).toContain("timestamp: {\n      type: 'string'");
     expect(openApiGenerator).not.toContain("description: 'Unix 時間戳（毫秒）'");
@@ -1022,9 +1040,20 @@ describe('ratewise build scripts', () => {
     expect(llmsGenerator).not.toContain('| timestamp | number | Unix 時間戳（秒） |');
     expect(llmsGenerator).not.toContain('| updateTime | string | ISO 8601 更新時間（UTC+8） |');
 
-    expect(openDataPage).toContain('17 種外幣的現金與即期四種報價，TWD 為基準幣');
+    expect(openDataPage).toContain('v3 current release pointer');
     expect(openDataPage).toContain("type: 'string (ISO 8601)'");
     expect(openDataPage).not.toContain('integer (milliseconds)');
     expect(openDataPage).not.toContain('包含全部 18 種幣別（含 TWD 基準幣）的現金與即期四種報價');
+  });
+
+  it('should publish the v3 contract schema at the documented public URL', async () => {
+    const contractPath = path.resolve(__dirname, '../../../public/api/v3/contract.schema.json');
+    const contract = JSON.parse(await readFile(contractPath, 'utf-8')) as {
+      $id?: string;
+      $defs?: Record<string, unknown>;
+    };
+    expect(contract.$id).toBe('https://app.haotool.org/ratewise/api/v3/contract.schema.json');
+    expect(contract.$defs?.['SourceQuote']).toBeDefined();
+    expect((await readApiJsonGenerator()).toString()).toContain('contract.schema.json');
   });
 });

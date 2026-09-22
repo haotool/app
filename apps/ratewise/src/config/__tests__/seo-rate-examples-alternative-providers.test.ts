@@ -18,11 +18,12 @@ describe('AlternativeProvider interface', () => {
     const provider = SEO_RATE_EXAMPLES['KRW']!.alternativeProviders![0];
     expect(provider!.name).toBe('明洞換匯所');
     expect(provider!.nameEn).toBe('Myeongdong Exchange');
+    expect(provider!.providerId).toBe('moneybox');
     expect(typeof provider!.rate).toBe('number');
-    expect(typeof provider!.rateInverse).toBe('number');
     expect(provider!.source).toBe('MoneyBox');
     expect(provider!.sourceUrl).toContain('moneybox');
-    expect(typeof provider!.rateDate).toBe('string');
+    expect(provider).toHaveProperty('sourcePublishedAt');
+    expect(typeof provider!.fetchedAt).toBe('string');
     expect(typeof provider!.note).toBe('string');
   });
 
@@ -36,28 +37,22 @@ describe('AlternativeProvider interface', () => {
   it('rateBuy 應大於 rate（換匯所買入 KRW 的門檻比賣出寬鬆）', () => {
     const provider = SEO_RATE_EXAMPLES['KRW']!.alternativeProviders![0]!;
     // sell=46.0（旅客持 TWD 換 KRW 得 46）; buy=46.7（旅客持 KRW 換 TWD 需付 46.7）
-    expect(provider.rateBuy!).toBeGreaterThan(provider.rate);
+    expect(provider.rateBuy!).toBeGreaterThan(provider.rate!);
   });
 
-  it('rateBuy 應與 rateInverse 不同（rateBuy 是實際 buy 報價，rateInverse 是 1/sell 計算值）', () => {
+  it('不發布由 canonical quote 倒數推導的 rateInverse', () => {
     const provider = SEO_RATE_EXAMPLES['KRW']!.alternativeProviders![0]!;
-    // rateInverse = 1/sell ≈ 0.02174（TWD/KRW），rateBuy = 46.7（KRW/TWD），單位不同
-    expect(provider.rateBuy!).not.toBeCloseTo(provider.rateInverse, 3);
-  });
-
-  it('rate 與 rateInverse 應互為倒數（誤差 < 0.5%）', () => {
-    const provider = SEO_RATE_EXAMPLES['KRW']!.alternativeProviders![0]!;
-    const product = provider.rate * provider.rateInverse;
-    expect(product).toBeCloseTo(1.0, 1); // 誤差 < 0.05
+    expect(provider).not.toHaveProperty('rateInverse');
   });
 
   it('明洞匯率（KRW per TWD）應高於台銀現金賣出換算值', () => {
     const krw = SEO_RATE_EXAMPLES['KRW']!;
     const provider = krw.alternativeProviders![0]!;
+    expect(krw.cashSell).not.toBeNull();
     // 台銀 cashSell = 1 KRW = X TWD，換算成 1 TWD = 1/cashSell KRW
-    const taiwanBankRate = 1 / krw.cashSell;
+    const taiwanBankRate = 1 / krw.cashSell!;
     // 明洞匯率應更優惠（同樣台幣換更多韓元）
-    expect(provider.rate).toBeGreaterThan(taiwanBankRate);
+    expect(provider.rate!).toBeGreaterThan(taiwanBankRate);
   });
 
   it('非 KRW 幣別不應有 alternativeProviders', () => {
@@ -68,8 +63,8 @@ describe('AlternativeProvider interface', () => {
 
   it('AlternativeProvider 型別檢查：rate 必須為正數', () => {
     const provider = SEO_RATE_EXAMPLES['KRW']!.alternativeProviders![0]!;
-    expect(provider.rate).toBeGreaterThan(0);
-    expect(provider.rateInverse).toBeGreaterThan(0);
+    expect(provider.rate!).toBeGreaterThan(0);
+    expect(provider.rateBuy!).toBeGreaterThan(0);
   });
 
   it('RateExample 的 alternativeProviders 為 optional', () => {
@@ -85,8 +80,9 @@ describe('buildMyeongdongComparison 計算輔助', () => {
     const provider = krw.alternativeProviders![0]!;
     const exampleTWD = krw.exampleTWD; // 30000
 
-    const myeongdongKRW = Math.floor(exampleTWD * provider.rate);
-    const taiwanBankKRW = krw.foreignAtCash;
+    const myeongdongKRW = Math.floor(exampleTWD * provider.rate!);
+    expect(krw.foreignAtCash).not.toBeNull();
+    const taiwanBankKRW = krw.foreignAtCash!;
 
     expect(myeongdongKRW).toBeGreaterThan(taiwanBankKRW);
     const diffPct = ((myeongdongKRW - taiwanBankKRW) / taiwanBankKRW) * 100;

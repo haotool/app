@@ -32,7 +32,8 @@ function tryAutoDetect(): void {
 
 /**
  * App 啟動時執行：
- * 1. 從 moneybox CDN 取得最新匯率（TWD 賣出價）；回前景且快照過期時 refetch（TTL 6h）
+ * 1. 優先取得已驗證 v3 快照；資料 gate 尚未啟用時才使用明示的 legacy 參考值
+ *    （TWD→KRW）；回前景且快照過期時 refetch（TTL 6h）
  * 2. 若使用者未手動設定幣別，依時區自動切換
  *    - Asia/Seoul → KRW
  *    - Asia/Taipei → TWD

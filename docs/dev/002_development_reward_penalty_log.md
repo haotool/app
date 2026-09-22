@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+375
+> 本次分數變化：+6（reward 6、penalty 0、neutral 0）｜累計總分：+381
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,36 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-09-22
+- ID：reward-ratewise-prerender-coverage-timeout
+- 原因：RateWise coverage CI 的 prerender 建置在 120 秒 hook 限制內不穩定逾時。
+- 解法：將 prerender 建置鎖與相關測試 hook 的上限延長至 5 分鐘，保留原子鎖與產物驗證。
+
+- 日期：2026-09-22
+- ID：reward-ratewise-fx-v3-prototype-pollution-guard
+- 原因：CodeQL 發現 legacy projection 對來源幣別動態寫入普通物件可能觸發 prototype pollution。
+- 解法：改用無原型物件承接動態幣別鍵，保留既有 legacy 輸出欄位契約。
+
+- 日期：2026-09-22
+- ID：reward-ratewise-fx-v3-seo-ci-compatibility
+- 原因：SEO/E2E CI 未同步 v3 rollout 的既有 Unicode 時間、shell chunk 與 legacy detail fixture 契約。
+- 解法：正規化 Unicode 空白時間、補齊 legacy fixture detail、將 precache 上限調整至 110 並補回歸驗證。
+
+- 日期：2026-09-22
+- ID：reward-ratewise-fx-v3-history-calendar-date
+- 原因：review 發現週末或休市 carry-forward 的歷史檔案日期晚於最後牌告日會被錯誤拒絕。
+- 解法：將 history date 驗證改為 provider 當地來源日期至 release 日的合法日曆範圍，並補回歸測試。
+
+- 日期：2026-09-22
+- ID：reward-ratewise-fx-v3-review-integrity
+- 原因：review 發現 release 完整性、legacy fallback、公開 contract 與 data branch gate 的邊界仍有可重現缺口。
+- 解法：補齊 provider status ranking、pointer purge、公開 contract schema、legacy fallback、歷史日期與文件授權邊界驗證。
+
+- 日期：2026-09-22
+- ID：reward-ratewise-fx-v3-product-contract
+- 原因：匯率來源、方向試算、歷史遷移、SEO 與發布鏈缺少同一份可追溯產品契約。
+- 解法：完成 v3 schema／十進位方向核心、來源與歷史驗證、hash release、UI／SEO／OpenAPI 串接及完整測試守門。
 
 - 日期：2026-09-01
 - ID：reward-haotool-papertrade-screenshot-asset

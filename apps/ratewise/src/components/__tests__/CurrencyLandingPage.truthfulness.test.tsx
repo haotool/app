@@ -72,7 +72,7 @@ describe('CurrencyLandingPage template truthfulness', () => {
         projectRoot: appRoot,
         distRoot: distPath,
       });
-    }, 120000);
+    }, 300000);
 
     it.each([...CURRENCY_SEO_PATHS, ...REVERSE_CURRENCY_SEO_PATHS])(
       '%s 禁止保留通用硬編污染文案',

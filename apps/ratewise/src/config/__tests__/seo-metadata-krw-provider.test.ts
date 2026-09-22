@@ -19,20 +19,21 @@ describe('buildAlternativeProviderFaq（twd-to-foreign，預設方向）', () =>
   it('FAQ answer 應包含台銀換算金額', () => {
     const faqs = buildAlternativeProviderFaq('KRW', krw);
     const answer = faqs[0]!.answer;
-    expect(answer).toContain(krw.foreignAtCash.toLocaleString());
+    expect(krw.foreignAtCash).not.toBeNull();
+    expect(answer).toContain(krw.foreignAtCash!.toLocaleString());
   });
 
   it('FAQ answer 應包含明洞換算金額', () => {
     const faqs = buildAlternativeProviderFaq('KRW', krw);
     const answer = faqs[0]!.answer;
-    const myeongdongKRW = Math.floor(krw.exampleTWD * provider.rate);
+    const myeongdongKRW = Math.floor(krw.exampleTWD * provider.rate!);
     expect(answer).toContain(myeongdongKRW.toLocaleString());
   });
 
-  it('FAQ answer 應包含差額百分比（%）', () => {
+  it('FAQ answer 應揭露兩地點的牌告差額與限制', () => {
     const faqs = buildAlternativeProviderFaq('KRW', krw);
     const answer = faqs[0]!.answer;
-    expect(answer).toMatch(/%/);
+    expect(answer).toMatch(/多約|少約/);
   });
 
   it('FAQ answer 應說明需現場前往', () => {
@@ -62,7 +63,7 @@ describe('buildAlternativeProviderFaq（to-twd，KRW→TWD 方向）', () => {
     const faqs = buildAlternativeProviderFaq('KRW', krw, 'to-twd');
     const answer = faqs[0]!.answer;
     const rateBuy = provider.rateBuy ?? provider.rate;
-    const providerTWD = Math.floor(1_000_000 / rateBuy);
+    const providerTWD = Math.floor(1_000_000 / rateBuy!);
     expect(answer).toContain(providerTWD.toLocaleString());
   });
 
@@ -72,11 +73,11 @@ describe('buildAlternativeProviderFaq（to-twd，KRW→TWD 方向）', () => {
     expect(answer).toMatch(/現場|親自|現鈔/);
   });
 
-  it('FAQ answer 應使用 rateBuy 而非 rate', () => {
+  it('FAQ answer 應使用反向 canonical 試算而非 forward rate', () => {
     const faqs = buildAlternativeProviderFaq('KRW', krw, 'to-twd');
     const answer = faqs[0]!.answer;
-    // rateBuy (46.7) 應出現在答案中（作為 KRW/TWD 匯率顯示）
-    expect(answer).toContain(provider.rateBuy!.toFixed(1));
+    expect(answer).toContain('TWD');
+    expect(answer).not.toContain(provider.rate!.toFixed(1));
   });
 
   it('to-twd FAQ question 不應包含「去首爾前」（那是 twd-to-foreign 方向）', () => {

@@ -48,6 +48,7 @@ describe('fetchHistoricalRatesRange - aggregate endpoint', () => {
     expect(result).toHaveLength(3);
     expect(result[0]?.date).toBe('2026-05-04');
     expect(result[0]?.data.rates.USD).toBe(31.92);
+    expect(result[0]?.data.updateTime).toBe('2026-05-05T08:00:00+08:00');
   });
 
   it('aggregate endpoint 失敗時應 fallback 到逐日 fetch', async () => {

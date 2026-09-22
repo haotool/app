@@ -13,7 +13,7 @@ HaoRate 是以臺灣銀行牌告匯率為基礎的換匯工具，重點是幫台
 
 - 資料來源為臺灣銀行官方牌告匯率，涵蓋 18 種貨幣。
 - 約每 5 分鐘檢查更新最新報價，涵蓋現金買入、現金賣出、即期買入、即期賣出四種。
-- 資料管線：GitHub Actions 每日抓取 + 雙重驗證（台銀牌告 vs open.er-api.com 中間價，誤差 ≤ 2%）+ Pull Request 自動審核後合併至 data branch。
+- 資料管線：GitHub Actions 抓取 provider 牌告，v3 snapshot 保留來源/擷取時間與 SHA-256 provenance，經 Pull Request 驗證後合併至 data branch。
 - 匯差範例數字透過 SSG（vite-react-ssg）於 build 期嵌入靜態 HTML，搜尋引擎無需執行 JavaScript 即可讀取。
 
 ## 技術與資料面能力
@@ -50,7 +50,7 @@ HaoRate 是以臺灣銀行牌告匯率為基礎的換匯工具，重點是幫台
 
 ### 5. 匯差數字如何保持最新且讓搜尋引擎正確讀取？
 
-匯差範例數據由 GitHub Actions 每日自動執行：同時抓取台灣銀行牌告匯率與 open.er-api.com 市場中間價（Google、XE、Wise、Apple 計算機的共同基準），進行雙重驗證（兩個中間價差距須在 2% 以內），生成靜態 TypeScript 常數，透過 Pull Request 自動審核後進入主分支。最終數字直接嵌入靜態 HTML（vite-react-ssg SSG 預渲染），Google 爬蟲無需執行 JavaScript 即可讀取所有匯差數字。
+牌告範例由銀行與換錢所快照生成，與換算器共用 v3 方向選擇及十進位試算。來源發布時間與擷取時間分開記錄；未知來源時間不補成今天。產物透過 Pull Request 驗證後嵌入靜態 HTML，頁面、API 及結構化資料可依報價識別碼追溯。牌告中點只作數學參考，不視為外部市場價或成交價。
 
 ---
 

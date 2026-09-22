@@ -32,11 +32,15 @@ const CDN_DATA_BASE = `https://cdn.jsdelivr.net/gh/${GITHUB_REPO_PATH}@data`;
 const RAW_DATA_BASE = `https://raw.githubusercontent.com/${GITHUB_REPO_PATH}/data`;
 const RATES_LATEST_PATH = '/public/rates/latest.json';
 const RATES_HISTORY_EXAMPLE_DATE = '2026-03-19';
+const FX_V3_CURRENT_PATH = '/public/rates/v3/current.json';
 const RATES_API = {
   latestCdn: `${CDN_DATA_BASE}${RATES_LATEST_PATH}`,
   latestRaw: `${RAW_DATA_BASE}${RATES_LATEST_PATH}`,
   historyCdnExample: `${CDN_DATA_BASE}/public/rates/history/${RATES_HISTORY_EXAMPLE_DATE}.json`,
   historyRawExample: `${RAW_DATA_BASE}/public/rates/history/${RATES_HISTORY_EXAMPLE_DATE}.json`,
+  v3CurrentCdn: `${CDN_DATA_BASE}${FX_V3_CURRENT_PATH}`,
+  v3CurrentRaw: `${RAW_DATA_BASE}${FX_V3_CURRENT_PATH}`,
+  v3Contract: `${SITE_CONFIG.url}api/v3/contract.schema.json`,
   actionsUrl: `${APP_INFO.github}/actions`,
 };
 
@@ -268,7 +272,7 @@ ${APP_INFO.shortName} 是以臺灣銀行牌告匯率為基礎的換匯工具，�
 
 - 資料來源為臺灣銀行官方牌告匯率，涵蓋 ${SUPPORTED_CURRENCY_COUNT} 種貨幣。
 - 約每 5 分鐘檢查更新最新報價，涵蓋現金買入、現金賣出、即期買入、即期賣出四種。
-- 資料管線：GitHub Actions 每日抓取 + 雙重驗證（台銀牌告 vs open.er-api.com 中間價，誤差 ≤ 2%）+ Pull Request 自動審核後合併至 data branch。
+- 資料管線：GitHub Actions 抓取 provider 牌告，v3 snapshot 保留來源/擷取時間與 SHA-256 provenance，經 Pull Request 驗證後合併至 data branch。
 - 匯差範例數字透過 SSG（vite-react-ssg）於 build 期嵌入靜態 HTML，搜尋引擎無需執行 JavaScript 即可讀取。
 
 ## 技術與資料面能力
@@ -396,18 +400,27 @@ function buildOpenDataMd() {
 
 | 類型 | URL |
 |------|-----|
+| v3 current pointer（主要，jsDelivr CDN） | \`${RATES_API.v3CurrentCdn}\` |
+| v3 current pointer（備援，GitHub Raw） | \`${RATES_API.v3CurrentRaw}\` |
 | 最新匯率（主要，jsDelivr CDN） | \`${RATES_API.latestCdn}\` |
 | 最新匯率（備援，GitHub Raw） | \`${RATES_API.latestRaw}\` |
 | 歷史匯率 | \`${CDN_DATA_BASE}/public/rates/history/{YYYY-MM-DD}.json\` |
 | OpenAPI 規格 | ${BASE_URL}openapi.json |
 
-- **免 API Key**、**免費使用**、**CORS 已啟用**。
-- 更新頻率：約每 5 分鐘檢查更新臺灣銀行牌告。
-- 涵蓋 ${SUPPORTED_CURRENCY_COUNT} 種貨幣的現金買/賣、即期買/賣四種報價。
+- **免 API Key**、**公開讀取**、**CORS 已啟用**；資料使用與再散布依各 provider 條款。
+- v3 current pointer 只有在 data branch 啟用發布 gate 後才會存在；未啟用時請使用明確標示的 legacy adapter。
+- 更新頻率：約每 5 分鐘檢查 provider；canonical v3 release 以 manifest 與 SHA-256 objects 綁定。
+- v3 quote 使用 fromCurrency → toCurrency 與 decimal string rate；legacy latest/history 僅作相容投影。
 
 ## 呼叫範例
 
-### curl
+### curl（v3 pointer）
+
+\`\`\`bash
+curl -s ${RATES_API.v3CurrentCdn} | jq .
+\`\`\`
+
+### curl（legacy adapter）
 
 \`\`\`bash
 curl -s ${RATES_API.latestCdn} | jq '.details.USD'
@@ -416,26 +429,27 @@ curl -s ${RATES_API.latestCdn} | jq '.details.USD'
 ### JavaScript / Node.js
 
 \`\`\`javascript
-const res = await fetch('${RATES_API.latestCdn}');
-const data = await res.json();
-console.log('USD 現金賣出：', data.details.USD.cash.sell);
-console.log('USD 即期賣出：', data.details.USD.spot.sell);
+const res = await fetch('${RATES_API.v3CurrentCdn}');
+const current = await res.json();
+// 依 current.manifest 讀取並驗證 manifest/object SHA-256，再使用 snapshot.quotes。
+console.log(current.releaseId);
 \`\`\`
 
 ### Python
 
 \`\`\`python
 import urllib.request, json
-url = '${RATES_API.latestCdn}'
+url = '${RATES_API.v3CurrentCdn}'
 with urllib.request.urlopen(url) as r:
     data = json.loads(r.read())
-print(data['details']['JPY']['cash']['buy'])
+print(data['releaseId'])
 \`\`\`
 
-## 資料格式
+## legacy adapter 資料格式
 
 \`\`\`json
 {
+  "schemaVersion": "2.0",
   "updateTime": "2026-04-17T08:00:00+08:00",
   "details": {
     "USD": {
@@ -446,10 +460,10 @@ print(data['details']['JPY']['cash']['buy'])
 }
 \`\`\`
 
-- \`cash.buy\`：現金買入（銀行向您收購外幣現鈔）
-- \`cash.sell\`：現金賣出（您臨櫃向銀行買外幣現鈔）
-- \`spot.buy\`：即期買入（外幣帳戶結匯回台幣）
-- \`spot.sell\`：即期賣出（外幣帳戶購匯或匯款）
+- v3 \`QuoteSnapshot.fromCurrency\`：來源幣別
+- v3 \`QuoteSnapshot.toCurrency\`：目標幣別
+- v3 \`QuoteSnapshot.rate\`：每 1 來源幣可取得的目標幣 decimal string
+- v3 \`sourceQuote\`：現金/即期、通路、來源發布時間與擷取時間等適用條件
 
 ## 速率限制
 
@@ -459,11 +473,11 @@ print(data['details']['JPY']['cash']['buy'])
 
 ## 使用限制與授權聲明
 
-- 允許個人專案、學術研究、非商業 App、教學與媒體引用。
-- 引用時請標示「資料來源：臺灣銀行牌告匯率」。
+- 使用或再散布前，請先確認各 provider 的條款與授權範圍；目前 metadata 未提供 provider 授權保證。
+- 公開頁面請標示資料來源與 attribution。
 - 禁止大量爬取歷史資料，避免對 CDN 或 GitHub 造成異常流量。
 - 禁止宣稱本資料為官方臺灣銀行 API；${APP_INFO.shortName} 與臺灣銀行無隸屬關係。
-- 程式碼以 ${APP_INFO.license} 授權釋出；資料原始版權屬臺灣銀行。
+- 程式碼以 ${APP_INFO.license} 授權釋出；臺灣銀行與 MoneyBox 資料的使用及再散布依各 provider 條款，不能由程式碼授權推定。
 - 匯率僅供參考，實際交易以金融機構公告為準。
 
 ## 常見問題

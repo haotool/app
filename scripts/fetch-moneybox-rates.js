@@ -4,6 +4,7 @@
  * 更新頻率: 每5分鐘（由 GitHub Actions cron 觸發，見 .github/workflows/update-moneybox-rates.yml）
  */
 
+import { parseSourceRate, parseSourceJson, sourcePublishedAt } from './lib/source-quotes.mjs';
 import { writeFileSync, mkdirSync, readFileSync } from 'fs';
 import { dirname, isAbsolute, join } from 'path';
 import { fileURLToPath } from 'url';
@@ -17,7 +18,7 @@ const __dirname = dirname(__filename);
 
 // 設定檔案路徑
 const REPO_ROOT = join(__dirname, '..');
-const OUTPUT_DIR = join(REPO_ROOT, 'public', 'rates');
+const OUTPUT_DIR = process.env.FX_DATA_ROOT || join(REPO_ROOT, 'public', 'rates');
 const OUTPUT_FILE = join(OUTPUT_DIR, 'providers', 'moneybox', 'latest.json');
 
 const MAX_RETRIES = 3;
@@ -131,7 +132,8 @@ function mapUpstreamRow(item) {
   if (!code) return null;
 
   const readRate = (field) => {
-    const parsed = Number.parseFloat(item?.[field]);
+    const raw = parseSourceRate(item?.[field]);
+    const parsed = raw === null ? null : Number(raw);
     // 0 與非有限值皆視為「上游未報價」，交由熔斷判定，不可當成有效匯率
     return Number.isFinite(parsed) && parsed > 0 ? toLegacyQuoteUnit(code, parsed) : null;
   };
@@ -195,7 +197,7 @@ async function fetchMoneyBoxRates() {
         throw error;
       }
 
-      const data = await response.json();
+      const data = parseSourceJson(await response.text());
       const upstreamRows = data?.data?.rates;
 
       if (data?.success !== true || !Array.isArray(upstreamRows) || upstreamRows.length === 0) {
@@ -219,8 +221,23 @@ async function fetchMoneyBoxRates() {
       console.log(`✅ Successfully parsed ${Object.keys(rates).length} currencies`);
       console.log(`   TWD sell: ${rates.TWD.sell} KRW/TWD (旅客持台幣現金換韓元的到手匯率)`);
 
+      const fetchedAt = new Date().toISOString();
+      const sourceQuotes = Object.fromEntries(
+        upstreamRows.map((row) => [
+          row.currencyCode,
+          {
+            buy: parseSourceRate(row.buyRate),
+            sell: parseSourceRate(row.sellRate),
+            unitAmount: '1',
+          },
+        ]),
+      );
       return {
-        timestamp: new Date().toISOString(),
+        timestamp: fetchedAt,
+        fetchedAt,
+        lastSuccessfulCheckAt: fetchedAt,
+        sourcePublishedAt: sourcePublishedAt(data.data.publishedAt),
+        sourceQuotes,
         updateTime: new Date().toLocaleString('zh-TW', {
           timeZone: 'Asia/Seoul',
           year: 'numeric',
@@ -296,7 +313,7 @@ function assertMoneyBoxRatesIntegrity(
     throw new AbortError(
       `Upstream sell-quote outage: only ${quotedSellCount}/${currencyCount} currencies carry a positive sell rate ` +
         `(upstream returns "0.0000"); this is a source-side outage, not a per-currency anomaly. ` +
-        `Verify https://cems.moneybox.or.kr/ before touching sanity thresholds; refusing to write suspicious data`,
+        `Verify https://moneybox-exchange.com/api/rates before touching sanity thresholds; refusing to write suspicious data`,
     );
   }
 
@@ -471,7 +488,23 @@ async function main() {
     const schemaMigrationNeeded = needsSchemaMigration();
 
     if (!hasChanges && !schemaMigrationNeeded) {
-      console.log('ℹ️  No rate changes detected, skipping update');
+      const previous = JSON.parse(readFileSync(OUTPUT_FILE, 'utf8'));
+      writeFileSync(
+        OUTPUT_FILE,
+        JSON.stringify(
+          {
+            ...previous,
+            sourceQuotes: ratesData.sourceQuotes,
+            fetchedAt: ratesData.fetchedAt,
+            lastSuccessfulCheckAt: ratesData.lastSuccessfulCheckAt,
+            sourcePublishedAt: ratesData.sourcePublishedAt,
+          },
+          null,
+          2,
+        ),
+        'utf8',
+      );
+      console.log('ℹ️  Rates unchanged; successful source check recorded');
       return;
     }
 
@@ -501,7 +534,7 @@ async function main() {
     console.log('');
     console.log('💱 TWD Rates at MoneyBox:');
     console.log(`  Base (中間牌告): ${twdRate.base} KRW/TWD`);
-    console.log(`  Buy  (換匯所買入 TWD): ${twdRate.buy} KRW/TWD`);
+    console.log(`  Buy  (店家賣出台幣，legacy buy): ${twdRate.buy} KRW/TWD`);
     console.log(`  Sell (旅客持 TWD 換 KRW 到手): ${twdRate.sell} KRW/TWD`);
     console.log(`  SP Buy  (高額買入): ${twdRate.spbuy} KRW/TWD`);
     console.log(`  SP Sell (高額賣出): ${twdRate.spsell} KRW/TWD`);
@@ -519,7 +552,7 @@ async function main() {
     console.error(`Stack: ${error.stack}`);
     console.error('');
     console.error('💡 Troubleshooting:');
-    console.error('  1. Check MoneyBox API status: https://cems.moneybox.or.kr/');
+    console.error('  1. Check MoneyBox API status: https://moneybox-exchange.com/api/rates');
     console.error('  2. Verify network connectivity');
     console.error('  3. Check API response format changes');
     process.exit(1);

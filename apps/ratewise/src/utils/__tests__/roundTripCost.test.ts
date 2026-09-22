@@ -124,7 +124,7 @@ describe('真實牌告資料迴歸', () => {
   it('還原的買入價恆低於賣出價（價差方向正確）', () => {
     for (const [code, ex] of entries) {
       const buy = deriveCashBuy(ex.bankMid, ex.cashSell);
-      if (buy != null) {
+      if (buy != null && ex.cashSell != null) {
         expect(buy, `${code} 買入不應高於賣出`).toBeLessThan(ex.cashSell);
       }
     }
@@ -134,7 +134,8 @@ describe('真實牌告資料迴歸', () => {
     const costOf = (code: 'USD' | 'IDR') => {
       const ex = SEO_RATE_EXAMPLES[code];
       expect(ex, `${code} 應存在於 SEO_RATE_EXAMPLES`).toBeDefined();
-      return computeRoundTripCost(ex!.cashSell, deriveCashBuy(ex!.bankMid, ex!.cashSell));
+      expect(ex!.cashSell).not.toBeNull();
+      return computeRoundTripCost(ex!.cashSell!, deriveCashBuy(ex!.bankMid, ex!.cashSell!));
     };
     const usd = costOf('USD');
     const idr = costOf('IDR');
