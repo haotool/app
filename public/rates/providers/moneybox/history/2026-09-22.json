@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-09-21T22:11:17.915Z",
-  "updateTime": "2026/09/22 07:11:17",
+  "timestamp": "2026-09-22T00:50:25.037Z",
+  "updateTime": "2026/09/22 09:50:25",
   "source": "MoneyBox (明洞換匯所聯盟)",
   "sourceUrl": "https://moneybox-exchange.com/zh-CHT/exchange",
   "apiUrl": "https://moneybox-exchange.com/api/rates",
@@ -8,8 +8,8 @@
   "rates": {
     "AED": {
       "currency": "AED",
-      "base": 372.465,
-      "buy": 394.93,
+      "base": 370.595,
+      "buy": 391.19,
       "sell": 350,
       "spbuy": null,
       "spsell": null
@@ -40,9 +40,9 @@
     },
     "CNY": {
       "currency": "CNY",
-      "base": 205.2,
+      "base": 204.7,
       "buy": 205.9,
-      "sell": 204.5,
+      "sell": 203.5,
       "spbuy": null,
       "spsell": null
     },
@@ -64,9 +64,9 @@
     },
     "HKD": {
       "currency": "HKD",
-      "base": 176,
+      "base": 175.25,
       "buy": 177,
-      "sell": 175,
+      "sell": 173.5,
       "spbuy": null,
       "spsell": null
     },
@@ -80,9 +80,9 @@
     },
     "JPY": {
       "currency": "JPY",
-      "base": 873.5,
-      "buy": 876,
-      "sell": 871,
+      "base": 870,
+      "buy": 875,
+      "sell": 865,
       "spbuy": null,
       "spsell": null
     },
@@ -128,33 +128,33 @@
     },
     "THB": {
       "currency": "THB",
-      "base": 42.1,
+      "base": 41.8,
       "buy": 42.6,
-      "sell": 41.6,
+      "sell": 41,
       "spbuy": null,
       "spsell": null
     },
     "TWD": {
       "currency": "TWD",
-      "base": 42.6,
-      "buy": 42.8,
-      "sell": 42.4,
+      "base": 42.3,
+      "buy": 42.5,
+      "sell": 42.1,
       "spbuy": null,
       "spsell": null
     },
     "USD": {
       "currency": "USD",
-      "base": 1377,
-      "buy": 1383,
-      "sell": 1371,
+      "base": 1367.5,
+      "buy": 1370,
+      "sell": 1365,
       "spbuy": null,
       "spsell": null
     },
     "VND": {
       "currency": "VND",
-      "base": 5.425,
+      "base": 6.03,
       "buy": 5.6,
-      "sell": 5.25,
+      "sell": 6.46,
       "spbuy": null,
       "spsell": null
     }
