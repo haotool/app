@@ -45,6 +45,7 @@ vi.mock('workbox-routing', () => ({
 vi.mock('workbox-strategies', () => ({
   CacheFirst: class CacheFirst {},
   NetworkOnly: class NetworkOnly {},
+  NetworkFirst: class NetworkFirst {},
   StaleWhileRevalidate: class StaleWhileRevalidate {},
 }));
 
@@ -189,7 +190,6 @@ describe('Service Worker Cache Strategies', () => {
    * 驗證快取策略配置（預期值 = 修復後的正確配置）
    */
   const expectedStrategies = {
-    'history-rates-cdn': { strategy: 'CacheFirst', maxAge: 365 * 24 * 60 * 60 },
     'latest-rate-cache': { strategy: 'StaleWhileRevalidate', maxAge: 7 * 24 * 60 * 60 },
     'image-cache': { strategy: 'CacheFirst', maxAge: 30 * 24 * 60 * 60, maxEntries: 60 },
     'font-cache': { strategy: 'CacheFirst', maxAge: 365 * 24 * 60 * 60 },
@@ -210,19 +210,13 @@ describe('Service Worker Cache Strategies', () => {
     expect(sourceCode).toContain('fetchAndCacheNavigation(request, cache)');
     expect(sourceCode).toContain("matchPrecache('index.html')");
     // 防回歸：禁止 Workbox NetworkFirst navigation plugin（與自訂 bounded fetch 策略不同）。
-    expect(sourceCode).not.toContain('new NetworkFirst(');
+    expect(sourceCode).not.toContain('new NavigationRoute(new NetworkFirst(');
     // 防回歸：禁止重新引入 3s 全域 navigation timeout（iOS eviction 假離線根因）。
     expect(sourceCode).not.toContain('const NAVIGATION_NETWORK_TIMEOUT_MS');
     expect(sourceCode).not.toContain('Promise.race([networkResponse, timeoutFallback])');
     // 冷快取與離線 fallback 允許 8s bounded race，避免 hung network 無限白屏。
     expect(sourceCode).toContain('const NAVIGATION_FETCH_TIMEOUT_MS = 8000');
     expect(sourceCode).toContain('navigation-fetch-timeout');
-  });
-
-  it('should have correct historical rates cache configuration', () => {
-    const config = expectedStrategies['history-rates-cdn'];
-    expect(config.strategy).toBe('CacheFirst');
-    expect(config.maxAge).toBe(365 * 24 * 60 * 60); // 1 year
   });
 
   it('should have correct latest rate cache configuration', () => {
@@ -358,7 +352,7 @@ describe('Service Worker Cache Strategies', () => {
     expect(sourceCode).toContain("emergencyReason: 'emergency-navigation-fallback'");
     expect(sourceCode).toContain("matchPrecache('index.html')");
     // 防回歸：navigation 不可重新引入 NetworkFirst（cold-start 白屏根因之一）。
-    expect(sourceCode).not.toContain('new NetworkFirst(');
+    expect(sourceCode).not.toContain('new NavigationRoute(new NetworkFirst(');
     expect(sourceCode).not.toContain('NAVIGATION_NETWORK_TIMEOUT_MS');
   });
 

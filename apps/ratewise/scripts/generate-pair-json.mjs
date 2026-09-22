@@ -25,6 +25,8 @@ const ROOT = resolve(__dirname, '..');
 
 // GitHub raw 無快取，確保 liveRateUrl 指向真正即時資料（jsdelivr 有 12-24h 快取延遲，不適合用於 liveRateUrl）
 const CDN_BASE_URL = `${RAW_DATA_BASE}/public/rates`;
+const FX_V3_AVAILABILITY =
+  'v3 current 只有 data branch 的 RATEWISE_FX_V3_ENABLED=true 發布 gate 開啟後才存在；尚未啟用時請使用 legacy 相容投影。';
 
 const RATE_TYPE_DESCRIPTIONS = {
   cash_sell: '現金賣出：銀行以此價賣出外幣現鈔（你拿台幣換外幣現金）',
@@ -52,19 +54,30 @@ for (const path of CURRENCY_SEO_PATHS) {
     pair: `${fromCode}/${toCode}`,
     from: fromCode,
     to: toCode,
-    schemaVersion: API_SEMANTICS_SCHEMA_VERSION,
+    schemaVersion: '3.0',
+    legacySchemaVersion: API_SEMANTICS_SCHEMA_VERSION,
     semanticsDoc: API_SEMANTICS_DOC.publicUrl,
     semanticFieldMapping: buildSemanticFieldMapping(),
     slug,
     pageUrl: `${SITE_CONFIG.url}${slug}/`,
     liveRateUrl: `${CDN_BASE_URL}/latest.json`,
+    v3CurrentUrl: `${CDN_BASE_URL}/v3/current.json`,
+    v3ContractUrl: 'https://app.haotool.org/ratewise/api/v3/contract.schema.json',
+    v3Availability: FX_V3_AVAILABILITY,
+    canonicalFields: {
+      current: `${CDN_BASE_URL}/v3/current.json`,
+      quote: 'ProviderSnapshot.quotes[]',
+      direction: 'fromCurrency → toCurrency',
+      rate: 'decimal string: target units per 1 fromCurrency',
+      hash: 'SHA-256 over final UTF-8 bytes',
+    },
     rateFieldPath: `details.${fromCode}`,
     source: '臺灣銀行牌告匯率',
     sourceUrl: 'https://rate.bot.com.tw/xrt',
     updateFrequency: 'every 5 minutes',
     rateTypes: RATE_TYPE_DESCRIPTIONS,
     rateModes: RATE_MODE_STRATEGIES,
-    note: '賣出（sell）= 銀行賣給你外幣的價格，即你拿台幣換外幣看此價；買入（buy）= 銀行收你外幣的價格，即你拿外幣換台幣看此價。若要與 App 顯示一致，請依 rateModes 選取對應欄位。',
+    note: 'v3 以 fromCurrency → toCurrency 定義方向，rate 為每 1 單位來源幣可取得的目標幣數量；legacy sell/buy 僅供相容讀取。',
     disclaimer: '匯率僅供參考，實際交易請以金融機構公告為準。',
   };
 

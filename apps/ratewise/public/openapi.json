@@ -3,8 +3,8 @@
   "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
   "info": {
     "title": "HaoRate 匯率 API",
-    "version": "2.1.0",
-    "description": "臺灣銀行牌告匯率靜態 JSON API，每 5 分鐘由 GitHub Actions 自動同步。\n\n**匯率類型說明：**\n- `cash_buy`（現金買入）：銀行以此價收購外幣現鈔（你拿外幣換台幣）\n- `cash_sell`（現金賣出）：銀行以此價賣出外幣現鈔（你拿台幣換外幣現金）\n- `spot_buy`（即期買入）：電匯/帳戶轉入匯率（你匯款回台灣）\n- `spot_sell`（即期賣出）：電匯/帳戶轉出匯率（你從台灣匯款出去）\n\n**重要提示：** 賣出（sell）= 銀行賣給你外幣的價格 = 你拿台幣換外幣看此價；\n買入（buy）= 銀行收你外幣的價格 = 你拿外幣換台幣看此價。\n\n**App 匯率模式對應：**\n- `auto`：來源外幣用 `{rateType}.buy`，目標外幣用 `{rateType}.sell`；TWD 視為 1。\n- `sell`：來源與目標皆用 `{rateType}.sell`。\n- `mid`：來源與目標皆用 `({rateType}.buy + {rateType}.sell) / 2`。\n\n匯率僅供參考，實際交易請以金融機構公告為準。",
+    "version": "3.0.0",
+    "description": "方向明確的匯率 v3 靜態 JSON API，以不可變 release manifest、SHA-256 content-addressed objects 與 provider snapshot 為 canonical contract；legacy latest/history 端點僅作相容投影。\n\n**匯率類型說明：**\n- `cash_buy`（現金買入）：銀行以此價收購外幣現鈔（你拿外幣換台幣）\n- `cash_sell`（現金賣出）：銀行以此價賣出外幣現鈔（你拿台幣換外幣現金）\n- `spot_buy`（即期買入）：電匯/帳戶轉入匯率（你匯款回台灣）\n- `spot_sell`（即期賣出）：電匯/帳戶轉出匯率（你從台灣匯款出去）\n\n**v3 核心規則：** `rate` 永遠表示每 1 `fromCurrency` 可取得的 `toCurrency`；試算固定為 `received = sent × rate`。\n\n**App 匯率模式對應：**\n- `auto`：來源外幣用 `{rateType}.buy`，目標外幣用 `{rateType}.sell`；TWD 視為 1。\n- `sell`：來源與目標皆用 `{rateType}.sell`。\n- `mid`：來源與目標皆用 `({rateType}.buy + {rateType}.sell) / 2`。\n\n匯率僅供參考，實際交易請以金融機構公告為準。",
     "contact": {
       "name": "haotool",
       "email": "haotool.org@gmail.com",
@@ -95,7 +95,11 @@
             "cash"
           ],
           "currentEndpoint": "/public/rates/latest.json",
-          "historyEndpoint": "/public/rates/history/{date}.json"
+          "historyEndpoint": "/public/rates/history/{date}.json",
+          "sourceUrl": "https://rate.bot.com.tw/xrt?Lang=zh-TW",
+          "termsUrl": null,
+          "redistributionStatus": "unknown",
+          "attribution": "台灣銀行；資料來源：https://rate.bot.com.tw/xrt?Lang=zh-TW"
         },
         {
           "providerId": "moneybox",
@@ -109,7 +113,11 @@
             "cash"
           ],
           "currentEndpoint": "/public/rates/providers/moneybox/latest.json",
-          "historyEndpoint": "/public/rates/providers/moneybox/history/{date}.json"
+          "historyEndpoint": "/public/rates/providers/moneybox/history/{date}.json",
+          "sourceUrl": "https://moneybox-exchange.com/zh-CHT/exchange/",
+          "termsUrl": null,
+          "redistributionStatus": "unknown",
+          "attribution": "明洞換匯所；資料來源：https://moneybox-exchange.com/zh-CHT/exchange/"
         }
       ]
     },
@@ -136,8 +144,25 @@
     "x-webapp": "https://app.haotool.org/ratewise/",
     "x-documentation": "https://app.haotool.org/ratewise/open-data/",
     "x-app-version": "2.28.2",
-    "x-schema-version": "2.0",
-    "x-semantics-doc": "https://app.haotool.org/ratewise/open-data/"
+    "x-schema-version": "3.0",
+    "x-legacy-schema-version": "2.0",
+    "x-semantics-doc": "https://app.haotool.org/ratewise/open-data/",
+    "x-code-license": "GPL-3.0",
+    "x-data-license-note": "Provider data terms and redistribution rights are separate from the repository code license.",
+    "x-data-providers": [
+      {
+        "providerId": "bot",
+        "termsUrl": null,
+        "redistributionStatus": "unknown",
+        "attribution": "台灣銀行；資料來源：https://rate.bot.com.tw/xrt?Lang=zh-TW"
+      },
+      {
+        "providerId": "moneybox",
+        "termsUrl": null,
+        "redistributionStatus": "unknown",
+        "attribution": "明洞換匯所；資料來源：https://moneybox-exchange.com/zh-CHT/exchange/"
+      }
+    ]
   },
   "x-changelog": {
     "2.1.0": {
@@ -177,6 +202,101 @@
     }
   ],
   "paths": {
+    "/public/rates/v3/current.json": {
+      "get": {
+        "summary": "取得 v3 已驗證發布指標",
+        "description": "回傳不可變 v3 manifest 的內容位址。用戶端必須先驗證 manifest 與 provider snapshot 的 SHA-256，再使用 canonical rate 試算。",
+        "operationId": "getFxV3CurrentRelease",
+        "tags": [
+          "FX API v3"
+        ],
+        "responses": {
+          "200": {
+            "description": "v3 current release pointer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentRelease"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "v3 data branch gate is not enabled or no current release has been published"
+          }
+        }
+      }
+    },
+    "/public/rates/v3/releases/{releaseId}.json": {
+      "get": {
+        "summary": "取得 v3 不可變 release manifest",
+        "operationId": "getFxV3ReleaseManifest",
+        "tags": [
+          "FX API v3"
+        ],
+        "parameters": [
+          {
+            "name": "releaseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "v3 release manifest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseManifest"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Release 不存在"
+          }
+        }
+      }
+    },
+    "/public/rates/v3/objects/{objectId}.json": {
+      "get": {
+        "summary": "取得 v3 內容定址資料物件",
+        "operationId": "getFxV3Object",
+        "tags": [
+          "FX API v3"
+        ],
+        "parameters": [
+          {
+            "name": "objectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "v3 provider snapshot or history object; response bytes must match manifest sha256",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderSnapshot"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Object 不存在"
+          }
+        }
+      }
+    },
     "/public/rates/providers/{providerId}/latest.json": {
       "get": {
         "summary": "取得指定 provider 最新換錢所匯率",
@@ -587,6 +707,818 @@
   },
   "components": {
     "schemas": {
+      "SourceQuote": {
+        "type": "object",
+        "properties": {
+          "providerId": {
+            "type": "string",
+            "maxLength": 512
+          },
+          "subjectCurrency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$",
+            "maxLength": 512
+          },
+          "priceCurrency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$",
+            "maxLength": 512
+          },
+          "unitAmount": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+            "maxLength": 512
+          },
+          "buy": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+                "maxLength": 512
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sell": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+                "maxLength": 512
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sourcePublishedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "maxLength": 512
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "fetchedAt": {
+            "type": "string",
+            "format": "date-time",
+            "maxLength": 512
+          },
+          "lastSuccessfulCheckAt": {
+            "type": "string",
+            "format": "date-time",
+            "maxLength": 512
+          },
+          "serviceCountry": {
+            "type": "string",
+            "pattern": "^[A-Z]{2}$",
+            "maxLength": 512
+          },
+          "deliveryMethod": {
+            "enum": [
+              "cash",
+              "account"
+            ]
+          },
+          "channel": {
+            "enum": [
+              "branch",
+              "online",
+              "atm",
+              "unknown"
+            ]
+          },
+          "branchId": {
+            "type": "string",
+            "maxLength": 512
+          },
+          "denominations": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+              "maxLength": 512
+            },
+            "maxItems": 100
+          },
+          "amountRange": {
+            "type": "object",
+            "properties": {
+              "currency": {
+                "type": "string",
+                "pattern": "^[A-Z]{3}$",
+                "maxLength": 512
+              },
+              "min": {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+                "maxLength": 512
+              },
+              "max": {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+                "maxLength": 512
+              }
+            },
+            "required": [
+              "currency",
+              "min",
+              "max"
+            ],
+            "additionalProperties": false
+          },
+          "qualifications": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "maxItems": 100
+          },
+          "feeStatus": {
+            "enum": [
+              "unknown",
+              "no_additional_fee",
+              "unsupported"
+            ]
+          },
+          "sourceUrl": {
+            "type": "string",
+            "maxLength": 512
+          },
+          "originalBuyField": {
+            "type": "string",
+            "maxLength": 512
+          },
+          "originalSellField": {
+            "type": "string",
+            "maxLength": 512
+          },
+          "mappingVersion": {
+            "type": "string",
+            "maxLength": 512
+          },
+          "originalUnitAmount": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+            "maxLength": 512
+          },
+          "dataKind": {
+            "enum": [
+              "published_board",
+              "fixed_fallback",
+              "reference",
+              "derived_cross"
+            ]
+          },
+          "feeEvidenceUrl": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^https://"
+          }
+        },
+        "required": [
+          "providerId",
+          "subjectCurrency",
+          "priceCurrency",
+          "unitAmount",
+          "buy",
+          "sell",
+          "sourcePublishedAt",
+          "fetchedAt",
+          "lastSuccessfulCheckAt",
+          "serviceCountry",
+          "deliveryMethod",
+          "channel"
+        ],
+        "additionalProperties": false
+      },
+      "QuoteSnapshot": {
+        "type": "object",
+        "properties": {
+          "quoteId": {
+            "type": "string",
+            "maxLength": 20000
+          },
+          "quoteSeriesId": {
+            "type": "string",
+            "maxLength": 20000
+          },
+          "providerId": {
+            "type": "string",
+            "maxLength": 512
+          },
+          "fromCurrency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$",
+            "maxLength": 512
+          },
+          "toCurrency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$",
+            "maxLength": 512
+          },
+          "providerSide": {
+            "enum": [
+              "buy",
+              "sell"
+            ]
+          },
+          "status": {
+            "enum": [
+              "available",
+              "unavailable"
+            ]
+          },
+          "rate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+                "maxLength": 512
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "unavailableReason": {
+            "enum": [
+              "not_quoted",
+              null
+            ]
+          },
+          "sourceQuote": {
+            "$ref": "#/components/schemas/SourceQuote"
+          },
+          "methodVersion": {
+            "const": "1"
+          }
+        },
+        "required": [
+          "quoteId",
+          "quoteSeriesId",
+          "providerId",
+          "fromCurrency",
+          "toCurrency",
+          "providerSide",
+          "status",
+          "rate",
+          "unavailableReason",
+          "sourceQuote",
+          "methodVersion"
+        ],
+        "additionalProperties": false
+      },
+      "EstimateRequest": {
+        "type": "object",
+        "properties": {
+          "fromCurrency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$",
+            "maxLength": 512
+          },
+          "toCurrency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$",
+            "maxLength": 512
+          },
+          "amount": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+            "maxLength": 512
+          },
+          "mode": {
+            "enum": [
+              "EXACT_IN",
+              "EXACT_OUT"
+            ]
+          }
+        },
+        "required": [
+          "fromCurrency",
+          "toCurrency",
+          "amount",
+          "mode"
+        ],
+        "additionalProperties": false
+      },
+      "EstimateResult": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "enum": [
+              "available",
+              "unavailable"
+            ]
+          },
+          "fromAmount": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+                "maxLength": 512
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "toAmount": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+                "maxLength": 512
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "quoteId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+                "maxLength": 512
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "feeStatus": {
+            "enum": [
+              "unknown",
+              "no_additional_fee",
+              "unsupported"
+            ]
+          }
+        },
+        "required": [
+          "status",
+          "fromAmount",
+          "toAmount",
+          "quoteId",
+          "rate",
+          "reason",
+          "feeStatus"
+        ],
+        "additionalProperties": false
+      },
+      "SelectionContext": {
+        "type": "object",
+        "properties": {
+          "now": {
+            "type": "string",
+            "format": "date-time",
+            "maxLength": 512
+          },
+          "country": {
+            "type": "string",
+            "maxLength": 512
+          },
+          "deliveryMethod": {
+            "enum": [
+              "cash",
+              "account"
+            ]
+          },
+          "channel": {
+            "enum": [
+              "branch",
+              "online",
+              "atm",
+              "unknown"
+            ]
+          },
+          "branchId": {
+            "type": "string",
+            "maxLength": 512
+          },
+          "denomination": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+            "maxLength": 512
+          },
+          "qualifications": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 512
+            }
+          }
+        },
+        "required": [
+          "now",
+          "country",
+          "deliveryMethod",
+          "channel"
+        ],
+        "additionalProperties": false
+      },
+      "DerivedCrossQuote": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "derived_cross"
+          },
+          "providerId": {
+            "type": "string"
+          },
+          "fromCurrency": {
+            "type": "string"
+          },
+          "toCurrency": {
+            "type": "string"
+          },
+          "rate": {
+            "type": "string"
+          },
+          "legs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "recommendable": {
+            "const": false
+          }
+        },
+        "required": [
+          "kind",
+          "providerId",
+          "fromCurrency",
+          "toCurrency",
+          "rate",
+          "legs",
+          "recommendable"
+        ]
+      },
+      "ObjectReference": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "maxLength": 512,
+            "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.?(?:/|$))[A-Za-z0-9_/-]+\\.json$"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        },
+        "required": [
+          "path",
+          "sha256"
+        ],
+        "additionalProperties": false
+      },
+      "Provider": {
+        "type": "object",
+        "properties": {
+          "providerId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "kind": {
+            "enum": [
+              "bank",
+              "exchange_shop"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "sourceUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "serviceCountries": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[A-Z]{2}$"
+            },
+            "minItems": 1
+          },
+          "termsUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "redistributionStatus": {
+            "enum": [
+              "verified",
+              "unknown",
+              "restricted"
+            ]
+          },
+          "attribution": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          }
+        },
+        "required": [
+          "providerId",
+          "kind",
+          "name",
+          "sourceUrl",
+          "serviceCountries",
+          "termsUrl",
+          "redistributionStatus",
+          "attribution"
+        ],
+        "additionalProperties": false
+      },
+      "ProviderSnapshot": {
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "const": "3.0"
+          },
+          "providerId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "quotes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuoteSnapshot"
+            },
+            "minItems": 1,
+            "maxItems": 10000
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "providerId",
+          "quotes"
+        ],
+        "additionalProperties": false
+      },
+      "ReleaseManifest": {
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "const": "3.0"
+          },
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "providers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "providerId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 512
+                },
+                "snapshot": {
+                  "$ref": "#/components/schemas/ObjectReference"
+                },
+                "checkStatus": {
+                  "enum": [
+                    "ok",
+                    "failed",
+                    "carried_forward"
+                  ]
+                },
+                "lastSuccessfulCheckAt": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              },
+              "required": [
+                "providerId",
+                "snapshot",
+                "checkStatus",
+                "lastSuccessfulCheckAt"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 1000
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "providerId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 512
+                },
+                "date": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "snapshot": {
+                  "$ref": "#/components/schemas/ObjectReference"
+                }
+              },
+              "required": [
+                "providerId",
+                "date",
+                "snapshot"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 100000
+          },
+          "deprecation": {
+            "type": "object",
+            "properties": {
+              "activatedAt": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "sunsetAt": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "replacement": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 512
+              }
+            },
+            "required": [
+              "activatedAt",
+              "sunsetAt",
+              "replacement"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "generatedAt",
+          "providers",
+          "history",
+          "deprecation"
+        ],
+        "additionalProperties": false
+      },
+      "CurrentRelease": {
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "const": "3.0"
+          },
+          "releaseId": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "manifest": {
+            "$ref": "#/components/schemas/ObjectReference"
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "releaseId",
+          "manifest"
+        ],
+        "additionalProperties": false
+      },
+      "DerivedEstimateResult": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "enum": [
+              "available",
+              "unavailable"
+            ]
+          },
+          "fromAmount": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+                "maxLength": 512
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "toAmount": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+                "maxLength": 512
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "quoteId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+                "maxLength": 512
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "feeStatus": {
+            "enum": [
+              "unknown",
+              "no_additional_fee",
+              "unsupported"
+            ]
+          },
+          "kind": {
+            "const": "derived_cross"
+          },
+          "legs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 2
+          },
+          "recommendable": {
+            "const": false
+          }
+        },
+        "required": [
+          "status",
+          "fromAmount",
+          "toAmount",
+          "quoteId",
+          "rate",
+          "reason",
+          "feeStatus",
+          "kind",
+          "legs",
+          "recommendable"
+        ],
+        "additionalProperties": false
+      },
       "CurrencyRateDetail": {
         "type": "object",
         "description": "單一幣別的完整四種報價（即期與現金的買入/賣出）",
@@ -1218,6 +2150,21 @@
             "description": "在 liveRateUrl 回應中定位此幣別資料的路徑",
             "example": "details.USD"
           },
+          "v3CurrentUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "v3 atomic current pointer；使用前須驗證 manifest 與 objects 的 SHA-256。"
+          },
+          "v3ContractUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "canonicalFields": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
           "rateModes": {
             "type": "object",
             "description": "App 匯率模式對應的欄位選擇策略；用於依使用者模式取正確 buy/sell/mid 欄位。",
@@ -1264,6 +2211,9 @@
           "pageUrl",
           "liveRateUrl",
           "rateFieldPath",
+          "v3CurrentUrl",
+          "v3ContractUrl",
+          "canonicalFields",
           "rateModes",
           "source"
         ]
@@ -1293,6 +2243,10 @@
               "MoneyBox (明洞換匯所聯盟)"
             ]
           },
+          "sourceUrl": {
+            "type": "string",
+            "format": "uri"
+          },
           "supportedCurrencies": {
             "type": "array",
             "items": {
@@ -1314,16 +2268,38 @@
           },
           "historyEndpoint": {
             "type": "string"
+          },
+          "termsUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri"
+          },
+          "redistributionStatus": {
+            "type": "string",
+            "enum": [
+              "verified",
+              "unknown",
+              "restricted"
+            ]
+          },
+          "attribution": {
+            "type": "string"
           }
         },
         "required": [
           "providerId",
           "sourceKind",
           "name",
+          "sourceUrl",
           "supportedCurrencies",
           "supportedRateTypes",
           "currentEndpoint",
-          "historyEndpoint"
+          "historyEndpoint",
+          "termsUrl",
+          "redistributionStatus",
+          "attribution"
         ]
       }
     }
@@ -1388,7 +2364,11 @@
           "cash"
         ],
         "currentEndpoint": "/public/rates/latest.json",
-        "historyEndpoint": "/public/rates/history/{date}.json"
+        "historyEndpoint": "/public/rates/history/{date}.json",
+        "sourceUrl": "https://rate.bot.com.tw/xrt?Lang=zh-TW",
+        "termsUrl": null,
+        "redistributionStatus": "unknown",
+        "attribution": "台灣銀行；資料來源：https://rate.bot.com.tw/xrt?Lang=zh-TW"
       },
       {
         "providerId": "moneybox",
@@ -1402,9 +2382,24 @@
           "cash"
         ],
         "currentEndpoint": "/public/rates/providers/moneybox/latest.json",
-        "historyEndpoint": "/public/rates/providers/moneybox/history/{date}.json"
+        "historyEndpoint": "/public/rates/providers/moneybox/history/{date}.json",
+        "sourceUrl": "https://moneybox-exchange.com/zh-CHT/exchange/",
+        "termsUrl": null,
+        "redistributionStatus": "unknown",
+        "attribution": "明洞換匯所；資料來源：https://moneybox-exchange.com/zh-CHT/exchange/"
       }
     ]
+  },
+  "x-fx-v3-contract": {
+    "schemaVersion": "3.0",
+    "schemaUrl": "https://app.haotool.org/ratewise/api/v3/contract.schema.json",
+    "canonicalRate": "published canonical rate; decimal string; 34 significant digits; HALF_EVEN",
+    "estimateModes": [
+      "EXACT_IN",
+      "EXACT_OUT"
+    ],
+    "releasePointer": "/public/rates/v3/current.json",
+    "hashAlgorithm": "SHA-256 over final UTF-8 bytes"
   },
   "x-pair-endpoints": {
     "description": "各幣對靜態 JSON 端點（供搜尋系統與 AI agent 查詢特定幣對匯率資訊）",

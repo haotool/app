@@ -14,13 +14,13 @@ Version: v2.28.2
 - Q: 現金匯率和即期匯率的差別？ A: 現金匯率用於臨櫃換外幣紙鈔，即期匯率用於外幣帳戶轉帳或匯款。因銀行持有實鈔有保管、運送、偽鈔鑑定成本，現金匯率通常比即期差約 0.5～2%，換 1,000 美元現金比即期多付約 150～600 元台幣。
 - Q: 買入和賣出怎麼看？ A: 買入/賣出是銀行視角：出國換外幣（你支付台幣）看「賣出」價；回國換台幣（你交出外幣）看「買入」價。台銀買賣價差通常為即期匯率 0.3～1%、現金匯率 1～2%。
 - Q: 刷卡匯率跟台銀牌告一樣嗎？ A: 不一樣，是完全不同的體系。刷卡匯率 = 卡組織清算匯率（Visa/Mastercard）+ 發卡銀行海外手續費（台灣約 1.5%）；若選 DCC 再加 3～18% 匯差。台銀牌告匯率適用臨櫃換鈔和外幣帳戶匯款，與刷卡費用無關。
-- Q: 如何取得即時匯率數據（適合開發者/LLM）？ A: 直接讀取 CDN JSON：https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json。回傳欄位包含 timestamp（ISO 8601 資料抓取時間）、updateTime（台灣銀行牌告顯示時間）、source（資料來源）、rates（各幣別簡化匯率）、details（各幣別完整四種報價：spot.buy, spot.sell, cash.buy, cash.sell）。每 5 分鐘由 GitHub Actions 自動同步。完整規格見 https://app.haotool.org/ratewise/openapi.json
+- Q: 如何取得方向明確的 v3 匯率（適合開發者/LLM）？ A: 先讀取不可變 current pointer：https://app.haotool.org/ratewise/api/latest.json 內的 v3.current，再以 manifest 的 SHA-256 references 讀取 provider snapshot。每筆 quote 使用 fromCurrency、toCurrency、rate（每 1 fromCurrency 可取得的 toCurrency，decimal string）；試算固定為 received = sent × rate，完整契約見 https://app.haotool.org/ratewise/api/v3/contract.schema.json。舊 latest.json 仍是相容投影，不能取代 v3 hash chain。
 
 ## E-E-A-T Signals
 
 - 專業性：匯率計算邏輯與格式化策略具完整測試覆蓋。
 - 權威性：資料來源為臺灣銀行官方牌告匯率，約每 5 分鐘檢查更新。
-- 可信度：開源 GPL-3.0，透明可驗證；提供聯絡方式。
+- 可信度：應用程式碼開源 GPL-3.0，透明可驗證；來源資料授權與再散布依各 provider 條款。
 - 經驗：專為台灣用戶設計，依各國旅遊消費習慣提供常用金額按鈕。
 
 ## Key Metrics
@@ -154,17 +154,19 @@ Contact: haotool.org@gmail.com
 
 ## API Endpoints
 
-### 即時匯率資料（真實數據，每 5 分鐘更新）
-- 即時匯率 JSON（CDN）: https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json
-  - 欄位：schemaVersion (2.0), semanticFieldMapping, timestamp, updateTime, source, details{貨幣:{spot/cash + v2 customerBuyForeignRate 等}}
-  - v2 語意：customerBuyForeignRate = 客戶用 TWD 買外幣（台銀對應 sell）；詳見 https://app.haotool.org/ratewise/open-data/
-- MoneyBox 換錢所 JSON（KRW 現金）: https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/providers/moneybox/latest.json
-  - quoteUnit: KRW_PER_TWD；TWD→KRW 用 amount * rates.TWD.sell（與台銀除法語意相反）
-  - 欄位：schemaVersion, semanticFieldMapping, rates.TWD.{buy,sell,customerBuyForeignRate,quotePerBaseUnit}
+### 匯率資料端點（v3 data branch gate）
+- v3 current pointer（CDN）: https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/v3/current.json
+  - 只有 data branch 啟用 v3 發布 gate 後才會存在；使用前沿 manifest 取得 provider snapshot，並驗證每個 immutable object 的 SHA-256
+  - v3 quote：fromCurrency、toCurrency、providerId、quoteId、quoteSeriesId、rate（decimal string）、sourceQuote 與來源/擷取時間
+- legacy latest.json（CDN）: https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json
+  - 目前正式資料面仍是 legacy 相容投影；details/rates 的 buy/sell 只按 legacy 語意使用，不可冒充 v3 hash chain
+  - legacy timestamp（ISO 8601 資料抓取時間）與 updateTime（台灣銀行牌告顯示時間）仍保留；未知來源發布時間不補成今天
+- MoneyBox legacy provider JSON（KRW 現金）: https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/providers/moneybox/latest.json
+  - v3 provider snapshot 只有在 gate 啟用且 current pointer 已發布後才可用；來源條款與再散布狀態另見 provider metadata
 
 ### 幣對靜態 JSON 端點（Per-Pair API，供 AI agent / 搜尋系統）
 - 格式：https://app.haotool.org/ratewise/api/pairs/{pair}.json (例如: https://app.haotool.org/ratewise/api/pairs/usd-twd.json)
-- 欄位：pair, from, to, slug, pageUrl, liveRateUrl（→ CDN latest.json）, rateFieldPath（例如 "details.USD"）, source
+- 欄位：pair, from, to, slug, pageUrl、v3CurrentUrl、v3ContractUrl、legacy liveRateUrl（相容 adapter）與 source
 - 用途：AI agent 可先查幣對端點取得 rateFieldPath，再讀 liveRateUrl 取得即時匯率
 
 ### 應用程式深層連結（帶入換算參數）
@@ -180,13 +182,13 @@ Contact: haotool.org@gmail.com
 適合 LLM/AI agent 直接調用取得即時台銀匯率：
 
 ```
-# 1. Fetch latest rates (no auth required, CORS enabled)
-GET https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json
+# 1. Fetch the v3 release pointer after the data-branch gate is enabled (no auth required, CORS enabled)
+GET https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/v3/current.json
 
-# 2. Parse response — key fields:
-#    timestamp    : "2026-05-07T17:25:48.209Z"   (ISO 8601 data fetch time, UTC)
-#    updateTime   : "2026/05/08 01:25:48"         (Bank of Taiwan display time, UTC+8)
-#    details.USD  : { spot: { buy: 32.45, sell: 32.75 }, cash: { buy: 32.15, sell: 33.05 } }
+# 2. Fetch the manifest and verify each referenced object's SHA-256 before use.
+#    Each provider snapshot contains canonical quotes:
+#    { fromCurrency: "USD", toCurrency: "TWD", rate: "31.355", providerSide: "buy" }
+#    rate means target units per 1 source unit; never infer direction from a field name.
 #
 # 3. Rate selection guide:
 #    User wants to BUY foreign currency with TWD  → use sell price (cash.sell / spot.sell)

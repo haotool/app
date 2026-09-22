@@ -18,7 +18,9 @@ export interface ProviderQuote {
   rateType: RateType;
   sourceKind: RateSourceKind;
   unitRate: number;
+  /** EXACT_IN: estimated received amount; EXACT_OUT: required source payment. */
   resultAmount: number;
+  inputMode?: 'EXACT_IN' | 'EXACT_OUT';
   isAvailable: boolean;
 }
 

@@ -32,6 +32,7 @@ export function SettingsTab() {
     rateUpdatedAt,
     rateUpdatedAtIso,
     rateFetchFailed,
+    krwPerTwd,
     refreshExchangeRate,
     expenses,
     currentTripId,
@@ -274,6 +275,11 @@ export function SettingsTab() {
                 {isRateStale(rateUpdatedAtIso) && (
                   <span className="ml-1 text-tertiary">{t('settings.rate_stale')}</span>
                 )}
+              </p>
+            )}
+            {rateFetchFailed && rateUpdatedAtIso === null && krwPerTwd !== null && (
+              <p className="text-[11px] text-tertiary pl-10" role="status">
+                {t('settings.rate_legacy_reference')}
               </p>
             )}
             {rateFetchFailed && (

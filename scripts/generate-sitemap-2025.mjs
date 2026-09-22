@@ -375,10 +375,14 @@ function getRatePageFallbackDate() {
   const sourceContent = readFileSync(rateSourcePath, 'utf-8');
   const rateTimestampMatch = sourceContent.match(/匯率時間：(\d{4}\/\d{2}\/\d{2})/);
   const generatedDateMatch = sourceContent.match(/生成日期：(\d{4}-\d{2}-\d{2})/);
+  const generatedArtifactDateMatch = sourceContent.match(
+    /SEO_RATE_EXAMPLES_DATE\s*=\s*['"](\d{4}-\d{2}-\d{2})['"]/,
+  );
 
   cachedRatePageFallbackDate =
     parseDateInTaipei(rateTimestampMatch?.[1] ?? '') ??
     parseDateInTaipei(generatedDateMatch?.[1] ?? '') ??
+    parseDateInTaipei(generatedArtifactDateMatch?.[1] ?? '') ??
     null;
 
   return cachedRatePageFallbackDate;

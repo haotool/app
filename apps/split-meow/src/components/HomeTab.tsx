@@ -186,7 +186,13 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
                   <p className="text-xs text-on-surface-variant/50 mt-1">
                     ≈ {formatAmount(approx, to)}
                     {isRateStale(rateUpdatedAtIso) && (
-                      <span className="ml-1 text-tertiary">{t('settings.rate_stale')}</span>
+                      <span className="ml-1 text-tertiary">
+                        {t(
+                          rateUpdatedAtIso === null
+                            ? 'settings.rate_source_unknown'
+                            : 'settings.rate_stale',
+                        )}
+                      </span>
                     )}
                   </p>
                 );

@@ -20,6 +20,10 @@ export const RAW_DATA_BASE = `https://raw.githubusercontent.com/${GITHUB_REPO_PA
 /** 匯率 JSON 相對路徑 */
 const RATES_LATEST_PATH = '/public/rates/latest.json';
 const RATES_HISTORY_PATH = (date: string) => `/public/rates/history/${date}.json`;
+const FX_V3_CURRENT_PATH = '/public/rates/v3/current.json';
+const FX_V3_CONTRACT_URL = 'https://app.haotool.org/ratewise/api/v3/contract.schema.json';
+export const FX_V3_AVAILABILITY_NOTE =
+  'v3 current 只有 data branch 的 RATEWISE_FX_V3_ENABLED=true 發布 gate 開啟後才存在；尚未啟用時請使用 legacy 相容投影。';
 export const PROVIDER_RATES_PATH = {
   latest: (providerId: string) => `/public/rates/providers/${providerId}/latest.json`,
   history: (providerId: string, date: string) =>
@@ -56,6 +60,12 @@ export const RATES_API = {
   moneyboxHistoryCdnExample: `${CDN_DATA_BASE}${MONEYBOX_HISTORY_PATH(EXAMPLE_DATE)}`,
 
   moneyboxHistoryRawExample: `${RAW_DATA_BASE}${MONEYBOX_HISTORY_PATH(EXAMPLE_DATE)}`,
+
+  /** v3 current pointer；使用前須依 manifest 驗證 SHA-256 objects。 */
+  v3CurrentCdn: `${CDN_DATA_BASE}${FX_V3_CURRENT_PATH}`,
+  v3CurrentRaw: `${RAW_DATA_BASE}${FX_V3_CURRENT_PATH}`,
+  v3Contract: FX_V3_CONTRACT_URL,
+  v3AvailabilityNote: FX_V3_AVAILABILITY_NOTE,
 
   /** GitHub Actions 自動同步任務頁面 */
   actionsUrl: `${APP_INFO.github}/actions`,

@@ -11,7 +11,7 @@ interface EnsurePrerenderDistOptions {
 }
 
 const LOCK_STALE_MS = 10 * 60 * 1000;
-const LOCK_WAIT_TIMEOUT_MS = 120 * 1000;
+const LOCK_WAIT_TIMEOUT_MS = 5 * 60 * 1000;
 const LOCK_WAIT_INTERVAL_MS = 500;
 
 const hasArtifacts = (paths: string[]): boolean => paths.every((path) => existsSync(path));

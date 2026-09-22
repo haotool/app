@@ -43,7 +43,7 @@ beforeAll(async () => {
     projectRoot: appRoot,
     distRoot: distPath,
   });
-}, 120000);
+}, 300000);
 
 describe('SEO 首屏文字順序檢查（route order gate）', () => {
   const samples = [

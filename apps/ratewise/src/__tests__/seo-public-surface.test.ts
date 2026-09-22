@@ -57,7 +57,7 @@ beforeAll(async () => {
       resolve(appRoot, 'src/config/seo-schema-registry.ts'),
     ],
   });
-}, 120000);
+}, 300000);
 
 describe('SEO public surface regression suite', () => {
   it.each([

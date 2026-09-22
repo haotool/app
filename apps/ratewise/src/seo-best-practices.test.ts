@@ -921,7 +921,8 @@ describe('💱 ExchangeRateSpecification Schema (P0-5)', () => {
     expect(rate['price']).toBe('32.01');
     expect(rate['priceCurrency']).toBe('TWD');
     expect(rate['description']).toContain('臺灣銀行');
-    expect(rate['validFrom']).toBeTruthy();
+    // 來源發布時間未知時，禁止把擷取日偽裝成 validFrom。
+    expect(rate['validFrom']).toBeUndefined();
   });
 
   it('should include ExchangeRateSpecification in currency landing page jsonLd', async () => {
@@ -1008,9 +1009,9 @@ describe('💵 Amount Page ExchangeRateSpecification Schema (P1-5)', () => {
     expect(rate['description']).toContain('3,250');
     expect(rate['description']).toContain('USD');
     expect(rate['description']).toContain('TWD');
-    expect(rate['description']).toContain('買 100 USD 所需 3,250 TWD');
-    expect(rate['description']).not.toContain('100 USD 換 3,250 TWD');
-    expect(rate['validFrom']).toBeTruthy();
+    expect(rate['description']).toContain('支付 100 USD 估算取得 3,250 TWD');
+    expect(rate['description']).not.toContain('買 100 USD 所需 3,250 TWD');
+    expect(rate['validFrom']).toBeUndefined();
   });
 
   it('should generate valid ExchangeRateSpecification for twd-to-foreign direction', async () => {
@@ -1053,12 +1054,12 @@ describe('💵 Amount Page ExchangeRateSpecification Schema (P1-5)', () => {
     const rate = schema['currentExchangeRate'] as Record<string, unknown>;
     const description = rate['description'] as string;
 
-    expect(description).toContain('臺灣銀行現金賣出價');
+    expect(description).toContain('臺灣銀行現金買入價');
     expect(description).toContain('50,000');
     expect(description).toContain('KRW');
     expect(description).toContain('1,185');
     expect(description).toContain('TWD');
-    expect(description).toContain('買 50,000 KRW 所需 1,185 TWD');
+    expect(description).toContain('支付 50,000 KRW 估算取得 1,185 TWD');
   });
 
   it('should include Dataset provenance for Bank of Taiwan source', async () => {

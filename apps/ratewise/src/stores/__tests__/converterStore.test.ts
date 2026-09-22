@@ -131,21 +131,21 @@ describe('converterStore', () => {
       expect(useConverterStore.getState().rateType).toBe('cash');
     });
 
-    it('rateSource=exchange-shop 時，直接 setRateType("spot") 也必須維持 cash', () => {
+    it('rateSource=exchange-shop 時，直接 setRateType("spot") 保留明確選擇', () => {
       useConverterStore.setState({ rateType: 'cash', rateSource: 'exchange-shop' });
       useConverterStore.getState().setRateType('spot');
 
       const state = useConverterStore.getState();
       expect(state.rateSource).toBe('exchange-shop');
-      expect(state.rateType).toBe('cash');
+      expect(state.rateType).toBe('spot');
     });
 
-    it('setRateSource("exchange-shop") 自動同步 rateType=cash（SSOT 不變式）', () => {
+    it('setRateSource("exchange-shop") 不覆寫已選帳戶方式', () => {
       useConverterStore.setState({ rateType: 'spot', rateSource: 'bank' });
       useConverterStore.getState().setRateSource('exchange-shop');
       const state = useConverterStore.getState();
       expect(state.rateSource).toBe('exchange-shop');
-      expect(state.rateType).toBe('cash');
+      expect(state.rateType).toBe('spot');
     });
 
     it('setRateSource("bank") 不應重置 rateType（保留使用者偏好）', () => {
@@ -485,14 +485,14 @@ describe('converterStore', () => {
       expect(useConverterStore.getState().toCurrency).toBe('JPY');
     });
 
-    it('rateType 為非法值時，重置為 spot', () => {
+    it('rateType 為非法值時，重置為 cash', () => {
       useConverterStore.setState({
         rateType: 'broken' as unknown as 'spot' | 'cash',
       });
 
       useConverterStore.getState().__validateAndSanitize?.();
 
-      expect(useConverterStore.getState().rateType).toBe('spot');
+      expect(useConverterStore.getState().rateType).toBe('cash');
     });
 
     it('rateSource 為非法值時，重置為 bank', () => {
@@ -505,7 +505,7 @@ describe('converterStore', () => {
       expect(useConverterStore.getState().rateSource).toBe('bank');
     });
 
-    it('exchange-shop 與 spot 的非法組合會被修正回 cash', () => {
+    it('保留 exchange-shop 與 spot 選擇，由 quote 資格顯示無報價', () => {
       useConverterStore.setState({
         rateType: 'spot',
         rateSource: 'exchange-shop',
@@ -519,7 +519,7 @@ describe('converterStore', () => {
 
       const state = useConverterStore.getState();
       expect(state.rateSource).toBe('exchange-shop');
-      expect(state.rateType).toBe('cash');
+      expect(state.rateType).toBe('spot');
     });
 
     it('所有欄位合法時，不修改 store 狀態', () => {
@@ -547,7 +547,7 @@ describe('converterStore', () => {
       });
     });
 
-    it('setProviderPreference 切到 exchange-shop/moneybox 同步 rateSource 與 cash 不變式', () => {
+    it('setProviderPreference 切到 exchange-shop/moneybox 同步 rateSource 並保留通路', () => {
       useConverterStore.setState({ rateType: 'spot', rateSource: 'bank' });
 
       useConverterStore.getState().setProviderPreference({
@@ -561,7 +561,7 @@ describe('converterStore', () => {
         manualProvider: { sourceKind: 'exchange-shop', providerId: 'moneybox' },
       });
       expect(state.rateSource).toBe('exchange-shop');
-      expect(state.rateType).toBe('cash');
+      expect(state.rateType).toBe('spot');
     });
 
     it('setProviderPreference 切回 bank 時，保留使用者刻意選的 rateType (cash 不被改成 spot)', () => {
@@ -592,7 +592,7 @@ describe('converterStore', () => {
         manualProvider: { sourceKind: 'exchange-shop', providerId: 'moneybox' },
       });
       expect(state.rateSource).toBe('exchange-shop');
-      expect(state.rateType).toBe('cash');
+      expect(state.rateType).toBe('spot');
     });
 
     it('setRateSource("bank") 為相容包裝，providerPreference 同步成 bot', () => {
@@ -678,7 +678,7 @@ describe('converterStore', () => {
       });
     });
 
-    it('sanitize: providerPreference 是 exchange-shop 但 rateType=spot → rateType 修正為 cash', () => {
+    it('sanitize: providerPreference 是 exchange-shop 但 rateType=spot → 保留使用者通路', () => {
       useConverterStore.setState({
         providerPreference: {
           mode: 'manual',
@@ -693,7 +693,7 @@ describe('converterStore', () => {
       const state = useConverterStore.getState();
       expect(state.providerPreference.manualProvider?.sourceKind).toBe('exchange-shop');
       expect(state.rateSource).toBe('exchange-shop');
-      expect(state.rateType).toBe('cash');
+      expect(state.rateType).toBe('spot');
     });
 
     it('sanitize: providerPreference 與 rateSource 漂移時，以 providerPreference 為主重新推導 rateSource', () => {
@@ -710,7 +710,7 @@ describe('converterStore', () => {
 
       const state = useConverterStore.getState();
       expect(state.rateSource).toBe('exchange-shop');
-      expect(state.rateType).toBe('cash');
+      expect(state.rateType).toBe('spot');
     });
 
     it('migration: 舊 storage rateSource=exchange-shop 且無 providerPreference → 補上 manual moneybox', () => {
