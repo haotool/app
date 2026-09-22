@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-09-22T21:40:59.115Z",
-  "updateTime": "2026/09/23 06:40:59",
+  "timestamp": "2026-09-22T23:50:04.632Z",
+  "updateTime": "2026/09/23 08:50:04",
   "source": "MoneyBox (明洞換匯所聯盟)",
   "sourceUrl": "https://moneybox-exchange.com/zh-CHT/exchange",
   "apiUrl": "https://moneybox-exchange.com/api/rates",
@@ -8,14 +8,14 @@
   "rates": {
     "AED": {
       "currency": "AED",
-      "base": 369.605,
-      "buy": 389.21,
+      "base": 368.895,
+      "buy": 387.79,
       "sell": 350,
       "spbuy": null,
       "spsell": null,
       "customerBuyForeignRate": 350,
-      "customerSellForeignRate": 389.21,
-      "midMarketRate": 369.605,
+      "customerSellForeignRate": 387.79,
+      "midMarketRate": 368.895,
       "quoteUnit": "TWD_PER_FOREIGN",
       "quotePerBaseUnit": 0.00285714
     },
@@ -125,16 +125,16 @@
     },
     "JPY": {
       "currency": "JPY",
-      "base": 862.5,
+      "base": 860.5,
       "buy": 865,
-      "sell": 860,
+      "sell": 856,
       "spbuy": null,
       "spsell": null,
-      "customerBuyForeignRate": 860,
+      "customerBuyForeignRate": 856,
       "customerSellForeignRate": 865,
-      "midMarketRate": 862.5,
+      "midMarketRate": 860.5,
       "quoteUnit": "TWD_PER_FOREIGN",
-      "quotePerBaseUnit": 0.00116279
+      "quotePerBaseUnit": 0.00116822
     },
     "MYR": {
       "currency": "MYR",
@@ -255,7 +255,7 @@
     }
   },
   "schemaVersion": "2.0",
-  "asOf": "2026-09-22T21:40:59.115Z",
+  "asOf": "2026-09-22T23:50:04.632Z",
   "semanticFieldMapping": {
     "schemaVersion": "2.0",
     "semanticsDoc": "https://app.haotool.org/ratewise/open-data/",
