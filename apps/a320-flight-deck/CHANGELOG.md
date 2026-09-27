@@ -1,5 +1,11 @@
 # @app/a320-flight-deck
 
+## 0.2.1
+
+### Patch Changes
+
+- ee2c3fb: 修正 sitemap 語系標記，與單一網址頁面的實際語系一致。
+
 ## 0.2.0
 
 ### Minor Changes
