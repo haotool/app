@@ -75,6 +75,10 @@ jobs:
       - name: Format check
         run: pnpm format
 
+      # FX 生成產物漂移守門：schema → validators.js / types.ts / validators.d.ts 必須與生成器一致。
+      - name: Verify FX generated artifacts
+        run: pnpm generate:fx --check
+
       - name: Type check
         run: pnpm typecheck
 
