@@ -1,7 +1,7 @@
 # 匯率 API 語意 v3 正名與 MoneyBox 上游遷移 PRD
 
 > **建立時間**: 2026-08-26T14:00:00+08:00
-> **版本**: v11.4
+> **版本**: v11.5
 > **狀態**: ✅ 欄位語意定案；✅ PR 1 已合併（#1051）；🟡 PR 2+3 合併實作於 #1104（`RATEWISE_FX_V3_ENABLED` 預設關閉）；⚠️ 正式切換阻塞項未解（§0）；✅ API 標示與 SEO 策略定案（§21，S3 實作）
 > **作者**: Claude Code（研究與盤點）+ Codex（獨立第二意見）
 > **上位文件**: `CLAUDE.md`、`AGENTS.md`
@@ -241,28 +241,35 @@ receivedAmount = paidAmount × rate      對所有 provider 恆成立，永不�
 
 ### 4.3 欄位表
 
-每筆 rate row 的維度與量值（維度對齊 ECB SDMX，語彙對齊 schema.org）。
+> **v11.5 定案（ADR B3，2026-09-28）**：本表為公開契約欄位的權威說明，機器可讀 SSOT 為 `apps/shared/fx/schema.json`（發佈副本 `/ratewise/api/v3/contract.schema.json`）。早期 `customerBuy`／`customerSell` 雙物件設計不採用，見 §16.7。
 
-> **本表為欄位名的權威來源。** §16 與 §18 的後續裁決已回填於此；已汰換名稱見 §4.5。
+每筆 `QuoteSnapshot`（provider snapshot 的 `quotes[]` 元素）：
 
-| 欄位                            | 型別                                     | 定義                                                                           | 缺值行為                                | 權威依據                                            |
-| ------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------ | --------------------------------------- | --------------------------------------------------- |
-| `rateType`                      | `"cash"` \| `"spot"` \| `"unspecified"`  | **一級平行維度**，非巢狀於 rate 之下（受控詞彙）                               | 必填                                    | ECB `EXR_TYPE`；ISO 20022 SPOT                      |
-| `customerBuy.fromCurrency`      | string                                   | 客戶付出的幣別                                                                 | 必填                                    | ECB `CURRENCY_DENOM`；schema.org `currency`         |
-| `customerBuy.toCurrency`        | string                                   | 客戶取得的幣別                                                                 | 必填                                    | ECB `CURRENCY`；schema.org `priceCurrency`          |
-| `customerBuy.publishedRate`     | **decimal string**                       | `received = paid × publishedRate`                                              | 必填                                    | schema.org `UnitPriceSpecification.price`           |
-| `customerBuy.rateUnit`          | `"TO_PER_1_FROM"`                        | 固定值，明示「每 1 單位來源幣換多少目標幣」                                    | 必填                                    | FX `CCY1/CCY2 = X` 恆 per-1                         |
-| `customerBuy.quoteNature`       | `"published_board_rate"`                 | **傳達精準**：牌告實際買賣價，非中間價                                         | 必填                                    | 本產品定位（§16.4）                                 |
-| `customerBuy.quoteAvailability` | `"indicative_not_transaction_guarantee"` | **防止過度承諾**：牌告價會變動、現場可得性不保證                               | 必填                                    | §14 排除清單                                        |
-| `customerSell.*`                | 同上                                     | 反方向                                                                         | 必填                                    | —                                                   |
-| `spread`                        | decimal string \| null                   | `customerSell.publishedRate − customerBuy.publishedRate`                       | 無法計算時 `null`                       | schema.org `exchangeRateSpread`                     |
-| `derivedQuoteMidpoint`          | decimal string \| null                   | 同一 provider 兩側牌告價的數學中點；須帶 `isMarketRate: false` 與 `derivation` | 任一側缺報價 `null`                     | §18.3                                               |
-| `derivedQuoteSpread`            | decimal string \| null                   | 兩側牌告價差                                                                   | 同上                                    | §18.3                                               |
-| `marketMidCounterfactual`       | object \| **null**                       | 外部市場中價**對照**（非基準）；須帶 `purpose: "comparison_only"` 與來源出處   | **授權確認前恆 `null`**（§17 #1）       | Stripe `reference_rate` + `reference_rate_provider` |
-| `providerReferenceRate`         | decimal string \| **null**               | **上游明示**的參考價；與 `marketMidCounterfactual` **不得混用**                | MoneyBox 結構性不提供 → `null`（§18.5） | Stripe `base_rate`                                  |
-| `status`                        | ECB `CL_OBS_STATUS` 碼（見 §4.4）        | **每筆值自帶狀態碼**，說明缺值或品質；禁止用 `null` 代表語意                   | 必填                                    | **ECB `CL_OBS_STATUS`**                             |
-| `observedAt`                    | ISO string                               | **我方抓取時間**                                                               | 必填                                    | ECB series 屬性 `COLLECTION`                        |
-| `publishedAt`                   | ISO string \| null                       | **上游宣告的發布時間**；缺值時**不得回填**，以 `status` 說明                   | 上游未提供 `null`                       | ECB `TIME_PERIOD` 與屬性分離                        |
+| 欄位                | 型別                                                                 | 定義                                                                                                        | 缺值行為                       |
+| ------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| `quoteSeriesId`     | string（≤256）                                                       | `fx3:{provider}:{deliveryMethod}:{channel}:{country}:{branch\|-}:{from}-{to}`；不內嵌來源 JSON              | 必填                           |
+| `quoteId`           | string（≤256）                                                       | `{quoteSeriesId}@{sourcePublishedAt\|fetchedAt}`；同一發布時間更正值時 ID 相同，由快照 SHA-256 定址保證唯一 | 必填                           |
+| `fromCurrency`      | ISO 4217                                                             | 客戶付出的幣別                                                                                              | 必填                           |
+| `toCurrency`        | ISO 4217                                                             | 客戶取得的幣別                                                                                              | 必填                           |
+| `rate`              | decimal string \| null                                               | 每 1 `fromCurrency` 可取得的 `toCurrency`；`toAmount = fromAmount × rate`                                   | `status=unavailable` 時 `null` |
+| `status`            | `available` \| `unavailable`                                         | 單側可用性；一側停供不影響另一側                                                                            | 必填                           |
+| `unavailableReason` | `not_quoted`\|`not_collected`\|`market_closed`\|`suppressed`\|`null` | ECB `CL_OBS_STATUS` M／L／H／Q（schema `x-ecbObsStatus`）；可用時 `null`                                    | 必填                           |
+| `sourceQuote`       | `SourceQuote`                                                        | 來源原值與適用條件（見下表）                                                                                | 必填                           |
+| `methodVersion`     | `"1"`                                                                | 正規化方法版本                                                                                              | 必填                           |
+
+`SourceQuote`（業者視角，主詞：業者；受詞：`subjectCurrency`）：
+
+| 欄位                                                                                                              | 定義                                                                                                                     |
+| ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `providerBuyPrice` / `providerSellPrice`                                                                          | 業者買入／賣出 `subjectCurrency` 的牌告價：每 `unitAmount` 單位 `subjectCurrency` 的 `priceCurrency` 金額；未報價 `null` |
+| `providerBuyUnavailableReason` / `providerSellUnavailableReason`                                                  | 價格為 `null` 的原因（省略即 `not_quoted`）；上游 `0` 為 `suppressed`、無法解析為 `not_collected`                        |
+| `unitAmount`                                                                                                      | 報價單位（per-1 或 per-100），保留原值                                                                                   |
+| `sourcePublishedAt` / `fetchedAt` / `lastSuccessfulCheckAt`                                                       | 上游發布（缺值不回填）／我方擷取／最後成功檢查時間                                                                       |
+| `serviceCountry` / `deliveryMethod` / `channel` / `branchId` / `denominations` / `amountRange` / `qualifications` | 適用條件維度                                                                                                             |
+| `feeStatus` / `feeEvidenceUrl`                                                                                    | 費用狀態；`no_additional_fee` 必須附證據                                                                                 |
+| `dataKind`（必填）                                                                                                | `published_board`｜`fixed_fallback`｜`reference`｜`derived_cross`，不再有隱性預設                                        |
+
+`sourceUrl` 不逐筆重複，移至 manifest `providers[]`。
 
 **`sourceDenominator` 移出公開 payload**，只留在轉換 manifest 供稽核。
 
@@ -270,17 +277,17 @@ receivedAmount = paidAmount × rate      對所有 provider 恆成立，永不�
 
 ### 4.3.1 payload 層級欄位（非 rate row）
 
-| 欄位                                                               | 定義                                                                                                            | 依據                                  |
-| ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
-| `$schema`                                                          | 指向 canonical contract URL（**取代** `semanticFieldMapping`）                                                  | §19.3                                 |
-| `schemaVersion`                                                    | `"3.0"`                                                                                                         | Google AIP-180：語意變更須 major 版本 |
-| `nextSourceCheckAt`                                                | **下次檢查時間**（依上游 `max-age` 排程，非每 5 分鐘）                                                          | §18.2                                 |
-| `calculationRule`                                                  | 供 LLM agent 直接套用的換算規則                                                                                 | §19.5                                 |
-| `comparablePairs`                                                  | **強制且顯著**；目前僅 `TWD↔KRW` 一組                                                                           | §13.3.4                               |
-| `pricing.fee` / `pricing.pricingScope`                             | `fee: 0` + `policy: "spread_only"` + 適用邊界宣告                                                               | §15.1                                 |
-| `providers[]`（`attribution`／`termsUrl`／`redistributionStatus`） | 每個上游來源的標示文字（string）、條款連結與再散布狀態（`verified`｜`unknown`｜`restricted`，現值 `"unknown"`） | exchangerate-api payload 內建出處     |
+| 欄位                          | 定義                                                                                                                             | 依據                                  |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| `$schema`                     | ReleaseManifest 與 ProviderSnapshot 皆帶，指向版本化 contract URL（**取代** `semanticFieldMapping`，兩者不得並存）               | §19.3                                 |
+| `schemaVersion`               | `"3.0"`                                                                                                                          | Google AIP-180：語意變更須 major 版本 |
+| `publisher`                   | `name`、`url`、`termsUrl`、`requiredText`（manifest 層一次）                                                                     | §21.3                                 |
+| `providers[]`                 | `name`、`kind`、`sourceUrl`、`termsUrl`、`redistributionStatus`（現值 `unknown`）、`attribution`、`nextSourceCheckAt` + 檢查狀態 | exchangerate-api payload 內建出處     |
+| `calculationRule`             | const：`toAmount = fromAmount × rate`；EXACT_OUT 以來源原值計算；倒數 12 位小數 ROUND_HALF_EVEN；金額依 minor unit               | §19.5                                 |
+| `quoteAvailability`           | const `indicative_not_transaction_guarantee`（manifest 層一次，不逐筆重複）                                                      | §16.4                                 |
+| `comparablePairs` / `pricing` | **不採用**：由 `feeStatus` + `dataKind` + 適用條件維度取代（§16.7）                                                              | —                                     |
 
-> `nextSourceCheckAt` **不承諾上游必然更新**——我方能保證的只有下次檢查時間（§18.2）。
+> `nextSourceCheckAt` **不承諾上游必然更新**——排程由 GitHub Actions cron 驅動且不保證準點，為避免每輪改寫 manifest（churn），目前輸出 `null`；日後改依上游 `max-age` 排程時相容填值（§18.2）。
 
 ### 4.5 已汰換名稱對照
 
@@ -800,6 +807,30 @@ repo 既有文案佐證：`DEFAULT_DESCRIPTION`「顯示臺灣銀行牌告的**�
 | **本產品獨有**   | `marketMidCounterfactual`、`marketMidExpectationGap`、`published_board_rate` scope                                        |
 | **業界標準對齊** | `TO_PER_1_FROM`（FX per-1）、provider `type`（Wise）、freshness 欄位群、fee 與 rate 分離、`SEND` 語意（Wise `amountTyp`） |
 
+### 16.7 v11.5 定案契約（ADR B3）與不採用的 A 設計
+
+公開契約採 **C：保留 `quotes[]` 結構 + 採 PRD 語意 + 修正已實測缺陷**。未公開（`v3/current.json` 404）前改名零外部成本；發布後改名即為 major。
+
+| 決定      | 內容                                                                                                                                                                             |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Schema 根 | 只留 `$defs`，移除根 `oneOf`；payload 以 `$schema` 指向版本化 contract                                                                                                           |
+| 相容擴充  | 回應實體 tolerant reader（無 `additionalProperties:false`）；輸入實體（EstimateRequest、SelectionContext）維持封閉；發布端以 producer 嚴格驗證（`producer-validators.js`）防拼錯 |
+| 命名      | `SourceQuote.buy/sell` → `providerBuyPrice`／`providerSellPrice`；移除 `QuoteSnapshot.providerSide`                                                                              |
+| 識別碼    | `quoteSeriesId`／`quoteId` 如 §4.3，≤256 字元；原實作內嵌來源 JSON 達 892 字                                                                                                     |
+| 缺值      | `unavailableReason` enum 一次定義完整並註記 ECB 碼；單側 0／停供不整包 throw                                                                                                     |
+| 精度      | 見 §18.4：來源直接值保留原始位數、倒數 12 位小數、EXACT_OUT 由來源原值計算                                                                                                       |
+| 標示      | manifest 層 `publisher`、`providers[]`、`calculationRule`、`quoteAvailability`                                                                                                   |
+
+**不採用的 A 設計（附註）**：
+
+- `customerBuy`／`customerSell` 雙物件：缺 EXACT_OUT 與適用條件維度；以方向化 `quotes[]` 取代。
+- 逐筆 `rateUnit`／`quoteNature`／`rateType`：`rate` 語意由 schema 固定為 per-1 from→to；`quoteAvailability` 升至 manifest 層；現鈔／帳戶由 `deliveryMethod` 表達。
+- `spread`／`derivedQuoteMidpoint`：由 JSON-LD 投影層依兩側 `sourceQuote` 計算，不進公開 row。
+- 恆為 `null` 的 `marketMidCounterfactual`／`providerReferenceRate`：授權確認前不輸出欄位，待授權後相容新增。
+- `comparablePairs`／`pricing`：由 `feeStatus` + `dataKind` + 適用條件取代。
+
+**風險記錄**：12 位小數對極小倒數（如 1/30000）僅約 8 位有效數字，目前幣對安全，新增 provider 時需重評；`quoteId` 以時間為鍵，同一發布時間更正值時 ID 相同，由快照 SHA-256 定址保證唯一。
+
 ---
 
 ## 17. 最終未定案清單（6 項）
@@ -876,13 +907,14 @@ cf-cache-status: HIT / age: 21
 
 實例：`(42.15 + 42.3) / 2` 在 JS 得到 **`42.224999999999994`**。
 
-| 項目           | 規格                                                            |
-| -------------- | --------------------------------------------------------------- |
-| 公開 JSON 表示 | **decimal string**（`"42.3"` 而非 `42.3`）                      |
-| 算術           | 十進位算術（decimal.js 等），**禁止** binary float 進入公開產物 |
-| 中點／spread   | 依輸入位數規則捨入，`ROUND_HALF_EVEN`                           |
-| canonical 倒數 | 保留 **12 位小數**                                              |
-| 金額           | 依幣別 **minor-unit** 捨入                                      |
+| 項目           | 規格                                                                                     |
+| -------------- | ---------------------------------------------------------------------------------------- |
+| 公開 JSON 表示 | **decimal string**（`"42.3"` 而非 `42.3`）                                               |
+| 算術           | 十進位算術（decimal.js 等），**禁止** binary float 進入公開產物                          |
+| 中點／spread   | 依輸入位數規則捨入，`ROUND_HALF_EVEN`                                                    |
+| canonical 倒數 | 保留 **12 位小數**，`ROUND_HALF_EVEN`；來源直接值（per-1 或 per-10ⁿ 可整除）保留原始位數 |
+| EXACT_OUT      | `from = ceil_minor(to × unitAmount ÷ providerPrice)`，**禁止**除以捨入後的 rate          |
+| 金額           | 依幣別 **minor-unit** 捨入                                                               |
 
 守門測試須斷言：
 
@@ -891,18 +923,20 @@ cf-cache-status: HIT / age: 21
 - hash 可重建一致性
 - per-100 正規化仍走 decimal path
 
-### 18.5 上游只給 3 欄位下，必須為 null 的欄位
+### 18.5 上游只給 3 欄位下，不輸出或為 null 的欄位
 
-| 欄位                      | 值                                    |
-| ------------------------- | ------------------------------------- |
-| `providerReferenceRate`   | `null`（上游不提供）                  |
-| `marketMidCounterfactual` | `null`（授權未確認前）                |
-| `marketMidExpectationGap` | `null`（依賴上者）                    |
-| `deliveryEstimation`      | `null`（無此資料）                    |
-| 優惠匯率資訊              | `null`（§15.1 `pricingScope` 已排除） |
-| `rateType`                | **`"unspecified"`** 而非 `null`       |
+> **v11.5 修訂（ADR B3）**：恆為 `null` 的欄位不再佔位輸出；待授權或資料到位後以相容新增（tolerant reader）引入。
 
-> 最後一列是刻意區分：**`"unspecified"` = 已知有此概念但無資料；`null` = 此概念不適用。** 兩者不可混用。
+| 欄位                      | v11.5 行為                                                          |
+| ------------------------- | ------------------------------------------------------------------- |
+| `providerReferenceRate`   | 不輸出（上游不提供）                                                |
+| `marketMidCounterfactual` | 不輸出（授權未確認前）                                              |
+| `marketMidExpectationGap` | 不輸出（依賴上者）                                                  |
+| `deliveryEstimation`      | 不輸出（無此資料）                                                  |
+| 優惠匯率資訊              | 不輸出（§15.1 `pricingScope` 已排除）                               |
+| `rateType`                | 不逐筆輸出；由 `sourceQuote.deliveryMethod`／`channel` 表達適用條件 |
+
+> 原則不變：**「缺的就是缺的」**——不輸出不存在的概念，存在但缺值的報價以 `status=unavailable` + `unavailableReason` 表達。
 
 ---
 
@@ -1145,22 +1179,23 @@ v3 contract／OpenAPI／LLM 文件可在 feature branch 建立，**不連 canoni
 
 ## 修訂紀錄
 
-| 日期       | 版本  | 變更                                                                                                                                                                                                                                                                                                                       |
-| ---------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-09-28 | v11.4 | 修正獨立 spec-evidence 審查：F4／F8 補可追溯來源；§0／§19.2／§21.3 統一契約 SSOT 為 `apps/shared/fx/schema.json`（發佈副本 `public/api/v3/contract.schema.json`）；§4.3.1、§17 #6 對齊 PR 1104 `providers[].redistributionStatus`；§21 payload 物件改名 `publisher` 並移除 `sources[]`；新增著作權宣稱守門；裁決 2 改引 F8 |
-| 2026-09-28 | v11.3 | 新增 §21 API 使用標示與 SEO 策略：8 項事實（含來源與信心）、5 項裁決（可要求標示但不得強制 dofollow）、S3 契約增量與驗收標準、不做清單；§17 #6 與 §19.8 #11 指向 F7／F8                                                                                                                                                    |
-| 2026-09-28 | v11.2 | 併入 origin/main（`443c7d197`）；新增 §0 實作現況（PR 1 已合併、PR 2+3 併於 PR 1104、`RATEWISE_FX_V3_ENABLED` 預設關閉）；§5 標註偏離                                                                                                                                                                                      |
-| 2026-08-26 | v11.1 | §14 重新定稿：初版以「無費用資料」為由排除 all-in 的前提已被 fee=0 推翻，改為情境限定式；新增「是什麼」章節明示界定情境內可給 all-in；新增現場成交保證與牌告情境外來源兩項排除；新增 all-in 與保證的分界對照                                                                                                               |
-| 2026-08-26 | v11.0 | 新增 §20 全域漂移稽核：確認 5 項漂移（含台銀 workflow 缺 outage routing、人民幣 FAQ 推薦我方不涵蓋的管道）；記錄我方 4 項「非漂移」判定被推翻及正確判準；§14 因 fee=0 需重新定稿；共識狀態為否，7 項未決且 5 項需外部事實                                                                                                  |
-| 2026-08-26 | v10.1 | reconcile 早期章節欄位名：§4.3 回填 publishedRate／marketMidCounterfactual／derivedQuoteMidpoint／quoteNature／quoteAvailability，§4.3.1 回填 $schema／nextSourceCheckAt／calculationRule；新增 §4.5 已汰換名稱對照表                                                                                                      |
-| 2026-08-26 | v10.0 | 新增 §19 SSOT 架構：語意散落 6 表面且已證實漂移，llms.txt 散文欄位說明為定時炸彈；定案以版本化 JSON Schema 為 SSOT 並衍生全部產物；v3 移除 semanticFieldMapping 改用 $schema；llms.txt 散文與 schema 連結兩者都要；JSON-LD 改為已驗證 payload 的投影；誠實列出 11 項未達成                                                 |
-| 2026-08-26 | v9.0  | MoneyBox 新 API 完整實測（單一端點、3 欄位、max-age 4h）；輪詢改依上游快取契約並改名 nextSourceCheckAt；新增 derivedQuoteMidpoint 但裁定不可取代外部市場中價、授權阻塞未解除；decimal string 與十進位算術規格定案；列出上游僅 3 欄位下必須為 null 的欄位                                                                   |
-| 2026-08-26 | v8.0  | 產品定位揭露（主打實際牌告價非中間價）推翻中間價 deferred 裁決；中間價改名 marketMidCounterfactual 並定位為對照組；主匯率數值改名 publishedRate 並以 quoteNature + quoteAvailability 平衡精準與不過度承諾；精準度落差升為一級欄位但只依附 amountTiers；列出 6 項需外部資訊的未定案                                         |
-| 2026-08-26 | v7.0  | 查證台銀免手續費推翻 feeCoverage=unknown，改 fee:0 + pricingScope；新增 comparisonProfile 取代 rateType 字串比對（避免錯殺唯一可比對）；十二項逐項裁決（5 採納 7 修正）；覆蓋範圍與可得性分離；新增 8 項續議與阻塞分析，確認 PR 1 不被阻塞                                                                                 |
-| 2026-08-26 | v6.0  | 第二輪獨立審查推翻三項裁決：`amountTiers` 改為納入、`grossReceivedAmount` 否決、`comparisonBenchmark` 延後；新增 `comparablePairs` 強制欄位與 §13.3.4 只有一組可比對的實測；新增 §14 產品定位界定與 §15 十二項待對齊清單                                                                                                   |
-| 2026-08-26 | v5.0  | 新增 §13 權威聚合器設計：Wise Comparison API 實測、8 條提取原則的獨立評估（僅 3 條完全成立）、provider.kind + providerRole、cash/spot 正交、中價不升格改立 comparisonBenchmark、grossReceivedAmount 折衷、十項要素與四階段路徑                                                                                             |
-| 2026-08-26 | v4.0  | 補生產級 API 實測對照（Wise／Stripe／OANDA／exchangerate-api／ECB／schema.org）與版本治理標準（AIP-180、RFC 9745/8594、Zalando #185–#191）；新增 payload 層級欄位 `nextUpdateAt`／出處連結；補 PR 3 的棄用 header 與流量監控驗收                                                                                           |
-| 2026-08-26 | v3.1  | `status` 改採 ECB `CL_OBS_STATUS` 官方碼表子集（不自創字串）；釐清正規化不屬 status 而由 `rateUnit` 自我描述；裁決 `spread` 對外輸出                                                                                                                                                                                       |
-| 2026-08-26 | v3.0  | 補 ECB SDMX／schema.org／ISO 20022 權威對照；裁決 rateType 為平行維度、publishedAt 不回填；`referenceRateStatus` 泛化為 `status`；新增 `spread`；記錄 JSON-LD 語意優於資料 API 的對比                                                                                                                                      |
-| 2026-08-26 | v2.0  | 產品裁決硬切、取消 sunset；v3 範圍擴大至台銀；歷史 419 檔全轉換；補 Codex 7 項風險；PR 由 4 收斂為 3                                                                                                                                                                                                                       |
-| 2026-08-26 | v1.0  | 初版：上游遷移調查、v2 命名方案失效判定、雙軌規劃                                                                                                                                                                                                                                                                          |
+| 日期       | 版本  | 變更                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ---------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-28 | v11.5 | 依 ADR B3 修訂公開契約：§4.3 改為 `quotes[]`／`SourceQuote` 欄位表（`providerBuyPrice`／`providerSellPrice`、移除 `providerSide`、`quoteId`／`quoteSeriesId` 格式 ≤256、`unavailableReason` 完整 enum、`dataKind` 必填）；§4.3.1 改為 manifest 層 `$schema`／`publisher`／`providers[]`／`calculationRule`／`quoteAvailability`；新增 §16.7 定案與不採用的 A 設計附註；§18.4 補 EXACT_OUT 與倒數規則；§18.5 改為不輸出恆 null 欄位 |
+| 2026-09-28 | v11.4 | 修正獨立 spec-evidence 審查：F4／F8 補可追溯來源；§0／§19.2／§21.3 統一契約 SSOT 為 `apps/shared/fx/schema.json`（發佈副本 `public/api/v3/contract.schema.json`）；§4.3.1、§17 #6 對齊 PR 1104 `providers[].redistributionStatus`；§21 payload 物件改名 `publisher` 並移除 `sources[]`；新增著作權宣稱守門；裁決 2 改引 F8                                                                                                         |
+| 2026-09-28 | v11.3 | 新增 §21 API 使用標示與 SEO 策略：8 項事實（含來源與信心）、5 項裁決（可要求標示但不得強制 dofollow）、S3 契約增量與驗收標準、不做清單；§17 #6 與 §19.8 #11 指向 F7／F8                                                                                                                                                                                                                                                            |
+| 2026-09-28 | v11.2 | 併入 origin/main（`443c7d197`）；新增 §0 實作現況（PR 1 已合併、PR 2+3 併於 PR 1104、`RATEWISE_FX_V3_ENABLED` 預設關閉）；§5 標註偏離                                                                                                                                                                                                                                                                                              |
+| 2026-08-26 | v11.1 | §14 重新定稿：初版以「無費用資料」為由排除 all-in 的前提已被 fee=0 推翻，改為情境限定式；新增「是什麼」章節明示界定情境內可給 all-in；新增現場成交保證與牌告情境外來源兩項排除；新增 all-in 與保證的分界對照                                                                                                                                                                                                                       |
+| 2026-08-26 | v11.0 | 新增 §20 全域漂移稽核：確認 5 項漂移（含台銀 workflow 缺 outage routing、人民幣 FAQ 推薦我方不涵蓋的管道）；記錄我方 4 項「非漂移」判定被推翻及正確判準；§14 因 fee=0 需重新定稿；共識狀態為否，7 項未決且 5 項需外部事實                                                                                                                                                                                                          |
+| 2026-08-26 | v10.1 | reconcile 早期章節欄位名：§4.3 回填 publishedRate／marketMidCounterfactual／derivedQuoteMidpoint／quoteNature／quoteAvailability，§4.3.1 回填 $schema／nextSourceCheckAt／calculationRule；新增 §4.5 已汰換名稱對照表                                                                                                                                                                                                              |
+| 2026-08-26 | v10.0 | 新增 §19 SSOT 架構：語意散落 6 表面且已證實漂移，llms.txt 散文欄位說明為定時炸彈；定案以版本化 JSON Schema 為 SSOT 並衍生全部產物；v3 移除 semanticFieldMapping 改用 $schema；llms.txt 散文與 schema 連結兩者都要；JSON-LD 改為已驗證 payload 的投影；誠實列出 11 項未達成                                                                                                                                                         |
+| 2026-08-26 | v9.0  | MoneyBox 新 API 完整實測（單一端點、3 欄位、max-age 4h）；輪詢改依上游快取契約並改名 nextSourceCheckAt；新增 derivedQuoteMidpoint 但裁定不可取代外部市場中價、授權阻塞未解除；decimal string 與十進位算術規格定案；列出上游僅 3 欄位下必須為 null 的欄位                                                                                                                                                                           |
+| 2026-08-26 | v8.0  | 產品定位揭露（主打實際牌告價非中間價）推翻中間價 deferred 裁決；中間價改名 marketMidCounterfactual 並定位為對照組；主匯率數值改名 publishedRate 並以 quoteNature + quoteAvailability 平衡精準與不過度承諾；精準度落差升為一級欄位但只依附 amountTiers；列出 6 項需外部資訊的未定案                                                                                                                                                 |
+| 2026-08-26 | v7.0  | 查證台銀免手續費推翻 feeCoverage=unknown，改 fee:0 + pricingScope；新增 comparisonProfile 取代 rateType 字串比對（避免錯殺唯一可比對）；十二項逐項裁決（5 採納 7 修正）；覆蓋範圍與可得性分離；新增 8 項續議與阻塞分析，確認 PR 1 不被阻塞                                                                                                                                                                                         |
+| 2026-08-26 | v6.0  | 第二輪獨立審查推翻三項裁決：`amountTiers` 改為納入、`grossReceivedAmount` 否決、`comparisonBenchmark` 延後；新增 `comparablePairs` 強制欄位與 §13.3.4 只有一組可比對的實測；新增 §14 產品定位界定與 §15 十二項待對齊清單                                                                                                                                                                                                           |
+| 2026-08-26 | v5.0  | 新增 §13 權威聚合器設計：Wise Comparison API 實測、8 條提取原則的獨立評估（僅 3 條完全成立）、provider.kind + providerRole、cash/spot 正交、中價不升格改立 comparisonBenchmark、grossReceivedAmount 折衷、十項要素與四階段路徑                                                                                                                                                                                                     |
+| 2026-08-26 | v4.0  | 補生產級 API 實測對照（Wise／Stripe／OANDA／exchangerate-api／ECB／schema.org）與版本治理標準（AIP-180、RFC 9745/8594、Zalando #185–#191）；新增 payload 層級欄位 `nextUpdateAt`／出處連結；補 PR 3 的棄用 header 與流量監控驗收                                                                                                                                                                                                   |
+| 2026-08-26 | v3.1  | `status` 改採 ECB `CL_OBS_STATUS` 官方碼表子集（不自創字串）；釐清正規化不屬 status 而由 `rateUnit` 自我描述；裁決 `spread` 對外輸出                                                                                                                                                                                                                                                                                               |
+| 2026-08-26 | v3.0  | 補 ECB SDMX／schema.org／ISO 20022 權威對照；裁決 rateType 為平行維度、publishedAt 不回填；`referenceRateStatus` 泛化為 `status`；新增 `spread`；記錄 JSON-LD 語意優於資料 API 的對比                                                                                                                                                                                                                                              |
+| 2026-08-26 | v2.0  | 產品裁決硬切、取消 sunset；v3 範圍擴大至台銀；歷史 419 檔全轉換；補 Codex 7 項風險；PR 由 4 收斂為 3                                                                                                                                                                                                                                                                                                                               |
+| 2026-08-26 | v1.0  | 初版：上游遷移調查、v2 命名方案失效判定、雙軌規劃                                                                                                                                                                                                                                                                                                                                                                                  |

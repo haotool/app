@@ -10,8 +10,8 @@
 
 - `apps/shared/fx/schema.json` 定義 SourceQuote、QuoteSnapshot、試算、ProviderSnapshot、release manifest 與 current pointer。
 - `apps/shared/fx/index.ts` 使用十進位字串、明確方向、`EXACT_IN`／`EXACT_OUT`、幣別 minor unit 與條件適用性。
-- `scripts/generate-fx-contract.mjs` 產生 TypeScript 型別與 Ajv standalone validator；禁止手改產出物。Node 腳本以原生型別剝除直接匯入 `apps/shared/fx/index.ts`，不另產 runtime bundle。
-- `rate = 每 1 fromCurrency 可取得的 toCurrency`；銀行／換錢所原始 buy/sell 仍保留在 `sourceQuote`，不可由國家或欄位名稱猜方向。
+- `scripts/generate-fx-contract.mjs` 產生 TypeScript 型別、consumer validator（`validators.js`，tolerant reader）與 producer 嚴格 validator（`producer-validators.js`，只供發布端，拒絕未知欄位）；禁止手改產出物。Node 腳本以原生型別剝除直接匯入 `apps/shared/fx/index.ts`，不另產 runtime bundle。
+- `rate = 每 1 fromCurrency 可取得的 toCurrency`；業者原始牌告保留為 `sourceQuote.providerBuyPrice`／`providerSellPrice`（主詞業者、受詞 subjectCurrency），不可由國家或欄位名稱猜方向。公開契約細節以 PRD 049 §4.3／§4.3.1／§16.7（v11.5，ADR B3）為準：`quoteSeriesId`／`quoteId` 短格式（≤256）、`unavailableReason` 完整 enum、`dataKind` 必填、倒數 12 位小數 ROUND_HALF_EVEN、EXACT_OUT 由來源原值計算，manifest 帶 `$schema`／`publisher`／`providers[]`／`calculationRule`／`quoteAvailability`。
 
 ## 來源與試算
 
@@ -25,7 +25,7 @@
 
 provider `failed`／`carried_forward` 快照只可供明確手動選擇，不能進入 best 自動排名。
 
-**公開切換 SSOT（expand–contract）**：`apps/ratewise/src/config/api-endpoints.ts` 的 `FX_V3_PUBLIC`（預設 `false`）同時控制 App 是否讀取 v3，以及站台生成器（`api/latest.json`、`api/pairs/*`、`openapi.json`、`open-data`、`llms*.txt`、`about`／`index` 鏡像）是否宣告 v3。`false` 時 App 使用凍結的 `useLegacyCurrencyConverter`（與 main 等價：MoneyBox 手動換算、legacy 趨勢圖、不顯示 best 與 v3 新鮮度提示、不輪詢 v3 current），公開資料面維持 schemaVersion 2.0 與 openapi 2.1.0；`/ratewise/api/v3/contract.schema.json` 可預先存在但不被宣告為主要入口。S4 切換順序：先開 data workflow 的 `RATEWISE_FX_V3_ENABLED` 產出並驗證，再以一行 PR 將 `FX_V3_PUBLIC` 改為 `true`；回滾即翻回。守門：`fx-v3-inert.test.tsx`、`fx-v3-public-surface.test.ts`。
+**公開切換 SSOT（expand–contract）**：`apps/shared/fx/public.ts` 的 `FX_V3_PUBLIC`（RateWise 經 `api-endpoints.ts` 重新匯出，split-meow 直接匯入）（預設 `false`）同時控制 App 是否讀取 v3，以及站台生成器（`api/latest.json`、`api/pairs/*`、`openapi.json`、`open-data`、`llms*.txt`、`about`／`index` 鏡像）是否宣告 v3。`false` 時 App 使用凍結的 `useLegacyCurrencyConverter`（與 main 等價：MoneyBox 手動換算、legacy 趨勢圖、不顯示 best 與 v3 新鮮度提示、不輪詢 v3 current），公開資料面維持 schemaVersion 2.0 與 openapi 2.1.0；`/ratewise/api/v3/contract.schema.json` 可預先存在但不被宣告為主要入口。S4 切換順序：先開 data workflow 的 `RATEWISE_FX_V3_ENABLED` 產出並驗證，再以一行 PR 將 `FX_V3_PUBLIC` 改為 `true`；回滾即翻回。守門：`fx-v3-inert.test.tsx`、`fx-v3-public-surface.test.ts`、split-meow `exchangeRate.test.ts`（false 時只請求 v2 MoneyBox CDN、不顯示參考值提示）。`useLegacyCurrencyConverter.ts` 是 expand–contract 的暫存副本，於 S4 切換 PR（`FX_V3_PUBLIC` 改為 `true` 並完成 contract 階段）刪除。
 
 新鮮度只看來源發布時間：台銀 36 小時、MoneyBox 24 小時（`FRESHNESS_MAX_HOURS`）；`sourcePublishedAt=null` 為 `unknown`，UI 分別顯示「來源未提供發布時間」與「已超過更新門檻」。公開 contract 固定輸出至 `/ratewise/api/v3/contract.schema.json`，current pointer 更新後由工作流 purge mutable URL。
 
