@@ -24,7 +24,7 @@ pnpm exec wrangler deploy
 
 ## 本版重點
 
-- Worker 版本：`6.5`
+- Worker 版本：`6.8`
 - HSTS 改由 Cloudflare Edge 管理，Worker 不再寫入
 - `app.haotool.org/*` 全域納入 Worker
 - `www.haotool.org/*` 由 Worker 永久轉址到 apex
@@ -32,37 +32,26 @@ pnpm exec wrangler deploy
 - `csp-report` 改為 `POST` only
 - 分享圖 CORS 白名單改為精準檔名
 - `haotool` 首頁改為程序化 3D environment，避免執行期依賴遠端 HDR preset
-- Pages 由 Cloudflare Web Analytics 自動注入 beacon；前端不再載入失效的 Vercel Analytics 路由
+- 移除已淘汰的 `VERCEL_ORIGIN` 回退，靜態 origin 僅由 `STATIC_ORIGIN` 決定
 
-## 靜態 origin 切換（Cloudflare Pages／Vercel）
+## 靜態 origin 切換（Cloudflare Pages）
 
 `STATIC_ORIGIN` 是非機密的 Cloudflare Worker plain variable，用來在不改變公開網域與
 既有 route 的情況下切換至 Cloudflare Pages。值必須是沒有 path、帳號或密碼的 HTTPS
-origin，例如 `https://<pages-project>.pages.dev`。`STATIC_ORIGIN` 優先於舊的
-`VERCEL_ORIGIN`；未設定前者時，後者仍可作為 Vercel 觀察期回退。
+origin，例如 `https://<pages-project>.pages.dev`。
 
 設定前先以 Pages Preview 驗證完整路由；正式值由 `wrangler.jsonc` 的 `vars` 固定，部署 Worker
-後再執行下列檢查。移除 `STATIC_ORIGIN` 或回滾 Worker 版本即可回退至
-`VERCEL_ORIGIN`，若兩者皆未設定則回到原 origin。
+後再執行下列檢查。移除 `STATIC_ORIGIN` 或回滾 Worker 版本即可回到 route 原 origin。
 
-若 Vercel origin 未設定或格式不合法，Worker 會保留原 origin 並記錄警告，方便安全回退。
-兩者是公開 origin 名稱，不是 secret；可以存在 Worker 的 `wrangler.jsonc`，但不可放入
-`.env`、Vercel 前端環境變數或 client bundle。Cloudflare API token 與 KV secret 仍不可進 repo。
+若 `STATIC_ORIGIN` 未設定或格式不合法，Worker 會保留原 origin 並記錄警告，方便安全回退。
+它是公開 origin 名稱，不是 secret；可以存在 Worker 的 `wrangler.jsonc`，但不可放入
+`.env`、前端環境變數或 client bundle。Cloudflare API token 與 KV secret 仍不可進 repo。
 
-### Vercel 自訂網域 vs Cloudflare 代理（重要）
+### 公開網域必須維持 Cloudflare 代理（重要）
 
 本架構的公開網域 **必須** 維持 Cloudflare 橘雲（Proxied），由 `security-headers` Worker
 接收流量；靜態內容則透過 Worker 變數 `STATIC_ORIGIN=https://<project>.pages.dev` 回源。
-
-因此：
-
-- Vercel Dashboard 若顯示「偵測到代理／Invalid Configuration」，在 **未直連 Vercel DNS**
-  的遷移期是預期現象，**不要** 為了消除警告而把 `www` CNAME 改成灰雲直連 Vercel。
-- **不要** 在 Vercel 專案加入 `haotool.org` / `www.haotool.org` 作為對外自訂網域，
-  除非已完全移除 Worker 前置層；否則 Vercel 會將 apex 308 到 www，與 Worker 的
-  `www → haotool.org` 規則互撞，造成無限重導。
-- 正確做法：Pages 僅用 `*.pages.dev` 作為 `STATIC_ORIGIN`；Cloudflare DNS 維持現狀。
-- 觀察期可保留 `VERCEL_ORIGIN`；回退時移除 `STATIC_ORIGIN` 即恢復 Vercel origin。
+Pages 僅用 `*.pages.dev` 作為 `STATIC_ORIGIN`，不要把公開網域直接綁到 Pages；Cloudflare DNS 維持現狀。
 
 ## 部署後驗證
 

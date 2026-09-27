@@ -54,7 +54,7 @@ describe('About', () => {
     render(<About />);
     expect(screen.getByRole('heading', { name: '隱私政策' })).toBeInTheDocument();
     expect(screen.getByText(/本應用程式的停車紀錄等資料均儲存於您的裝置本機/)).toBeInTheDocument();
-    expect(screen.getByText(/Vercel Web Analytics/)).toBeInTheDocument();
+    expect(screen.queryByText(/Vercel/)).not.toBeInTheDocument();
     expect(screen.getByText(/停車紀錄（車牌、樓層、照片、座標等）/)).toBeInTheDocument();
   });
 

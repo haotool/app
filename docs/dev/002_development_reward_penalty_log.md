@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+4（reward 5、penalty 1、neutral 0）｜累計總分：+379
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+380
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-09-28
+- ID：reward-remove-vercel-residue
+- 原因：正式環境已收斂為 Cloudflare Pages 自動部署，但 repo 仍殘留 vercel.json、Dockerfile.vercel、VERCEL_ORIGIN 回退與 Vercel Analytics 隱私文案。
+- 解法：刪除 Vercel 設定檔與忽略建置腳本、Worker v6.8 移除 VERCEL_ORIGIN 回退、同步四個 app 隱私揭露與部署安全文件。
 
 - 日期：2026-09-28
 - ID：reward-a320-haotool-card-and-codex-icon

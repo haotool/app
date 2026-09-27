@@ -1,13 +1,14 @@
 /* global HTMLRewriter, performance */
 
 /**
- * 安全標頭 Worker v6.7
+ * 安全標頭 Worker v6.8
  *
  * 處理 Cloudflare 無法以固定規則精準表達的安全邏輯。
  * 固定站點級政策由 Cloudflare Edge 管理，Worker 專注於路由分層 CSP、
  * CSP report、分享圖 CORS 與 ratewise 跨域隔離。
  *
  * 變更記錄：
+ * - v6.8: 移除已淘汰的 VERCEL_ORIGIN 回退，靜態 origin 僅由 STATIC_ORIGIN（Cloudflare Pages）決定
  * - v6.7: 新增 a320-flight-deck CSP profile（Google Fonts），Permissions-Policy 允許同源 accelerometer/gyroscope 供手機傾斜操控
  * - v6.6: Cloudflare Web Analytics beacon 上傳 origin 納入所有 HTML profile 的 connect-src
  * - v6.5: Pages 由 Cloudflare Web Analytics 自動注入 beacon，移除失效的 Vercel Analytics CSP 依賴
@@ -43,7 +44,7 @@
  * - v3.6: 改用 HTMLRewriter 解析 inline script
  */
 
-const SECURITY_POLICY_VERSION = '6.7';
+const SECURITY_POLICY_VERSION = '6.8';
 const CSP_REPORT_MAX_BYTES = 16 * 1024;
 const HASHED_ASSET_PATH = /^\/(?:[^/]+\/)?assets\/[^/]+-[A-Za-z0-9_-]{6,12}\.(?:js|css|mjs)$/;
 
@@ -798,14 +799,13 @@ function buildServerTiming(timings) {
 }
 
 /**
- * 解析可選的靜態 origin。STATIC_ORIGIN 優先於 VERCEL_ORIGIN；未設定或設定不合法時保留目前 origin，
- * 讓正式切換可以先以回退模式驗證，不會因空白環境變數中斷既有服務。
+ * 解析可選的靜態 origin（STATIC_ORIGIN）。未設定或設定不合法時保留目前 origin，
+ * 不會因空白環境變數中斷既有服務。
  * @param {Record<string, unknown>|undefined} env
  * @returns {URL|null}
  */
 function resolveStaticOrigin(env) {
-	const configuredName = typeof env?.STATIC_ORIGIN === 'string' && env.STATIC_ORIGIN.trim() !== '' ? 'STATIC_ORIGIN' : 'VERCEL_ORIGIN';
-	const configuredOrigin = typeof env?.[configuredName] === 'string' ? env[configuredName].trim() : '';
+	const configuredOrigin = typeof env?.STATIC_ORIGIN === 'string' ? env.STATIC_ORIGIN.trim() : '';
 	if (configuredOrigin === '') {
 		return null;
 	}
@@ -813,14 +813,14 @@ function resolveStaticOrigin(env) {
 	try {
 		const origin = new URL(configuredOrigin);
 		if (origin.protocol !== 'https:' || origin.username !== '' || origin.password !== '' || !['', '/'].includes(origin.pathname)) {
-			throw new Error(`${configuredName} must be an https origin without credentials or a path`);
+			throw new Error('STATIC_ORIGIN must be an https origin without credentials or a path');
 		}
 		origin.pathname = '/';
 		origin.search = '';
 		origin.hash = '';
 		return origin;
 	} catch (error) {
-		globalThis.console.warn(`invalid-${configuredName.toLowerCase()}`, String(error));
+		globalThis.console.warn('invalid-static_origin', String(error));
 		return null;
 	}
 }
@@ -844,7 +844,7 @@ function resolveUpstreamUrl(requestedUrl, staticOrigin) {
 
 /**
  * 將靜態 origin 發出的同源 redirect 改寫回目前公開 host。
- * 否則上游會把 /ratewise 等 canonical redirect 指向 Pages／Vercel alias，
+ * 否則上游會把 /ratewise 等 canonical redirect 指向 Pages alias，
  * 使公開網址脫離 Cloudflare Worker 的安全與路由邊界。
  * @param {Response} response
  * @param {URL} requestedUrl
@@ -864,7 +864,7 @@ function rewriteOriginRedirect(response, requestedUrl, staticOrigin) {
 	try {
 		const redirectUrl = new URL(location, requestedUrl);
 
-		// Vercel 自訂網域常將 apex 308 到 www；公開 canonical 為 apex（Worker 亦將 www→apex）。
+		// 上游若將 apex 308 到 www，改寫回 apex；公開 canonical 為 apex（Worker 亦將 www→apex）。
 		if (redirectUrl.host === WWW_HOST && requestedUrl.host === CANONICAL_ROOT_HOST) {
 			redirectUrl.protocol = requestedUrl.protocol;
 			redirectUrl.host = CANONICAL_ROOT_HOST;

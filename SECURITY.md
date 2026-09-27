@@ -116,12 +116,11 @@ Technology Stack:
 - Alpine Linux-based minimal images
 - Read-only filesystem where possible
 
-When the static monorepo origin is moved from Zeabur to Vercel or Cloudflare Pages,
-the Cloudflare `security-headers` Worker remains the public security and routing
-boundary. The `STATIC_ORIGIN`／`VERCEL_ORIGIN` values are validated as HTTPS origins,
+The static monorepo origin is served from Cloudflare Pages, and the Cloudflare
+`security-headers` Worker remains the public security and routing boundary. The
+`STATIC_ORIGIN` value is validated as an HTTPS origin,
 stored as non-secret Worker configuration, and kept out of the client bundle. The `rating-api` Worker and
-KV remain on Cloudflare; no Cloudflare credential is required by the Pages asset
-upload or Vercel Docker image.
+KV remain on Cloudflare; Cloudflare credentials are used only by the CI deployment steps.
 
 ### Continuous Security Monitoring
 
