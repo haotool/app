@@ -1,5 +1,10 @@
 import { FxReleaseError, loadRelease, FX_BASE_URLS } from '@app/shared/fx/release';
 import { freshness, normalizeMoneyboxSnapshot } from '@app/shared/fx';
+import { FX_V3_PUBLIC } from '@app/shared/fx/public';
+
+/** v3 未公開時沿用 main 的 v2 CDN 端點與行為（不請求 v3 current、不顯示參考值提示）。 */
+const LEGACY_RATE_URL =
+  'https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/providers/moneybox/latest.json';
 
 /** 匯率快照有效期：6 小時。 */
 export const RATE_TTL_MS = 6 * 60 * 60 * 1000;
@@ -21,7 +26,29 @@ export function isRateStale(updatedAtIso: string | null, now = Date.now()): bool
   return !Number.isFinite(ts) || ts > now || now - ts > RATE_TTL_MS;
 }
 
+interface LegacyMoneyboxResponse {
+  timestamp: string;
+  updateTime: string;
+  rates: Record<string, { buy: number; sell: number; base: number }>;
+}
+
+async function fetchLegacyMoneyboxRate(): Promise<MoneyboxRate> {
+  const res = await fetch(LEGACY_RATE_URL);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = (await res.json()) as LegacyMoneyboxResponse;
+  const sell = data.rates['TWD']?.sell;
+  if (typeof sell !== 'number' || !Number.isFinite(sell) || sell <= 0) {
+    throw new Error('TWD sell rate missing or invalid');
+  }
+  // timestamp 供 TTL 判斷；缺失或不可解析視為 feed 異常，避免寫入後永遠 stale 造成前景熱迴圈。
+  if (typeof data.timestamp !== 'string' || !Number.isFinite(Date.parse(data.timestamp))) {
+    throw new Error('timestamp missing or invalid');
+  }
+  return { krwPerTwd: sell, updatedAt: data.updateTime, updatedAtIso: data.timestamp };
+}
+
 export async function fetchMoneyboxRate(now = new Date().toISOString()): Promise<MoneyboxRate> {
+  if (!FX_V3_PUBLIC) return fetchLegacyMoneyboxRate();
   let release;
   try {
     release = await loadRelease();

@@ -6,7 +6,8 @@
   "exports": {
     "./analytics": "./analytics/index.ts",
     "./fx": "./fx/index.ts",
-    "./fx/release": "./fx/release.ts"
+    "./fx/release": "./fx/release.ts",
+    "./fx/public": "./fx/public.ts"
   },
   "peerDependencies": {
     "react": ">=18",

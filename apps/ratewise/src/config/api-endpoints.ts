@@ -17,12 +17,8 @@ export const CDN_DATA_BASE = `https://cdn.jsdelivr.net/gh/${GITHUB_REPO_PATH}@${
 /** GitHub Raw 資料根路徑（備援）*/
 export const RAW_DATA_BASE = `https://raw.githubusercontent.com/${GITHUB_REPO_PATH}/${DATA_BRANCH}`;
 
-/**
- * v3 公開切換 SSOT（expand–contract）：false 時 App 不讀取 v3 current、站台生成器不宣告 v3。
- * data workflow 的 RATEWISE_FX_V3_ENABLED 只控制 data branch 產出；S4 先開 data gate 驗證，
- * 再以一行 PR 將此值改為 true；回滾同樣只翻回此常數。
- */
-export const FX_V3_PUBLIC = false as boolean;
+/** v3 公開切換 SSOT 位於 apps/shared/fx/public.ts（RateWise 與 split-meow 共用）。 */
+export { FX_V3_PUBLIC } from '../../../shared/fx/public.ts';
 
 /** 匯率 JSON 相對路徑 */
 const RATES_LATEST_PATH = '/public/rates/latest.json';
