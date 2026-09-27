@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeQuote } from '@app/shared/fx';
+import { normalizeQuote, type QuoteSnapshot } from '@app/shared/fx';
 import { projectSeoQuote } from '../seo-metadata/fx-projection';
 import { buildSeoExamples } from '../../../scripts/update-seo-rate-examples.mjs';
 const quotes = normalizeQuote({
@@ -43,6 +43,9 @@ describe('SEO directional projection', () => {
 });
 
 describe('SEO alternative provider projection', () => {
+  const availableRate = (quotes: readonly QuoteSnapshot[], from: string, to: string) =>
+    quotes.find((q) => q.fromCurrency === from && q.toCurrency === to && q.status === 'available')
+      ?.rate;
   const bank = {
     timestamp: '2026-09-21T00:00:00Z',
     details: { KRW: { cash: { buy: '0.02', sell: '0.03' } } },
@@ -54,10 +57,9 @@ describe('SEO alternative provider projection', () => {
       rates: { TWD: { buy: null, sell: '45' } },
     });
 
-    expect(result['KRW']?.alternativeProviders?.[0]).toMatchObject({
-      rate: 45,
-      rateBuy: null,
-    });
+    const quotes = result['KRW']?.alternativeProviders?.[0]?.quotes ?? [];
+    expect(availableRate(quotes, 'TWD', 'KRW')).toBe('45');
+    expect(availableRate(quotes, 'KRW', 'TWD')).toBeUndefined();
   });
 
   it('keeps the KRW to TWD provider when the forward side is missing', () => {
@@ -66,7 +68,8 @@ describe('SEO alternative provider projection', () => {
       rates: { TWD: { buy: '46', sell: null } },
     });
 
-    expect(result['KRW']?.alternativeProviders?.[0]?.rate).toBeNull();
-    expect(result['KRW']?.alternativeProviders?.[0]?.rateBuy).toBeCloseTo(1 / 46);
+    const quotes = result['KRW']?.alternativeProviders?.[0]?.quotes ?? [];
+    expect(availableRate(quotes, 'TWD', 'KRW')).toBeUndefined();
+    expect(Number(availableRate(quotes, 'KRW', 'TWD'))).toBeCloseTo(1 / 46);
   });
 });

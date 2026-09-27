@@ -793,7 +793,7 @@ export function getCurrencyLandingPageContent(
       answer: `不一樣。出國刷卡使用的是發卡組織（Visa、Mastercard）的清算匯率，再加上發卡銀行的海外交易手續費（通常 1.5%），與臺灣銀行牌告匯率是不同體系。本工具顯示的台銀牌告匯率適用於臨櫃換鈔或外幣帳戶匯款，不代表你出國刷卡時的實際扣款匯率。若出國以刷卡為主，建議另行查詢發卡銀行的海外手續費規定。`,
     },
     // 替代換匯管道 FAQ（如明洞換匯所），僅有 alternativeProviders 的幣別（KRW）會產生條目
-    // /krw-twd/ 頁方向為 to-twd（旅客持 KRW 換 TWD），使用 rateBuy 版本 FAQ
+    // /krw-twd/ 頁方向為 to-twd（旅客持 KRW 換 TWD），以 canonical KRW→TWD 報價試算 FAQ
     ...buildAlternativeProviderFaq(code, rateExample ?? ({} as RateExample), 'to-twd'),
   ];
 

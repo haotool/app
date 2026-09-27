@@ -1,70 +1,73 @@
 /**
  * TDD GREEN: AlternativeProvider interface + KRW 明洞換匯資料測試
+ * 匯率一律由 canonical quotes 投影，不再發布同名但方向不明的 rate／rateBuy。
  */
 
 import { describe, it, expect } from 'vitest';
 import { SEO_RATE_EXAMPLES, type RateExample } from '../generated/seo-rate-examples';
+import { projectSeoQuote } from '../seo-metadata/fx-projection';
+
+const krw = SEO_RATE_EXAMPLES['KRW']!;
+const provider = krw.alternativeProviders![0]!;
 
 describe('AlternativeProvider interface', () => {
   it('KRW 應有 alternativeProviders 欄位', () => {
-    const krw = SEO_RATE_EXAMPLES['KRW'];
     expect(krw).toBeDefined();
-    expect(krw!.alternativeProviders).toBeDefined();
-    expect(Array.isArray(krw!.alternativeProviders)).toBe(true);
-    expect(krw!.alternativeProviders!.length).toBeGreaterThan(0);
+    expect(krw.alternativeProviders).toBeDefined();
+    expect(Array.isArray(krw.alternativeProviders)).toBe(true);
+    expect(krw.alternativeProviders!.length).toBeGreaterThan(0);
   });
 
   it('明洞換匯所資料應有必要欄位', () => {
-    const provider = SEO_RATE_EXAMPLES['KRW']!.alternativeProviders![0];
-    expect(provider!.name).toBe('明洞換匯所');
-    expect(provider!.nameEn).toBe('Myeongdong Exchange');
-    expect(provider!.providerId).toBe('moneybox');
-    expect(typeof provider!.rate).toBe('number');
-    expect(provider!.source).toBe('MoneyBox');
-    expect(provider!.sourceUrl).toContain('moneybox');
+    expect(provider.name).toBe('明洞換匯所');
+    expect(provider.nameEn).toBe('Myeongdong Exchange');
+    expect(provider.providerId).toBe('moneybox');
+    expect(Array.isArray(provider.quotes)).toBe(true);
+    expect(provider.quotes.length).toBeGreaterThan(0);
+    expect(provider.source).toBe('MoneyBox');
+    expect(provider.sourceUrl).toContain('moneybox');
     expect(provider).toHaveProperty('sourcePublishedAt');
-    expect(typeof provider!.fetchedAt).toBe('string');
-    expect(typeof provider!.note).toBe('string');
+    expect(typeof provider.fetchedAt).toBe('string');
+    expect(typeof provider.note).toBe('string');
   });
 
-  it('明洞換匯所應有 rateBuy 欄位（KRW→TWD 方向的實際 buy 率）', () => {
-    const provider = SEO_RATE_EXAMPLES['KRW']!.alternativeProviders![0]!;
-    expect(provider.rateBuy).toBeDefined();
-    expect(typeof provider.rateBuy).toBe('number');
-    expect(provider.rateBuy!).toBeGreaterThan(0);
+  it('不發布 legacy rate／rateBuy／rateInverse（同名反義地雷）', () => {
+    for (const example of Object.values(SEO_RATE_EXAMPLES)) {
+      for (const alternative of example.alternativeProviders ?? []) {
+        expect(alternative).not.toHaveProperty('rate');
+        expect(alternative).not.toHaveProperty('rateBuy');
+        expect(alternative).not.toHaveProperty('rateInverse');
+      }
+    }
   });
 
-  it('rateBuy 應大於 rate（換匯所買入 KRW 的門檻比賣出寬鬆）', () => {
-    const provider = SEO_RATE_EXAMPLES['KRW']!.alternativeProviders![0]!;
-    // sell=46.0（旅客持 TWD 換 KRW 得 46）; buy=46.7（旅客持 KRW 換 TWD 需付 46.7）
-    expect(provider.rateBuy!).toBeGreaterThan(provider.rate!);
+  it('雙向 canonical 報價皆為正數且可試算', () => {
+    const outward = projectSeoQuote(provider.quotes, 'KRW', 'twd-to-foreign', '1');
+    const inward = projectSeoQuote(provider.quotes, 'KRW', 'to-twd', '1');
+    expect(Number(outward?.rate)).toBeGreaterThan(0);
+    expect(Number(inward?.rate)).toBeGreaterThan(0);
   });
 
-  it('不發布由 canonical quote 倒數推導的 rateInverse', () => {
-    const provider = SEO_RATE_EXAMPLES['KRW']!.alternativeProviders![0]!;
-    expect(provider).not.toHaveProperty('rateInverse');
+  it('換匯所買入 KRW 的門檻比賣出寬鬆（往返後金額不增加）', () => {
+    const outward = projectSeoQuote(provider.quotes, 'KRW', 'twd-to-foreign', '1');
+    const inward = projectSeoQuote(provider.quotes, 'KRW', 'to-twd', '1');
+    // TWD→KRW 與 KRW→TWD 皆為 canonical 方向率，乘積 < 1 代表存在買賣價差
+    expect(Number(outward!.rate) * Number(inward!.rate)).toBeLessThan(1);
   });
 
   it('明洞匯率（KRW per TWD）應高於台銀現金賣出換算值', () => {
-    const krw = SEO_RATE_EXAMPLES['KRW']!;
-    const provider = krw.alternativeProviders![0]!;
     expect(krw.cashSell).not.toBeNull();
     // 台銀 cashSell = 1 KRW = X TWD，換算成 1 TWD = 1/cashSell KRW
     const taiwanBankRate = 1 / krw.cashSell!;
+    const outward = projectSeoQuote(provider.quotes, 'KRW', 'twd-to-foreign', '1');
     // 明洞匯率應更優惠（同樣台幣換更多韓元）
-    expect(provider.rate!).toBeGreaterThan(taiwanBankRate);
+    expect(Number(outward!.rate)).toBeGreaterThan(taiwanBankRate);
   });
 
   it('非 KRW 幣別不應有 alternativeProviders', () => {
     expect(SEO_RATE_EXAMPLES['USD']!.alternativeProviders).toBeUndefined();
     expect(SEO_RATE_EXAMPLES['JPY']!.alternativeProviders).toBeUndefined();
     expect(SEO_RATE_EXAMPLES['EUR']!.alternativeProviders).toBeUndefined();
-  });
-
-  it('AlternativeProvider 型別檢查：rate 必須為正數', () => {
-    const provider = SEO_RATE_EXAMPLES['KRW']!.alternativeProviders![0]!;
-    expect(provider.rate!).toBeGreaterThan(0);
-    expect(provider.rateBuy!).toBeGreaterThan(0);
   });
 
   it('RateExample 的 alternativeProviders 為 optional', () => {
@@ -76,11 +79,9 @@ describe('AlternativeProvider interface', () => {
 
 describe('buildMyeongdongComparison 計算輔助', () => {
   it('以 30000 TWD 換算：明洞應比台銀多換一定韓元', () => {
-    const krw = SEO_RATE_EXAMPLES['KRW']!;
-    const provider = krw.alternativeProviders![0]!;
     const exampleTWD = krw.exampleTWD; // 30000
-
-    const myeongdongKRW = Math.floor(exampleTWD * provider.rate!);
+    const projected = projectSeoQuote(provider.quotes, 'KRW', 'twd-to-foreign', String(exampleTWD));
+    const myeongdongKRW = Number(projected!.amount);
     expect(krw.foreignAtCash).not.toBeNull();
     const taiwanBankKRW = krw.foreignAtCash!;
 

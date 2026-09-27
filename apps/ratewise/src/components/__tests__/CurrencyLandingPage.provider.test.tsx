@@ -30,8 +30,6 @@ const mockProvider: AlternativeProvider = {
   name: '明洞換匯所',
   nameEn: 'Myeongdong Exchange',
   providerId: 'moneybox',
-  rate: 46.0,
-  rateBuy: 46.7,
   source: 'MoneyBox',
   sourceUrl: 'https://moneybox-exchange.com/zh-CHT/exchange',
   sourcePublishedAt: null,

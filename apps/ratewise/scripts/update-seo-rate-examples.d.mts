@@ -1,6 +1,8 @@
+import type { QuoteSnapshot } from '@app/shared/fx';
+
 export interface GeneratedAlternativeProvider {
-  rate: number | null;
-  rateBuy: number | null;
+  providerId: string;
+  quotes: QuoteSnapshot[];
 }
 
 export interface GeneratedSeoExample {

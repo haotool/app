@@ -76,8 +76,6 @@ export function buildSeoExamples(bankPayload, moneyboxPayload = null) {
             name: '明洞換匯所',
             nameEn: 'Myeongdong Exchange',
             providerId: sourceQuote.providerId,
-            rate: forward?.rate == null ? null : Number(forward.rate),
-            rateBuy: reverse?.rate == null ? null : Number(reverse.rate),
             source: 'MoneyBox',
             sourceUrl: sourceQuote.sourceUrl,
             sourcePublishedAt: sourceQuote.sourcePublishedAt,
@@ -94,7 +92,7 @@ export function buildSeoExamples(bankPayload, moneyboxPayload = null) {
 
 const TYPES = `import type { QuoteSnapshot } from '@app/shared/fx';
 export interface AlternativeProvider {
-  name: string; nameEn: string; providerId: string; rate: number | null; rateBuy: number | null;
+  name: string; nameEn: string; providerId: string;
   source: string; sourceUrl: string; sourcePublishedAt: string | null; fetchedAt: string;
   note: string; quotes: QuoteSnapshot[];
 }

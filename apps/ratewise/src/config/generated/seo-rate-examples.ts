@@ -4,8 +4,6 @@ export interface AlternativeProvider {
   name: string;
   nameEn: string;
   providerId: string;
-  rate: number | null;
-  rateBuy: number | null;
   source: string;
   sourceUrl: string;
   sourcePublishedAt: string | null;
@@ -1122,8 +1120,6 @@ export const SEO_RATE_EXAMPLES: Record<string, RateExample> = {
         name: '明洞換匯所',
         nameEn: 'Myeongdong Exchange',
         providerId: 'moneybox',
-        rate: 41.5,
-        rateBuy: 0.023809523809523808,
         source: 'MoneyBox',
         sourceUrl: 'https://moneybox-exchange.com/zh-CHT/exchange/',
         sourcePublishedAt: null,
