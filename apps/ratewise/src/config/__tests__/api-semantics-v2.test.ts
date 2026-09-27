@@ -113,3 +113,25 @@ describe('api-semantics-v2', () => {
     expect(bank.bankComparison.botTwdToForeign).toContain('details');
   });
 });
+it('labels legacy reciprocal units honestly without changing the old numerical field', () => {
+  const value = enrichCurrencyDetail('USD', {
+    cash: { buy: 31, sell: 32 },
+    spot: { buy: null, sell: null },
+  });
+  expect(value.cash.bankSellTwdPerUnit).toBe(0.03125);
+  const mapping = buildSemanticFieldMapping();
+  expect(mapping.fields.bankSellTwdPerUnit?.description).toContain('每 1 TWD');
+  expect(mapping.fields.bankSellTwdPerUnit).toHaveProperty('deprecated', true);
+});
+it('labels all MoneyBox currencies in KRW, including per-100 denominations', () => {
+  const rates = Object.fromEntries(
+    ['USD', 'JPY', 'IDR', 'VND'].map((currency) => [
+      currency,
+      { currency, base: null, buy: 100, sell: 90, spbuy: null, spsell: null },
+    ]),
+  );
+  const payload = enrichExchangeShopRatesPayload({ base: 'KRW', rates });
+  expect(payload.rates['USD']?.quoteUnit).toBe('KRW_PER_FOREIGN');
+  for (const currency of ['JPY', 'IDR', 'VND'])
+    expect(payload.rates[currency]?.quoteUnit).toBe('KRW_PER_100_FOREIGN');
+});

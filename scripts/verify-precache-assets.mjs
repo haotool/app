@@ -13,7 +13,7 @@ const DIST_DIR = path.resolve(PROJECT_ROOT, 'apps/ratewise/dist');
 const SW_PATH = path.resolve(PROJECT_ROOT, 'apps/ratewise/dist/sw.js');
 const INDEX_HTML_PATH = path.resolve(DIST_DIR, 'index.html');
 const MIN_PRECACHE_ENTRY_COUNT = 20;
-const MAX_PRECACHE_ENTRY_COUNT = 100;
+const MAX_PRECACHE_ENTRY_COUNT = 110;
 const MAX_PRECACHE_BYTES = 3 * 1024 * 1024;
 
 const REQUIRED_PRECACHE_URLS = [
@@ -36,7 +36,7 @@ const FORBIDDEN_PRECACHE_PATTERNS = [
   /pwa-512x512\.png/,
   /openapi\.json$/,
   // 匯率 JSON 屬 Tier 2 runtime SWR，不得進 precache（loader manifest 例外，於 REQUIRED 檢查）。
-  /(?:^|\/)api\/(?:latest\.json|pairs\/)/,
+  /(?:^|\/)api\/(?:latest\.json|pairs\/|v3\/contract\.schema\.json$)/,
   // 任何非根目錄 index.html（幣別 landing、about、faq 等 SSG 頁）由 NavigationRoute 回退 shell。
   /.+\/index\.html$/,
   // 點陣圖一律 runtime CacheFirst（REQUIRED 的 shell 圖示於下方掃描時排除）。

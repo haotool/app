@@ -54,7 +54,7 @@ export const DEFAULT_CONVERTER_MODE = 'single';
 /** 多幣別模式字串 SSOT；避免在元件散落 'multi' 字面量。 */
 export const MULTI_CONVERTER_MODE = 'multi';
 export const DEFAULT_RATE_MODE = 'auto';
-export const DEFAULT_RATE_TYPE = 'spot';
+export const DEFAULT_RATE_TYPE = 'cash';
 export const DEFAULT_RATE_SOURCE = 'bank';
 export const DEFAULT_FROM_CURRENCY = 'TWD';
 export const DEFAULT_TO_CURRENCY = 'JPY'; // 日本為台灣人最熱門旅遊目的地

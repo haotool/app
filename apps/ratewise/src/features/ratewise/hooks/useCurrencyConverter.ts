@@ -1,3 +1,19 @@
+import type { ProviderQuote } from '../rateProviderRanking';
+import { getRateProvider } from '../../../config/rateProviders';
+import {
+  estimate,
+  estimateDerived,
+  freshness,
+  normalizeBankSnapshot,
+  rankQuotes,
+  isQuoteApplicable,
+  type QuoteSnapshot,
+  type EstimateRequest,
+  type EstimateResult,
+  type DerivedEstimateResult,
+  type SelectionContext,
+} from '@app/shared/fx';
+import { useFxQuotes } from './useFxQuotes';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -18,7 +34,6 @@ import type {
 } from '../types';
 import type { RateDetails } from './useExchangeRates';
 import { logger } from '../../../utils/logger';
-import { getUnitExchangeRate } from '../../../utils/exchangeRateCalculation';
 import { getRelativeTimeString } from '../../../utils/timeFormatter';
 import { INP_LONG_TASK_THRESHOLD_MS } from '../../../utils/interactionBudget';
 import { useToast } from '../../../components/Toast';
@@ -29,19 +44,12 @@ import {
   hasExchangeShopProvider,
 } from '../../../config/exchangeShopProviders';
 import {
-  getExchangeShopRateForPair,
   type ExchangeShopRate,
   type ExchangeShopRatesByCurrency,
 } from '../../../services/moneyboxRateService';
 import { useMoneyBoxRates } from './useMoneyBoxRates';
 import { useMoneyBoxRatesMap } from './useMoneyBoxRatesMap';
-import type { ProviderSelectionMode, ResolvedRateProvider } from '../rateProviderTypes';
-import {
-  rankProviderQuotes,
-  resolveProviderPreference,
-  type ProviderQuote,
-} from '../rateProviderRanking';
-import { buildProviderQuotes } from '../rateProviderQuoteAdapters';
+import type { ProviderSelectionMode } from '../rateProviderTypes';
 
 const CURRENCY_CODES = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
 
@@ -81,6 +89,7 @@ const buildFallbackExchangeShopRate = (currency: CurrencyCode): ExchangeShopRate
 };
 
 interface UseCurrencyConverterOptions {
+  fxQuotes?: QuoteSnapshot[];
   exchangeRates?: Record<string, number | null>;
   details?: Record<string, RateDetails>;
   rateType?: RateType;
@@ -112,13 +121,8 @@ export function resolveEffectiveRateSourceForConversion({
 }
 
 export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) => {
-  const {
-    exchangeRates,
-    details,
-    rateType = DEFAULT_RATE_TYPE,
-    rateSource,
-    mode: requestedMode,
-  } = options;
+  const { rateType = DEFAULT_RATE_TYPE, rateSource, mode: requestedMode } = options;
+  const fx = useFxQuotes(options.fxQuotes === undefined);
   const { t } = useTranslation();
   const { showToast } = useToast();
 
@@ -128,6 +132,8 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     rateMode,
     favorites,
     providerPreference,
+    serviceCountry,
+    branchId,
     history,
     baseCurrency,
     setFromCurrency,
@@ -165,74 +171,6 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
   }, [exchangeShopCurrency]);
   const selectedExchangeShopRate = moneyBoxRate ?? fallbackExchangeShopRate;
 
-  const numericAmount = useMemo(() => {
-    const parsed = parseFloat(fromAmount);
-    return Number.isNaN(parsed) ? 0 : parsed;
-  }, [fromAmount]);
-  const providerQuotes = useMemo<ProviderQuote[]>(() => {
-    return buildProviderQuotes({
-      amount: numericAmount,
-      from: fromCurrency,
-      to: toCurrency,
-      details,
-      rateType,
-      rateMode,
-      exchangeRates,
-      exchangeShopRate: selectedExchangeShopRate,
-    });
-  }, [
-    fromCurrency,
-    toCurrency,
-    details,
-    rateType,
-    rateMode,
-    exchangeRates,
-    selectedExchangeShopRate,
-    numericAmount,
-  ]);
-
-  const resolvedProvider = useMemo<ResolvedRateProvider>(
-    () =>
-      resolveProviderPreference({
-        preference: providerPreference,
-        from: fromCurrency,
-        to: toCurrency,
-        rateType,
-        quotes: providerQuotes,
-      }),
-    [providerPreference, fromCurrency, toCurrency, rateType, providerQuotes],
-  );
-
-  const rankedProviderQuotes = useMemo<ProviderQuote[]>(
-    () =>
-      rankProviderQuotes({
-        amount: numericAmount,
-        from: fromCurrency,
-        to: toCurrency,
-        rateType,
-        quotes: providerQuotes,
-      }),
-    [numericAmount, fromCurrency, toCurrency, rateType, providerQuotes],
-  );
-
-  const effectiveRateSource = useMemo<RateSource>(
-    () =>
-      resolveEffectiveRateSourceForConversion({
-        mode,
-        requestedRateSource: rateSource,
-        resolvedSourceKind: resolvedProvider.sourceKind,
-        exchangeShopRate: selectedExchangeShopRate,
-        providerSelectionMode: providerPreference.mode,
-      }),
-    [
-      mode,
-      rateSource,
-      resolvedProvider.sourceKind,
-      selectedExchangeShopRate,
-      providerPreference.mode,
-    ],
-  );
-
   const multiExchangeShopCurrencies = useMemo((): CurrencyCode[] => {
     if (mode !== 'multi') return [];
     if (baseCurrency === 'TWD') return getSupportedExchangeShopCurrencies();
@@ -249,6 +187,23 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     }, {});
   }, [multiExchangeShopCurrencies, multiMoneyBoxRates]);
 
+  const legacyFallbackQuotes = useMemo(() => {
+    if (options.fxQuotes !== undefined || fx.quotes.length > 0 || !options.details) return [];
+    const fetchedAt = new Date().toISOString();
+    try {
+      return normalizeBankSnapshot({
+        timestamp: fetchedAt,
+        sourcePublishedAt: null,
+        dataKind: 'fixed_fallback',
+        details: options.details,
+      });
+    } catch {
+      return [];
+    }
+  }, [fx.quotes.length, options.details, options.fxQuotes]);
+  const fxQuotes = options.fxQuotes ?? (fx.quotes.length > 0 ? fx.quotes : legacyFallbackQuotes);
+  const providerStatuses = options.fxQuotes === undefined ? fx.providerStatuses : undefined;
+
   const pendingMultiRecalcRef = useRef<{ code: CurrencyCode; value: string } | null>(null);
   const multiRecalcFrameRef = useRef<number | null>(null);
 
@@ -259,46 +214,66 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     }
   }, []);
 
-  const getResolvedUnitRate = useCallback(
-    (from: CurrencyCode, to: CurrencyCode): number => {
-      const pairExchangeShopRate =
-        mode === 'multi'
-          ? getExchangeShopRateForPair(from, to, multiExchangeShopRatesByCurrency)
-          : selectedExchangeShopRate;
-      const effectiveSourceKind = resolveEffectiveRateSourceForConversion({
-        mode,
-        requestedRateSource: rateSource,
-        resolvedSourceKind: resolvedProvider.sourceKind,
-        exchangeShopRate: pairExchangeShopRate,
-        providerSelectionMode: providerPreference.mode,
-      });
-      const exchangeShopRate =
-        effectiveSourceKind === 'exchange-shop' ? pairExchangeShopRate : null;
-      const unitRate = getUnitExchangeRate(from, to, details, rateType, rateMode, exchangeRates, {
-        rateSource: effectiveSourceKind,
-        exchangeShopRate,
-      });
-
-      return unitRate;
-    },
-    [
-      details,
-      rateType,
-      rateMode,
-      exchangeRates,
-      mode,
-      rateSource,
-      resolvedProvider.sourceKind,
-      multiExchangeShopRatesByCurrency,
-      selectedExchangeShopRate,
-      providerPreference.mode,
-    ],
+  const getQuoteContext = useCallback(
+    (): SelectionContext => ({
+      now: new Date().toISOString(),
+      country: serviceCountry,
+      deliveryMethod: rateType === 'cash' ? 'cash' : 'account',
+      channel: rateType === 'cash' ? 'branch' : 'online',
+      ...(branchId ? { branchId } : {}),
+    }),
+    [serviceCountry, rateType, branchId],
   );
 
-  const convertAmount = useCallback(
-    (amount: number, from: CurrencyCode, to: CurrencyCode): number =>
-      amount * getResolvedUnitRate(from, to),
-    [getResolvedUnitRate],
+  const estimatePair = useCallback(
+    (
+      amount: string,
+      from: CurrencyCode,
+      to: CurrencyCode,
+      inputMode: EstimateRequest['mode'] = 'EXACT_IN',
+    ): EstimateResult | DerivedEstimateResult => {
+      const request = { amount, fromCurrency: from, toCurrency: to, mode: inputMode };
+      const context = getQuoteContext();
+      const quote =
+        providerPreference.mode === 'best'
+          ? (rankQuotes(fxQuotes, request, context, providerStatuses)[0]?.quote ?? null)
+          : (fxQuotes.find(
+              (q) =>
+                q.providerId === providerPreference.manualProvider?.providerId &&
+                isQuoteApplicable(q, request, context),
+            ) ?? null);
+      if (quote || from === to || providerPreference.mode === 'best')
+        return estimate(quote, request);
+      const manualQuotes = fxQuotes.filter(
+        (q) => q.providerId === providerPreference.manualProvider?.providerId,
+      );
+      for (const first of manualQuotes.filter((q) => q.fromCurrency === from)) {
+        for (const second of manualQuotes.filter(
+          (q) => q.fromCurrency === first.toCurrency && q.toCurrency === to,
+        )) {
+          const derived = estimateDerived(first, second, request);
+          if (derived.status !== 'available' || derived.fromAmount === null) continue;
+          const firstRequest = {
+            fromCurrency: first.fromCurrency,
+            toCurrency: first.toCurrency,
+            amount: derived.fromAmount,
+            mode: 'EXACT_IN' as const,
+          };
+          const intermediate = estimate(first, firstRequest);
+          if (intermediate.toAmount === null || !isQuoteApplicable(first, firstRequest, context))
+            continue;
+          const secondRequest = {
+            fromCurrency: second.fromCurrency,
+            toCurrency: second.toCurrency,
+            amount: intermediate.toAmount,
+            mode: 'EXACT_IN' as const,
+          };
+          if (isQuoteApplicable(second, secondRequest, context)) return derived;
+        }
+      }
+      return estimate(null, request);
+    },
+    [fxQuotes, providerPreference, getQuoteContext, providerStatuses],
   );
 
   useEffect(() => {
@@ -344,51 +319,26 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
             return acc;
           }
 
-          const converted = convertAmount(amount, sourceCode, code);
-
-          if (converted === 0 && amount !== 0) {
-            acc[code] = 'N/A';
-            logger.warn(`No exchange rate available for ${code}`, { code });
-            return acc;
-          }
-
-          const decimals = CURRENCY_DEFINITIONS[code].decimals;
-          acc[code] = converted.toFixed(decimals);
+          const result = estimatePair(sourceAmount, sourceCode, code);
+          acc[code] = result.toAmount ?? 'N/A';
 
           return acc;
         },
         { ...prev },
       );
     },
-    [convertAmount],
+    [estimatePair],
   );
 
   const calculateFromAmount = useCallback(() => {
-    const amount = parseFloat(fromAmount);
-    if (Number.isNaN(amount)) {
-      setToAmount('');
-      return;
-    }
-
-    const converted = convertAmount(amount, fromCurrency, toCurrency);
-
-    const decimals = CURRENCY_DEFINITIONS[toCurrency].decimals;
-    setToAmount(converted ? converted.toFixed(decimals) : '0'.padEnd(decimals + 2, '0'));
-  }, [fromAmount, fromCurrency, toCurrency, convertAmount]);
+    const result = estimatePair(fromAmount, fromCurrency, toCurrency);
+    setToAmount(result.toAmount ?? '');
+  }, [fromAmount, fromCurrency, toCurrency, estimatePair]);
 
   const calculateToAmount = useCallback(() => {
-    const amount = parseFloat(toAmount);
-    if (Number.isNaN(amount)) {
-      setFromAmount('');
-      return;
-    }
-
-    const unitRate = getResolvedUnitRate(fromCurrency, toCurrency);
-    const converted = unitRate ? amount / unitRate : 0;
-
-    const decimals = CURRENCY_DEFINITIONS[fromCurrency].decimals;
-    setFromAmount(converted ? converted.toFixed(decimals) : '0'.padEnd(decimals + 2, '0'));
-  }, [toAmount, fromCurrency, toCurrency, getResolvedUnitRate]);
+    const result = estimatePair(toAmount, fromCurrency, toCurrency, 'EXACT_OUT');
+    setFromAmount(result.fromAmount ?? '');
+  }, [toAmount, fromCurrency, toCurrency, estimatePair]);
 
   // 單幣別換算效果（路由決定顯示，無需依賴 mode 狀態）
   useEffect(() => {
@@ -422,14 +372,6 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
       mode === 'multi' ? multiExchangeShopCurrencies.length > 0 : exchangeShopCurrency !== null,
     [mode, multiExchangeShopCurrencies, exchangeShopCurrency],
   );
-
-  useEffect(() => {
-    // 已選擇換錢所但目前情境無法支援時，自動回退銀行來源（透過 store action 收斂使用者設定）。
-    // SSOT：單一 effect 取代過去 RateWise / MultiConverter 各自的重複 fallback。
-    if (rateSource === 'exchange-shop' && !isExchangeShopAvailableInContext) {
-      setRateSource('bank');
-    }
-  }, [rateSource, isExchangeShopAvailableInContext, setRateSource]);
 
   // Handlers
   const handleFromAmountChange = useCallback((value: string) => {
@@ -502,6 +444,7 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     storeSwapCurrencies(); // 幣別互換（atomic，在 store 中一次性更新）
     setFromAmount(toAmount);
     setToAmount(fromAmount);
+    setLastEdited('from');
   }, [storeSwapCurrencies, toAmount, fromAmount]);
 
   const toggleFavorite = useCallback(
@@ -521,20 +464,40 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
   );
 
   const addToHistory = useCallback(() => {
+    const current = estimatePair(
+      lastEdited === 'from' ? fromAmount : toAmount,
+      fromCurrency,
+      toCurrency,
+      lastEdited === 'from' ? 'EXACT_IN' : 'EXACT_OUT',
+    );
+    if (current.status !== 'available') return;
+    const snapshot = fxQuotes.find((q) => q.quoteId === current.quoteId);
     const timestamp = Date.now();
     const entry: ConversionHistoryEntry = {
       from: fromCurrency,
       to: toCurrency,
-      amount: fromAmount,
-      result: toAmount,
+      amount: current.fromAmount ?? fromAmount,
+      result: current.toAmount ?? toAmount,
       time: getRelativeTimeString(timestamp),
       timestamp,
       rateType,
-      sourceKind: resolvedProvider.sourceKind,
-      providerId: resolvedProvider.providerId,
-      providerSelectionMode: resolvedProvider.selectionMode,
-      rateMode,
-      schemaVersion: 2,
+      sourceKind:
+        getRateProvider(snapshot?.providerId ?? '')?.sourceKind ??
+        providerPreference.manualProvider?.sourceKind ??
+        'bank',
+      providerId: snapshot?.providerId ?? providerPreference.manualProvider?.providerId,
+      providerSelectionMode: providerPreference.mode,
+      rateMode: 'auto',
+      schemaVersion: 3,
+      quoteSnapshot: snapshot,
+      derivedLegs:
+        'legs' in current
+          ? fxQuotes.filter((q) => current.legs.some((id) => id === q.quoteId))
+          : undefined,
+      releaseId: fx.releaseId,
+      estimateMode: lastEdited === 'from' ? 'EXACT_IN' : 'EXACT_OUT',
+      serviceCountry,
+      branchId,
     };
 
     storeAddToHistory(entry);
@@ -545,9 +508,14 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     fromAmount,
     toAmount,
     rateType,
-    resolvedProvider,
-    rateMode,
+    providerPreference,
     storeAddToHistory,
+    estimatePair,
+    fxQuotes,
+    fx.releaseId,
+    lastEdited,
+    serviceCountry,
+    branchId,
     showToast,
     t,
   ]);
@@ -563,8 +531,12 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
       setFromCurrency(entry.from);
       setToCurrency(entry.to);
       setFromAmount(entry.amount);
-      setLastEdited('from');
-      if (entry.schemaVersion === 2 && entry.rateType) {
+      setToAmount(entry.result);
+      setLastEdited(entry.estimateMode === 'EXACT_OUT' ? 'to' : 'from');
+      if (entry.serviceCountry)
+        useConverterStore.getState().setServiceCountry(entry.serviceCountry);
+      if (entry.branchId) useConverterStore.getState().setBranchId(entry.branchId);
+      if ((entry.schemaVersion === 2 || entry.schemaVersion === 3) && entry.rateType) {
         if (entry.rateMode) {
           setRateMode(entry.rateMode);
         }
@@ -602,15 +574,83 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     return [DEFAULT_BASE_CURRENCY, ...favWithoutBase, ...remaining];
   }, [favorites]);
 
+  const fxEstimate = estimatePair(
+    lastEdited === 'from' ? fromAmount : toAmount,
+    fromCurrency,
+    toCurrency,
+    lastEdited === 'from' ? 'EXACT_IN' : 'EXACT_OUT',
+  );
+  const selectedQuote = fxQuotes.find((q) => q.quoteId === fxEstimate.quoteId) ?? null;
+  const selectedQuoteEvidence =
+    'legs' in fxEstimate
+      ? fxEstimate.legs.flatMap((id) => fxQuotes.filter((quote) => quote.quoteId === id))
+      : selectedQuote
+        ? [selectedQuote]
+        : [];
+  const evidenceStates = selectedQuoteEvidence.map((quote) =>
+    freshness(quote, new Date().toISOString()),
+  );
+  const estimateFreshness = evidenceStates.includes('stale')
+    ? 'stale'
+    : evidenceStates.length === 0 || evidenceStates.includes('unknown')
+      ? 'unknown'
+      : 'fresh';
+  const effectiveSource =
+    getRateProvider(selectedQuote?.providerId ?? '')?.sourceKind ?? rateSource ?? 'bank';
+  const activeRequest: EstimateRequest = {
+    amount: lastEdited === 'from' ? fromAmount : toAmount,
+    fromCurrency,
+    toCurrency,
+    mode: lastEdited === 'from' ? 'EXACT_IN' : 'EXACT_OUT',
+  };
+  const activeContext = getQuoteContext();
+  // Numeric compatibility fields are presentation-only; monetary ranking stays decimal.
+  const presentQuote = (quote: QuoteSnapshot, result: EstimateResult): ProviderQuote => {
+    const sourceKind = getRateProvider(quote.providerId)?.sourceKind ?? 'bank';
+    return {
+      provider: { providerId: quote.providerId, sourceKind },
+      sourceKind,
+      rateType: quote.sourceQuote.deliveryMethod === 'cash' ? 'cash' : 'spot',
+      unitRate: Number(result.rate ?? 0),
+      resultAmount: Number(
+        (activeRequest.mode === 'EXACT_IN' ? result.toAmount : result.fromAmount) ?? 0,
+      ),
+      isAvailable: result.status === 'available',
+      inputMode: activeRequest.mode,
+    };
+  };
+  const providerQuotes = fxQuotes
+    .filter((quote) => isQuoteApplicable(quote, activeRequest, activeContext))
+    .map((quote) => presentQuote(quote, estimate(quote, activeRequest)));
+  const rankedProviderQuotes = rankQuotes(
+    fxQuotes,
+    activeRequest,
+    activeContext,
+    providerStatuses,
+  ).map(({ quote, estimate: result }) => presentQuote(quote, result));
   return {
     // State
+    fxQuotes,
+    estimatePair,
+    fxEstimate,
+    selectedQuote,
+    selectedProviderStatus:
+      providerStatuses?.get(selectedQuoteEvidence[0]?.providerId ?? '') ?? null,
+    providerStatuses,
+    selectedQuoteEvidence,
+    estimateFreshness,
     mode,
     rateMode,
     moneyBoxRate: selectedExchangeShopRate,
     exchangeShopCurrency,
     exchangeShopRatesByCurrency: multiExchangeShopRatesByCurrency,
-    effectiveRateSource,
-    resolvedProvider,
+    effectiveRateSource: effectiveSource,
+    resolvedProvider: {
+      sourceKind: effectiveSource,
+      providerId: selectedQuote?.providerId ?? providerPreference.manualProvider?.providerId ?? '',
+      selectionMode: providerPreference.mode,
+      reason: providerPreference.mode === 'best' ? 'best-rate' : 'manual',
+    },
     providerQuotes,
     rankedProviderQuotes,
     fromCurrency,

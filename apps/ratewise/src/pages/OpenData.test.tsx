@@ -11,7 +11,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter, MemoryRouter } from 'react-router-dom';
 import OpenData from './OpenData';
 import { OPEN_DATA_PAGE_SEO } from '../config/seo-metadata';
-import { RATES_API } from '../config/api-endpoints';
+import { FX_V3_AVAILABILITY_NOTE, RATES_API } from '../config/api-endpoints';
 import { SITE_CONFIG } from '../config/seo-paths';
 import { APP_INFO } from '../config/app-info';
 
@@ -50,6 +50,11 @@ describe('OpenData Page', () => {
       expect(screen.getByText('API 端點')).toBeInTheDocument();
     });
 
+    it('discloses the v3 data branch gate before the pointer is enabled', () => {
+      renderOpenData();
+      expect(screen.getAllByText(FX_V3_AVAILABILITY_NOTE).length).toBeGreaterThan(0);
+    });
+
     it('renders data format section heading', () => {
       renderOpenData();
       expect(screen.getByText('資料格式')).toBeInTheDocument();
@@ -63,7 +68,7 @@ describe('OpenData Page', () => {
     it('renders an answer capsule that explains the primary endpoint and crawlable landing-page pattern', () => {
       renderOpenData();
       expect(screen.getByRole('heading', { level: 2, name: /快速答案/i })).toBeInTheDocument();
-      expect(screen.getByText(/最新台銀牌告匯率建議直接讀取 latest\.json/i)).toBeInTheDocument();
+      expect(screen.getByText(/新整合應讀取 v3 current pointer/i)).toBeInTheDocument();
       expect(screen.getByText(/可索引金額落地頁採用 \/usd-twd\/1000\//i)).toBeInTheDocument();
     });
   });

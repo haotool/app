@@ -2,7 +2,8 @@
   "pair": "GBP/TWD",
   "from": "GBP",
   "to": "TWD",
-  "schemaVersion": "2.0",
+  "schemaVersion": "3.0",
+  "legacySchemaVersion": "2.0",
   "semanticsDoc": "https://app.haotool.org/ratewise/open-data/",
   "semanticFieldMapping": {
     "schemaVersion": "2.0",
@@ -23,11 +24,13 @@
       },
       "midMarketRate": {
         "legacyPath": "(buy + sell) / 2",
-        "description": "參考中間價"
+        "description": "已棄用名稱：同業者牌告中點 (buy + sell) / 2；不是外部市場價或成交價。",
+        "deprecated": true
       },
       "bankSellTwdPerUnit": {
         "legacyPath": "1 / sell",
-        "description": "每 1 單位外幣的 TWD 賣價（外幣計價時）"
+        "description": "已棄用的誤命名欄位：實值為每 1 TWD 可換多少外幣（1 / sell），數值維持 v2 相容；新整合請使用 v3 fromCurrency/toCurrency/rate。",
+        "deprecated": true
       }
     },
     "examples": {
@@ -48,6 +51,16 @@
   "slug": "gbp-twd",
   "pageUrl": "https://app.haotool.org/ratewise/gbp-twd/",
   "liveRateUrl": "https://raw.githubusercontent.com/haotool/app/data/public/rates/latest.json",
+  "v3CurrentUrl": "https://raw.githubusercontent.com/haotool/app/data/public/rates/v3/current.json",
+  "v3ContractUrl": "https://app.haotool.org/ratewise/api/v3/contract.schema.json",
+  "v3Availability": "v3 current 只有 data branch 的 RATEWISE_FX_V3_ENABLED=true 發布 gate 開啟後才存在；尚未啟用時請使用 legacy 相容投影。",
+  "canonicalFields": {
+    "current": "https://raw.githubusercontent.com/haotool/app/data/public/rates/v3/current.json",
+    "quote": "ProviderSnapshot.quotes[]",
+    "direction": "fromCurrency → toCurrency",
+    "rate": "decimal string: target units per 1 fromCurrency",
+    "hash": "SHA-256 over final UTF-8 bytes"
+  },
   "rateFieldPath": "details.GBP",
   "source": "臺灣銀行牌告匯率",
   "sourceUrl": "https://rate.bot.com.tw/xrt",
@@ -87,6 +100,6 @@
       "foreignToForeign": "amount * mid(details.{FROM}.{rateType}) / mid(details.{TO}.{rateType})"
     }
   },
-  "note": "賣出（sell）= 銀行賣給你外幣的價格，即你拿台幣換外幣看此價；買入（buy）= 銀行收你外幣的價格，即你拿外幣換台幣看此價。若要與 App 顯示一致，請依 rateModes 選取對應欄位。",
+  "note": "v3 以 fromCurrency → toCurrency 定義方向，rate 為每 1 單位來源幣可取得的目標幣數量；legacy sell/buy 僅供相容讀取。",
   "disclaimer": "匯率僅供參考，實際交易請以金融機構公告為準。"
 }

@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+import { normalizeQuote } from '@app/shared/fx';
 // @vitest-environment jsdom
 
 /**
@@ -10,7 +12,7 @@ import { renderHook, act, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   resolveEffectiveRateSourceForConversion,
-  useCurrencyConverter,
+  useCurrencyConverter as useConverter,
 } from '../useCurrencyConverter';
 import { STORAGE_KEYS } from '../../storage-keys';
 import { useConverterStore } from '../../../../stores/converterStore';
@@ -44,6 +46,59 @@ vi.mock('../useMoneyBoxRates', () => ({
   }),
 }));
 
+vi.mock('../useFxQuotes', () => ({
+  useFxQuotes: () => ({ quotes: [], releaseId: null, isLoading: false, error: null }),
+}));
+// Characterization fixtures now enter through the public v3 quote boundary.
+function useCurrencyConverter(options: Parameters<typeof useConverter>[0] = {}) {
+  const signature = JSON.stringify([options, moneyBoxRateMock.rate]);
+  const fxQuotes = useMemo(() => {
+    const now = new Date().toISOString();
+    const bank = Object.entries(options.exchangeRates ?? {})
+      .filter(([currency, value]) => currency !== 'TWD' && value !== null)
+      .flatMap(([currency, value]) =>
+        normalizeQuote({
+          providerId: 'bot',
+          subjectCurrency: currency,
+          priceCurrency: 'TWD',
+          unitAmount: '1',
+          buy: String(value),
+          sell: String(value),
+          sourcePublishedAt: now,
+          fetchedAt: now,
+          lastSuccessfulCheckAt: now,
+          serviceCountry: 'TW',
+          deliveryMethod: options.rateType === 'spot' ? 'account' : 'cash',
+          channel: options.rateType === 'spot' ? 'online' : 'branch',
+        }),
+      );
+    const rate = moneyBoxRateMock.rate;
+    return rate
+      ? [
+          ...bank,
+          ...normalizeQuote({
+            providerId: 'moneybox',
+            subjectCurrency: 'TWD',
+            priceCurrency: 'KRW',
+            unitAmount: '1',
+            buy: String(rate.sell),
+            sell: String(rate.buy),
+            sourcePublishedAt: now,
+            fetchedAt: now,
+            lastSuccessfulCheckAt: now,
+            serviceCountry: 'KR',
+            deliveryMethod: 'cash',
+            channel: 'branch',
+            branchId: 'myeongdong',
+          }),
+        ]
+      : bank;
+    // Serialized fixture inputs avoid rebuilding immutable snapshots on every hook render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signature]);
+  return useConverter({ ...options, fxQuotes });
+}
+
 // Mock localStorage
 const localStorageMock = (() => {
   let store: Record<string, string> = {};
@@ -72,6 +127,8 @@ describe('useCurrencyConverter', () => {
     useConverterStore.setState({
       fromCurrency: 'TWD',
       toCurrency: 'JPY',
+      serviceCountry: 'TW',
+      branchId: null,
       rateMode: 'auto',
       rateType: 'spot',
       rateSource: 'bank',
@@ -190,7 +247,7 @@ describe('useCurrencyConverter', () => {
       expect(firstEntry?.to).toBe('TWD');
     });
 
-    it('每筆寫入應帶 schemaVersion=2 與 provider/sourceKind/rateType/rateMode 欄位', () => {
+    it('每筆寫入應帶 schemaVersion=3 與 provider/sourceKind/rateType/rateMode 欄位', () => {
       useConverterStore.setState({ rateMode: 'sell' });
       const mockRates = { USD: 31.5, TWD: 1 };
       const { result } = renderHook(() =>
@@ -217,12 +274,13 @@ describe('useCurrencyConverter', () => {
         sourceKind: 'bank',
         providerId: 'bot',
         providerSelectionMode: 'manual',
-        rateMode: 'sell',
-        schemaVersion: 2,
+        rateMode: 'auto',
+        schemaVersion: 3,
       });
     });
 
     it('歷史紀錄上限為 store HISTORY_CAPACITY（50 筆）', () => {
+      useConverterStore.setState({ fromCurrency: 'USD', toCurrency: 'TWD' });
       // Arrange
       const mockRates = {
         USD: 31.5,
@@ -252,6 +310,7 @@ describe('useCurrencyConverter', () => {
 
   describe('clearAllHistory', () => {
     it('should clear all history entries', () => {
+      useConverterStore.setState({ fromCurrency: 'USD', toCurrency: 'TWD' });
       // Arrange
       const mockRates = {
         USD: 31.5,
@@ -458,6 +517,8 @@ describe('useCurrencyConverter', () => {
         favorites: ['KRW'],
         history: [],
         providerPreference: exchangeShopPreference,
+        serviceCountry: 'KR',
+        branchId: 'myeongdong',
         rateSource: 'exchange-shop',
       });
 
@@ -484,6 +545,8 @@ describe('useCurrencyConverter', () => {
         favorites: ['KRW'],
         history: [],
         providerPreference: exchangeShopPreference,
+        serviceCountry: 'KR',
+        branchId: 'myeongdong',
         rateSource: 'exchange-shop',
       });
 
@@ -500,13 +563,13 @@ describe('useCurrencyConverter', () => {
       });
 
       await waitFor(() => {
-        expect(result.current.fromAmount).toBe('1000.00');
+        expect(result.current.fromAmount).toBe('1000');
       });
       expect(result.current.toAmount).toBe('44850');
       expect(result.current.exchangeShopCurrency).toBe('KRW');
     });
 
-    it('uses provider fallback instead of bank rate while MoneyBox rate is not ready', async () => {
+    it('does not invent a provider rate while MoneyBox data is not ready', async () => {
       moneyBoxRateMock.rate = null;
       useConverterStore.setState({
         fromCurrency: 'TWD',
@@ -514,6 +577,8 @@ describe('useCurrencyConverter', () => {
         favorites: ['KRW'],
         history: [],
         providerPreference: exchangeShopPreference,
+        serviceCountry: 'KR',
+        branchId: 'myeongdong',
         rateSource: 'exchange-shop',
       });
 
@@ -526,7 +591,7 @@ describe('useCurrencyConverter', () => {
       );
 
       await waitFor(() => {
-        expect(result.current.toAmount).toBe('46000');
+        expect(result.current.toAmount).toBe('');
       });
       expect(result.current.moneyBoxRate).toMatchObject({
         sell: 46.0,
@@ -543,6 +608,8 @@ describe('useCurrencyConverter', () => {
         favorites: ['KRW'],
         history: [],
         providerPreference: exchangeShopPreference,
+        serviceCountry: 'KR',
+        branchId: 'myeongdong',
         rateSource: 'exchange-shop',
       });
 
@@ -559,7 +626,7 @@ describe('useCurrencyConverter', () => {
       });
 
       await waitFor(() => {
-        expect(result.current.toAmount).toBe('1000.00');
+        expect(result.current.toAmount).toBe('1000');
       });
       expect(result.current.exchangeShopCurrency).toBe('KRW');
     });
@@ -572,6 +639,8 @@ describe('useCurrencyConverter', () => {
         favorites: ['USD', 'KRW'],
         history: [],
         providerPreference: exchangeShopPreference,
+        serviceCountry: 'KR',
+        branchId: 'myeongdong',
         rateSource: 'exchange-shop',
       });
 
@@ -584,7 +653,7 @@ describe('useCurrencyConverter', () => {
       );
 
       expect(result.current.exchangeShopCurrency).toBeNull();
-      expect(result.current.toAmount).toBe('1334746');
+      expect(result.current.toAmount).toBe('');
     });
 
     it('multi mode uses exchange-shop per supported row even when single pair fallback is bank', () => {
@@ -648,6 +717,8 @@ describe('useCurrencyConverter', () => {
         toCurrency: 'KRW',
         favorites: ['TWD', 'KRW'],
         history: [],
+        serviceCountry: 'KR',
+        branchId: 'myeongdong',
         rateSource: 'exchange-shop',
       });
 
@@ -718,6 +789,8 @@ describe('useCurrencyConverter', () => {
           mode: 'manual',
           manualProvider: { sourceKind: 'exchange-shop', providerId: 'moneybox' },
         },
+        serviceCountry: 'KR',
+        branchId: 'myeongdong',
         rateSource: 'exchange-shop',
       });
 
@@ -751,6 +824,8 @@ describe('useCurrencyConverter', () => {
         favorites: ['KRW'],
         history: [],
         providerPreference: { mode: 'best' },
+        serviceCountry: 'KR',
+        branchId: 'myeongdong',
         rateSource: 'bank',
       });
 
@@ -766,7 +841,7 @@ describe('useCurrencyConverter', () => {
       expect(result.current.effectiveRateSource).toBe('exchange-shop');
     });
 
-    it('providerQuotes 同時包含 bot 與 moneybox；moneybox 在缺資料時 isAvailable=false', () => {
+    it('providerQuotes 不為缺資料來源合成報價', () => {
       moneyBoxRateMock.rate = null;
       useConverterStore.setState({
         fromCurrency: 'USD',
@@ -783,11 +858,11 @@ describe('useCurrencyConverter', () => {
       );
 
       const ids = result.current.providerQuotes.map((q) => q.provider.providerId);
-      expect(ids).toEqual(expect.arrayContaining(['bot', 'moneybox']));
+      expect(ids).toEqual(['bot']);
       const moneyboxQuote = result.current.providerQuotes.find(
         (q) => q.provider.providerId === 'moneybox',
       );
-      expect(moneyboxQuote?.isAvailable).toBe(false);
+      expect(moneyboxQuote).toBeUndefined();
     });
 
     it('rankedProviderQuotes 過濾掉 isAvailable=false 的 quote', () => {

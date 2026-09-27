@@ -16,6 +16,7 @@
  * @updated 2025-12-10 整合 Request ID 追蹤
  */
 
+import { isValidHistoryAggregate, isValidHistorySnapshot } from '../../../shared/fx/history.mjs';
 import { logger } from '../utils/logger';
 import { fetchWithRequestId } from '../utils/requestId';
 import type { CurrencyCode } from '../features/ratewise/types';
@@ -131,7 +132,8 @@ const CONFIG = {
 interface AggregateHistoryData {
   updateTime: string;
   dates: string[];
-  rates: Record<CurrencyCode, number[]>;
+  updateTimes?: string[];
+  rates: Record<string, (number | null)[]>;
 }
 
 /**
@@ -157,7 +159,7 @@ function convertAggregateToHistorical(
     results.push({
       date,
       data: {
-        updateTime: `${date}T08:00:00+08:00`,
+        updateTime: aggregate.updateTimes?.[i] ?? aggregate.updateTime,
         source: 'Taiwan Bank (臺灣銀行牌告匯率)',
         rates,
       },
@@ -199,7 +201,7 @@ async function tryFetchAggregate(maxDays: number): Promise<HistoricalRateData[] 
       const data = (await response.json()) as AggregateHistoryData;
 
       // 驗證資料結構
-      if (!data.dates || !Array.isArray(data.dates) || !data.rates) {
+      if (!isValidHistoryAggregate(data)) {
         logger.warn('Invalid aggregate data structure', { url });
         continue;
       }
@@ -254,7 +256,13 @@ function getStorageCache(): StorageHistoryCache | null {
     if (typeof localStorage === 'undefined') return null;
     const stored = localStorage.getItem(STORAGE_HISTORY_KEY);
     if (!stored) return null;
-    return JSON.parse(stored) as StorageHistoryCache;
+    const parsed = JSON.parse(stored) as StorageHistoryCache;
+    return parsed?.version === 1 &&
+      parsed.rates &&
+      typeof parsed.rates === 'object' &&
+      !Array.isArray(parsed.rates)
+      ? parsed
+      : null;
   } catch {
     return null;
   }
@@ -297,7 +305,12 @@ function getFromStorageCache(dateKey: string): RateSnapshot | null {
   if (!cache) return null;
 
   const entry = cache.rates[dateKey];
-  if (!entry) return null;
+  if (
+    !entry ||
+    !Number.isFinite(entry.timestamp) ||
+    !isValidHistorySnapshot(entry.data, dateKey === 'latest' ? undefined : dateKey)
+  )
+    return null;
 
   // 檢查是否過期（30 天）
   if (Date.now() - entry.timestamp > STORAGE_CACHE_DURATION) {
@@ -419,6 +432,10 @@ async function fetchWithFallback<T>(urls: string[], cacheKey: string): Promise<T
       }
 
       const data = (await response.json()) as RateSnapshot;
+      if (!isValidHistorySnapshot(data, dateKey === 'latest' ? undefined : dateKey)) {
+        logger.warn('Invalid history snapshot', { url });
+        continue;
+      }
 
       // 存入記憶體快取
       saveToCache(cacheKey, data);

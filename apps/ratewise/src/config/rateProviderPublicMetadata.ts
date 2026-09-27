@@ -36,7 +36,17 @@ export interface PublicRateProvider {
   historyEndpoint: string;
   cdnCurrentEndpoint?: string;
   cdnHistoryEndpoint?: string;
+  sourceUrl: string;
+  /** Provider terms are deliberately separate from the repository's GPL code license. */
+  termsUrl: string | null;
+  redistributionStatus: 'verified' | 'unknown' | 'restricted';
+  attribution: string;
 }
+
+const PROVIDER_SOURCE_URLS: Readonly<Record<string, string>> = {
+  bot: 'https://rate.bot.com.tw/xrt?Lang=zh-TW',
+  moneybox: 'https://moneybox-exchange.com/zh-CHT/exchange/',
+};
 
 export function buildPublicRateProviderMetadata(
   options: PublicRateProviderMetadataOptions,
@@ -74,6 +84,10 @@ export function buildPublicRateProviderMetadata(
               cdnHistoryEndpoint: joinEndpoint(options.cdnBaseUrl, historyPath),
             }
           : {}),
+        sourceUrl: PROVIDER_SOURCE_URLS[provider.id] ?? '',
+        termsUrl: null,
+        redistributionStatus: 'unknown',
+        attribution: `${provider.label}；資料來源：${PROVIDER_SOURCE_URLS[provider.id] ?? 'provider source'}`,
       };
     }),
   };

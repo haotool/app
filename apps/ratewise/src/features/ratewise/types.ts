@@ -1,3 +1,4 @@
+import type { QuoteSnapshot } from '@app/shared/fx';
 import {
   type CONVERTER_MODES,
   type CURRENCY_DEFINITIONS,
@@ -32,5 +33,11 @@ export interface ConversionHistoryEntry {
   providerId?: string;
   providerSelectionMode?: 'best' | 'manual';
   rateMode?: RateMode;
-  schemaVersion?: 2;
+  schemaVersion?: 2 | 3;
+  quoteSnapshot?: QuoteSnapshot;
+  derivedLegs?: QuoteSnapshot[];
+  releaseId?: string | null;
+  estimateMode?: 'EXACT_IN' | 'EXACT_OUT';
+  serviceCountry?: string;
+  branchId?: string | null;
 }

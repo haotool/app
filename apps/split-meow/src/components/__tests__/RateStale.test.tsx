@@ -10,6 +10,7 @@ import i18n from '../../i18n';
 import { useStore } from '../../store/useStore';
 import { HomeTab } from '../HomeTab';
 import { HistoryTab } from '../HistoryTab';
+import { SettingsTab } from '../SettingsTab';
 import { RATE_TTL_MS } from '../../lib/exchangeRate';
 
 const STALE_ISO = new Date(Date.now() - RATE_TTL_MS - 60_000).toISOString();
@@ -94,4 +95,17 @@ describe('R10：≈ 換算參考的 stale 標注', () => {
     expect(screen.getByText(/≈/)).toBeInTheDocument();
     expect(screen.queryByText(i18n.t('settings.rate_stale'))).not.toBeInTheDocument();
   });
+});
+it('Home labels unknown publication time for a usable legacy reference', () => {
+  useStore.setState({ calculatorValue: '100', rateUpdatedAtIso: null, rateFetchFailed: true });
+  renderWith(<HomeTab />);
+  expect(screen.getByText(/≈/)).toBeInTheDocument();
+  expect(screen.getByText(i18n.t('settings.rate_source_unknown'))).toBeInTheDocument();
+});
+
+it('Settings preserves the retry control and identifies the legacy reference', () => {
+  useStore.setState({ rateUpdatedAt: '', rateUpdatedAtIso: null, rateFetchFailed: true });
+  renderWith(<SettingsTab />);
+  expect(screen.getByText(i18n.t('settings.rate_legacy_reference'))).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: i18n.t('settings.rate_retry') })).toBeInTheDocument();
 });

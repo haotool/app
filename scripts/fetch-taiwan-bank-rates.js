@@ -12,13 +12,14 @@
 import { writeFileSync, mkdirSync, readFileSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
+import { parseSourceRate } from './lib/source-quotes.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // 設定檔案路徑
 const REPO_ROOT = join(__dirname, '..');
-const OUTPUT_DIR = join(REPO_ROOT, 'public', 'rates');
+const OUTPUT_DIR = process.env.FX_DATA_ROOT || join(REPO_ROOT, 'public', 'rates');
 const OUTPUT_FILE = join(OUTPUT_DIR, 'latest.json');
 
 const MAX_RETRIES = 3;
@@ -91,6 +92,7 @@ function parseTaiwanBankCSV(csvText) {
 
   const rates = {};
   const details = {};
+  const sourceQuotes = {};
 
   for (const line of dataLines) {
     // 移除 BOM 和處理特殊字符
@@ -105,19 +107,24 @@ function parseTaiwanBankCSV(csvText) {
     if (!CURRENCY_MAP[currencyCode]) continue;
 
     // 解析匯率
-    const cashBuy = parseFloat(columns[2]);
-    const spotBuy = parseFloat(columns[3]);
-    const cashSell = parseFloat(columns[12]);
-    const spotSell = parseFloat(columns[13]);
+    const raw = {
+      cash: { buy: parseSourceRate(columns[2]), sell: parseSourceRate(columns[12]) },
+      spot: { buy: parseSourceRate(columns[3]), sell: parseSourceRate(columns[13]) },
+    };
+    const cashBuy = raw.cash.buy === null ? null : Number(raw.cash.buy);
+    const spotBuy = raw.spot.buy === null ? null : Number(raw.spot.buy);
+    const cashSell = raw.cash.sell === null ? null : Number(raw.cash.sell);
+    const spotSell = raw.spot.sell === null ? null : Number(raw.spot.sell);
 
     // 使用現金賣出作為主要匯率
     const mainRate = cashSell;
 
     // 跳過無效資料 (有些貨幣沒有現金賣出價, e.g. ZAR, SEK)
-    if (isNaN(mainRate) || mainRate === 0) continue;
+    if ([cashBuy, spotBuy, cashSell, spotSell].every((value) => value === null)) continue;
+    sourceQuotes[currencyCode] = raw;
 
     // 儲存主要匯率（現金賣出）
-    rates[currencyCode] = mainRate;
+    if (mainRate !== null) rates[currencyCode] = mainRate;
 
     // 儲存詳細資料
     details[currencyCode] = {
@@ -133,7 +140,7 @@ function parseTaiwanBankCSV(csvText) {
     };
   }
 
-  return { rates, details };
+  return { rates, details, sourceQuotes };
 }
 
 /**
@@ -168,9 +175,14 @@ function isRetryableError(error) {
 }
 
 /** 由解析結果組出 latest.json payload（網路與檔案模式共用）。 */
-function buildRatesPayload(rates, details) {
+function buildRatesPayload(rates, details, sourceQuotes) {
+  const fetchedAt = new Date().toISOString();
   return {
-    timestamp: new Date().toISOString(),
+    timestamp: fetchedAt,
+    fetchedAt,
+    lastSuccessfulCheckAt: fetchedAt,
+    sourcePublishedAt: null,
+    sourceQuotes,
     updateTime: new Date().toLocaleString('zh-TW', {
       timeZone: 'Asia/Taipei',
       year: 'numeric',
@@ -202,13 +214,13 @@ async function fetchTaiwanBankRates() {
       throw new AbortError('CSV input file contains bot challenge HTML, not rate data');
     }
 
-    const { rates, details } = parseTaiwanBankCSV(csvText);
+    const { rates, details, sourceQuotes } = parseTaiwanBankCSV(csvText);
     if (Object.keys(rates).length === 0) {
       throw new AbortError('No valid rates found in CSV input file');
     }
 
     console.log(`✅ Successfully parsed ${Object.keys(rates).length} currencies (file mode)`);
-    return buildRatesPayload(rates, details);
+    return buildRatesPayload(rates, details, sourceQuotes);
   }
 
   console.log('🔄 Fetching exchange rates from Taiwan Bank...');
@@ -249,7 +261,7 @@ async function fetchTaiwanBankRates() {
         throw new AbortError('Blocked by Taiwan Bank bot challenge (HTML challenge page returned)');
       }
 
-      const { rates, details } = parseTaiwanBankCSV(csvText);
+      const { rates, details, sourceQuotes } = parseTaiwanBankCSV(csvText);
 
       if (Object.keys(rates).length === 0) {
         throw new AbortError('No valid rates found in CSV');
@@ -257,7 +269,7 @@ async function fetchTaiwanBankRates() {
 
       console.log(`✅ Successfully parsed ${Object.keys(rates).length} currencies`);
 
-      return buildRatesPayload(rates, details);
+      return buildRatesPayload(rates, details, sourceQuotes);
     } catch (error) {
       if (error instanceof AbortError) {
         throw error;
@@ -308,6 +320,11 @@ function assertRatesIntegrity(
     );
   }
 
+  for (const [currency, value] of Object.entries(newRates)) {
+    if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) {
+      throw new AbortError(`Invalid rate for ${currency}`);
+    }
+  }
   if (!previousRates) return;
 
   const mutations = [];
@@ -340,13 +357,13 @@ function readPreviousRates() {
 /**
  * 檢查匯率是否有變化
  */
-function hasRateChanges(newData) {
+function hasRateChanges(newData, previousData = undefined) {
   try {
-    const oldData = JSON.parse(readFileSync(OUTPUT_FILE, 'utf8'));
+    const oldData = previousData ?? JSON.parse(readFileSync(OUTPUT_FILE, 'utf8'));
 
     // 比較匯率資料
-    const oldRatesStr = JSON.stringify(oldData.rates);
-    const newRatesStr = JSON.stringify(newData.rates);
+    const oldRatesStr = JSON.stringify([oldData.rates, oldData.details]);
+    const newRatesStr = JSON.stringify([newData.rates, newData.details]);
 
     const hasChanges = oldRatesStr !== newRatesStr;
 
@@ -400,7 +417,23 @@ async function main() {
     const hasChanges = hasRateChanges(ratesData);
 
     if (!hasChanges) {
-      console.log('ℹ️  No rate changes detected, skipping update');
+      const previous = JSON.parse(readFileSync(OUTPUT_FILE, 'utf8'));
+      writeFileSync(
+        OUTPUT_FILE,
+        JSON.stringify(
+          {
+            ...previous,
+            sourceQuotes: ratesData.sourceQuotes,
+            fetchedAt: ratesData.fetchedAt,
+            lastSuccessfulCheckAt: ratesData.lastSuccessfulCheckAt,
+            sourcePublishedAt: ratesData.sourcePublishedAt,
+          },
+          null,
+          2,
+        ),
+        'utf8',
+      );
+      console.log('ℹ️  Rates unchanged; successful source check recorded');
       console.log('📊 Current rates are still valid');
       return;
     }
@@ -460,4 +493,10 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   main();
 }
 
-export { fetchTaiwanBankRates, parseTaiwanBankCSV, assertRatesIntegrity, resolveMutationThreshold };
+export {
+  fetchTaiwanBankRates,
+  parseTaiwanBankCSV,
+  assertRatesIntegrity,
+  resolveMutationThreshold,
+  hasRateChanges,
+};

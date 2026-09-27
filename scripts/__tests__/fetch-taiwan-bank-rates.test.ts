@@ -1,6 +1,48 @@
 import { describe, expect, it } from 'vitest';
 
-import { assertRatesIntegrity, resolveMutationThreshold } from '../fetch-taiwan-bank-rates.js';
+import {
+  assertRatesIntegrity,
+  resolveMutationThreshold,
+  parseTaiwanBankCSV,
+  hasRateChanges,
+} from '../fetch-taiwan-bank-rates.js';
+
+function csv(code: string, cashBuy: string, spotBuy: string, cashSell: string, spotSell: string) {
+  const columns = Array<string>(14).fill('-');
+  columns[0] = code;
+  columns[2] = cashBuy;
+  columns[3] = spotBuy;
+  columns[12] = cashSell;
+  columns[13] = spotSell;
+  return `header\n${columns.join(',')}`;
+}
+
+describe('台銀完整牌告契約', () => {
+  it('保留只有即期價格的幣別及原始十進位文字', () => {
+    const result = parseTaiwanBankCSV(csv('ZAR', '-', '1.7', '-', '1.90'));
+    expect(result.details['ZAR']!.spot).toEqual({ buy: 1.7, sell: 1.9 });
+    expect(result.sourceQuotes['ZAR']!.spot.sell).toBe('1.90');
+    expect(result.details['ZAR']!.cash).toEqual({ buy: null, sell: null });
+  });
+
+  it.each(['-3', '31x', 'Infinity', 'NaN'])('拒絕不合法價格 %s', (invalid) => {
+    expect(() => parseTaiwanBankCSV(csv('USD', invalid, '31', '32', '31.5'))).toThrow();
+  });
+
+  it.each(['cash.buy', 'spot.buy', 'spot.sell'])('單獨改變 %s 仍發布', (path) => {
+    const before = parseTaiwanBankCSV(csv('USD', '30', '31', '32', '31.5'));
+    const after = structuredClone(before);
+    const [kind, side] = path.split('.') as ['cash' | 'spot', 'buy' | 'sell'];
+    after.details['USD']![kind][side]! += 0.1;
+    expect(hasRateChanges(after, before)).toBe(true);
+    expect(hasRateChanges(before, before)).toBe(false);
+  });
+
+  it('首次快照也拒絕負值與非有限價格', () => {
+    expect(() => assertRatesIntegrity({ USD: -1 }, null, { minCurrencyCount: 1 })).toThrow();
+    expect(() => assertRatesIntegrity({ USD: Infinity }, null, { minCurrencyCount: 1 })).toThrow();
+  });
+});
 
 function makeRates(count: number, usd = 32.215): Record<string, number> {
   const rates: Record<string, number> = { USD: usd };

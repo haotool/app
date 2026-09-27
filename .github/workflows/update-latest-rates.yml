@@ -22,6 +22,10 @@ on:
     branches:
       - main
     paths:
+      - 'apps/shared/fx/**'
+      - 'scripts/lib/**'
+      - 'scripts/publish-fx-release.mjs'
+      - 'pnpm-lock.yaml'
       - 'scripts/fetch-taiwan-bank-rates.js'
       - '.github/workflows/update-latest-rates.yml'
 
@@ -50,19 +54,24 @@ jobs:
           git push -u origin data
           git checkout data
 
-      - name: Ensure data branch is up to date with scripts
-        run: |
-          # 使用觸發 ref 的腳本版本：schedule 為 main HEAD；push/dispatch 為對應分支，
-          # 讓腳本修正能在分支上先驗證，不必等合併 main。
-          git fetch origin ${{ github.sha }}
-          git checkout ${{ github.sha }} -- scripts/fetch-taiwan-bank-rates.js
-          git checkout ${{ github.sha }} -- scripts/fetch-taiwan-bank-rates-browser.mjs
-          git checkout ${{ github.sha }} -- public/rates/ 2>/dev/null || mkdir -p public/rates
+      - name: Checkout the complete publisher at the triggering code SHA
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.sha }}
+          path: _fx-code
+          persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: '24'
+
+      - name: Install exact publisher dependencies
+        working-directory: _fx-code
+        run: |
+          corepack enable
+          corepack pnpm install --frozen-lockfile --ignore-scripts
+          corepack pnpm generate:fx --check
 
       - name: Log schedule diagnostics
         env:
@@ -84,7 +93,7 @@ jobs:
         continue-on-error: true
         run: |
           echo "🔄 Fetching latest exchange rates from Taiwan Bank..."
-          node scripts/fetch-taiwan-bank-rates.js
+          FX_DATA_ROOT="$GITHUB_WORKSPACE/public/rates" node _fx-code/scripts/fetch-taiwan-bank-rates.js
 
       # 台銀 bot challenge fallback：純 fetch 被擋時改用真瀏覽器（xvfb headed Chrome）
       # 於頁面內完成 JS 驗證後下載 CSV，再以 CSV_INPUT_FILE 模式解析寫檔。
@@ -96,14 +105,14 @@ jobs:
           echo "🤖 Direct fetch blocked — falling back to real browser..."
           FALLBACK_DIR="$RUNNER_TEMP/twbank-browser"
           mkdir -p "$FALLBACK_DIR"
-          cp scripts/fetch-taiwan-bank-rates-browser.mjs "$FALLBACK_DIR/"
+          cp _fx-code/scripts/fetch-taiwan-bank-rates-browser.mjs "$FALLBACK_DIR/"
           pushd "$FALLBACK_DIR" > /dev/null
           npm init -y > /dev/null
           npm install --no-audit --no-fund --silent @playwright/test@1.61.1
           CSV_FILE="$FALLBACK_DIR/taiwan-bank.csv"
           xvfb-run -a node fetch-taiwan-bank-rates-browser.mjs "$CSV_FILE"
           popd > /dev/null
-          CSV_INPUT_FILE="$CSV_FILE" node scripts/fetch-taiwan-bank-rates.js
+          CSV_INPUT_FILE="$CSV_FILE" FX_DATA_ROOT="$GITHUB_WORKSPACE/public/rates" node _fx-code/scripts/fetch-taiwan-bank-rates.js
 
       - name: Resolve fetch status
         id: fetch-status
@@ -116,18 +125,30 @@ jobs:
             echo "❌ Both direct and browser fetch failed"
           fi
 
+      - name: Publish verified v3 release
+        if: vars.RATEWISE_FX_V3_ENABLED == 'true'
+        env:
+          FX_PROVIDER: bot
+          FX_DATA_ROOT: ${{ github.workspace }}/public/rates
+          FX_FETCH_FAILED: ${{ steps.fetch-status.outputs.ok != 'true' && '1' || '0' }}
+        run: node _fx-code/scripts/publish-fx-release.mjs
+
       - name: Check for changes in latest.json
         id: git-check
-        if: steps.fetch-status.outputs.ok == 'true'
+        if: steps.fetch-status.outputs.ok == 'true' || vars.RATEWISE_FX_V3_ENABLED == 'true'
         run: |
-          git diff --quiet public/rates/latest.json || echo "changed=true" >> $GITHUB_OUTPUT
+          changed=false
+          git diff --quiet public/rates/latest.json || changed=true
+          if [[ -n "$(git status --short --untracked-files=all -- public/rates/v3/)" ]]; then changed=true; fi
+          echo "changed=${changed}" >> $GITHUB_OUTPUT
 
       - name: Commit and push changes
-        if: steps.fetch-status.outputs.ok == 'true' && steps.git-check.outputs.changed == 'true'
+        if: steps.git-check.outputs.changed == 'true' && (steps.fetch-status.outputs.ok == 'true' || vars.RATEWISE_FX_V3_ENABLED == 'true')
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add public/rates/latest.json
+          if [ -f public/rates/v3/current.json ]; then git add public/rates/v3/; fi
 
           # 取得更新資訊
           UPDATE_TIME=$(node -p "JSON.parse(require('fs').readFileSync('public/rates/latest.json')).updateTime")
@@ -177,31 +198,36 @@ jobs:
           fi
 
       - name: Purge jsDelivr CDN cache
-        if: steps.fetch-status.outputs.ok == 'true' && steps.git-check.outputs.changed == 'true'
+        if: steps.git-check.outputs.changed == 'true' && (steps.fetch-status.outputs.ok == 'true' || vars.RATEWISE_FX_V3_ENABLED == 'true')
         run: |
-          PURGE_URL="https://purge.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json"
+          PURGE_URLS=("https://purge.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json")
+          if [ -f public/rates/v3/current.json ]; then
+            PURGE_URLS+=("https://purge.jsdelivr.net/gh/haotool/app@data/public/rates/v3/current.json")
+          fi
           echo "🧹 Purging jsDelivr CDN cache..."
-          for i in 1 2 3; do
-            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$PURGE_URL")
-            if [ "$HTTP_STATUS" = "200" ]; then
-              echo "✅ CDN cache purged successfully (attempt $i)"
-              break
-            else
-              echo "⚠️ Purge attempt $i failed (HTTP $HTTP_STATUS)"
-              if [ $i -lt 3 ]; then sleep 5; fi
-            fi
+          for PURGE_URL in "${PURGE_URLS[@]}"; do
+            for i in 1 2 3; do
+              HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$PURGE_URL")
+              if [ "$HTTP_STATUS" = "200" ]; then
+                echo "✅ CDN cache purged successfully (attempt $i): $PURGE_URL"
+                break
+              else
+                echo "⚠️ Purge attempt $i failed (HTTP $HTTP_STATUS): $PURGE_URL"
+                if [ $i -lt 3 ]; then sleep 5; fi
+              fi
+            done
           done
 
       - name: Refresh latest.json from remote data branch
         id: refresh-remote
-        if: steps.fetch-status.outputs.ok == 'true' && steps.git-check.outputs.changed == 'true'
+        if: steps.git-check.outputs.changed == 'true' && (steps.fetch-status.outputs.ok == 'true' || vars.RATEWISE_FX_V3_ENABLED == 'true')
         continue-on-error: true
         run: |
           # 收尾同步僅用於摘要校對，不得覆蓋已成功的資料推送結果。
           git rebase --abort 2>/dev/null || true
           for i in 1 2 3; do
             echo "🔄 Refreshing latest.json from remote data branch (try $i/3)..."
-            if git fetch origin data && git checkout origin/data -- public/rates/latest.json; then
+            if git fetch origin data && git checkout origin/data -- public/rates/latest.json && { [ ! -d public/rates/v3 ] || git checkout origin/data -- public/rates/v3/; }; then
               echo "✅ Remote refresh successful"
               exit 0
             fi

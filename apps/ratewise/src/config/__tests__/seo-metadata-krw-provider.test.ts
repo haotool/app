@@ -5,6 +5,7 @@
 import { describe, it, expect } from 'vitest';
 import { buildAlternativeProviderFaq } from '../seo-metadata';
 import { SEO_RATE_EXAMPLES } from '../generated/seo-rate-examples';
+import { projectSeoQuote } from '../seo-metadata/fx-projection';
 
 describe('buildAlternativeProviderFaq（twd-to-foreign，預設方向）', () => {
   const krw = SEO_RATE_EXAMPLES['KRW']!;
@@ -19,20 +20,27 @@ describe('buildAlternativeProviderFaq（twd-to-foreign，預設方向）', () =>
   it('FAQ answer 應包含台銀換算金額', () => {
     const faqs = buildAlternativeProviderFaq('KRW', krw);
     const answer = faqs[0]!.answer;
-    expect(answer).toContain(krw.foreignAtCash.toLocaleString());
+    expect(krw.foreignAtCash).not.toBeNull();
+    expect(answer).toContain(krw.foreignAtCash!.toLocaleString());
   });
 
   it('FAQ answer 應包含明洞換算金額', () => {
     const faqs = buildAlternativeProviderFaq('KRW', krw);
     const answer = faqs[0]!.answer;
-    const myeongdongKRW = Math.floor(krw.exampleTWD * provider.rate);
-    expect(answer).toContain(myeongdongKRW.toLocaleString());
+    const projected = projectSeoQuote(
+      provider.quotes,
+      'KRW',
+      'twd-to-foreign',
+      String(krw.exampleTWD),
+    );
+    expect(projected).not.toBeNull();
+    expect(answer).toContain(Number(projected!.amount).toLocaleString('zh-TW'));
   });
 
-  it('FAQ answer 應包含差額百分比（%）', () => {
+  it('FAQ answer 應揭露兩地點的牌告差額與限制', () => {
     const faqs = buildAlternativeProviderFaq('KRW', krw);
     const answer = faqs[0]!.answer;
-    expect(answer).toMatch(/%/);
+    expect(answer).toMatch(/多約|少約/);
   });
 
   it('FAQ answer 應說明需現場前往', () => {
@@ -58,12 +66,20 @@ describe('buildAlternativeProviderFaq（to-twd，KRW→TWD 方向）', () => {
     expect(faqs[0]!.question).toMatch(/韓元|明洞/);
   });
 
-  it('FAQ answer 應包含 rateBuy 換算後的台幣金額', () => {
+  it('FAQ answer 應包含 canonical KRW→TWD 報價試算的台幣金額', () => {
     const faqs = buildAlternativeProviderFaq('KRW', krw, 'to-twd');
     const answer = faqs[0]!.answer;
-    const rateBuy = provider.rateBuy ?? provider.rate;
-    const providerTWD = Math.floor(1_000_000 / rateBuy);
-    expect(answer).toContain(providerTWD.toLocaleString());
+    const inward = provider.quotes.find(
+      (q) => q.fromCurrency === 'KRW' && q.toCurrency === 'TWD' && q.status === 'available',
+    );
+    const projected = projectSeoQuote(provider.quotes, 'KRW', 'to-twd', '1000000');
+    expect(inward).toBeDefined();
+    expect(projected).not.toBeNull();
+    // 支付 1,000,000 KRW × canonical KRW→TWD 率，四捨五入誤差不超過 1 TWD
+    expect(
+      Math.abs(Number(projected!.amount) - 1_000_000 * Number(inward!.rate)),
+    ).toBeLessThanOrEqual(1);
+    expect(answer).toContain(Number(projected!.amount).toLocaleString('zh-TW'));
   });
 
   it('FAQ answer 應說明需現場前往', () => {
@@ -72,11 +88,13 @@ describe('buildAlternativeProviderFaq（to-twd，KRW→TWD 方向）', () => {
     expect(answer).toMatch(/現場|親自|現鈔/);
   });
 
-  it('FAQ answer 應使用 rateBuy 而非 rate', () => {
+  it('FAQ answer 應使用反向 canonical 試算而非 forward rate', () => {
     const faqs = buildAlternativeProviderFaq('KRW', krw, 'to-twd');
     const answer = faqs[0]!.answer;
-    // rateBuy (46.7) 應出現在答案中（作為 KRW/TWD 匯率顯示）
-    expect(answer).toContain(provider.rateBuy!.toFixed(1));
+    expect(answer).toContain('TWD');
+    const outward = projectSeoQuote(provider.quotes, 'KRW', 'twd-to-foreign', '1');
+    expect(outward).not.toBeNull();
+    expect(answer).not.toContain(Number(outward!.rate).toFixed(1));
   });
 
   it('to-twd FAQ question 不應包含「去首爾前」（那是 twd-to-foreign 方向）', () => {

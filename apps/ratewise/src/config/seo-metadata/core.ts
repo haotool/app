@@ -1,11 +1,8 @@
+import { projectSeoQuote } from './fx-projection';
 import { SUPPORTED_CURRENCY_COUNT } from '../../features/ratewise/constants';
 import { APP_INFO, AUTHOR_PERSON, SEO_SOCIAL_LINKS } from '../app-info';
 import { DEFAULT_TITLE, GUIDE_PAGE_TITLE } from '../seo-static';
-import {
-  SEO_RATE_EXAMPLES_DATE,
-  type RateExample,
-  type AlternativeProvider,
-} from '../generated/seo-rate-examples';
+import { type RateExample, type AlternativeProvider } from '../generated/seo-rate-examples';
 import { RATING_SNAPSHOT } from '../generated/rating-snapshot';
 import { RATES_API } from '../api-endpoints';
 import {
@@ -418,8 +415,9 @@ interface WebPageOptions {
 export function buildExchangeRateSpecificationJsonLd(
   fromCurrency: string,
   toCurrency: string,
-  rate: number,
+  rate: number | string,
   rateDescription: string,
+  sourcePublishedAt?: string | null,
 ): JsonLdBlock {
   return {
     '@context': 'https://schema.org',
@@ -430,7 +428,7 @@ export function buildExchangeRateSpecificationJsonLd(
       price: String(rate),
       priceCurrency: toCurrency,
       description: rateDescription,
-      validFrom: SEO_RATE_EXAMPLES_DATE,
+      ...(sourcePublishedAt ? { validFrom: sourcePublishedAt } : {}),
     },
   };
 }
@@ -449,15 +447,16 @@ export function buildExchangeRateSpecificationJsonLd(
 export function buildAmountExchangeRateSpecificationJsonLd(
   fromCurrency: string,
   toCurrency: string,
-  rate: number,
+  rate: number | string,
   amount: number,
   result: number,
   direction: 'to-twd' | 'twd-to-foreign',
+  sourcePublishedAt?: string | null,
 ): JsonLdBlock {
   const isTwdToForeign = direction === 'twd-to-foreign';
   const rateDescription = isTwdToForeign
     ? `臺灣銀行現金賣出價（${amount.toLocaleString('zh-TW')} TWD 可買 ${result.toLocaleString('zh-TW')} ${toCurrency}）`
-    : `臺灣銀行現金賣出價（買 ${amount.toLocaleString('zh-TW')} ${fromCurrency} 所需 ${result.toLocaleString('zh-TW')} TWD）`;
+    : `臺灣銀行現金買入價（支付 ${amount.toLocaleString('zh-TW')} ${fromCurrency} 估算取得 ${result.toLocaleString('zh-TW')} TWD，未含費用）`;
 
   return {
     '@context': 'https://schema.org',
@@ -468,7 +467,7 @@ export function buildAmountExchangeRateSpecificationJsonLd(
       price: String(rate),
       priceCurrency: toCurrency,
       description: rateDescription,
-      validFrom: SEO_RATE_EXAMPLES_DATE,
+      ...(sourcePublishedAt ? { validFrom: sourcePublishedAt } : {}),
     },
   };
 }
@@ -556,7 +555,7 @@ export function buildOpenDataDatasetJsonLd(): JsonLdBlock {
     '@context': 'https://schema.org',
     '@type': 'Dataset',
     name: `${APP_INFO.shortName} 匯率開放資料`,
-    description: `${APP_INFO.shortName} 提供臺灣銀行牌告匯率與 MoneyBox 換錢所（KRW/TWD）的開放 JSON 資料集，包含 ${SUPPORTED_CURRENCY_COUNT} 種台銀外幣的現金與即期四種報價，以及 v2 語意欄位（customerBuyForeignRate、quoteUnit）對照；並提供最新匯率、歷史匯率與 OpenAPI 規格。`,
+    description: `${APP_INFO.shortName} 提供臺灣銀行牌告匯率與 MoneyBox 換錢所（KRW/TWD）的 v3 方向化開放 JSON 資料集，包含 ${SUPPORTED_CURRENCY_COUNT} 種台銀外幣的現金與即期報價、來源時間與不可變快照；並提供 v3 contract、最新 release、歷史匯率與 OpenAPI 規格。程式碼採 GPL 授權，來源資料的使用與再散布仍以各 provider 條款為準。`,
     url: buildCanonicalUrl('/open-data/'),
     sameAs: 'https://rate.bot.com.tw/xrt',
     isBasedOn: {
@@ -570,7 +569,6 @@ export function buildOpenDataDatasetJsonLd(): JsonLdBlock {
       },
     },
     identifier: `${SITE_BASE_URL}open-data/#bank-of-taiwan-exchange-rate-dataset`,
-    license: APP_INFO.licenseUrl,
     isAccessibleForFree: true,
     inLanguage: DEFAULT_LOCALE,
     dateModified: BUILD_TIME,
@@ -780,26 +778,26 @@ export function buildAlternativeProviderFaq(
   if (!example.alternativeProviders?.length) return [];
 
   return example.alternativeProviders.map((provider) => {
-    if (direction === 'to-twd') {
-      // KRW→TWD 方向：旅客返台前在明洞換回台幣（使用 rateBuy）
-      const exampleKRW = 1_000_000;
-      const rateBuy = provider.rateBuy ?? provider.rate;
-      const providerTWD = Math.floor(exampleKRW / rateBuy);
+    const amount = direction === 'to-twd' ? '1000000' : String(example.exampleTWD);
+    const projected = projectSeoQuote(provider.quotes, 'KRW', direction, amount);
+    const bank = projectSeoQuote(example.quotes, 'KRW', direction, amount);
+    const from = direction === 'to-twd' ? 'KRW' : 'TWD';
+    const to = direction === 'to-twd' ? 'TWD' : 'KRW';
+    if (!projected)
       return {
-        question: `帶韓元回台灣，可以在${provider.name}先換好台幣嗎？`,
-        answer: `${provider.name}（${provider.nameEn}）同時提供韓元換台幣的現場換匯服務。以 ${exampleKRW.toLocaleString()} 韓元為例，現場換匯約可換 ${providerTWD.toLocaleString()} 台幣（匯率 ${rateBuy.toFixed(1)} KRW/TWD）。返台前在首爾兌換通常比回台灣再換更划算，需現場持韓元現鈔親自前往（資料來源：${provider.source}，更新日期 ${provider.rateDate}）。`,
+        question: `${provider.name}可以辦理 ${from} 換 ${to} 嗎？`,
+        answer: '此方向缺少有效牌告，無法試算；請向明洞分店確認。',
       };
-    }
-
-    // twd-to-foreign 方向：出境前換韓元（使用 rate，即 sell 率）
-    const exampleTWD = example.exampleTWD;
-    const taiwanBankKRW = example.foreignAtCash;
-    const providerKRW = Math.floor(exampleTWD * provider.rate);
-    const diffKRW = providerKRW - taiwanBankKRW;
-    const diffPct = ((diffKRW / taiwanBankKRW) * 100).toFixed(1);
+    const difference = bank ? Number(projected.amount) - Number(bank.amount) : null;
+    const comparison =
+      difference === null
+        ? '台銀此方向缺少報價，無法比較。'
+        : difference === 0
+          ? '兩者牌告試算相同。'
+          : `與台灣台銀牌告相比，明洞方案${difference > 0 ? '多' : '少'}約 ${Math.abs(difference).toLocaleString('zh-TW')} ${to}。`;
     return {
-      question: `去首爾前，換韓元可以去${provider.name}嗎？比台銀划算多少？`,
-      answer: `${provider.name}（${provider.nameEn}）提供現場現金換匯服務。以 ${exampleTWD.toLocaleString()} 元新台幣為例：台銀現金賣出約可換 ${taiwanBankKRW.toLocaleString()} 韓元，而在明洞現場換匯約可換 ${providerKRW.toLocaleString()} 韓元，多換約 ${diffKRW.toLocaleString()} 韓元（約多 ${diffPct}%）。需注意需現場親自前往，建議出發前確認最新匯率（資料來源：${provider.source}，更新日期 ${provider.rateDate}）。`,
+      question: `${provider.name}的 ${from} 換 ${to} 牌告如何比較？`,
+      answer: `${provider.name}（${provider.nameEn}）適用韓國明洞分店現場現鈔。支付 ${Number(amount).toLocaleString('zh-TW')} ${from}，牌告估算取得 ${Number(projected.amount).toLocaleString('zh-TW')} ${to}。${bank ? `台灣台銀方案估算 ${Number(bank.amount).toLocaleString('zh-TW')} ${to}。` : ''}${comparison}兩方案換匯地點不同，均未含未知費用，不代表保證成交或最低總成本。來源：${provider.source}；來源發布時間：${provider.sourcePublishedAt ?? '未知'}。`,
     };
   });
 }
@@ -829,10 +827,9 @@ export function buildFaqPageJsonLd(faqEntries: readonly FAQEntry[], maxItems = 5
   };
 }
 
-// 中間價與台銀實際賣出價差距的全站描述 SSOT，統一多處曾互相矛盾的數字。
-// 依據：SEO_RATE_EXAMPLES 每日實測 diffPct（主要貨幣約 1～2%，東南亞與非主流貨幣可達 6% 以上）。
+// 牌告中點的全站描述 SSOT；它是同一 provider 買賣價的數學參考，不是外部市場中價。
 export const MID_RATE_SPREAD_NOTE =
-  '中間價與台銀實際賣出價的差距依幣別而異：主要貨幣通常約 1～2%，東南亞與非主流貨幣可能超過 6%（依台銀牌告與市場中間價每日實測）。';
+  '牌告中點只由同一 provider 的買入與賣出價計算，差距依幣別、通路與時點而異；它不是外部市場中價，也不代表實際成交價格。';
 
 export const HOMEPAGE_FAQ_CONTENT = [
   {
@@ -1225,7 +1222,7 @@ export const GUIDE_PAGE_SEO = {
 export const OPEN_DATA_PAGE_FAQ = [
   {
     question: '如何取得最新匯率資料？',
-    answer: `直接 GET \`${RATES_API.latestCdn}\`，無需 API Key。回傳 JSON 包含 ${SUPPORTED_CURRENCY_COUNT} 種貨幣的現金買入、現金賣出、即期買入、即期賣出四種報價。建議 client 端自行快取 5 分鐘，與資料更新頻率一致，避免無意義重複請求。`,
+    answer: `新整合請先 GET v3 current pointer（${RATES_API.v3CurrentCdn}），再依 manifest 的 SHA-256 references 讀取 provider snapshot；每筆 quote 以 fromCurrency、toCurrency、rate（每 1 來源幣可取得的目標幣 decimal string）表達。${RATES_API.latestCdn} 仍保留作 legacy adapter，不能取代 v3 hash chain。`,
   },
   {
     question: 'jsDelivr CDN 和 GitHub Raw 端點有何差異？',
@@ -1233,7 +1230,7 @@ export const OPEN_DATA_PAGE_FAQ = [
   },
   {
     question: '有備援端點嗎？',
-    answer: `有。jsDelivr CDN 不可用時會自動切換至 GitHub Raw 端點 \`${RATES_API.latestRaw}\`，無快取，每次請求直接取得最新資料。注意未認證 IP 每小時限 60 次請求。`,
+    answer: `有。v3 current pointer 與 immutable objects 同時提供 jsDelivr CDN 與 GitHub Raw；CDN 不可用時可沿同一 manifest path 改讀 ${RATES_API.v3CurrentRaw} 與 raw objects，並在使用前驗證 SHA-256。legacy adapter 備援端點為 \`${RATES_API.latestRaw}\`。`,
   },
   {
     question: '如何查詢歷史匯率？',
@@ -1242,8 +1239,8 @@ export const OPEN_DATA_PAGE_FAQ = [
 ] as const satisfies readonly FAQEntry[];
 
 export const OPEN_DATA_PAGE_SEO = {
-  title: '開放資料 API — 台銀牌告匯率 JSON 端點',
-  description: `${APP_INFO.shortName} 開放台灣銀行牌告匯率 JSON 資料：jsDelivr CDN 與 GitHub Raw 雙端點，支援 curl / JS / Python 查詢。免費、免 API Key。`,
+  title: '開放資料 API v3 — 方向化匯率 JSON 端點',
+  description: `${APP_INFO.shortName} 提供臺灣銀行與 MoneyBox 的 v3 方向化匯率 JSON：不可變 release manifest、SHA-256 objects、來源/擷取時間與 legacy adapter，支援 curl / JS / Python 查詢。免 API Key；資料使用依各 provider 條款。`,
   pathname: '/open-data/',
   breadcrumb: [
     { name: `${APP_INFO.shortName} 首頁`, item: '/' },
@@ -1252,7 +1249,7 @@ export const OPEN_DATA_PAGE_SEO = {
   answerCapsule: [
     {
       question: '要串接最新台銀牌告匯率，應該用哪個端點？',
-      answer: `最新台銀牌告匯率建議直接讀取 latest.json：${RATES_API.latestCdn}。這是免 API Key 的主要 CDN 端點，適合正式環境。`,
+      answer: `新整合應讀取 v3 current pointer：${RATES_API.v3CurrentCdn}，再沿 manifest 取得台銀 provider snapshot 並驗證 SHA-256；legacy latest.json 僅供相容讀取。`,
     },
     {
       question: `SEO 與 AI 引用應該連到哪種 ${APP_INFO.shortName} URL？`,
@@ -1263,22 +1260,23 @@ export const OPEN_DATA_PAGE_SEO = {
   faqContent: [...OPEN_DATA_PAGE_FAQ],
   howTo: {
     name: `如何呼叫 ${APP_INFO.shortName} 開放匯率 API`,
-    description: '透過 jsDelivr CDN 端點取得台銀牌告匯率 JSON 資料，免費、免 API Key。',
+    description:
+      '透過 v3 current pointer 與 content-addressed snapshot 取得方向化牌告匯率；免 API Key，資料使用依 provider 條款。',
     steps: [
       {
         position: 1,
         name: '選擇端點',
-        text: '建議使用 jsDelivr CDN 主要端點，全球加速，適合生產環境。GitHub Raw 為備援。',
+        text: `先讀取 ${RATES_API.v3CurrentCdn}；CDN 失敗時改用 raw current pointer，兩者都必須沿 manifest 驗證 SHA-256。`,
       },
       {
         position: 2,
         name: '呼叫最新匯率',
-        text: `使用 curl 或任何 HTTP 客戶端，GET ${RATES_API.latestCdn}，無需 API Key。`,
+        text: `使用 curl 或任何 HTTP 客戶端 GET ${RATES_API.v3CurrentCdn}，無需 API Key，再依 manifest 讀取 provider snapshot。`,
       },
       {
         position: 3,
         name: '解析 JSON',
-        text: '回傳 JSON 包含 details.{幣別}.cash.buy/sell 與 details.{幣別}.spot.buy/sell 四種報價。',
+        text: 'snapshot 的 canonical quote 以 fromCurrency、toCurrency、rate decimal string 與 sourceQuote 條件表達；不要從 buy/sell 欄位名稱猜方向。',
       },
     ],
   },
@@ -1290,7 +1288,7 @@ export const OPEN_DATA_PAGE_SEO = {
     ),
     buildTechArticleJsonLd(
       '開放資料 API — 台銀牌告匯率 JSON 端點',
-      `${APP_INFO.shortName} 開放台灣銀行牌告匯率 JSON 資料：jsDelivr CDN 與 GitHub Raw 雙端點，支援 curl / JS / Python 查詢。免費、免 API Key。`,
+      `${APP_INFO.shortName} 開放台灣銀行牌告匯率 JSON 資料：v3 current pointer、SHA-256 manifest/object 驗證與 legacy adapter，支援 curl / JS / Python 查詢。免 API Key；資料使用依 provider 條款。`,
       '/open-data/',
       GUIDE_PUBLISH_DATES.openData,
       {
@@ -1306,7 +1304,7 @@ export const OPEN_DATA_PAGE_SEO = {
           'curl',
           'fetch',
         ],
-        articleBody: `${APP_INFO.shortName} 提供台灣銀行牌告匯率的開放 JSON 資料，無需 API Key，免費使用。主要端點透過 jsDelivr CDN 加速，備援端點透過 GitHub Raw。支援最新匯率（約每 5 分鐘檢查更新）與歷史匯率查詢，涵蓋 ${SUPPORTED_CURRENCY_COUNT} 種貨幣的現金與即期四種報價。`,
+        articleBody: `${APP_INFO.shortName} 提供台灣銀行牌告匯率的開放 JSON 資料，無需 API Key。主要端點是 v3 current pointer，透過 manifest 與 SHA-256 objects 追溯 provider snapshot；GitHub Raw 是備援。legacy latest/history 端點只作相容投影。資料使用與再散布依 provider 條款，涵蓋 ${SUPPORTED_CURRENCY_COUNT} 種貨幣的現金與即期四種報價。`,
         speakableCssSelectors: ['h1', 'h3'],
         proficiencyLevel: 'Beginner',
         dependencies: ['HTTP', 'JSON', 'curl 或 fetch'],
@@ -1338,7 +1336,7 @@ export const ABOUT_PAGE_FAQ = [
   {
     question: '匯差數字如何保持最新且讓搜尋引擎正確讀取？',
     answer:
-      '匯差範例數據由 GitHub Actions 每日自動執行：同時抓取台灣銀行牌告匯率與 open.er-api.com 市場中間價（Google、XE、Wise、Apple 計算機的共同基準），進行雙重驗證（兩個中間價差距須在 2% 以內），生成靜態 TypeScript 常數，透過 Pull Request 自動審核後進入主分支。最終數字直接嵌入靜態 HTML（vite-react-ssg SSG 預渲染），Google 爬蟲無需執行 JavaScript 即可讀取所有匯差數字。',
+      '牌告範例由銀行與換錢所快照生成，與換算器共用 v3 方向選擇及十進位試算。來源發布時間與擷取時間分開記錄；未知來源時間不補成今天。產物透過 Pull Request 驗證後嵌入靜態 HTML，頁面、API 及結構化資料可依報價識別碼追溯。牌告中點只作數學參考，不視為外部市場價或成交價。',
   },
 ] as const satisfies readonly FAQEntry[];
 
@@ -1384,7 +1382,7 @@ export const ABOUT_PAGE_SEO = {
           '匯差計算',
           'LLM 引用',
         ],
-        articleBody: `${APP_INFO.name}是專為台灣用戶設計的即時匯率 PWA 工具，資料來源為臺灣銀行官方牌告匯率，支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣換算與離線使用。完全免費、無廣告，資料約每 5 分鐘檢查更新，涵蓋現金買入、現金賣出、即期買入、即期賣出四種報價。各頁面部署 schema.org JSON-LD 結構化標記，採用 SSG 靜態預渲染確保爬蟲可讀性，匯差數據每日自動雙重驗證更新。`,
+        articleBody: `${APP_INFO.name}是專為台灣用戶設計的即時匯率 PWA 工具，資料來源為臺灣銀行官方牌告匯率，支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣換算與離線使用。完全免費、無廣告，資料約每 5 分鐘檢查更新，涵蓋現金買入、現金賣出、即期買入、即期賣出四種報價。各頁面部署 schema.org JSON-LD 結構化標記，採用 SSG 靜態預渲染確保爬蟲可讀性，v3 快照保留來源與擷取時間並由 release manifest 綁定。`,
         speakableCssSelectors: ['h1', 'h3'],
       },
     ),

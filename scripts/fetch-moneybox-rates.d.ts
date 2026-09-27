@@ -8,6 +8,12 @@ export interface MoneyBoxRateQuote {
   spsell?: number | null;
 }
 
+export interface MoneyBoxSourceQuote {
+  buy: string | null;
+  sell: string | null;
+  unitAmount: string;
+}
+
 export type MoneyBoxRates = Record<string, MoneyBoxRateQuote>;
 
 export interface RateChange {
@@ -19,9 +25,21 @@ export interface RateChange {
 
 export interface MoneyBoxSnapshot {
   rates?: MoneyBoxRates;
+  sourceQuotes?: Record<string, MoneyBoxSourceQuote>;
+  sourcePublishedAt?: string | null;
+  fetchedAt?: string;
+  lastSuccessfulCheckAt?: string;
   updateTime?: string;
   timestamp?: string;
-  schemaVersion?: number;
+  schemaVersion?: string;
+}
+
+export interface MoneyBoxFetchResult extends MoneyBoxSnapshot {
+  rates: MoneyBoxRates;
+  sourceQuotes: Record<string, MoneyBoxSourceQuote>;
+  sourcePublishedAt: string | null;
+  fetchedAt: string;
+  lastSuccessfulCheckAt: string;
 }
 
 export interface RefreshDecision {
@@ -32,7 +50,7 @@ export interface RefreshDecision {
   newSnapshotDate?: string;
 }
 
-export function fetchMoneyBoxRates(): Promise<MoneyBoxRates>;
+export function fetchMoneyBoxRates(): Promise<MoneyBoxFetchResult>;
 export function listRateChanges(oldRates?: MoneyBoxRates, newRates?: MoneyBoxRates): RateChange[];
 export function needsSchemaMigration(): boolean;
 export function extractSeoulSnapshotDate(
