@@ -8,7 +8,7 @@ name: SEO Production Validation
 # 4. 支援所有 apps: ratewise + nihonname + haotool
 #
 # 觸發條件:
-# - Release 成功後自動執行
+# - main 的 Cloudflare Pages 正式部署成功後自動執行
 # - 手動觸發 (workflow_dispatch)
 # - 每日定時檢查 (UTC 00:00 = 台北 08:00)
 #
@@ -17,7 +17,7 @@ name: SEO Production Validation
 
 on:
   workflow_run:
-    workflows: ['Release']
+    workflows: ['Deploy Cloudflare Pages']
     types:
       - completed
 
@@ -49,7 +49,10 @@ jobs:
     if: |
       github.event_name == 'workflow_dispatch' ||
       github.event_name == 'schedule' ||
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+      (github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.event != 'pull_request')
 
     steps:
       - name: Checkout code
@@ -62,12 +65,6 @@ jobs:
 
       - name: Generate dynamic env vars from app.config.mjs (SSOT)
         run: node scripts/generate-app-env-vars.mjs >> $GITHUB_ENV
-
-      - name: Wait for deployment
-        if: github.event_name == 'workflow_run'
-        run: |
-          echo "⏳ 等待 Zeabur 部署完成..."
-          sleep 180
 
       - name: Run Required Resource Availability Check
         run: node scripts/verify-production-resources.mjs
