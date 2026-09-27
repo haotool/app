@@ -21,6 +21,10 @@ on:
     branches:
       - main
     paths:
+      - 'apps/shared/fx/**'
+      - 'scripts/lib/**'
+      - 'scripts/publish-fx-release.mjs'
+      - 'pnpm-lock.yaml'
       - 'scripts/fetch-moneybox-rates.js'
       - '.github/workflows/update-moneybox-rates.yml'
 
@@ -59,17 +63,24 @@ jobs:
           git push -u origin data
           git checkout data
 
-      - name: Ensure data branch is up to date with scripts
-        run: |
-          git fetch origin main
-          git checkout origin/main -- scripts/fetch-moneybox-rates.js
-          git checkout origin/main -- apps/ratewise/src/config/api-semantics-v2.ts
-          git checkout origin/main -- public/rates/ 2>/dev/null || mkdir -p public/rates
+      - name: Checkout the complete publisher at the triggering code SHA
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.sha }}
+          path: _fx-code
+          persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: '24'
+
+      - name: Install exact publisher dependencies
+        working-directory: _fx-code
+        run: |
+          corepack enable
+          corepack pnpm install --frozen-lockfile --ignore-scripts
+          corepack pnpm generate:fx --check
 
       - name: Log schedule diagnostics
         env:
@@ -91,7 +102,15 @@ jobs:
         continue-on-error: true
         run: |
           echo "🔄 Fetching latest exchange rates from MoneyBox (明洞換匯所)..."
-          node scripts/fetch-moneybox-rates.js
+          FX_DATA_ROOT="$GITHUB_WORKSPACE/public/rates" node _fx-code/scripts/fetch-moneybox-rates.js
+
+      - name: Publish verified v3 release
+        if: vars.RATEWISE_FX_V3_ENABLED == 'true'
+        env:
+          FX_PROVIDER: moneybox
+          FX_DATA_ROOT: ${{ github.workspace }}/public/rates
+          FX_FETCH_FAILED: ${{ steps.fetch-rates.outcome != 'success' && '1' || '0' }}
+        run: node _fx-code/scripts/publish-fx-release.mjs
 
       # 恢復後必須關閉追蹤 issue：否則它會永久 open，使下一次中斷從第一次執行就被節流，
       # 失去「首次偵測大聲失敗」的曝光。關閉失敗不阻斷本次資料更新。
@@ -157,7 +176,7 @@ jobs:
 
       - name: Check for changes in MoneyBox provider files
         id: git-check
-        if: steps.fetch-rates.outcome == 'success'
+        if: steps.fetch-rates.outcome == 'success' || vars.RATEWISE_FX_V3_ENABLED == 'true'
         env:
           RETIRED_ALIASES_CHANGED: ${{ steps.remove-retired-aliases.outputs.changed }}
         run: |
@@ -174,55 +193,17 @@ jobs:
           if [[ "$RETIRED_ALIASES_CHANGED" == "true" ]]; then
             echo "changed=true" >> $GITHUB_OUTPUT
           fi
+          if [[ -n "$(git status --short --untracked-files=all -- public/rates/v3/)" ]]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
 
       - name: Generate moneybox aggregate 30-day history
         if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true'
         run: |
-          node --input-type=module << 'SCRIPT'
-          import { readdirSync, readFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
-          import { dirname, join } from 'node:path';
-
-          const HISTORY_DIR = process.env.MONEYBOX_HISTORY_DIR;
-          const OUTPUT_PATH = process.env.MONEYBOX_AGGREGATE_FILE;
-          const MAX_DAYS = 30;
-
-          if (!existsSync(HISTORY_DIR)) {
-            console.error(`❌ History dir not found: ${HISTORY_DIR}`);
-            process.exit(1);
-          }
-
-          const files = readdirSync(HISTORY_DIR)
-            .filter((f) => /^\d{4}-\d{2}-\d{2}\.json$/.test(f))
-            .sort()
-            .reverse()
-            .slice(0, MAX_DAYS);
-
-          const snapshots = [];
-          for (const file of files) {
-            const date = file.replace(/\.json$/, '');
-            try {
-              const raw = JSON.parse(readFileSync(join(HISTORY_DIR, file), 'utf-8'));
-              snapshots.push({ date, raw });
-            } catch (e) {
-              console.warn(`⚠️ Skip ${file}: ${e.message}`);
-            }
-          }
-
-          const aggregate = {
-            providerId: 'moneybox',
-            generatedAt: new Date().toISOString(),
-            snapshots,
-          };
-
-          const outDir = dirname(OUTPUT_PATH);
-          if (!existsSync(outDir)) mkdirSync(outDir, { recursive: true });
-          writeFileSync(OUTPUT_PATH, JSON.stringify(aggregate, null, 2) + '\n');
-
-          console.log(`✅ moneybox aggregate: ${snapshots.length} days → ${OUTPUT_PATH}`);
-          SCRIPT
+          RATE_DATA_ROOT=. FX_PROVIDER=moneybox node _fx-code/apps/ratewise/scripts/generate-history-aggregate.mjs
 
       - name: Commit and push changes
-        if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true'
+        if: steps.git-check.outputs.changed == 'true' && (steps.fetch-rates.outcome == 'success' || vars.RATEWISE_FX_V3_ENABLED == 'true')
         env:
           TODAY_HISTORY_FILE: ${{ steps.save-history.outputs.history_file }}
         run: |
@@ -231,7 +212,10 @@ jobs:
           # 只 add 當日 history 檔與 aggregate，避免 git checkout origin/main -- public/rates/
           # 後把 data branch 既有的前幾日 history snapshot 一併 stage 成刪除（會清掉公開
           # MoneyBox history API 與趨勢圖前日資料）。SSOT：每次只動當日 snapshot + aggregate。
-          git add "$MONEYBOX_LATEST_FILE" "$TODAY_HISTORY_FILE" "$MONEYBOX_AGGREGATE_FILE"
+          if [[ "${{ steps.fetch-rates.outcome }}" == "success" ]]; then
+            git add "$MONEYBOX_LATEST_FILE" "$TODAY_HISTORY_FILE" "$MONEYBOX_AGGREGATE_FILE"
+          fi
+          if [ -f public/rates/v3/current.json ]; then git add public/rates/v3/; fi
 
           # 取得更新資訊
           UPDATE_TIME=$(node -p "JSON.parse(require('fs').readFileSync(process.env.MONEYBOX_LATEST_FILE)).updateTime")
@@ -282,15 +266,25 @@ jobs:
           fi
 
       - name: Purge jsDelivr CDN cache
-        if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true'
+        if: steps.git-check.outputs.changed == 'true' && (steps.fetch-rates.outcome == 'success' || vars.RATEWISE_FX_V3_ENABLED == 'true')
         env:
           CURRENT_DATE: ${{ steps.save-history.outputs.current_date }}
         run: |
           PURGE_URL="${MONEYBOX_PURGE_DATA_BASE}/${MONEYBOX_LATEST_FILE}"
-          HISTORY_PURGE_URL="${MONEYBOX_PURGE_DATA_BASE}/${MONEYBOX_HISTORY_DIR}/${CURRENT_DATE}.json"
-          AGGREGATE_PURGE_URL="${MONEYBOX_PURGE_DATA_BASE}/${MONEYBOX_AGGREGATE_FILE}"
+          V3_PURGE_URL="${MONEYBOX_PURGE_DATA_BASE}/public/rates/v3/current.json"
           echo "🧹 Purging jsDelivr CDN cache..."
-          for URL in "$PURGE_URL" "$HISTORY_PURGE_URL" "$AGGREGATE_PURGE_URL"; do
+          PURGE_URLS=()
+          if [[ "${{ steps.fetch-rates.outcome }}" == "success" ]]; then
+            HISTORY_PURGE_URL="${MONEYBOX_PURGE_DATA_BASE}/${MONEYBOX_HISTORY_DIR}/${CURRENT_DATE}.json"
+            AGGREGATE_PURGE_URL="${MONEYBOX_PURGE_DATA_BASE}/${MONEYBOX_AGGREGATE_FILE}"
+            PURGE_URLS+=("$PURGE_URL" "$HISTORY_PURGE_URL" "$AGGREGATE_PURGE_URL")
+          fi
+          if [ -f public/rates/v3/current.json ]; then PURGE_URLS+=("$V3_PURGE_URL"); fi
+          if [ ${#PURGE_URLS[@]} -eq 0 ]; then
+            echo "ℹ️ No mutable rate URL changed; skipping CDN purge."
+            exit 0
+          fi
+          for URL in "${PURGE_URLS[@]}"; do
             for i in 1 2 3; do
               HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL")
               if [ "$HTTP_STATUS" = "200" ]; then
@@ -305,7 +299,7 @@ jobs:
 
       - name: Refresh MoneyBox provider files from remote data branch
         id: refresh-remote
-        if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true'
+        if: steps.git-check.outputs.changed == 'true' && (steps.fetch-rates.outcome == 'success' || vars.RATEWISE_FX_V3_ENABLED == 'true')
         continue-on-error: true
         run: |
           # 收尾同步僅用於摘要校對，不得覆蓋已成功的資料推送結果。

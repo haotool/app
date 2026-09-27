@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   assertMoneyBoxRatesIntegrity,
@@ -6,7 +6,31 @@ import {
   mapUpstreamRow,
   shouldRefreshLatestSnapshot,
   toLegacyQuoteUnit,
+  fetchMoneyBoxRates,
 } from '../fetch-moneybox-rates.js';
+
+afterEach(() => vi.unstubAllGlobals());
+
+it('保留來源發布時間與原始 per-1 十進位文字', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi
+      .fn()
+      .mockResolvedValue(
+        new Response(
+          '{"success":true,"data":{"publishedAt":"2026-09-21T10:00:00Z","rates":[{"currencyCode":"TWD","buyRate":42.15000000000000001,"sellRate":42.3}]}}',
+        ),
+      ),
+  );
+  const result = await fetchMoneyBoxRates();
+  expect(result.sourcePublishedAt).toBe('2026-09-21T10:00:00.000Z');
+  expect(result.fetchedAt).not.toBe(result.sourcePublishedAt);
+  expect(result.sourceQuotes['TWD']!.buy).toBe('42.15000000000000001');
+});
+
+it.each(['1junk', '-1', 'Infinity'])('拒絕上游不合法數值 %s 而非截斷成有效價格', (value) => {
+  expect(() => mapUpstreamRow({ currencyCode: 'TWD', buyRate: value, sellRate: '43' })).toThrow();
+});
 
 const baseRates = {
   TWD: { sell: 46.1, buy: 46.7, base: 47.95, spbuy: 54.23, spsell: 43.16 },
@@ -171,9 +195,7 @@ describe('fetch-moneybox-rates / 新 API 欄位對應（PRD 049 §2.2）', () =>
     expect(zero.buy).toBeNull();
     expect(zero.base).toBeNull();
 
-    const [, nan] = mapUpstreamRow({ currencyCode: 'USD', buyRate: 'x', sellRate: null })!;
-    expect(nan.sell).toBeNull();
-    expect(nan.buy).toBeNull();
+    expect(() => mapUpstreamRow({ currencyCode: 'USD', buyRate: 'x', sellRate: null })).toThrow();
   });
 
   it('缺 currencyCode 的列被丟棄', () => {

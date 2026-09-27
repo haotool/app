@@ -1,0 +1,728 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://app.haotool.org/ratewise/api/v3/contract.schema.json",
+  "title": "FxContract",
+  "$defs": {
+    "SourceQuote": {
+      "type": "object",
+      "properties": {
+        "providerId": {
+          "type": "string",
+          "maxLength": 512
+        },
+        "subjectCurrency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$",
+          "maxLength": 512
+        },
+        "priceCurrency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$",
+          "maxLength": 512
+        },
+        "unitAmount": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+          "maxLength": 512
+        },
+        "buy": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+              "maxLength": 512
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sell": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+              "maxLength": 512
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sourcePublishedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "maxLength": 512
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "fetchedAt": {
+          "type": "string",
+          "format": "date-time",
+          "maxLength": 512
+        },
+        "lastSuccessfulCheckAt": {
+          "type": "string",
+          "format": "date-time",
+          "maxLength": 512
+        },
+        "serviceCountry": {
+          "type": "string",
+          "pattern": "^[A-Z]{2}$",
+          "maxLength": 512
+        },
+        "deliveryMethod": {
+          "enum": ["cash", "account"]
+        },
+        "channel": {
+          "enum": ["branch", "online", "atm", "unknown"]
+        },
+        "branchId": {
+          "type": "string",
+          "maxLength": 512
+        },
+        "denominations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+            "maxLength": 512
+          },
+          "maxItems": 100
+        },
+        "amountRange": {
+          "type": "object",
+          "properties": {
+            "currency": {
+              "type": "string",
+              "pattern": "^[A-Z]{3}$",
+              "maxLength": 512
+            },
+            "min": {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+              "maxLength": 512
+            },
+            "max": {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+              "maxLength": 512
+            }
+          },
+          "required": ["currency", "min", "max"],
+          "additionalProperties": false
+        },
+        "qualifications": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 512
+          },
+          "maxItems": 100
+        },
+        "feeStatus": {
+          "enum": ["unknown", "no_additional_fee", "unsupported"]
+        },
+        "sourceUrl": {
+          "type": "string",
+          "maxLength": 512
+        },
+        "originalBuyField": {
+          "type": "string",
+          "maxLength": 512
+        },
+        "originalSellField": {
+          "type": "string",
+          "maxLength": 512
+        },
+        "mappingVersion": {
+          "type": "string",
+          "maxLength": 512
+        },
+        "originalUnitAmount": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+          "maxLength": 512
+        },
+        "dataKind": {
+          "enum": ["published_board", "fixed_fallback", "reference", "derived_cross"]
+        },
+        "feeEvidenceUrl": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512,
+          "pattern": "^https://"
+        }
+      },
+      "required": [
+        "providerId",
+        "subjectCurrency",
+        "priceCurrency",
+        "unitAmount",
+        "buy",
+        "sell",
+        "sourcePublishedAt",
+        "fetchedAt",
+        "lastSuccessfulCheckAt",
+        "serviceCountry",
+        "deliveryMethod",
+        "channel"
+      ],
+      "additionalProperties": false
+    },
+    "QuoteSnapshot": {
+      "type": "object",
+      "properties": {
+        "quoteId": {
+          "type": "string",
+          "maxLength": 20000
+        },
+        "quoteSeriesId": {
+          "type": "string",
+          "maxLength": 20000
+        },
+        "providerId": {
+          "type": "string",
+          "maxLength": 512
+        },
+        "fromCurrency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$",
+          "maxLength": 512
+        },
+        "toCurrency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$",
+          "maxLength": 512
+        },
+        "providerSide": {
+          "enum": ["buy", "sell"]
+        },
+        "status": {
+          "enum": ["available", "unavailable"]
+        },
+        "rate": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+              "maxLength": 512
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unavailableReason": {
+          "enum": ["not_quoted", null]
+        },
+        "sourceQuote": {
+          "$ref": "#/$defs/SourceQuote"
+        },
+        "methodVersion": {
+          "const": "1"
+        }
+      },
+      "required": [
+        "quoteId",
+        "quoteSeriesId",
+        "providerId",
+        "fromCurrency",
+        "toCurrency",
+        "providerSide",
+        "status",
+        "rate",
+        "unavailableReason",
+        "sourceQuote",
+        "methodVersion"
+      ],
+      "additionalProperties": false
+    },
+    "EstimateRequest": {
+      "type": "object",
+      "properties": {
+        "fromCurrency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$",
+          "maxLength": 512
+        },
+        "toCurrency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$",
+          "maxLength": 512
+        },
+        "amount": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+          "maxLength": 512
+        },
+        "mode": {
+          "enum": ["EXACT_IN", "EXACT_OUT"]
+        }
+      },
+      "required": ["fromCurrency", "toCurrency", "amount", "mode"],
+      "additionalProperties": false
+    },
+    "EstimateResult": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "enum": ["available", "unavailable"]
+        },
+        "fromAmount": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+              "maxLength": 512
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "toAmount": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+              "maxLength": 512
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "quoteId": {
+          "type": ["string", "null"]
+        },
+        "rate": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+              "maxLength": 512
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reason": {
+          "type": ["string", "null"]
+        },
+        "feeStatus": {
+          "enum": ["unknown", "no_additional_fee", "unsupported"]
+        }
+      },
+      "required": ["status", "fromAmount", "toAmount", "quoteId", "rate", "reason", "feeStatus"],
+      "additionalProperties": false
+    },
+    "SelectionContext": {
+      "type": "object",
+      "properties": {
+        "now": {
+          "type": "string",
+          "format": "date-time",
+          "maxLength": 512
+        },
+        "country": {
+          "type": "string",
+          "maxLength": 512
+        },
+        "deliveryMethod": {
+          "enum": ["cash", "account"]
+        },
+        "channel": {
+          "enum": ["branch", "online", "atm", "unknown"]
+        },
+        "branchId": {
+          "type": "string",
+          "maxLength": 512
+        },
+        "denomination": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+          "maxLength": 512
+        },
+        "qualifications": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 512
+          }
+        }
+      },
+      "required": ["now", "country", "deliveryMethod", "channel"],
+      "additionalProperties": false
+    },
+    "DerivedCrossQuote": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "derived_cross"
+        },
+        "providerId": {
+          "type": "string"
+        },
+        "fromCurrency": {
+          "type": "string"
+        },
+        "toCurrency": {
+          "type": "string"
+        },
+        "rate": {
+          "type": "string"
+        },
+        "legs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "recommendable": {
+          "const": false
+        }
+      },
+      "required": [
+        "kind",
+        "providerId",
+        "fromCurrency",
+        "toCurrency",
+        "rate",
+        "legs",
+        "recommendable"
+      ]
+    },
+    "ObjectReference": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "maxLength": 512,
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.?(?:/|$))[A-Za-z0-9_/-]+\\.json$"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": ["path", "sha256"],
+      "additionalProperties": false
+    },
+    "Provider": {
+      "type": "object",
+      "properties": {
+        "providerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "kind": {
+          "enum": ["bank", "exchange_shop"]
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "sourceUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "serviceCountries": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Z]{2}$"
+          },
+          "minItems": 1
+        },
+        "termsUrl": {
+          "type": ["string", "null"]
+        },
+        "redistributionStatus": {
+          "enum": ["verified", "unknown", "restricted"]
+        },
+        "attribution": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        }
+      },
+      "required": [
+        "providerId",
+        "kind",
+        "name",
+        "sourceUrl",
+        "serviceCountries",
+        "termsUrl",
+        "redistributionStatus",
+        "attribution"
+      ],
+      "additionalProperties": false
+    },
+    "ProviderSnapshot": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": "3.0"
+        },
+        "providerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "quotes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/QuoteSnapshot"
+          },
+          "minItems": 1,
+          "maxItems": 10000
+        }
+      },
+      "required": ["schemaVersion", "providerId", "quotes"],
+      "additionalProperties": false
+    },
+    "ReleaseManifest": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": "3.0"
+        },
+        "generatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "providers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "providerId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 512
+              },
+              "snapshot": {
+                "$ref": "#/$defs/ObjectReference"
+              },
+              "checkStatus": {
+                "enum": ["ok", "failed", "carried_forward"]
+              },
+              "lastSuccessfulCheckAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": ["providerId", "snapshot", "checkStatus", "lastSuccessfulCheckAt"],
+            "additionalProperties": false
+          },
+          "maxItems": 1000
+        },
+        "history": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "providerId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 512
+              },
+              "date": {
+                "type": "string",
+                "format": "date"
+              },
+              "snapshot": {
+                "$ref": "#/$defs/ObjectReference"
+              }
+            },
+            "required": ["providerId", "date", "snapshot"],
+            "additionalProperties": false
+          },
+          "maxItems": 100000
+        },
+        "deprecation": {
+          "type": "object",
+          "properties": {
+            "activatedAt": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "sunsetAt": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "replacement": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            }
+          },
+          "required": ["activatedAt", "sunsetAt", "replacement"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["schemaVersion", "generatedAt", "providers", "history", "deprecation"],
+      "additionalProperties": false
+    },
+    "CurrentRelease": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": "3.0"
+        },
+        "releaseId": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "manifest": {
+          "$ref": "#/$defs/ObjectReference"
+        }
+      },
+      "required": ["schemaVersion", "releaseId", "manifest"],
+      "additionalProperties": false
+    },
+    "DerivedEstimateResult": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "enum": ["available", "unavailable"]
+        },
+        "fromAmount": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+              "maxLength": 512
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "toAmount": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+              "maxLength": 512
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "quoteId": {
+          "type": ["string", "null"]
+        },
+        "rate": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+              "maxLength": 512
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reason": {
+          "type": ["string", "null"]
+        },
+        "feeStatus": {
+          "enum": ["unknown", "no_additional_fee", "unsupported"]
+        },
+        "kind": {
+          "const": "derived_cross"
+        },
+        "legs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 2
+        },
+        "recommendable": {
+          "const": false
+        }
+      },
+      "required": [
+        "status",
+        "fromAmount",
+        "toAmount",
+        "quoteId",
+        "rate",
+        "reason",
+        "feeStatus",
+        "kind",
+        "legs",
+        "recommendable"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/SourceQuote"
+    },
+    {
+      "$ref": "#/$defs/QuoteSnapshot"
+    },
+    {
+      "$ref": "#/$defs/EstimateRequest"
+    },
+    {
+      "$ref": "#/$defs/EstimateResult"
+    },
+    {
+      "$ref": "#/$defs/SelectionContext"
+    },
+    {
+      "$ref": "#/$defs/DerivedCrossQuote"
+    },
+    {
+      "$ref": "#/$defs/ObjectReference"
+    },
+    {
+      "$ref": "#/$defs/Provider"
+    },
+    {
+      "$ref": "#/$defs/ProviderSnapshot"
+    },
+    {
+      "$ref": "#/$defs/ReleaseManifest"
+    },
+    {
+      "$ref": "#/$defs/CurrentRelease"
+    },
+    {
+      "$ref": "#/$defs/DerivedEstimateResult"
+    }
+  ]
+}

@@ -89,17 +89,17 @@ describe('SEO SSOT', () => {
     });
   });
 
-  // 幣別頁 FAQ 應含具體台幣差距數字（來自 SEO_RATE_EXAMPLES）。
+  // 幣別頁 FAQ 應使用同一份 canonical 牌告試算，不能注入未授權的外部市場差額。
   describe('currency page rate example in FAQ', () => {
     const codesWithExamples = ['USD', 'JPY', 'EUR', 'GBP', 'KRW', 'THB'] as const;
 
-    it.each(codesWithExamples)('%s 頁 FAQ 應含具體 TWD 差距數字', (code) => {
+    it.each(codesWithExamples)('%s 頁 FAQ 應揭露牌告試算未含未知費用', (code) => {
       const { faqEntries } = getCurrencyLandingPageContent(code);
       const allAnswers = faqEntries.map((e) => e.answer).join('\n');
       const ex = SEO_RATE_EXAMPLES[code as keyof typeof SEO_RATE_EXAMPLES];
-      // 確認 FAQ 包含計算出的差距數字。
+      // 這些頁面已移除外部市場差額欄位，仍必須保留同快照的牌告說明。
       expect(ex).toBeDefined();
-      expect(allAnswers).toContain(`${ex!.diffTWD} 元新台幣`);
+      expect(allAnswers).toMatch(/未含費用|牌告試算/);
     });
 
     it('每幣別範例應使用該幣別顯示名稱，不混用其他幣別', () => {
@@ -175,10 +175,10 @@ describe('SEO SSOT', () => {
     it('金額頁 SEO 文案應描述買外幣所需台幣，避免誤導為持外幣換回台幣', () => {
       const copy = buildPairAmountSeo(100, 'USD', '美金', 'to-twd');
 
-      expect(copy.title).toContain('買 100 美金要多少新台幣');
+      expect(copy.title).toContain('100 美金換多少新台幣');
       expect(copy.title).not.toContain('100 美金換新台幣');
-      expect(copy.description).toContain('買 100 美金');
-      expect(copy.description).toContain('所需台幣金額');
+      expect(copy.description).toContain('支付 100 美金');
+      expect(copy.description).toContain('未含未知費用');
     });
 
     it('幣別頁 FAQ 與 schema 名稱應使用買外幣語意對齊 cashSell', () => {
@@ -187,11 +187,11 @@ describe('SEO SSOT', () => {
       const commonAmountQuestions = content.commonAmounts.map((entry) => entry.question).join('\n');
       const schema = JSON.stringify(content.jsonLd);
 
-      expect(questions).toContain('買美金今日台銀賣出價是多少？');
+      expect(questions).toContain('美金換台幣的台銀買入價是多少？');
       expect(commonAmountQuestions).toContain('買 1 美金要多少台幣？');
       expect(questions).not.toContain('美金換台幣今日匯率是多少？');
-      expect(schema).toContain('買美金所需台幣匯率');
-      expect(schema).not.toContain('美金換台幣匯率');
+      expect(schema).toContain('臺灣銀行現金買入牌告');
+      expect(schema).not.toContain('臺灣銀行現金賣出價（買');
     });
   });
 

@@ -1,3 +1,4 @@
+import type { EstimateResult } from '@app/shared/fx';
 import { Suspense, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'motion/react';
@@ -23,6 +24,7 @@ import { CalculatorKeyboard } from '../../calculator/components/CalculatorKeyboa
 type UnifiedRateOption = 'spot' | 'cash' | 'exchange-shop';
 
 interface MultiConverterProps {
+  estimatePair?: (amount: string, from: CurrencyCode, to: CurrencyCode) => EstimateResult;
   sortedCurrencies: CurrencyCode[];
   multiAmounts: MultiAmountsState;
   baseCurrency: CurrencyCode;
@@ -41,6 +43,7 @@ interface MultiConverterProps {
 }
 
 export const MultiConverter = ({
+  estimatePair,
   sortedCurrencies,
   multiAmounts,
   baseCurrency,
@@ -154,6 +157,12 @@ export const MultiConverter = ({
       return t('multiConverter.baseCurrency');
     }
 
+    if (estimatePair) {
+      const result = estimatePair('1', baseCurrency, currency);
+      return result.rate
+        ? `1 ${baseCurrency} = ${result.rate} ${currency}`
+        : t('multiConverter.noData');
+    }
     const hasCurrencyDetails = (code: CurrencyCode) => code === 'TWD' || Boolean(details?.[code]);
     if (!hasCurrencyDetails(baseCurrency) || !hasCurrencyDetails(currency)) {
       return t('multiConverter.calculating');
@@ -309,7 +318,8 @@ export const MultiConverter = ({
                     {(() => {
                       const availability = getUnifiedRateAvailability(code);
                       const nextOption = getNextAvailableOption(availability);
-                      const canToggle = availability.availableCount > 1 && nextOption !== null;
+                      const canToggle =
+                        !estimatePair && availability.availableCount > 1 && nextOption !== null;
 
                       return canToggle ? (
                         // 負 margin 讓 44px 觸控目標不撐高列高（WCAG 2.5.8）。

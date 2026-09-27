@@ -1,3 +1,5 @@
+import { fetchFxHistory } from '../../../services/fxSnapshotService';
+import type { EstimateResult, QuoteSnapshot } from '@app/shared/fx';
 /**
  * SingleConverter Component - Single Currency Converter
  * 單幣別轉換器組件
@@ -67,6 +69,8 @@ function getDateKeyFromUpdateTime(updateTime: string | undefined, fallback: stri
 }
 
 interface SingleConverterProps {
+  fxEstimate?: EstimateResult;
+  fxQuote?: QuoteSnapshot | null;
   fromCurrency: CurrencyCode;
   toCurrency: CurrencyCode;
   fromAmount: string;
@@ -91,6 +95,8 @@ interface SingleConverterProps {
 }
 
 export const SingleConverter = ({
+  fxEstimate,
+  fxQuote,
   fromCurrency,
   toCurrency,
   fromAmount,
@@ -115,6 +121,7 @@ export const SingleConverter = ({
 }: SingleConverterProps) => {
   const { t } = useTranslation();
   const [trendData, setTrendData] = useState<MiniTrendDataPoint[]>([]);
+  const [historyGap, setHistoryGap] = useState(false);
   const [_loadingTrend, setLoadingTrend] = useState(false);
   const [isSwapping, setIsSwapping] = useState(false);
   const [trendDateKey, setTrendDateKey] = useState(() => getLocalDateKey());
@@ -142,18 +149,12 @@ export const SingleConverter = ({
   });
 
   // 匯率卡片與實際換算共用同一套核心。
-  const exchangeRate = getUnitExchangeRate(
-    fromCurrency,
-    toCurrency,
-    details,
-    rateType,
-    rateMode,
-    exchangeRates,
-    {
-      rateSource,
-      exchangeShopRate: moneyBoxRate,
-    },
-  );
+  const exchangeRate = fxEstimate
+    ? Number(fxEstimate.rate ?? 0)
+    : getUnitExchangeRate(fromCurrency, toCurrency, details, rateType, rateMode, exchangeRates, {
+        rateSource,
+        exchangeShopRate: moneyBoxRate,
+      });
   const reverseRate = getReciprocalExchangeRate(exchangeRate);
 
   // 處理交換按鈕點擊
@@ -213,6 +214,21 @@ export const SingleConverter = ({
       try {
         if (!isMounted) return;
         setLoadingTrend(true);
+        if (fxQuote !== undefined) {
+          if (!fxQuote) {
+            setTrendData([]);
+            return;
+          }
+          const points = await fetchFxHistory(fxQuote.quoteSeriesId);
+          if (!isMounted) return;
+          const hasGap = points.some((point) => point.rate === null);
+          setHistoryGap(hasGap);
+          setTrendData(
+            hasGap ? [] : points.map((point) => ({ date: point.date, rate: Number(point.rate) })),
+          );
+          return;
+        }
+
         const exchangeShopLatestRate = moneyBoxRate
           ? computeConverterRate(moneyBoxRate, fromCurrency, toCurrency)
           : null;
@@ -357,7 +373,15 @@ export const SingleConverter = ({
         clearTimeout(idleHandle as ReturnType<typeof setTimeout>);
       }
     };
-  }, [fromCurrency, toCurrency, trendDateKey, rateSource, moneyBoxRate, exchangeShopCurrency]);
+  }, [
+    fromCurrency,
+    toCurrency,
+    trendDateKey,
+    rateSource,
+    moneyBoxRate,
+    exchangeShopCurrency,
+    fxQuote,
+  ]);
 
   // 開發工具：強制觸發骨架屏效果（僅開發模式）
   /* v8 ignore next 22 */
@@ -495,26 +519,38 @@ export const SingleConverter = ({
           <div
             className={`relative text-center px-4 flex flex-col items-center justify-center transition-transform duration-300 group-hover:scale-[1.02] rounded-t-xl ${singleConverterLayoutTokens.rateCard.infoPadding}`}
           >
-            <RateSelector
-              rateType={rateType}
-              rateSource={rateSource}
-              rateTypeAvailability={rateTypeAvailability}
-              hasExchangeShop={!!exchangeShopCurrency}
-              onRateTypeChange={onRateTypeChange}
-              onRateSourceChange={onRateSourceChange ?? (() => undefined)}
-            />
+            {!fxEstimate && (
+              <RateSelector
+                rateType={rateType}
+                rateSource={rateSource}
+                rateTypeAvailability={rateTypeAvailability}
+                hasExchangeShop={!!exchangeShopCurrency}
+                onRateTypeChange={onRateTypeChange}
+                onRateSourceChange={onRateSourceChange ?? (() => undefined)}
+              />
+            )}
 
             {/* 匯率顯示 - 使用 SSOT text 色；固定高度避免計價基準 pill / live 匯率載入 CLS */}
             <div className={`w-full ${singleConverterLayoutTokens.rateCard.rateTextBlock}`}>
               <div
                 className={`${singleConverterLayoutTokens.rateCard.rateText} font-bold tabular-nums text-text mb-1 transition-transform duration-300 group-hover:scale-105`}
               >
-                1 {fromCurrency} = {formatExchangeRate(exchangeRate)} {toCurrency}
+                {fxEstimate?.status === 'unavailable' ? (
+                  '此條件無可用牌告'
+                ) : (
+                  <>
+                    1 {fromCurrency} = {formatExchangeRate(exchangeRate)} {toCurrency}
+                  </>
+                )}
               </div>
               <div
                 className={`${singleConverterLayoutTokens.rateCard.rateSubText} tabular-nums text-text-muted font-semibold opacity-80 group-hover:opacity-95 transition-opacity`}
               >
-                1 {toCurrency} = {formatExchangeRate(reverseRate)} {fromCurrency}
+                {fxEstimate?.status !== 'unavailable' && (
+                  <>
+                    1 {toCurrency} = {formatExchangeRate(reverseRate)} {fromCurrency}
+                  </>
+                )}
               </div>
               <div
                 className={singleConverterLayoutTokens.rateCard.rateBasisSlot}
@@ -547,7 +583,13 @@ export const SingleConverter = ({
                 }}
               >
                 {trendData.length === 0 ? (
-                  <TrendChartSkeleton />
+                  fxQuote !== undefined ? (
+                    <p className="p-4 text-sm">
+                      {historyGap ? '歷史含缺值，暫不連線。' : '尚無此方向的可驗證歷史。'}
+                    </p>
+                  ) : (
+                    <TrendChartSkeleton />
+                  )
                 ) : (
                   <Suspense fallback={<TrendChartSkeleton />}>
                     {/* 銀行歷史趨勢固定為現金賣出基準（與卡片即期價可能不同），須誠實標註；
@@ -556,7 +598,11 @@ export const SingleConverter = ({
                       data={trendData}
                       currencyCode={toCurrency}
                       basisLabel={
-                        rateSource === 'exchange-shop' ? undefined : t('trend.cashSellBasis')
+                        fxQuote !== undefined
+                          ? `${fromCurrency} → ${toCurrency}`
+                          : rateSource === 'exchange-shop'
+                            ? undefined
+                            : t('trend.cashSellBasis')
                       }
                     />
                   </Suspense>
@@ -736,6 +782,7 @@ export const SingleConverter = ({
        * - 點擊縮放回饋 (active:scale-[0.98])
        */}
       <button
+        disabled={fxEstimate?.status === 'unavailable'}
         onClick={onAddToHistory}
         className={`
           relative w-full overflow-hidden ${singleConverterLayoutTokens.addToHistory.className}

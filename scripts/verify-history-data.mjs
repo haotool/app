@@ -8,6 +8,12 @@
  */
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { isHistoryRate, isValidHistorySnapshot } from '../apps/shared/fx/history.mjs';
+
+export function validateHistoryEntries(entries) {
+  return entries.filter(({ value }) => !isHistoryRate(value));
+}
 
 const DAYS_TO_VERIFY = Number(process.env.HISTORY_DAYS ?? '25');
 const START_OFFSET = Number(process.env.HISTORY_START_OFFSET ?? '1'); // 預設從昨天開始
@@ -71,7 +77,7 @@ async function main() {
     const { payload, url } = result;
     const { updateTime, source = 'unknown', rates } = payload ?? {};
     const value = rates?.[TARGET_CURRENCY];
-    const numericValue = typeof value === 'number' ? value : Number(value);
+    const numericValue = value;
 
     entries.push({
       date: dateStr,
@@ -82,7 +88,10 @@ async function main() {
       value: numericValue,
     });
 
-    if (!Number.isFinite(numericValue)) {
+    if (
+      validateHistoryEntries([{ value: numericValue }]).length > 0 ||
+      !isValidHistorySnapshot(payload, dateStr)
+    ) {
       invalidRates.push(dateStr);
     } else {
       distinctValues.add(numericValue.toFixed(6));
@@ -115,10 +124,7 @@ async function main() {
     process.exitCode = 1;
   }
 
-  if (distinctValues.size <= 1) {
-    console.error('❌ 近 30 天匯率無變化，請確認資料產線是否正常更新。');
-    process.exitCode = 1;
-  }
+  // 平盤合法；資料完整性與上游存活不能由價格波動推斷。
 
   if (process.exitCode === undefined) {
     console.log(
@@ -127,4 +133,5 @@ async function main() {
   }
 }
 
-await main();
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href)
+  await main();

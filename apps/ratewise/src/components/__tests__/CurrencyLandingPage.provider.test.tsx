@@ -9,6 +9,7 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { CurrencyLandingPage } from '../CurrencyLandingPage';
 import type { AlternativeProvider } from '../../config/generated/seo-rate-examples';
+import { normalizeQuote } from '@app/shared/fx';
 
 // Mock i18n
 vi.mock('react-i18next', () => ({
@@ -28,13 +29,29 @@ vi.mock('../../hooks/usePairAmountSEO', () => ({
 const mockProvider: AlternativeProvider = {
   name: '明洞換匯所',
   nameEn: 'Myeongdong Exchange',
+  providerId: 'moneybox',
   rate: 46.0,
   rateBuy: 46.7,
-  rateInverse: 0.02174,
   source: 'MoneyBox',
   sourceUrl: 'https://moneybox-exchange.com/zh-CHT/exchange',
-  rateDate: '2026-03-31',
+  sourcePublishedAt: null,
+  fetchedAt: '2026-03-31T00:00:00Z',
   note: '適用：現場持 TWD 現金換 KRW，需親自前往',
+  quotes: normalizeQuote({
+    providerId: 'moneybox',
+    subjectCurrency: 'TWD',
+    priceCurrency: 'KRW',
+    unitAmount: '1',
+    buy: '46',
+    sell: '46.7',
+    sourcePublishedAt: '2026-03-31T00:00:00Z',
+    fetchedAt: '2026-03-31T00:00:00Z',
+    lastSuccessfulCheckAt: '2026-03-31T00:00:00Z',
+    serviceCountry: 'KR',
+    deliveryMethod: 'cash',
+    channel: 'branch',
+    branchId: 'myeongdong',
+  }),
 };
 
 const baseProps = {
@@ -87,10 +104,9 @@ describe('CurrencyLandingPage ProviderComparisonCard', () => {
     expect(screen.getByText(/MoneyBox|每日更新/)).toBeInTheDocument();
   });
 
-  it('比較卡片應顯示 rateDate 資訊', () => {
+  it('比較卡片應顯示 canonical quote 的來源發布時間', () => {
     renderPage({ alternativeProviders: [mockProvider] });
-    // 應顯示日期資訊
-    expect(screen.getByText(/2026-03-31|2026\/03\/31/)).toBeInTheDocument();
+    expect(screen.getByText(/來源發布時間：2026-03-31T00:00:00Z/)).toBeInTheDocument();
   });
 });
 
@@ -104,16 +120,16 @@ describe('ProviderComparisonCard 雙向匯率顯示', () => {
     expect(card).toHaveTextContent('46.00');
   });
 
-  it('to-twd 方向應顯示 buy 率（provider.rateBuy = 46.70）', () => {
+  it('to-twd 方向應顯示反向 canonical rate（TWD / KRW）', () => {
     renderPage({
       direction: 'to-twd',
       alternativeProviders: [mockProvider],
     });
     const card = screen.getByTestId('provider-comparison-card');
-    expect(card).toHaveTextContent('46.70');
+    expect(card).toHaveTextContent('0.0214');
   });
 
-  it('to-twd 方向不應顯示 sell 率（46.00）', () => {
+  it('to-twd 方向不應顯示 forward rate（46.00）', () => {
     renderPage({
       direction: 'to-twd',
       alternativeProviders: [mockProvider],
@@ -136,6 +152,6 @@ describe('ProviderComparisonCard 雙向匯率顯示', () => {
       direction: 'to-twd',
       alternativeProviders: [mockProvider],
     });
-    expect(screen.getByTestId('provider-comparison-card')).toHaveTextContent('KRW / TWD');
+    expect(screen.getByTestId('provider-comparison-card')).toHaveTextContent('TWD / KRW');
   });
 });

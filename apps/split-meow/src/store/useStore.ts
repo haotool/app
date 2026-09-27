@@ -362,12 +362,12 @@ export const useStore = create<AppState>()(
 
       refreshExchangeRate: async () => {
         try {
-          const { krwPerTwd, updatedAt, updatedAtIso } = await fetchMoneyboxRate();
+          const { krwPerTwd, updatedAt, updatedAtIso, isFallback } = await fetchMoneyboxRate();
           set({
             krwPerTwd,
             rateUpdatedAt: updatedAt,
             rateUpdatedAtIso: updatedAtIso,
-            rateFetchFailed: false,
+            rateFetchFailed: isFallback === true,
           });
         } catch {
           // 離線或來源異常：沿用 persist 快取值，UI 顯示可重試狀態。
