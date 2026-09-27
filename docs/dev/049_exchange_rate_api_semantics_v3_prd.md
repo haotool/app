@@ -1,8 +1,8 @@
 # 匯率 API 語意 v3 正名與 MoneyBox 上游遷移 PRD
 
 > **建立時間**: 2026-08-26T14:00:00+08:00
-> **版本**: v11.2
-> **狀態**: ✅ 欄位語意定案；✅ PR 1 已合併（#1051）；🟡 PR 2+3 合併實作於 #1104（`RATEWISE_FX_V3_ENABLED` 預設關閉）；⚠️ 正式切換阻塞項未解（§0）
+> **版本**: v11.3
+> **狀態**: ✅ 欄位語意定案；✅ PR 1 已合併（#1051）；🟡 PR 2+3 合併實作於 #1104（`RATEWISE_FX_V3_ENABLED` 預設關閉）；⚠️ 正式切換阻塞項未解（§0）；✅ API 標示與 SEO 策略定案（§21，S3 實作）
 > **作者**: Claude Code（研究與盤點）+ Codex（獨立第二意見）
 > **上位文件**: `CLAUDE.md`、`AGENTS.md`
 > **相關**: PR #472（v2 導入）、PR #1039（MoneyBox 中斷處理）
@@ -806,14 +806,14 @@ repo 既有文案佐證：`DEFAULT_DESCRIPTION`「顯示臺灣銀行牌告的**�
 
 獨立審查誠實列出**無法在此輪定案**的項目與原因：
 
-| #   | 項目                              | 為何無法定案                          | 暫定行為                                        |
-| --- | --------------------------------- | ------------------------------------- | ----------------------------------------------- |
-| 1   | 中間價來源的授權與再散布條件      | `open.er-api.com` 公開資格未確認      | 確認前不得發佈 `marketMidCounterfactual`        |
-| 2   | 中間價的獨立 freshness 門檻       | 需與台銀 36h／MoneyBox 24h 對齊或另定 | 待定                                            |
-| 3   | 既有 SEO `diffTWD`/`diffPct` 公式 | 未比對 fixture，無法判斷可否沿用      | 若公式不同須 `methodVersion: "2.0"` 版控        |
-| 4   | MoneyBox 正式 rate type           | 產品類型定義證據不足                  | **維持 `unspecified`**（§13.3 一致）            |
-| 5   | 歷史中間價共時性                  | 未證實歷史期間存在共時 benchmark      | 歷史 gap **必須為 `null`**，不得用今日中價回填  |
-| 6   | 兩個來源的再散布權利              | 台銀與 MoneyBox 條款盤點結果未提供    | `termsOfUse.redistributionStatus: "unverified"` |
+| #   | 項目                              | 為何無法定案                                                                                                                           | 暫定行為                                        |
+| --- | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| 1   | 中間價來源的授權與再散布條件      | `open.er-api.com` 公開資格未確認                                                                                                       | 確認前不得發佈 `marketMidCounterfactual`        |
+| 2   | 中間價的獨立 freshness 門檻       | 需與台銀 36h／MoneyBox 24h 對齊或另定                                                                                                  | 待定                                            |
+| 3   | 既有 SEO `diffTWD`/`diffPct` 公式 | 未比對 fixture，無法判斷可否沿用                                                                                                       | 若公式不同須 `methodVersion: "2.0"` 版控        |
+| 4   | MoneyBox 正式 rate type           | 產品類型定義證據不足                                                                                                                   | **維持 `unspecified`**（§13.3 一致）            |
+| 5   | 歷史中間價共時性                  | 未證實歷史期間存在共時 benchmark                                                                                                       | 歷史 gap **必須為 `null`**，不得用今日中價回填  |
+| 6   | 兩個來源的再散布權利              | 台銀與 MoneyBox 條款盤點結果未提供；§21 F7 僅涵蓋年度收盤資料集，F8：`rate.bot.com.tw` 牌告匯率再散布條款仍未證實、MoneyBox 無公開條款 | `termsOfUse.redistributionStatus: "unverified"` |
 
 > 第 5 項與 §11 第 3 點（`publishedAt` 不得回填）是同一原則：**缺的就是缺的，不用今天的數字填昨天的洞。**
 
@@ -992,19 +992,19 @@ CI 強制斷言 `apiAmountTierConfig` **不得 import** `seo-paths.config.mjs`�
 
 獨立審查明確回覆「非大致完成」：
 
-| #   | 缺口                                                                            |
-| --- | ------------------------------------------------------------------------------- |
-| 1   | v3 canonical JSON Schema contract 檔案**本身未建立**                            |
-| 2   | 生成鏈未證實存在                                                                |
-| 3   | runtime schema validation 未證實覆蓋 latest／history／pairs／tiers              |
-| 4   | 文件反漂移守門未實作（`llms.txt` 現況即反例）                                   |
-| 5   | JSON-LD projection adapter 未建立                                               |
-| 6   | AI operation guide 未含 v3 calculation rule                                     |
-| 7   | `$schema` payload linkage 未定案                                                |
-| 8   | 外部市場中價合法性未確認（§17 #1）                                              |
-| 9   | `currencyMinorUnits` SSOT 位置未定                                              |
-| 10  | MoneyBox 正式 rate type 證據仍缺（§17 #4）                                      |
-| 11  | 台銀／MoneyBox 再散布條款仍是發佈 blocker（§17 #6）；CDN 原子發布機制未證實完成 |
+| #   | 缺口                                                                                                                                     |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | v3 canonical JSON Schema contract 檔案**本身未建立**                                                                                     |
+| 2   | 生成鏈未證實存在                                                                                                                         |
+| 3   | runtime schema validation 未證實覆蓋 latest／history／pairs／tiers                                                                       |
+| 4   | 文件反漂移守門未實作（`llms.txt` 現況即反例）                                                                                            |
+| 5   | JSON-LD projection adapter 未建立                                                                                                        |
+| 6   | AI operation guide 未含 v3 calculation rule                                                                                              |
+| 7   | `$schema` payload linkage 未定案                                                                                                         |
+| 8   | 外部市場中價合法性未確認（§17 #1）                                                                                                       |
+| 9   | `currencyMinorUnits` SSOT 位置未定                                                                                                       |
+| 10  | MoneyBox 正式 rate type 證據仍缺（§17 #4）                                                                                               |
+| 11  | 台銀／MoneyBox 再散布條款仍是發佈 blocker（§17 #6）；CDN 原子發布機制未證實完成。§21 F7／F8：牌告匯率再散布仍未證實，MoneyBox 無公開條款 |
 
 **已達成**：10 項 v3 核心 schema 裁決（方向模型、decimal 精度、fee／pricingScope、comparablePairs、amount tiers、derived vs market mid 分離、source polling 等）。
 
@@ -1080,10 +1080,74 @@ v3 contract／OpenAPI／LLM 文件可在 feature branch 建立，**不連 canoni
 
 ---
 
+## 21. API 使用標示（Attribution）與 SEO 策略
+
+> 來源：PM 裁決（2026-09-28），依 research seat A／B 取回之一手／二手資料。本節僅轉錄事實與裁決；實作屬 S3。
+
+### 21.1 已驗證事實
+
+| #   | 事實                                                                                                                    | 來源                                                                                                                                                                                              | 信心       |
+| --- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| F1  | 以條款／合約**要求**連結、且不允許第三方以 `rel` 限定該連結 → Google 定義為 link spam                                   | [Spam policies](https://developers.google.com/search/docs/essentials/spam-policies)；[Qualify outbound links](https://developers.google.com/search/docs/crawling-indexing/qualify-outbound-links) | 高（一手） |
+| F2  | 散布於多站的 widget 內嵌連結須 `nofollow`                                                                               | [Google Search Central Blog 2016-09](https://developers.google.com/search/blog/2016/09/a-reminder-about-widget-links)                                                                             | 高（一手） |
+| F3  | `nofollow`／`sponsored`／`ugc` 自 2019-09-10 起為 hint 非指令                                                           | [Google Search Central Blog 2019-09-10](https://developers.google.com/search/blog/2019/09/evolving-nofollow-new-ways-to-identify)                                                                 | 高（一手） |
+| F4  | 無連結的品牌提及不用於 PageRank／連結圖                                                                                 | SEJ 轉述 John Mueller                                                                                                                                                                             | 中（二手） |
+| F5  | Dataset 結構化資料可用 `license`、`creator`、`citation`、`isAccessibleForFree`                                          | [Dataset structured data](https://developers.google.com/search/docs/appearance/structured-data/dataset)                                                                                           | 高（一手） |
+| F6  | 著作權法第 9 條第 1 項第 3 款：數表不受著作權保護（法律解釋非本節範圍）                                                 | [著作權法第 9 條](https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=J0070017&flno=9)                                                                                                           | 高（條文） |
+| F7  | 台銀 data.gov.tw 資料集 105011（**年度即期收盤匯率**）採政府資料開放授權條款第 1 版，需顯名；此非我方抓取之牌告匯率來源 | [資料集 105011](https://data.gov.tw/en/datasets/105011)；[政府資料開放授權條款第 1 版](https://data.gov.tw/license)                                                                               | 高（一手） |
+| F8  | 我方實際抓取的 `rate.bot.com.tw` 牌告匯率之「資料開放宣告」全文未取得；MoneyBox 無公開條款                              | research seat B                                                                                                                                                                                   | **未證實** |
+
+- `Link` relation `terms-of-service` 已於 [IANA Link Relations](https://www.iana.org/assignments/link-relations/link-relations.xhtml) 註冊：「Refers to the terms of service associated with the link's context.」（RFC 6903 §5；2026-09-28 取回確認）。
+
+### 21.2 裁決
+
+1. **可要求標示，不可強制 dofollow**：API 使用條款要求「匯率好工具 RateWise」文字連結至 `https://app.haotool.org/ratewise/`。**條款可要求標示連結，但必須明文允許 `rel="nofollow"`／`"sponsored"`／`"ugc"`，不得要求 dofollow**（F1）。
+2. **不主張資料著作權**：條款以「API 服務使用條件」表述，不宣稱對匯率數值的著作權或授權（F6）；同時要求保留上游來源標示「資料來源：臺灣銀行牌告匯率」／MoneyBox（F7、F8）。
+3. **機器可讀標示**（無 SEO 風險、提升 AI 引用）：payload `attribution` 物件、`Link` header、OpenData 可複製片段、Dataset JSON-LD（細節見 §21.3）。
+4. **不做**：widget／JS badge、標示連結附 UTM（理由見 §21.5）。
+5. **真正的連結權重來源是編輯性連結，非條款強制**：提交 API 至公開 API 目錄（如 GitHub public-apis 類清單）、OpenAPI 文件品質、`llms.txt`／AI 可引用摘要——列入 S3 後續，非本 epic 阻塞項。
+
+### 21.3 v3 契約增量（提案，S3 實作）
+
+以下為對 v3 JSON Schema SSOT（PR #1104 的 `apps/shared/fx/schema.json`）的**提案增量**，於 S3 實作，本 PR 不改契約：
+
+| 表面            | 內容                                                                                                                                   |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| payload 層級    | `attribution` 物件：`name`、`url`、`termsUrl`、`requiredText`、`sources[]`（上游來源與其標示要求）                                     |
+| 回應 header     | `Link: <termsUrl>; rel="terms-of-service"`，於 security-headers Worker 對 `/ratewise/api/*` 注入                                       |
+| OpenData 頁     | 提供可複製 HTML／Markdown 標示片段；預設**不帶** `nofollow`，但文字說明使用者可自行加上 `rel` 限定                                     |
+| Dataset JSON-LD | `creator`（Organization：haotool／匯率好工具）、`license`（指向條款頁）、`isAccessibleForFree: true`、`citation`（建議引用格式）（F5） |
+
+### 21.4 S3 驗收標準
+
+- [ ] schema 新增 `attribution`（`name`、`url`、`termsUrl`、`requiredText`、`sources[]`），runtime validator 覆蓋並有測試
+- [ ] `/ratewise/api/*` 回應帶 `Link: <termsUrl>; rel="terms-of-service"`（Worker 測試 + 正式站 `curl -sI` 驗證）
+- [ ] OpenData 頁含可複製 HTML／Markdown 片段與條款文字；條款明文允許 `rel="nofollow"`／`"sponsored"`／`"ugc"`
+- [ ] 條款文字不宣稱匯率數值著作權，且要求保留上游來源標示（§21.2 第 2 點）
+- [ ] Dataset JSON-LD 含 `creator`／`license`／`isAccessibleForFree`／`citation`，有測試斷言
+- [ ] 守門測試：grep 條款頁、OpenData、OpenAPI、`llms.txt` 等產物，禁止出現要求 dofollow 的文字（例如 `/(必須|須|需|require[sd]?|must).{0,20}do-?follow/i`、`/(不得|禁止|must not|may not).{0,20}nofollow/i`），命中即失敗
+- [ ] 條款頁文字屬使用者可見變更 → changeset `patch`
+
+### 21.5 不做清單
+
+| 項目                    | 理由                                                                  |
+| ----------------------- | --------------------------------------------------------------------- |
+| 可嵌入 widget／JS badge | 多站散布連結須強制 `nofollow`（F2），有 link spam 風險且 SEO 收益近零 |
+| 標示連結附 UTM 參數     | canonical 已處理，徒增雜訊                                            |
+
+### 21.6 對序列的影響
+
+- **S1 R2**：本節寫入 PRD（決策 + 驗收標準）。
+- **S3**：依 §21.2 第 3 點實作；條款頁文字屬使用者可見變更 → changeset `patch`。
+- **S4**：F8 仍為再散布 blocker（與 §17 #6 一致）；S3 不受阻，因條款為我方服務條件，不涉上游授權宣稱。
+
+---
+
 ## 修訂紀錄
 
 | 日期       | 版本  | 變更                                                                                                                                                                                                                                                                               |
 | ---------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-28 | v11.3 | 新增 §21 API 使用標示與 SEO 策略：8 項事實（含來源與信心）、5 項裁決（可要求標示但不得強制 dofollow）、S3 契約增量與驗收標準、不做清單；§17 #6 與 §19.8 #11 指向 F7／F8                                                                                                            |
 | 2026-08-26 | v11.1 | §14 重新定稿：初版以「無費用資料」為由排除 all-in 的前提已被 fee=0 推翻，改為情境限定式；新增「是什麼」章節明示界定情境內可給 all-in；新增現場成交保證與牌告情境外來源兩項排除；新增 all-in 與保證的分界對照                                                                       |
 | 2026-08-26 | v11.0 | 新增 §20 全域漂移稽核：確認 5 項漂移（含台銀 workflow 缺 outage routing、人民幣 FAQ 推薦我方不涵蓋的管道）；記錄我方 4 項「非漂移」判定被推翻及正確判準；§14 因 fee=0 需重新定稿；共識狀態為否，7 項未決且 5 項需外部事實                                                          |
 | 2026-08-26 | v10.1 | reconcile 早期章節欄位名：§4.3 回填 publishedRate／marketMidCounterfactual／derivedQuoteMidpoint／quoteNature／quoteAvailability，§4.3.1 回填 $schema／nextSourceCheckAt／calculationRule；新增 §4.5 已汰換名稱對照表                                                              |
