@@ -359,6 +359,8 @@ gh pr merge <PR_NUMBER> --squash --delete-branch=false
 
 **Release workflow 卡在 Create release tags**：取消卡住 run 後檢查是否在 CI 內呼叫 `pnpm changeset tag`，或 tag push 是否觸發 `.husky/pre-push`。修法是移除互動式 changeset tag 呼叫，改由 `scripts/get-release-metadata.mjs --changed` 顯式輸出 package tag 與 app tag，先驗證 `git check-ref-format`，再用完整 refspec 一次推送全部 tag；CI tag push 必須設定 `HUSKY=0` 並為步驟設定 timeout。
 
+**Release workflow `Wait for RateWise production deployment` 逾時**：先查 release commit 是否有 `Deploy Cloudflare Pages` run。bot 合併的 push 不觸發 workflow，必須由 `Re-dispatch main workflows after bot merge` 補派 `deploy-pages.yml`；缺漏時執行 `gh workflow run deploy-pages.yml --ref main`，確認 `app-version` 切版後再 `gh run rerun <RUN_ID> --failed`。
+
 **Release workflow 版本已 tag 但正式站未切版**：先用 `gh api repos/haotool/app/deployments` 查 Zeabur production deployment 的 SHA 與 status。若 release SHA 已成功但較舊 SHA 隨後 active，表示 deployment race；以最小 PR 重新觸發最新 main 部署，不要手動改版本號或重跑 `changeset:version`。
 
 **Cloudflare 邊緣同步**：release 需確認 `security-headers` worker 也已部署；`wrangler deploy` 需 `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`；secret 缺失時明確 `skip` 並回報，不可假設 edge 已同步。完整 SOP 見 `AGENTS.md` § security-headers Worker 部署 SOP。
