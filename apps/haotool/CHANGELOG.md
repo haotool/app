@@ -1,5 +1,11 @@
 # @app/haotool
 
+## 1.1.4
+
+### Patch Changes
+
+- 45bb706: 隱私說明移除已停用的 Vercel Web Analytics 描述，與目前僅以 Cloudflare 部署的實際服務一致。
+
 ## 1.1.3
 
 ### Patch Changes
