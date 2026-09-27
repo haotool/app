@@ -77,7 +77,9 @@ export function normalizeAmountInput(
   currency: string,
 ): { amount: string; negative: boolean } | null {
   const trimmed = value.trim();
-  if (!/^-?(\d+\.?\d*|\.\d+)(e[+-]?\d+)?$/i.test(trimmed)) return null;
+  // 無歧義文法（避免多項式回溯 ReDoS）並限制長度；計算機結果不會超過 64 字元。
+  if (trimmed.length > 64 || !/^-?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i.test(trimmed))
+    return null;
   let scale: number;
   try {
     scale = minorUnit(currency);

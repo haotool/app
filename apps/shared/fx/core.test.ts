@@ -350,6 +350,8 @@ describe('R3a money correctness', () => {
     expect(normalizeAmountInput('-5.005', 'TWD')).toEqual({ amount: '5', negative: true });
     expect(normalizeAmountInput('-0.001', 'TWD')).toEqual({ amount: '0', negative: false });
     expect(normalizeAmountInput('abc', 'TWD')).toBeNull();
+    expect(normalizeAmountInput('1'.repeat(5000) + 'x', 'TWD')).toBeNull();
+    expect(normalizeAmountInput('12.', 'TWD')).toEqual({ amount: '12', negative: false });
     expect(normalizeAmountInput('1e30', 'TWD')).toBeNull();
     expect(isValidAmount(normalizeAmountInput('0.1234567891', 'XAU')!.amount)).toBe(true);
   });
