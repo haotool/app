@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+382
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+383
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-09-28
+- ID：reward-ci-pr-live-base-ref
+- 原因：CI 以 pull_request.base.sha 算 merge-base，PR 合入新 main 後該值停在舊 SHA，002 守門把 58 筆 main 條目誤算為 PR 新增，Lighthouse 偵測也過度觸發。
+- 解法：002 守門與 Lighthouse 路徑偵測改用 origin/<base_ref> 現行分支頭，經 env 帶入，鎖入守門測試並同步 AGENTS/CLAUDE 描述。
 
 - 日期：2026-09-28
 - ID：reward-seo-validation-after-pages-deploy

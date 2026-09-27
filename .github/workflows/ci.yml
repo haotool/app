@@ -52,9 +52,13 @@ jobs:
 
       # 002 記分守門 CI 端強制（issue #661）：驗 PR 最終態 vs merge-base，堵 --no-verify 與網頁端 merge 繞過。
       # 002 未變更時即刻跳過；與 pre-commit 共用 validate002 核心，零 npm 依賴故置於 install 前搶先紅燈。
+      # 基準取 origin/<base_ref>（fetch-depth: 0 已抓全部分支）而非 pull_request.base.sha：後者在 PR
+      # 合入新 main 後可能停在舊 SHA，merge-base 退回舊點，把 main 的 002 條目誤算成 PR 自身新增。
       - name: Verify 002 log (vs merge-base)
         if: github.event_name == 'pull_request'
-        run: node scripts/verify-002-log.mjs --base-ref "${{ github.event.pull_request.base.sha }}"
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: node scripts/verify-002-log.mjs --base-ref "origin/$BASE_REF"
 
       # main 直推兜底：守門不假設 branch protection 永遠有效——這道守門的存在理由就是防止
       # 稽核證據被湮滅。基準取 github.event.before（本次 push 前的 main tip），可涵蓋一次推多個
@@ -790,12 +794,15 @@ jobs:
 
       - name: Detect changed paths
         id: filter
+        env:
+          BASE_REF: ${{ github.base_ref }}
         run: |
           if [ "${{ github.event_name }}" != "pull_request" ]; then
             echo "lighthouse=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          BASE="${{ github.event.pull_request.base.sha }}"
+          # 取目前的 base 分支（fetch-depth: 0 已抓全部分支），不用可能過期的 pull_request.base.sha。
+          BASE="origin/$BASE_REF"
           HEAD="${{ github.event.pull_request.head.sha }}"
           # 根 package.json 與 pnpm-lock.yaml 會改變 ratewise 實際解析到的依賴樹
           #（pnpm workspace 共用單一 lockfile），足以改變 bundle 體積與執行期行為，

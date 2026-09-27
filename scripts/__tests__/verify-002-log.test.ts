@@ -1522,7 +1522,7 @@ describe('守門觸發面（hook 條件與 CI 條件）', () => {
 
   it('ci.yml 對 pull_request 與 main push 都掛守門，且置於 install 之前', () => {
     const workflow = read('.github/workflows/ci.yml');
-    const prStep = workflow.indexOf('--base-ref "${{ github.event.pull_request.base.sha }}"');
+    const prStep = workflow.indexOf('--base-ref "origin/$BASE_REF"');
     const pushStep = workflow.indexOf('--base-commit "${{ github.event.before }}"');
     const install = workflow.indexOf('pnpm install --frozen-lockfile');
 
@@ -1535,6 +1535,9 @@ describe('守門觸發面（hook 條件與 CI 條件）', () => {
     expect(workflow).toContain("github.event_name == 'push'");
     // push 必須用 --base-commit：--base-ref 會取 merge-base，force push 時驗不出被改寫的條目。
     expect(workflow).not.toContain('--base-ref "${{ github.event.before }}"');
+    // PR 必須用現行 base 分支頭：pull_request.base.sha 在 PR 合入新 main 後可能過期（PR 1050 實例）。
+    expect(workflow).toContain('BASE_REF: ${{ github.base_ref }}');
+    expect(workflow).not.toContain('--base-ref "${{ github.event.pull_request.base.sha }}"');
     // 分支初建／force push 後 before 為全零，須跳過而非誤紅。
     expect(workflow).toContain("github.event.before != '0000000000000000000000000000000000000000'");
   });
