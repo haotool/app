@@ -45,6 +45,7 @@ RateWise Monorepo -- Agent 標準作業程序（SOP）與稽核控制規範。
 - `apps/haotool`：作品入口與視覺展示
 - `apps/quake-school`：地震學習工具（SSG）
 - `apps/park-keeper`：停車紀錄工具（Leaflet / i18n / Tailwind v4）
+- `apps/a320-flight-deck`：A320neo 物理驅動飛行模擬（React + three.js，`/a320-flight-deck/`）
 - `apps/poplog`：子應用（依任務確認）
 - `apps/shared`：共用程式碼/資源
 

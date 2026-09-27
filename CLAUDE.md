@@ -64,6 +64,7 @@ RateWise Monorepo -- Claude / Codex / AI 助手執行手冊（Enterprise SOP / A
 - `apps/haotool`：視覺展示與動畫較多
 - `apps/quake-school`：教育內容 + SSG
 - `apps/park-keeper`：地圖功能（Leaflet）、i18n、Tailwind v4
+- `apps/a320-flight-deck`：A320neo 飛行模擬（three.js WebGL、固定步進物理、i18n）；部署於 `/a320-flight-deck/`
 - `apps/shared`：共用邏輯 / 元件
 
 ### Root Commands（常用）

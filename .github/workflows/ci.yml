@@ -196,7 +196,7 @@ jobs:
               - 'package.json'
               - '.github/actions/setup-playwright/**'
 
-      # 非 ratewise app 的 e2e 閘門（#918）：starpuff／park-keeper／papertrade／split-meow
+      # 非 ratewise app 的 e2e 閘門（#918）：starpuff／park-keeper／papertrade／split-meow／a320-flight-deck
       # 各自持有 Playwright 套件，但在此之前沒有任何 workflow 觸發過它們。
       # filter 名稱＝pnpm package 後綴，changes 輸出直接餵給 e2e-apps 的 matrix。
       - name: Detect per-app E2E changes
@@ -219,6 +219,9 @@ jobs:
               - 'apps/split-meow/**'
               - 'apps/shared/**'
               - 'pnpm-lock.yaml'
+            a320-flight-deck:
+              - 'apps/a320-flight-deck/**'
+              - 'pnpm-lock.yaml'
 
       # main／nightly／workflow_dispatch 一律全跑；PR 只選受影響 app。
       # 非 ratewise app 的 PR 後續只進 smoke，主幹再跑完整套件。
@@ -228,7 +231,7 @@ jobs:
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             apps='${{ steps.app-filter.outputs.changes }}'
           else
-            apps='["starpuff","park-keeper","papertrade","split-meow"]'
+            apps='["starpuff","park-keeper","papertrade","split-meow","a320-flight-deck"]'
           fi
           non_starpuff_apps=$(echo "${apps}" | jq -c '[.[] | select(. != "starpuff")]')
           echo "apps=${apps}" >> "$GITHUB_OUTPUT"
@@ -355,6 +358,11 @@ jobs:
             split-meow)
               pnpm --filter '@app/split-meow' exec playwright test e2e/split-flow.spec.ts \
                 --project=mobile-chrome \
+                --reporter=github,list
+              ;;
+            a320-flight-deck)
+              pnpm --filter '@app/a320-flight-deck' exec playwright test e2e/smoke.spec.ts \
+                --project=chromium-desktop \
                 --reporter=github,list
               ;;
             *)

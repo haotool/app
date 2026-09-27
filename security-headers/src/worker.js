@@ -1,13 +1,14 @@
 /* global HTMLRewriter, performance */
 
 /**
- * 安全標頭 Worker v6.6
+ * 安全標頭 Worker v6.7
  *
  * 處理 Cloudflare 無法以固定規則精準表達的安全邏輯。
  * 固定站點級政策由 Cloudflare Edge 管理，Worker 專注於路由分層 CSP、
  * CSP report、分享圖 CORS 與 ratewise 跨域隔離。
  *
  * 變更記錄：
+ * - v6.7: 新增 a320-flight-deck CSP profile（Google Fonts），Permissions-Policy 允許同源 accelerometer/gyroscope 供手機傾斜操控
  * - v6.6: Cloudflare Web Analytics beacon 上傳 origin 納入所有 HTML profile 的 connect-src
  * - v6.5: Pages 由 Cloudflare Web Analytics 自動注入 beacon，移除失效的 Vercel Analytics CSP 依賴
  * - v6.4: 支援以 STATIC_ORIGIN 切換至 Cloudflare Pages，並保留 VERCEL_ORIGIN 作為回退
@@ -42,12 +43,14 @@
  * - v3.6: 改用 HTMLRewriter 解析 inline script
  */
 
-const SECURITY_POLICY_VERSION = '6.6';
+const SECURITY_POLICY_VERSION = '6.7';
 const CSP_REPORT_MAX_BYTES = 16 * 1024;
 const HASHED_ASSET_PATH = /^\/(?:[^/]+\/)?assets\/[^/]+-[A-Za-z0-9_-]{6,12}\.(?:js|css|mjs)$/;
 
 const DEFAULT_PERMISSIONS_POLICY =
 	'geolocation=(), microphone=(), camera=(), payment=(), accelerometer=(), gyroscope=(), magnetometer=(), usb=()';
+const A320_PERMISSIONS_POLICY =
+	'geolocation=(), microphone=(), camera=(), payment=(), accelerometer=(self), gyroscope=(self), magnetometer=(), usb=()';
 const PARK_KEEPER_PERMISSIONS_POLICY =
 	'geolocation=(self), microphone=(), camera=(), payment=(), accelerometer=(self), gyroscope=(self), magnetometer=(self), usb=()';
 const CANONICAL_ROOT_HOST = 'haotool.org';
@@ -534,6 +537,17 @@ const PAPERTRADE_HTML_PROFILE = createHtmlProfile({
 	connectSources: [CLOUDFLARE_INSIGHTS_SCRIPT, 'wss://stream.bybit.com', 'https://api.bybit.com'],
 });
 
+// A320neo Flight Deck：WebGL 模擬（無外部連線），B612/Inter 字型來自 Google Fonts；
+// 手機傾斜操控需 DeviceOrientation（accelerometer/gyroscope）。
+const A320_HTML_PROFILE = createHtmlProfile({
+	scriptMode: 'unsafe-inline',
+	scriptSources: [CLOUDFLARE_INSIGHTS_SCRIPT],
+	styleSources: ['https://fonts.googleapis.com'],
+	fontSources: ['https://fonts.gstatic.com'],
+	connectSources: [CLOUDFLARE_INSIGHTS_SCRIPT],
+	permissionsPolicy: A320_PERMISSIONS_POLICY,
+});
+
 const RATEWISE_HTML_PROFILE = createHtmlProfile({
 	scriptMode: 'nonce',
 	scriptSources: ['https://static.cloudflareinsights.com', 'https://www.googletagmanager.com'],
@@ -571,6 +585,9 @@ function resolveHtmlProfile(url) {
 	}
 	if (url.pathname.startsWith('/papertrade/')) {
 		return PAPERTRADE_HTML_PROFILE;
+	}
+	if (url.pathname.startsWith('/a320-flight-deck/')) {
+		return A320_HTML_PROFILE;
 	}
 	if (url.pathname.startsWith('/nihonname/')) {
 		return NIHONNAME_HTML_PROFILE;

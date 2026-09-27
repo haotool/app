@@ -96,7 +96,7 @@ jobs:
           test -f .pages-dist/health
           test -f .pages-dist/_headers
           test -f .pages-dist/_redirects
-          for app in ratewise nihonname quake-school park-keeper split-meow starpuff papertrade; do
+          for app in ratewise nihonname quake-school park-keeper split-meow starpuff papertrade a320-flight-deck; do
             test -f ".pages-dist/$app/index.html"
           done
 

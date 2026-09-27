@@ -1,0 +1,29 @@
+# A320neo 沉浸式駕駛艙（A320neo Immersive Flight Deck）
+# https://app.haotool.org/a320-flight-deck/
+
+> 免費的網頁 A320neo 飛行模擬：真實飛行物理、Airbus 風格線傳飛控、完整系統相依鏈、自動駕駛與可操作的 3D 駕駛艙，由 haotool.org 出品。
+
+## 功能
+
+- 飛行物理：6DOF 剛體、空氣動力（升力／阻力／力矩）、地面接觸與剎車，固定 60 Hz 模擬
+- 線傳飛控：Normal Law 風格俯仰／滾轉指令、飛行包線保護、自動配平
+- 系統：發動機與 APU 啟動程序、電力、液壓、燃油、氣源、增壓、ADIRS、起落架、燈光、ECAM 警告
+- 自動飛行：AP1／AP2、飛行導引、自動油門，NAV／HDG／LOC／G/S／LAND／FLARE 模式與 MCDU 航路
+- 儀表：即時繪製的 PFD、ND、E/WD、13 頁 SD、MCDU、ISIS
+- 情境：快速飛行、冷艙啟動（含檢查單輔助）、自動駕駛展示（起飛至自動降落）、自由飛行
+- 環境：物理天空、日夜與天氣、機場燈光與 PAPI、城市、雲與雨
+- 介面：繁體中文／English、桌機鍵盤滑鼠、手機虛擬側桿與傾斜操控
+
+## 頁面
+
+- [飛行模擬](https://app.haotool.org/a320-flight-deck/): 主選單與模擬器
+
+## 技術
+
+- React 19 + TypeScript + Vite 8
+- three.js WebGL（程序生成幾何與貼圖，無外部模型）
+- WebAudio 程序合成音效
+
+## 免責聲明
+
+本站為娛樂與教育用途的簡化模擬，非認證飛行訓練設備，亦不代表任何航空公司或製造商。

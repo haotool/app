@@ -1,6 +1,6 @@
 # HaoTool 好工具
 
-HaoTool 好工具（https://haotool.org/）是由台灣全端工程師阿璋打造的免費開源網頁工具站，收錄 7 個以 React 19、TypeScript、Vite 與 PWA 打造的上線工具。無廣告、不收集個資，全部以 GPL-3.0 開源。
+HaoTool 好工具（https://haotool.org/）是由台灣全端工程師阿璋打造的免費開源網頁工具站，收錄 8 個以 React 19、TypeScript、Vite 與 PWA 打造的上線工具。無廣告、不收集個資，全部以 GPL-3.0 開源。
 
 ## Agent Discovery
 
@@ -54,6 +54,11 @@ HaoTool 好工具（https://haotool.org/）是由台灣全端工程師阿璋打�
 - URL: https://app.haotool.org/quake-school/
 - 定位: 18 道互動測驗＋動畫，搞懂規模與震度，離線防災學習
 
+### A320neo 沉浸式駕駛艙
+
+- URL: https://app.haotool.org/a320-flight-deck/
+- 定位: 物理驅動的網頁飛行模擬：可操作 3D 駕駛艙、自動駕駛與 ILS 自動降落
+
 ## Core Pages
 
 - [首頁](https://haotool.org/)：品牌介紹與五個工具入口
@@ -73,4 +78,4 @@ HaoTool 好工具（https://haotool.org/）是由台灣全端工程師阿璋打�
 - GitHub: https://github.com/haotool/app
 - Threads: https://www.threads.net/@azlife_1224
 
-最後更新：2026-07-14
+最後更新：2026-09-27

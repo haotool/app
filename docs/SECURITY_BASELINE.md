@@ -47,19 +47,20 @@
 
 ## 2. 當前狀態（2026-09-01）
 
-| 項目            | 現況                                                                          |
-| --------------- | ----------------------------------------------------------------------------- |
-| Error Boundary  | ✅ `apps/ratewise/src/components/ErrorBoundary.tsx` 已上線                    |
-| Logger          | ✅ `apps/ratewise/src/utils/logger.ts`，待串接遠端 sink                       |
-| 安全標頭        | ✅ `security-headers` Worker 處理 CSP／路由，`nginx.conf` 僅保留最小 fallback |
-| `.env` 管理     | ✅ `.env.example` 已提供                                                      |
-| Secrets 掃描    | ✅ CI 使用固定版本 Gitleaks CLI 與 checksum 掃描 repo                         |
-| 依賴安全審計    | ⚠️ production 0 high/critical、3 moderate React Router advisories 待處理      |
-| 日誌外送        | ❌ 未上傳至遠端（Phase 0 計畫處理）                                           |
-| `.env` 漏掃     | ✅ Gitleaks 覆蓋 repo；執行期 provider variables 仍需平台權限控管             |
-| Pages origin    | ⚠️ 已支援可回退切換；尚未切換正式流量                                         |
-| Vercel origin   | ⚠️ 保留作觀察期回退；尚未切換正式流量                                         |
-| Rating API 邊界 | ✅ 維持 Cloudflare Worker + KV，不納入 Vercel image                           |
+| 項目            | 現況                                                                                        |
+| --------------- | ------------------------------------------------------------------------------------------- |
+| Error Boundary  | ✅ `apps/ratewise/src/components/ErrorBoundary.tsx` 已上線                                  |
+| Logger          | ✅ `apps/ratewise/src/utils/logger.ts`，待串接遠端 sink                                     |
+| 安全標頭        | ✅ `security-headers` Worker 處理 CSP／路由，`nginx.conf` 僅保留最小 fallback               |
+| 感測器權限例外  | ✅ Permissions-Policy 僅對同源放行：park-keeper（定位／羅盤）、a320-flight-deck（傾斜操控） |
+| `.env` 管理     | ✅ `.env.example` 已提供                                                                    |
+| Secrets 掃描    | ✅ CI 使用固定版本 Gitleaks CLI 與 checksum 掃描 repo                                       |
+| 依賴安全審計    | ⚠️ production 0 high/critical、3 moderate React Router advisories 待處理                    |
+| 日誌外送        | ❌ 未上傳至遠端（Phase 0 計畫處理）                                                         |
+| `.env` 漏掃     | ✅ Gitleaks 覆蓋 repo；執行期 provider variables 仍需平台權限控管                           |
+| Pages origin    | ⚠️ 已支援可回退切換；尚未切換正式流量                                                       |
+| Vercel origin   | ⚠️ 保留作觀察期回退；尚未切換正式流量                                                       |
+| Rating API 邊界 | ✅ 維持 Cloudflare Worker + KV，不納入 Vercel image                                         |
 
 ## 3. Cloudflare 推薦設定
 

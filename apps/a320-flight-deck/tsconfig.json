@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["vite/client", "node"],
+    "noEmit": true,
+    "isolatedModules": true,
+    // 數值模擬與幾何建構大量使用陣列索引；關閉此兩項以避免雜訊式斷言
+    "noUncheckedIndexedAccess": false,
+    "noPropertyAccessFromIndexSignature": false,
+    "baseUrl": "."
+  },
+  "include": ["src", "vite.config.ts", "app.config.d.mts", "playwright.config.ts", "e2e"],
+  "exclude": ["node_modules", "dist"]
+}

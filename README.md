@@ -27,16 +27,17 @@ haotool Apps 是一個專業的 pnpm Monorepo，包含多個高品質的 React 1
 
 ### 應用程式
 
-| 應用                                     | 描述                                           | 狀態 | 連結                                                                  |
-| ---------------------------------------- | ---------------------------------------------- | ---- | --------------------------------------------------------------------- |
-| **[RateWise](./apps/ratewise/)**         | 台銀即時匯率換算 PWA，支援 18 種貨幣           | Live | [app.haotool.org/ratewise](https://app.haotool.org/ratewise/)         |
-| **[NihonName](./apps/nihonname/)**       | 日本名字產生器，探索皇民化歷史                 | Live | [app.haotool.org/nihonname](https://app.haotool.org/nihonname/)       |
-| **[Quake-School](./apps/quake-school/)** | 互動式地震科學教育平台                         | Live | [app.haotool.org/quake-school](https://app.haotool.org/quake-school/) |
-| **[Park Keeper](./apps/park-keeper/)**   | 停車場導航工具，GPS 指引 + 多語言（i18n）      | Live | [app.haotool.org/park-keeper](https://app.haotool.org/park-keeper/)   |
-| **[Split Meow](./apps/split-meow/)**     | 貓咪主題旅遊帳單分攤計算機，支援費用分類與分享 | Live | [app.haotool.org/split-meow](https://app.haotool.org/split-meow/)     |
-| **[StarPuff](./apps/starpuff/)**         | 吸入果凍怪、擊敗果凍王的直向 Boss Rush 小遊戲  | Live | [app.haotool.org/starpuff](https://app.haotool.org/starpuff/)         |
-| **[PaperTrade](./apps/papertrade/)**     | 零風險模擬合約交易所，串接真實加密貨幣行情     | Live | [app.haotool.org/papertrade](https://app.haotool.org/papertrade/)     |
-| **[haotool](./apps/haotool/)**           | 專案展示平台，3D 互動首頁                      | Live | [app.haotool.org](https://app.haotool.org/)                           |
+| 應用                                                | 描述                                           | 狀態 | 連結                                                                  |
+| --------------------------------------------------- | ---------------------------------------------- | ---- | --------------------------------------------------------------------- |
+| **[RateWise](./apps/ratewise/)**                    | 台銀即時匯率換算 PWA，支援 18 種貨幣           | Live | [app.haotool.org/ratewise](https://app.haotool.org/ratewise/)         |
+| **[NihonName](./apps/nihonname/)**                  | 日本名字產生器，探索皇民化歷史                 | Live | [app.haotool.org/nihonname](https://app.haotool.org/nihonname/)       |
+| **[Quake-School](./apps/quake-school/)**            | 互動式地震科學教育平台                         | Live | [app.haotool.org/quake-school](https://app.haotool.org/quake-school/) |
+| **[Park Keeper](./apps/park-keeper/)**              | 停車場導航工具，GPS 指引 + 多語言（i18n）      | Live | [app.haotool.org/park-keeper](https://app.haotool.org/park-keeper/)   |
+| **[Split Meow](./apps/split-meow/)**                | 貓咪主題旅遊帳單分攤計算機，支援費用分類與分享 | Live | [app.haotool.org/split-meow](https://app.haotool.org/split-meow/)     |
+| **[A320neo Flight Deck](./apps/a320-flight-deck/)** | 物理驅動的 A320neo 互動駕駛艙飛行模擬（WebGL） | Dev  | 本機 `pnpm --filter @app/a320-flight-deck dev`                        |
+| **[StarPuff](./apps/starpuff/)**                    | 吸入果凍怪、擊敗果凍王的直向 Boss Rush 小遊戲  | Live | [app.haotool.org/starpuff](https://app.haotool.org/starpuff/)         |
+| **[PaperTrade](./apps/papertrade/)**                | 零風險模擬合約交易所，串接真實加密貨幣行情     | Live | [app.haotool.org/papertrade](https://app.haotool.org/papertrade/)     |
+| **[haotool](./apps/haotool/)**                      | 專案展示平台，3D 互動首頁                      | Live | [app.haotool.org](https://app.haotool.org/)                           |
 
 ### 應用特色
 
@@ -149,6 +150,7 @@ pnpm --filter @app/nihonname dev     # NihonName (http://localhost:3002)
 pnpm --filter @app/quake-school dev  # Quake-School (http://localhost:3003)
 pnpm --filter @app/park-keeper dev   # Park Keeper (http://localhost:3004)
 pnpm --filter @app/split-meow dev    # Split Meow (http://localhost:3005)
+pnpm --filter @app/a320-flight-deck dev  # A320neo Flight Deck (http://localhost:3010)
 pnpm --filter @app/starpuff dev      # StarPuff (http://localhost:3007)
 pnpm --filter @app/papertrade dev    # PaperTrade (http://localhost:5173)
 pnpm --filter @app/haotool dev       # haotool (http://localhost:3000)
@@ -215,6 +217,7 @@ haotool-app/
 │   ├── quake-school/     # 地震知識小學堂
 │   ├── park-keeper/      # 停車場導航工具
 │   ├── split-meow/       # 貓咪分帳計算機
+│   ├── a320-flight-deck/ # A320neo 飛行模擬（React + three.js）
 │   ├── starpuff/         # 直向 Boss Rush 小遊戲
 │   ├── papertrade/       # 模擬合約交易所
 │   ├── haotool/          # 專案展示平台
@@ -275,16 +278,17 @@ haotool Apps is a professional pnpm Monorepo containing multiple high-quality Re
 
 ### Applications
 
-| App                                      | Description                                         | Status | Link                                                                  |
-| ---------------------------------------- | --------------------------------------------------- | ------ | --------------------------------------------------------------------- |
-| **[RateWise](./apps/ratewise/)**         | Taiwan Bank exchange rate PWA, 18 currencies        | Live   | [app.haotool.org/ratewise](https://app.haotool.org/ratewise/)         |
-| **[NihonName](./apps/nihonname/)**       | Japanese name generator, historical exploration     | Live   | [app.haotool.org/nihonname](https://app.haotool.org/nihonname/)       |
-| **[Quake-School](./apps/quake-school/)** | Interactive earthquake science education            | Live   | [app.haotool.org/quake-school](https://app.haotool.org/quake-school/) |
-| **[Park Keeper](./apps/park-keeper/)**   | Parking lot navigator with GPS compass + i18n       | Live   | [app.haotool.org/park-keeper](https://app.haotool.org/park-keeper/)   |
-| **[Split Meow](./apps/split-meow/)**     | Cat-themed trip expense splitter with share + emoji | Live   | [app.haotool.org/split-meow](https://app.haotool.org/split-meow/)     |
-| **[StarPuff](./apps/starpuff/)**         | Vertical boss-rush action mini game with Phaser     | Live   | [app.haotool.org/starpuff](https://app.haotool.org/starpuff/)         |
-| **[PaperTrade](./apps/papertrade/)**     | Risk-free crypto perpetual paper-trading exchange   | Live   | [app.haotool.org/papertrade](https://app.haotool.org/papertrade/)     |
-| **[haotool](./apps/haotool/)**           | Project showcase with 3D interactive homepage       | Live   | [app.haotool.org](https://app.haotool.org/)                           |
+| App                                                 | Description                                                 | Status | Link                                                                  |
+| --------------------------------------------------- | ----------------------------------------------------------- | ------ | --------------------------------------------------------------------- |
+| **[RateWise](./apps/ratewise/)**                    | Taiwan Bank exchange rate PWA, 18 currencies                | Live   | [app.haotool.org/ratewise](https://app.haotool.org/ratewise/)         |
+| **[NihonName](./apps/nihonname/)**                  | Japanese name generator, historical exploration             | Live   | [app.haotool.org/nihonname](https://app.haotool.org/nihonname/)       |
+| **[Quake-School](./apps/quake-school/)**            | Interactive earthquake science education                    | Live   | [app.haotool.org/quake-school](https://app.haotool.org/quake-school/) |
+| **[Park Keeper](./apps/park-keeper/)**              | Parking lot navigator with GPS compass + i18n               | Live   | [app.haotool.org/park-keeper](https://app.haotool.org/park-keeper/)   |
+| **[Split Meow](./apps/split-meow/)**                | Cat-themed trip expense splitter with share + emoji         | Live   | [app.haotool.org/split-meow](https://app.haotool.org/split-meow/)     |
+| **[A320neo Flight Deck](./apps/a320-flight-deck/)** | Physics-driven interactive A320neo flight simulator (WebGL) | Dev    | local `pnpm --filter @app/a320-flight-deck dev`                       |
+| **[StarPuff](./apps/starpuff/)**                    | Vertical boss-rush action mini game with Phaser             | Live   | [app.haotool.org/starpuff](https://app.haotool.org/starpuff/)         |
+| **[PaperTrade](./apps/papertrade/)**                | Risk-free crypto perpetual paper-trading exchange           | Live   | [app.haotool.org/papertrade](https://app.haotool.org/papertrade/)     |
+| **[haotool](./apps/haotool/)**                      | Project showcase with 3D interactive homepage               | Live   | [app.haotool.org](https://app.haotool.org/)                           |
 
 ### Tech Stack
 

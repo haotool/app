@@ -100,7 +100,7 @@ CSP／HSTS 與 `/ratewise/api/ratings`。移除 `VERCEL_ORIGIN` 並重新部署
 
 ### Cloudflare Pages Direct Upload（目前遷移目標）
 
-靜態前端使用根目錄 `scripts/build-pages.mjs` 將 8 個 app 組裝至單一
+靜態前端使用根目錄 `scripts/build-pages.mjs` 將 9 個 app 組裝至單一
 `.pages-dist/`，再由 GitHub Actions 以 Wrangler Pages Direct Upload 部署至
 `haotool-static`。這條流程不使用 `docker-compose.yml`，也不把
 `rating-api` 或 Cloudflare KV 搬入 Pages。

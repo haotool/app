@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+375
+> 本次分數變化：+4（reward 5、penalty 1、neutral 0）｜累計總分：+379
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,36 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-09-28
+- ID：reward-a320-haotool-card-and-codex-icon
+- 原因：新 app 未上架根站工具卡且圖示為臨時手繪，首頁無入口、Codex 初版向量圖示比例失真像戰機。
+- 解法：同步 tools SSOT、SW denylist、llms/index/robots 與截圖素材；依真實尺寸換算幾何指示 Codex 重繪，並以 generate-icons 腳本產出各尺寸 PNG。
+
+- 日期：2026-09-27
+- ID：reward-a320-pages-contract-integration
+- 原因：新 app 未納入 Pages 組裝、Worker profile 與 PWA 契約，合併後 Pages parity 會失敗且正式子路徑無法進入。
+- 解法：以 app.config.mjs 為 SSOT 接入 build-pages、deploy-pages、CI E2E 矩陣、Docker/nginx 備援與 Worker profile，並以本機 Pages dev 跑通 405 項 parity。
+
+- 日期：2026-09-27
+- ID：reward-a320-e2e-mobile-menu-overflow
+- 原因：手機橫式選單內容高於視窗時，flex 置中裁切上緣且根層 touch-action 阻擋捲動，使用者無法點到語言切換。
+- 解法：選單改 safe center 並對選單與面板開放 pan-y 捲動，以 Playwright 手機橫式 smoke 固定回歸。
+
+- 日期：2026-09-27
+- ID：penalty-a320-sim-reset-state-leak
+- 原因：Simulation.reset 只重建狀態物件，警告系統等子系統的計時器沿用前一段，使 ECAM 頁面在新情境殘留 F/CTL。
+- 解法：重置時重建所有含內部狀態的子系統，並新增跨情境重置的回歸測試。
+
+- 日期：2026-09-27
+- ID：reward-a320-exposure-root-cause
+- 原因：物理散射天空生成的環境圖輻亮度過高，加上 Bloom 門檻 1.0，使日照白色表面整片泛白。
+- 解法：以瀏覽器逐項關閉後製與環境圖定位根因，縮放環境光強度並將 Bloom 門檻提高到只作用於燈具類 HDR 光源。
+
+- 日期：2026-09-27
+- ID：reward-a320-flight-deck-physics-first
+- 原因：飛行模擬需求要求所有儀表、自動駕駛與外部模型真實反映系統，若以動畫或固定時間軸實作將無法驗證行為。
+- 解法：以單一 SimState 驅動 6DOF 物理、線傳飛控與自動飛行，並用無頭完整航程測試驗證起飛至自動降落與冷艙系統相依鏈。
 
 - 日期：2026-09-01
 - ID：reward-haotool-papertrade-screenshot-asset
