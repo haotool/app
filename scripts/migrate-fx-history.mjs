@@ -7,7 +7,7 @@ import {
   normalizeMoneyboxSnapshot,
   exportLegacyRates,
   validateProviderSnapshot,
-} from '../apps/shared/fx/runtime.mjs';
+} from '../apps/shared/fx/index.ts';
 import { bytesHash, writeObject } from './publish-fx-release.mjs';
 
 const SUPPORTED_SOURCE_VERSIONS = new Set([undefined, null, 'legacy', '2.0']);

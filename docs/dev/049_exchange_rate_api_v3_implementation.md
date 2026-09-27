@@ -10,7 +10,7 @@
 
 - `apps/shared/fx/schema.json` 定義 SourceQuote、QuoteSnapshot、試算、ProviderSnapshot、release manifest 與 current pointer。
 - `apps/shared/fx/index.ts` 使用十進位字串、明確方向、`EXACT_IN`／`EXACT_OUT`、幣別 minor unit 與條件適用性。
-- `scripts/generate-fx-contract.mjs` 產生 TypeScript、Ajv standalone validator 與 Node runtime；禁止手改產出物。
+- `scripts/generate-fx-contract.mjs` 產生 TypeScript 型別與 Ajv standalone validator；禁止手改產出物。Node 腳本以原生型別剝除直接匯入 `apps/shared/fx/index.ts`，不另產 runtime bundle。
 - `rate = 每 1 fromCurrency 可取得的 toCurrency`；銀行／換錢所原始 buy/sell 仍保留在 `sourceQuote`，不可由國家或欄位名稱猜方向。
 
 ## 來源與試算

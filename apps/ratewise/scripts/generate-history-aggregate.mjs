@@ -3,7 +3,6 @@
 import { existsSync, readFileSync, writeFileSync, renameSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { normalizeMoneyboxSnapshot } from '../../shared/fx/runtime.mjs';
 import { isHistoryDate, isValidHistorySnapshot } from '../../shared/fx/history.mjs';
 
 export function buildHistoryAggregate(entries) {
@@ -49,7 +48,9 @@ export function generateHistoryAggregate(root, now = new Date()) {
   return aggregate;
 }
 
-export function generateMoneyboxHistoryAggregate(root) {
+// FX 核心依賴 decimal.js；update-historical-rates.yml 未安裝依賴，故僅 MoneyBox 路徑延遲載入。
+export async function generateMoneyboxHistoryAggregate(root) {
+  const { normalizeMoneyboxSnapshot } = await import('../../shared/fx/index.ts');
   const folder = join(root, 'public/rates/providers/moneybox');
   const output = join(folder, 'history-30d.json');
   const snapshots = readdirSync(join(folder, 'history'))
@@ -77,6 +78,6 @@ export function generateMoneyboxHistoryAggregate(root) {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   const root = resolve(process.env.RATE_DATA_ROOT ?? '.');
-  if (process.env.FX_PROVIDER === 'moneybox') generateMoneyboxHistoryAggregate(root);
+  if (process.env.FX_PROVIDER === 'moneybox') await generateMoneyboxHistoryAggregate(root);
   else generateHistoryAggregate(root);
 }

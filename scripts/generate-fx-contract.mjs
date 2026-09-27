@@ -56,13 +56,3 @@ await artifact(
     .map((name) => `export declare function validate${name}(value: unknown): value is ${name};`)
     .join('\n')}\n`,
 );
-const runtime = await build({
-  entryPoints: [fileURLToPath(new URL('index.ts', directory))],
-  bundle: true,
-  platform: 'neutral',
-  format: 'esm',
-  conditions: ['import', 'default'],
-  write: false,
-  minify: true,
-});
-await artifact('runtime.mjs', `/* eslint-disable */\n${runtime.outputFiles[0].text}`);

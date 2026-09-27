@@ -9,7 +9,7 @@ import {
   validateCurrentRelease,
   validateProviderSnapshot,
   exportLegacyRates,
-} from '../apps/shared/fx/runtime.mjs';
+} from '../apps/shared/fx/index.ts';
 
 export const sunsetAt = (activatedAt) =>
   activatedAt === null

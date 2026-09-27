@@ -10,7 +10,7 @@ import {
   normalizeMoneyboxSnapshot,
   estimate,
   boardMidpoint,
-} from '../../shared/fx/runtime.mjs';
+} from '../../shared/fx/index.ts';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const OUTPUT = resolve(ROOT, 'src/config/generated/seo-rate-examples.ts');
