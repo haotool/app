@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+380
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+381
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-09-28
+- ID：reward-release-dispatch-pages-and-a320-hreflang
+- 原因：release PR 由 bot 合併後只補派 release/ci，漏派 deploy-pages 使正式站停在舊版致 Release 等待逾時；a320 sitemap 同一 URL 多列 en hreflang 使 SEO Production Validation 失敗。
+- 解法：Re-dispatch 補派 deploy-pages.yml 並同步 AGENTS/CLAUDE 排障規則；a320 sitemap 對齊單 URL 慣例保留 zh-TW 與 x-default。
 
 - 日期：2026-09-28
 - ID：reward-remove-vercel-residue

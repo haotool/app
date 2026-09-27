@@ -251,7 +251,8 @@ jobs:
           sleep 5
           gh workflow run release.yml --ref main
           gh workflow run ci.yml --ref main
-          echo "Dispatched release.yml and ci.yml on main to compensate suppressed push events"
+          gh workflow run deploy-pages.yml --ref main
+          echo "Dispatched release.yml, ci.yml and deploy-pages.yml on main to compensate suppressed push events"
 
       - name: Report Release PR status
         if: steps.changesets.outcome == 'failure'
