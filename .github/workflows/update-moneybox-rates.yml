@@ -29,8 +29,12 @@ on:
       - '.github/workflows/update-moneybox-rates.yml'
 
 jobs:
+  # v2 管線：fetch → history → commit → purge。刻意不安裝依賴、不跑 generate:fx、不發布 v3，
+  # 讓 v3 發布或依賴安裝失敗永遠不會阻斷既有公開資料更新。
   update-moneybox:
     runs-on: ubuntu-latest
+    outputs:
+      fetch_outcome: ${{ steps.fetch-rates.outcome }}
 
     permissions:
       contents: write
@@ -39,7 +43,8 @@ jobs:
 
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
-      MONEYBOX_FETCH_OUTPUT_FILE: .moneybox-current-fetch.json
+      # 必須是絕對路徑：fetch 腳本在 _fx-code 執行，history step 在 data checkout 執行。
+      MONEYBOX_FETCH_OUTPUT_FILE: ${{ github.workspace }}/.moneybox-current-fetch.json
       MONEYBOX_LATEST_FILE: public/rates/providers/moneybox/latest.json
       MONEYBOX_HISTORY_DIR: public/rates/providers/moneybox/history
       MONEYBOX_AGGREGATE_FILE: public/rates/providers/moneybox/history-30d.json
@@ -63,7 +68,7 @@ jobs:
           git push -u origin data
           git checkout data
 
-      - name: Checkout the complete publisher at the triggering code SHA
+      - name: Checkout fetch scripts at the triggering code SHA
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ github.sha }}
@@ -74,13 +79,6 @@ jobs:
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: '24'
-
-      - name: Install exact publisher dependencies
-        working-directory: _fx-code
-        run: |
-          corepack enable
-          corepack pnpm install --frozen-lockfile --ignore-scripts
-          corepack pnpm generate:fx --check
 
       - name: Log schedule diagnostics
         env:
@@ -103,14 +101,6 @@ jobs:
         run: |
           echo "🔄 Fetching latest exchange rates from MoneyBox (明洞換匯所)..."
           FX_DATA_ROOT="$GITHUB_WORKSPACE/public/rates" node _fx-code/scripts/fetch-moneybox-rates.js
-
-      - name: Publish verified v3 release
-        if: vars.RATEWISE_FX_V3_ENABLED == 'true'
-        env:
-          FX_PROVIDER: moneybox
-          FX_DATA_ROOT: ${{ github.workspace }}/public/rates
-          FX_FETCH_FAILED: ${{ steps.fetch-rates.outcome != 'success' && '1' || '0' }}
-        run: node _fx-code/scripts/publish-fx-release.mjs
 
       # 恢復後必須關閉追蹤 issue：否則它會永久 open，使下一次中斷從第一次執行就被節流，
       # 失去「首次偵測大聲失敗」的曝光。關閉失敗不阻斷本次資料更新。
@@ -137,7 +127,7 @@ jobs:
           # 在跨日視窗不一致。提取失敗時 fallback 首爾 wall-clock。
           CURRENT_DATE=$(node --input-type=module -e "
             import { readFileSync } from 'node:fs';
-            const { extractSeoulSnapshotDate } = await import('./scripts/fetch-moneybox-rates.js');
+            const { extractSeoulSnapshotDate } = await import('./_fx-code/scripts/fetch-moneybox-rates.js');
             const data = JSON.parse(readFileSync(process.env.MONEYBOX_FETCH_OUTPUT_FILE, 'utf8'));
             const d = extractSeoulSnapshotDate(data);
             if (d) process.stdout.write(d);
@@ -176,7 +166,7 @@ jobs:
 
       - name: Check for changes in MoneyBox provider files
         id: git-check
-        if: steps.fetch-rates.outcome == 'success' || vars.RATEWISE_FX_V3_ENABLED == 'true'
+        if: steps.fetch-rates.outcome == 'success'
         env:
           RETIRED_ALIASES_CHANGED: ${{ steps.remove-retired-aliases.outputs.changed }}
         run: |
@@ -193,9 +183,6 @@ jobs:
           if [[ "$RETIRED_ALIASES_CHANGED" == "true" ]]; then
             echo "changed=true" >> $GITHUB_OUTPUT
           fi
-          if [[ -n "$(git status --short --untracked-files=all -- public/rates/v3/)" ]]; then
-            echo "changed=true" >> $GITHUB_OUTPUT
-          fi
 
       - name: Generate moneybox aggregate 30-day history
         if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true'
@@ -203,7 +190,7 @@ jobs:
           RATE_DATA_ROOT=. FX_PROVIDER=moneybox node _fx-code/apps/ratewise/scripts/generate-history-aggregate.mjs
 
       - name: Commit and push changes
-        if: steps.git-check.outputs.changed == 'true' && (steps.fetch-rates.outcome == 'success' || vars.RATEWISE_FX_V3_ENABLED == 'true')
+        if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true'
         env:
           TODAY_HISTORY_FILE: ${{ steps.save-history.outputs.history_file }}
         run: |
@@ -212,10 +199,7 @@ jobs:
           # 只 add 當日 history 檔與 aggregate，避免 git checkout origin/main -- public/rates/
           # 後把 data branch 既有的前幾日 history snapshot 一併 stage 成刪除（會清掉公開
           # MoneyBox history API 與趨勢圖前日資料）。SSOT：每次只動當日 snapshot + aggregate。
-          if [[ "${{ steps.fetch-rates.outcome }}" == "success" ]]; then
-            git add "$MONEYBOX_LATEST_FILE" "$TODAY_HISTORY_FILE" "$MONEYBOX_AGGREGATE_FILE"
-          fi
-          if [ -f public/rates/v3/current.json ]; then git add public/rates/v3/; fi
+          git add "$MONEYBOX_LATEST_FILE" "$TODAY_HISTORY_FILE" "$MONEYBOX_AGGREGATE_FILE"
 
           # 取得更新資訊
           UPDATE_TIME=$(node -p "JSON.parse(require('fs').readFileSync(process.env.MONEYBOX_LATEST_FILE)).updateTime")
@@ -266,25 +250,15 @@ jobs:
           fi
 
       - name: Purge jsDelivr CDN cache
-        if: steps.git-check.outputs.changed == 'true' && (steps.fetch-rates.outcome == 'success' || vars.RATEWISE_FX_V3_ENABLED == 'true')
+        if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true'
         env:
           CURRENT_DATE: ${{ steps.save-history.outputs.current_date }}
         run: |
           PURGE_URL="${MONEYBOX_PURGE_DATA_BASE}/${MONEYBOX_LATEST_FILE}"
-          V3_PURGE_URL="${MONEYBOX_PURGE_DATA_BASE}/public/rates/v3/current.json"
+          HISTORY_PURGE_URL="${MONEYBOX_PURGE_DATA_BASE}/${MONEYBOX_HISTORY_DIR}/${CURRENT_DATE}.json"
+          AGGREGATE_PURGE_URL="${MONEYBOX_PURGE_DATA_BASE}/${MONEYBOX_AGGREGATE_FILE}"
           echo "🧹 Purging jsDelivr CDN cache..."
-          PURGE_URLS=()
-          if [[ "${{ steps.fetch-rates.outcome }}" == "success" ]]; then
-            HISTORY_PURGE_URL="${MONEYBOX_PURGE_DATA_BASE}/${MONEYBOX_HISTORY_DIR}/${CURRENT_DATE}.json"
-            AGGREGATE_PURGE_URL="${MONEYBOX_PURGE_DATA_BASE}/${MONEYBOX_AGGREGATE_FILE}"
-            PURGE_URLS+=("$PURGE_URL" "$HISTORY_PURGE_URL" "$AGGREGATE_PURGE_URL")
-          fi
-          if [ -f public/rates/v3/current.json ]; then PURGE_URLS+=("$V3_PURGE_URL"); fi
-          if [ ${#PURGE_URLS[@]} -eq 0 ]; then
-            echo "ℹ️ No mutable rate URL changed; skipping CDN purge."
-            exit 0
-          fi
-          for URL in "${PURGE_URLS[@]}"; do
+          for URL in "$PURGE_URL" "$HISTORY_PURGE_URL" "$AGGREGATE_PURGE_URL"; do
             for i in 1 2 3; do
               HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL")
               if [ "$HTTP_STATUS" = "200" ]; then
@@ -299,7 +273,7 @@ jobs:
 
       - name: Refresh MoneyBox provider files from remote data branch
         id: refresh-remote
-        if: steps.git-check.outputs.changed == 'true' && (steps.fetch-rates.outcome == 'success' || vars.RATEWISE_FX_V3_ENABLED == 'true')
+        if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true'
         continue-on-error: true
         run: |
           # 收尾同步僅用於摘要校對，不得覆蓋已成功的資料推送結果。
@@ -478,3 +452,51 @@ jobs:
           echo "## Transient failure tolerated" >> $GITHUB_STEP_SUMMARY
           echo "This run's fetch failed; committed data is still fresh (<${STALENESS_THRESHOLD_HOURS}h)." >> $GITHUB_STEP_SUMMARY
           echo "Next scheduled run retries in 5 minutes." >> $GITHUB_STEP_SUMMARY
+
+  # v3 發布：獨立 job，於 v2 job 之後執行（不論其成敗，以記錄 provider 檢查結果）。
+  # 失敗時本 job 標紅，不使用 continue-on-error；v2 資料已於前一個 job 完成 commit／purge。
+  publish-v3:
+    needs: update-moneybox
+    if: ${{ always() && vars.RATEWISE_FX_V3_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+    steps:
+      - name: Checkout data branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: data
+          fetch-depth: 0
+
+      - name: Checkout the complete publisher at the triggering code SHA
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.sha }}
+          path: _fx-code
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '24'
+
+      - name: Install exact publisher dependencies
+        working-directory: _fx-code
+        run: |
+          corepack enable
+          corepack pnpm install --frozen-lockfile --ignore-scripts
+          corepack pnpm generate:fx --check
+
+      - name: Publish verified v3 release
+        env:
+          FX_PROVIDER: moneybox
+          FX_DATA_ROOT: ${{ github.workspace }}/public/rates
+          FX_FETCH_FAILED: ${{ needs.update-moneybox.outputs.fetch_outcome != 'success' && '1' || '0' }}
+        run: node _fx-code/scripts/publish-fx-release.mjs
+
+      - name: Commit, push and purge v3 pointer
+        env:
+          COMMIT_MESSAGE: 'chore(rates): publish moneybox v3 release'
+        run: bash _fx-code/scripts/commit-fx-v3-release.sh "$COMMIT_MESSAGE"

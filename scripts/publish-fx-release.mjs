@@ -125,12 +125,8 @@ function validateManifestReferences(root, manifest) {
 }
 export async function publishRelease(root, inputs, now = new Date().toISOString(), history) {
   const previous = readPrevious(root);
-  const providers = new Map(
-    (previous?.providers ?? []).map((p) => [
-      p.providerId,
-      { ...p, checkStatus: 'carried_forward' },
-    ]),
-  );
+  // 每個 provider 保留自身最後一次檢查結果；本輪未執行的 provider 不改寫狀態。
+  const providers = new Map((previous?.providers ?? []).map((p) => [p.providerId, p]));
   const snapshots = new Map();
   for (const [providerId, input] of Object.entries(inputs)) {
     if (input === null) {
@@ -146,6 +142,12 @@ export async function publishRelease(root, inputs, now = new Date().toISOString(
     if (!data.quotes.length || !validateProviderSnapshot(data))
       throw new Error('Empty or invalid provider snapshot');
     const snapshot = writeObject(root, data);
+    const prior = providers.get(providerId);
+    // 內容與狀態皆未變時沿用既有條目，避免每輪產生新 release 造成 commit／purge churn。
+    if (prior?.checkStatus === 'ok' && prior.snapshot.sha256 === snapshot.sha256) {
+      snapshots.set(providerId, data);
+      continue;
+    }
     providers.set(providerId, {
       providerId,
       snapshot,
@@ -155,11 +157,22 @@ export async function publishRelease(root, inputs, now = new Date().toISOString(
     snapshots.set(providerId, data);
   }
   if (!providers.size) throw new Error('No verified provider snapshot');
+  const nextProviders = [...providers.values()].sort((a, b) =>
+    a.providerId < b.providerId ? -1 : a.providerId > b.providerId ? 1 : 0,
+  );
+  if (
+    previous &&
+    history === undefined &&
+    JSON.stringify(nextProviders) === JSON.stringify(previous.providers)
+  ) {
+    const current = JSON.parse(readFileSync(resolve(root, 'current.json'), 'utf8'));
+    return { current, manifest: previous, snapshots, unchanged: true };
+  }
   const activatedAt = previous?.deprecation.activatedAt ?? null;
   const manifest = {
     schemaVersion: '3.0',
     generatedAt: now,
-    providers: [...providers.values()].sort((a, b) => a.providerId.localeCompare(b.providerId)),
+    providers: nextProviders,
     history: history ?? previous?.history ?? [],
     deprecation: {
       activatedAt,
@@ -235,7 +248,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     provider === 'bot' ? 'latest.json' : 'providers/moneybox/latest.json',
   );
   const input = process.env.FX_FETCH_FAILED === '1' ? null : JSON.parse(readFileSync(path, 'utf8'));
+  // v3 發布不得改寫 v2 latest.json（expand–contract：v2 棄用標記待 S4 公開切換時處理）。
   const result = await publishRelease(resolve(dataRoot, 'v3'), { [provider]: input });
-  const snapshot = result.snapshots.get(provider);
-  if (snapshot) writeFileSync(path, JSON.stringify(legacyPayload(snapshot, input), null, 2) + '\n');
+  console.log(result.unchanged ? 'v3 release unchanged' : `v3 release ${result.current.releaseId}`);
 }

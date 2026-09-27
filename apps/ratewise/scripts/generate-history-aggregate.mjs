@@ -4,6 +4,7 @@ import { existsSync, readFileSync, writeFileSync, renameSync, readdirSync } from
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { isHistoryDate, isValidHistorySnapshot } from '../../shared/fx/history.mjs';
+import { assertMoneyBoxRatesIntegrity } from '../../../scripts/fetch-moneybox-rates.js';
 
 export function buildHistoryAggregate(entries) {
   for (const { date, data } of entries) {
@@ -48,9 +49,8 @@ export function generateHistoryAggregate(root, now = new Date()) {
   return aggregate;
 }
 
-// FX 核心依賴 decimal.js；update-historical-rates.yml 未安裝依賴，故僅 MoneyBox 路徑延遲載入。
-export async function generateMoneyboxHistoryAggregate(root) {
-  const { normalizeMoneyboxSnapshot } = await import('../../shared/fx/index.ts');
+/** v2 資料管線不得依賴 pnpm install：以抓取端同一套零依賴完整性守門驗證歷史檔。 */
+export function generateMoneyboxHistoryAggregate(root) {
   const folder = join(root, 'public/rates/providers/moneybox');
   const output = join(folder, 'history-30d.json');
   const snapshots = readdirSync(join(folder, 'history'))
@@ -61,8 +61,12 @@ export async function generateMoneyboxHistoryAggregate(root) {
     .map((file) => {
       const date = file.slice(0, -5);
       const raw = JSON.parse(readFileSync(join(folder, 'history', file), 'utf8'));
-      if (!isHistoryDate(date) || !normalizeMoneyboxSnapshot(raw).length)
-        throw new Error(`Invalid MoneyBox history: ${date}`);
+      if (!isHistoryDate(date)) throw new Error(`Invalid MoneyBox history: ${date}`);
+      try {
+        assertMoneyBoxRatesIntegrity(raw?.rates, null);
+      } catch (cause) {
+        throw new Error(`Invalid MoneyBox history: ${date}`, { cause });
+      }
       return { date, raw };
     });
   const previousCount = existsSync(output)
@@ -78,6 +82,6 @@ export async function generateMoneyboxHistoryAggregate(root) {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   const root = resolve(process.env.RATE_DATA_ROOT ?? '.');
-  if (process.env.FX_PROVIDER === 'moneybox') await generateMoneyboxHistoryAggregate(root);
+  if (process.env.FX_PROVIDER === 'moneybox') generateMoneyboxHistoryAggregate(root);
   else generateHistoryAggregate(root);
 }

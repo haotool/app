@@ -30,8 +30,12 @@ on:
       - '.github/workflows/update-latest-rates.yml'
 
 jobs:
+  # v2 管線：fetch → commit → purge。刻意不安裝依賴、不跑 generate:fx、不發布 v3，
+  # 讓 v3 發布或依賴安裝失敗永遠不會阻斷既有公開資料更新。
   update-latest:
     runs-on: ubuntu-latest
+    outputs:
+      fetch_ok: ${{ steps.fetch-status.outputs.ok }}
 
     permissions:
       contents: write
@@ -54,7 +58,7 @@ jobs:
           git push -u origin data
           git checkout data
 
-      - name: Checkout the complete publisher at the triggering code SHA
+      - name: Checkout fetch scripts at the triggering code SHA
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ github.sha }}
@@ -65,13 +69,6 @@ jobs:
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: '24'
-
-      - name: Install exact publisher dependencies
-        working-directory: _fx-code
-        run: |
-          corepack enable
-          corepack pnpm install --frozen-lockfile --ignore-scripts
-          corepack pnpm generate:fx --check
 
       - name: Log schedule diagnostics
         env:
@@ -125,30 +122,18 @@ jobs:
             echo "❌ Both direct and browser fetch failed"
           fi
 
-      - name: Publish verified v3 release
-        if: vars.RATEWISE_FX_V3_ENABLED == 'true'
-        env:
-          FX_PROVIDER: bot
-          FX_DATA_ROOT: ${{ github.workspace }}/public/rates
-          FX_FETCH_FAILED: ${{ steps.fetch-status.outputs.ok != 'true' && '1' || '0' }}
-        run: node _fx-code/scripts/publish-fx-release.mjs
-
       - name: Check for changes in latest.json
         id: git-check
-        if: steps.fetch-status.outputs.ok == 'true' || vars.RATEWISE_FX_V3_ENABLED == 'true'
+        if: steps.fetch-status.outputs.ok == 'true'
         run: |
-          changed=false
-          git diff --quiet public/rates/latest.json || changed=true
-          if [[ -n "$(git status --short --untracked-files=all -- public/rates/v3/)" ]]; then changed=true; fi
-          echo "changed=${changed}" >> $GITHUB_OUTPUT
+          git diff --quiet public/rates/latest.json || echo "changed=true" >> $GITHUB_OUTPUT
 
       - name: Commit and push changes
-        if: steps.git-check.outputs.changed == 'true' && (steps.fetch-status.outputs.ok == 'true' || vars.RATEWISE_FX_V3_ENABLED == 'true')
+        if: steps.fetch-status.outputs.ok == 'true' && steps.git-check.outputs.changed == 'true'
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add public/rates/latest.json
-          if [ -f public/rates/v3/current.json ]; then git add public/rates/v3/; fi
 
           # 取得更新資訊
           UPDATE_TIME=$(node -p "JSON.parse(require('fs').readFileSync('public/rates/latest.json')).updateTime")
@@ -198,36 +183,31 @@ jobs:
           fi
 
       - name: Purge jsDelivr CDN cache
-        if: steps.git-check.outputs.changed == 'true' && (steps.fetch-status.outputs.ok == 'true' || vars.RATEWISE_FX_V3_ENABLED == 'true')
+        if: steps.fetch-status.outputs.ok == 'true' && steps.git-check.outputs.changed == 'true'
         run: |
-          PURGE_URLS=("https://purge.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json")
-          if [ -f public/rates/v3/current.json ]; then
-            PURGE_URLS+=("https://purge.jsdelivr.net/gh/haotool/app@data/public/rates/v3/current.json")
-          fi
+          PURGE_URL="https://purge.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json"
           echo "🧹 Purging jsDelivr CDN cache..."
-          for PURGE_URL in "${PURGE_URLS[@]}"; do
-            for i in 1 2 3; do
-              HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$PURGE_URL")
-              if [ "$HTTP_STATUS" = "200" ]; then
-                echo "✅ CDN cache purged successfully (attempt $i): $PURGE_URL"
-                break
-              else
-                echo "⚠️ Purge attempt $i failed (HTTP $HTTP_STATUS): $PURGE_URL"
-                if [ $i -lt 3 ]; then sleep 5; fi
-              fi
-            done
+          for i in 1 2 3; do
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$PURGE_URL")
+            if [ "$HTTP_STATUS" = "200" ]; then
+              echo "✅ CDN cache purged successfully (attempt $i)"
+              break
+            else
+              echo "⚠️ Purge attempt $i failed (HTTP $HTTP_STATUS)"
+              if [ $i -lt 3 ]; then sleep 5; fi
+            fi
           done
 
       - name: Refresh latest.json from remote data branch
         id: refresh-remote
-        if: steps.git-check.outputs.changed == 'true' && (steps.fetch-status.outputs.ok == 'true' || vars.RATEWISE_FX_V3_ENABLED == 'true')
+        if: steps.fetch-status.outputs.ok == 'true' && steps.git-check.outputs.changed == 'true'
         continue-on-error: true
         run: |
           # 收尾同步僅用於摘要校對，不得覆蓋已成功的資料推送結果。
           git rebase --abort 2>/dev/null || true
           for i in 1 2 3; do
             echo "🔄 Refreshing latest.json from remote data branch (try $i/3)..."
-            if git fetch origin data && git checkout origin/data -- public/rates/latest.json && { [ ! -d public/rates/v3 ] || git checkout origin/data -- public/rates/v3/; }; then
+            if git fetch origin data && git checkout origin/data -- public/rates/latest.json; then
               echo "✅ Remote refresh successful"
               exit 0
             fi
@@ -321,3 +301,51 @@ jobs:
 
           echo "## Transient failure tolerated" >> $GITHUB_STEP_SUMMARY
           echo "Data is still fresh (<${STALENESS_THRESHOLD_HOURS}h); next scheduled run retries in 5 minutes." >> $GITHUB_STEP_SUMMARY
+
+  # v3 發布：獨立 job，於 v2 job 之後執行（不論其成敗，以記錄 provider 檢查結果）。
+  # 失敗時本 job 標紅，不使用 continue-on-error；v2 資料已於前一個 job 完成 commit／purge。
+  publish-v3:
+    needs: update-latest
+    if: ${{ always() && vars.RATEWISE_FX_V3_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+    steps:
+      - name: Checkout data branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: data
+          fetch-depth: 0
+
+      - name: Checkout the complete publisher at the triggering code SHA
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.sha }}
+          path: _fx-code
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '24'
+
+      - name: Install exact publisher dependencies
+        working-directory: _fx-code
+        run: |
+          corepack enable
+          corepack pnpm install --frozen-lockfile --ignore-scripts
+          corepack pnpm generate:fx --check
+
+      - name: Publish verified v3 release
+        env:
+          FX_PROVIDER: bot
+          FX_DATA_ROOT: ${{ github.workspace }}/public/rates
+          FX_FETCH_FAILED: ${{ needs.update-latest.outputs.fetch_ok != 'true' && '1' || '0' }}
+        run: node _fx-code/scripts/publish-fx-release.mjs
+
+      - name: Commit, push and purge v3 pointer
+        env:
+          COMMIT_MESSAGE: 'chore(rates): publish bot v3 release'
+        run: bash _fx-code/scripts/commit-fx-v3-release.sh "$COMMIT_MESSAGE"

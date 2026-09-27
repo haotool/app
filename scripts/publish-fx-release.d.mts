@@ -19,6 +19,8 @@ export interface PublicationResult {
   current: { releaseId: string; manifest: ObjectReference };
   manifest: ReleaseManifest;
   snapshots: Map<string, unknown>;
+  /** 內容與 provider 狀態皆未變時為 true，且不寫入新 release。 */
+  unchanged?: boolean;
 }
 
 export function publishRelease(

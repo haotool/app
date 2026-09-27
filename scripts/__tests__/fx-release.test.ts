@@ -31,6 +31,54 @@ describe('v3 publication', () => {
     }
   });
 
+  it('keeps each provider on its own last check result instead of carried_forward', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'fx-release-status-'));
+    const time = '2026-09-21T01:00:00Z';
+    try {
+      const bot = {
+        timestamp: time,
+        sourcePublishedAt: time,
+        details: { USD: { cash: { buy: '31', sell: '32' } } },
+      };
+      await publishRelease(dir, { bot }, time);
+      const next = await publishRelease(
+        dir,
+        { moneybox: { timestamp: time, rates: { TWD: { buy: '46', sell: '45' } } } },
+        '2026-09-21T01:05:00Z',
+      );
+      const status = Object.fromEntries(
+        next.manifest.providers.map((p) => [p.providerId, p.checkStatus]),
+      );
+      expect(status).toEqual({ bot: 'ok', moneybox: 'ok' });
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('does not write a new release when content and provider status are unchanged', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'fx-release-churn-'));
+    const time = '2026-09-21T01:00:00Z';
+    try {
+      const bot = {
+        timestamp: time,
+        sourcePublishedAt: time,
+        details: { USD: { cash: { buy: '31', sell: '32' } } },
+      };
+      const first = await publishRelease(dir, { bot }, time);
+      const pointer = readFileSync(join(dir, 'current.json'), 'utf8');
+      const second = await publishRelease(dir, { bot }, '2026-09-21T01:05:00Z');
+      expect(second.unchanged).toBe(true);
+      expect(second.current.releaseId).toBe(first.current.releaseId);
+      expect(readFileSync(join(dir, 'current.json'), 'utf8')).toBe(pointer);
+      const failed = await publishRelease(dir, { bot: null }, '2026-09-21T01:10:00Z');
+      expect(failed.unchanged).toBeUndefined();
+      const stillFailed = await publishRelease(dir, { bot: null }, '2026-09-21T01:15:00Z');
+      expect(stillFailed.unchanged).toBe(true);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it('refuses to advance current when a carried snapshot is missing and keeps legacy detail metadata', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'fx-release-integrity-'));
     try {

@@ -77,7 +77,7 @@
     "changeset:version": "changeset version && pnpm run update:release-metadata",
     "changeset:publish": "pnpm build && changeset publish",
     "changeset:status": "changeset status",
-    "test:fx": "vitest run apps/shared/fx scripts/__tests__/fx-release.test.ts",
+    "test:fx": "vitest run apps/shared/fx scripts/__tests__/fx-release.test.ts scripts/__tests__/fx-data-pipeline.test.ts",
     "generate:fx": "node scripts/generate-fx-contract.mjs"
   },
   "devDependencies": {

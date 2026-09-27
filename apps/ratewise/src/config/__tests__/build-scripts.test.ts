@@ -681,7 +681,7 @@ describe('ratewise build scripts', () => {
     const workflowSource = await readMoneyBoxWorkflow();
 
     expect(workflowSource).toContain('branches:\n      - main');
-    expect(workflowSource).toContain('Checkout the complete publisher at the triggering code SHA');
+    expect(workflowSource).toContain('Checkout fetch scripts at the triggering code SHA');
     expect(workflowSource).toContain('path: _fx-code');
     expect(workflowSource).toContain('corepack pnpm generate:fx --check');
     expect(workflowSource).not.toContain(
@@ -691,7 +691,9 @@ describe('ratewise build scripts', () => {
     expect(workflowSource).not.toContain(
       'git checkout FETCH_HEAD -- scripts/fetch-moneybox-rates.js',
     );
-    expect(workflowSource).toContain('MONEYBOX_FETCH_OUTPUT_FILE: .moneybox-current-fetch.json');
+    expect(workflowSource).toContain(
+      'MONEYBOX_FETCH_OUTPUT_FILE: ${{ github.workspace }}/.moneybox-current-fetch.json',
+    );
     expect(workflowSource).toContain(
       'MONEYBOX_LATEST_FILE: public/rates/providers/moneybox/latest.json',
     );
@@ -735,13 +737,14 @@ describe('ratewise build scripts', () => {
     const moneyBoxWorkflow = await readMoneyBoxWorkflow();
 
     for (const workflow of [latestWorkflow, moneyBoxWorkflow]) {
-      expect(workflow).toContain("if: vars.RATEWISE_FX_V3_ENABLED == 'true'");
+      expect(workflow).toContain("if: ${{ always() && vars.RATEWISE_FX_V3_ENABLED == 'true' }}");
       expect(workflow).toContain('FX_FETCH_FAILED:');
-      expect(workflow).toContain('public/rates/v3/');
+      expect(workflow).toContain('commit-fx-v3-release.sh');
+      expect(workflow).not.toContain('git add public/rates/v3/');
     }
-    expect(latestWorkflow).toContain('git diff --quiet public/rates/latest.json || changed=true');
+    expect(latestWorkflow).toContain('FX_FETCH_FAILED: ${{ needs.update-latest.outputs.fetch_ok');
     expect(moneyBoxWorkflow).toContain(
-      'if [[ "${{ steps.fetch-rates.outcome }}" == "success" ]]; then',
+      'FX_FETCH_FAILED: ${{ needs.update-moneybox.outputs.fetch_outcome',
     );
   });
 

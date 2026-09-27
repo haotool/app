@@ -416,24 +416,9 @@ async function main() {
     console.log('🔍 Checking for rate changes...');
     const hasChanges = hasRateChanges(ratesData);
 
+    // 牌價未變不改寫 latest.json：避免每輪 commit 與 CDN purge（成功檢查時間不落盤）。
     if (!hasChanges) {
-      const previous = JSON.parse(readFileSync(OUTPUT_FILE, 'utf8'));
-      writeFileSync(
-        OUTPUT_FILE,
-        JSON.stringify(
-          {
-            ...previous,
-            sourceQuotes: ratesData.sourceQuotes,
-            fetchedAt: ratesData.fetchedAt,
-            lastSuccessfulCheckAt: ratesData.lastSuccessfulCheckAt,
-            sourcePublishedAt: ratesData.sourcePublishedAt,
-          },
-          null,
-          2,
-        ),
-        'utf8',
-      );
-      console.log('ℹ️  Rates unchanged; successful source check recorded');
+      console.log('ℹ️  No rate changes detected, skipping update');
       console.log('📊 Current rates are still valid');
       return;
     }
