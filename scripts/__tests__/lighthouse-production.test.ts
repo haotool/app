@@ -118,6 +118,12 @@ describe('Lighthouse CI 觸發判定（ci.yml lighthouse-changes）', () => {
     expect(filterLine).not.toMatch(/"\$BASE"\s+"\$HEAD"/);
   });
 
+  // pull_request.base.sha 在 PR 合入新 main 後可能過期，merge-base 退回舊點仍會誤觸發。
+  it('BASE 取現行 base 分支頭，不用可能過期的 pull_request.base.sha', () => {
+    expect(workflow).toContain('BASE="origin/$BASE_REF"');
+    expect(workflow).not.toContain('BASE="${{ github.event.pull_request.base.sha }}"');
+  });
+
   it('觸發樣式涵蓋依賴變更，且根檔案以 $ 錨定避免誤中其他 app', () => {
     expect(filterLine).toContain('package\\.json$');
     expect(filterLine).toContain('pnpm-lock\\.yaml$');
