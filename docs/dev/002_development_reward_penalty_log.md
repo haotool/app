@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+381
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+382
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-09-28
+- ID：reward-seo-validation-after-pages-deploy
+- 原因：SEO Production Validation 由 Release 完成觸發並固定 sleep 180 等 Zeabur，與補派的 Pages 部署競態，讀到舊 sw.js 誤報 precache 404。
+- 解法：改由 main 的 Deploy Cloudflare Pages 成功後觸發並排除 PR run，移除 Zeabur 固定等待，同步 CLAUDE.md 規則。
 
 - 日期：2026-09-28
 - ID：reward-release-dispatch-pages-and-a320-hreflang

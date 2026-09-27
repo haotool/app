@@ -252,6 +252,7 @@ gh pr merge <PR_NUMBER> --squash --delete-branch=false
 - app 清單 **必須**由 `discoverApps()` 自動發現；禁止在腳本或 workflow 硬編碼 app 名稱
 - 此腳本只負責 `200 / non200 / timeout` 資源可用性；`verify-all-apps.mjs` 保持 sitemap / robots / llms / 404 等語義驗證
 - `SEO Production Validation` workflow 的 `health-check` 應先跑資源可用性檢查，再跑語義檢查
+- `SEO Production Validation` 由 main 的 `Deploy Cloudflare Pages` 成功後觸發（不得改回 Release 觸發或固定 sleep），避免與 Pages 切版競態讀到舊 `sw.js` 而誤判 precache 404
 - RateWise 發版後必須額外執行 `VERIFY_PRECACHE_SOURCE=live VERIFY_BASE_URL=https://app.haotool.org/ratewise/ node scripts/verify-precache-assets.mjs`
 - 若 live precache 驗證出現「原 URL 404，但 querystring 後可 200」，應判定為 Cloudflare stale edge 404，先 purge CDN 再視為正式站可用
 - RateWise release 若涉及正式站資產更新，必須先用 cache-busting probe 確認 `/ratewise/` 的 `app-version` 已切到目標版本，再執行 Cloudflare purge
