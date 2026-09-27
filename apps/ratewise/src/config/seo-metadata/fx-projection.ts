@@ -10,7 +10,6 @@ export function projectSeoQuote(
   rate: string;
   amount: string;
   quoteId: string;
-  providerSide: 'buy' | 'sell';
   sourcePublishedAt: string | null;
   fetchedAt: string;
 } | null {
@@ -25,7 +24,6 @@ export function projectSeoQuote(
     rate: result.rate,
     amount: result.toAmount,
     quoteId: quote.quoteId,
-    providerSide: quote.providerSide,
     sourcePublishedAt: quote.sourceQuote.sourcePublishedAt,
     fetchedAt: quote.sourceQuote.fetchedAt,
   };

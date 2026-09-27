@@ -62,14 +62,15 @@ function useCurrencyConverter(options: Parameters<typeof useConverter>[0] = {}) 
           subjectCurrency: currency,
           priceCurrency: 'TWD',
           unitAmount: '1',
-          buy: String(value),
-          sell: String(value),
+          providerBuyPrice: String(value),
+          providerSellPrice: String(value),
           sourcePublishedAt: now,
           fetchedAt: now,
           lastSuccessfulCheckAt: now,
           serviceCountry: 'TW',
           deliveryMethod: options.rateType === 'spot' ? 'account' : 'cash',
           channel: options.rateType === 'spot' ? 'online' : 'branch',
+          dataKind: 'published_board' as const,
         }),
       );
     const rate = moneyBoxRateMock.rate;
@@ -81,8 +82,8 @@ function useCurrencyConverter(options: Parameters<typeof useConverter>[0] = {}) 
             subjectCurrency: 'TWD',
             priceCurrency: 'KRW',
             unitAmount: '1',
-            buy: String(rate.sell),
-            sell: String(rate.buy),
+            providerBuyPrice: String(rate.sell),
+            providerSellPrice: String(rate.buy),
             sourcePublishedAt: now,
             fetchedAt: now,
             lastSuccessfulCheckAt: now,
@@ -90,6 +91,7 @@ function useCurrencyConverter(options: Parameters<typeof useConverter>[0] = {}) 
             deliveryMethod: 'cash',
             channel: 'branch',
             branchId: 'myeongdong',
+            dataKind: 'published_board' as const,
           }),
         ]
       : bank;

@@ -10,6 +10,7 @@ import {
   normalizeMoneyboxSnapshot,
   estimate,
   boardMidpoint,
+  FX_PROVIDER_METADATA,
 } from '../../shared/fx/index.ts';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -49,8 +50,8 @@ export function buildSeoExamples(bankPayload, moneyboxPayload = null) {
     results[code] = {
       exampleTWD: 30000,
       foreignAtCash: example.toAmount === null ? null : Number(example.toAmount),
-      cashSell: source.sell === null ? null : Number(source.sell),
-      cashBuy: source.buy === null ? null : Number(source.buy),
+      cashSell: source.providerSellPrice === null ? null : Number(source.providerSellPrice),
+      cashBuy: source.providerBuyPrice === null ? null : Number(source.providerBuyPrice),
       bankMid: boardMidpoint(source) === null ? null : Number(boardMidpoint(source)),
       spotAvailable: normalizeBankSnapshot(bankPayload).some(
         (q) =>
@@ -77,7 +78,7 @@ export function buildSeoExamples(bankPayload, moneyboxPayload = null) {
             nameEn: 'Myeongdong Exchange',
             providerId: sourceQuote.providerId,
             source: 'MoneyBox',
-            sourceUrl: sourceQuote.sourceUrl,
+            sourceUrl: FX_PROVIDER_METADATA.moneybox.sourceUrl,
             sourcePublishedAt: sourceQuote.sourcePublishedAt,
             fetchedAt: sourceQuote.fetchedAt,
             note: '韓國明洞分店現場現鈔牌告試算；費用與鈔券交付條件須向業者確認。',

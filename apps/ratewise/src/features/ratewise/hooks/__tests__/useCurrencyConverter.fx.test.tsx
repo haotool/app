@@ -29,14 +29,15 @@ const quotes = normalizeQuote({
   subjectCurrency: 'USD',
   priceCurrency: 'TWD',
   unitAmount: '1',
-  buy: '30',
-  sell: '32',
+  providerBuyPrice: '30',
+  providerSellPrice: '32',
   sourcePublishedAt: new Date().toISOString(),
   fetchedAt: new Date().toISOString(),
   lastSuccessfulCheckAt: new Date().toISOString(),
   serviceCountry: 'TW',
   deliveryMethod: 'cash',
   channel: 'branch',
+  dataKind: 'published_board' as const,
 });
 beforeEach(() =>
   useConverterStore.setState({
@@ -133,8 +134,8 @@ it('keeps an explicitly selected two-leg reference out of best recommendations',
   const jpy = normalizeQuote({
     ...quotes[0]!.sourceQuote,
     subjectCurrency: 'JPY',
-    buy: '0.2',
-    sell: '0.25',
+    providerBuyPrice: '0.2',
+    providerSellPrice: '0.25',
   });
   useConverterStore.setState({ fromCurrency: 'USD', toCurrency: 'JPY' });
   const { result } = renderHook(() =>
@@ -159,13 +160,13 @@ it('exposes applicable provider quotes and ranks EXACT_OUT by required payment',
   const cheaper = normalizeQuote({
     ...quotes[0]!.sourceQuote,
     providerId: 'third-bank',
-    sell: '30',
+    providerSellPrice: '30',
   });
   const ineligible = normalizeQuote({
     ...quotes[0]!.sourceQuote,
     providerId: 'wrong-branch',
     branchId: 'other',
-    sell: '1',
+    providerSellPrice: '1',
   });
   const { result } = renderHook(() =>
     useCurrencyConverter({ fxQuotes: [...quotes, ...cheaper, ...ineligible], rateType: 'cash' }),
@@ -193,8 +194,8 @@ it.each(['stale', 'unknown'] as const)(
     const second = normalizeQuote({
       ...quotes[0]!.sourceQuote,
       subjectCurrency: 'JPY',
-      buy: '0.2',
-      sell: '0.25',
+      providerBuyPrice: '0.2',
+      providerSellPrice: '0.25',
     });
     useConverterStore.setState({ fromCurrency: 'USD', toCurrency: 'JPY' });
     const { result } = renderHook(() =>
@@ -214,8 +215,8 @@ it('discloses a failed provider check for a still-fresh explicitly selected two-
     ...normalizeQuote({
       ...quotes[0]!.sourceQuote,
       subjectCurrency: 'JPY',
-      buy: '0.2',
-      sell: '0.25',
+      providerBuyPrice: '0.2',
+      providerSellPrice: '0.25',
     }),
   ];
   fxFeed.providerStatuses.set('second-bank', 'failed');

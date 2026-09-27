@@ -59,7 +59,9 @@ for (const path of CURRENCY_SEO_PATHS) {
       ? { schemaVersion: '3.0', legacySchemaVersion: API_SEMANTICS_SCHEMA_VERSION }
       : { schemaVersion: API_SEMANTICS_SCHEMA_VERSION }),
     semanticsDoc: API_SEMANTICS_DOC.publicUrl,
-    semanticFieldMapping: buildSemanticFieldMapping(),
+    ...(FX_V3_PUBLIC
+      ? { $schema: 'https://app.haotool.org/ratewise/api/v3/contract.schema.json' }
+      : { semanticFieldMapping: buildSemanticFieldMapping() }),
     slug,
     pageUrl: `${SITE_CONFIG.url}${slug}/`,
     liveRateUrl: `${CDN_BASE_URL}/latest.json`,

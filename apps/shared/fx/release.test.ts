@@ -25,7 +25,7 @@ describe('immutable release transport', () => {
 });
 
 import { FxReleaseError, loadRelease, restoreRelease } from './release';
-import { normalizeBankSnapshot } from './index';
+import { buildProviderSnapshot, buildReleaseManifest, normalizeBankSnapshot } from './index';
 
 describe('release atomic unit', () => {
   it('classifies an unpublished current pointer separately from integrity failures', async () => {
@@ -44,19 +44,17 @@ describe('release atomic unit', () => {
 
   it('loads latest without fetching missing historical objects and rejects partial latest', async () => {
     const time = '2026-09-21T01:00:00Z';
-    const snapshot = {
-      schemaVersion: '3.0',
-      providerId: 'bot',
-      quotes: normalizeBankSnapshot({
+    const snapshot = buildProviderSnapshot(
+      'bot',
+      normalizeBankSnapshot({
         timestamp: time,
         sourcePublishedAt: time,
         details: { USD: { cash: { buy: '31', sell: '32' } } },
       }),
-    };
+    );
     const bytes = JSON.stringify(snapshot),
       sha256 = await hashBytes(bytes);
-    const manifest = {
-      schemaVersion: '3.0',
+    const manifest = buildReleaseManifest({
       generatedAt: time,
       providers: [
         {
@@ -74,7 +72,7 @@ describe('release atomic unit', () => {
         },
       ],
       deprecation: { activatedAt: null, sunsetAt: null, replacement: 'https://example.test/' },
-    };
+    });
     const manifestText = JSON.stringify(manifest),
       manifestHash = await hashBytes(manifestText);
     const current = {
@@ -112,20 +110,19 @@ describe('release atomic unit', () => {
 
   it('rejects a locally persisted snapshot whose bytes belong to another release', async () => {
     const time = '2026-09-21T01:00:00Z';
-    const makeSnapshot = (sell: string) => ({
-      schemaVersion: '3.0' as const,
-      providerId: 'bot',
-      quotes: normalizeBankSnapshot({
-        timestamp: time,
-        sourcePublishedAt: time,
-        details: { USD: { cash: { buy: '31', sell } } },
-      }),
-    });
+    const makeSnapshot = (sell: string) =>
+      buildProviderSnapshot(
+        'bot',
+        normalizeBankSnapshot({
+          timestamp: time,
+          sourcePublishedAt: time,
+          details: { USD: { cash: { buy: '31', sell } } },
+        }),
+      );
     const snapshotA = JSON.stringify(makeSnapshot('32'));
     const snapshotB = JSON.stringify(makeSnapshot('33'));
     const snapshotAHash = await hashBytes(snapshotA);
-    const manifest = {
-      schemaVersion: '3.0' as const,
+    const manifest = buildReleaseManifest({
       generatedAt: time,
       providers: [
         {
@@ -137,7 +134,7 @@ describe('release atomic unit', () => {
       ],
       history: [],
       deprecation: { activatedAt: null, sunsetAt: null, replacement: 'https://example.test/' },
-    };
+    });
     const manifestBytes = JSON.stringify(manifest);
     const manifestHash = await hashBytes(manifestBytes);
     const current = {
@@ -153,8 +150,8 @@ describe('release atomic unit', () => {
       snapshotBytes: [snapshotA],
     });
     expect(
-      restored?.snapshots[0]?.quotes.find((quote) => quote.providerSide === 'sell')?.sourceQuote
-        .sell,
+      restored?.snapshots[0]?.quotes.find((quote) => quote.fromCurrency === 'TWD')?.sourceQuote
+        .providerSellPrice,
     ).toBe('32');
     expect(
       await restoreRelease({

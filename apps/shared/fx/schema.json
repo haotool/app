@@ -25,7 +25,8 @@
           "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$",
           "maxLength": 512
         },
-        "buy": {
+        "providerBuyPrice": {
+          "description": "業者買入 subjectCurrency 的牌告價：每 unitAmount 單位 subjectCurrency 的 priceCurrency 金額；業者未報價為 null",
           "anyOf": [
             {
               "type": "string",
@@ -37,7 +38,8 @@
             }
           ]
         },
-        "sell": {
+        "providerSellPrice": {
+          "description": "業者賣出 subjectCurrency 的牌告價：每 unitAmount 單位 subjectCurrency 的 priceCurrency 金額；業者未報價為 null",
           "anyOf": [
             {
               "type": "string",
@@ -114,8 +116,7 @@
               "maxLength": 512
             }
           },
-          "required": ["currency", "min", "max"],
-          "additionalProperties": false
+          "required": ["currency", "min", "max"]
         },
         "qualifications": {
           "type": "array",
@@ -127,10 +128,6 @@
         },
         "feeStatus": {
           "enum": ["unknown", "no_additional_fee", "unsupported"]
-        },
-        "sourceUrl": {
-          "type": "string",
-          "maxLength": 512
         },
         "originalBuyField": {
           "type": "string",
@@ -157,6 +154,14 @@
           "minLength": 1,
           "maxLength": 512,
           "pattern": "^https://"
+        },
+        "providerBuyUnavailableReason": {
+          "enum": ["not_quoted", "not_collected", "market_closed", "suppressed"],
+          "description": "providerBuyPrice 為 null 的原因；省略代表 not_quoted"
+        },
+        "providerSellUnavailableReason": {
+          "enum": ["not_quoted", "not_collected", "market_closed", "suppressed"],
+          "description": "providerSellPrice 為 null 的原因；省略代表 not_quoted"
         }
       },
       "required": [
@@ -164,27 +169,31 @@
         "subjectCurrency",
         "priceCurrency",
         "unitAmount",
-        "buy",
-        "sell",
+        "providerBuyPrice",
+        "providerSellPrice",
         "sourcePublishedAt",
         "fetchedAt",
         "lastSuccessfulCheckAt",
         "serviceCountry",
         "deliveryMethod",
-        "channel"
-      ],
-      "additionalProperties": false
+        "channel",
+        "dataKind"
+      ]
     },
     "QuoteSnapshot": {
       "type": "object",
       "properties": {
         "quoteId": {
           "type": "string",
-          "maxLength": 20000
+          "maxLength": 256,
+          "pattern": "^fx3:[^@\\s]+@[0-9T:.+\\-Z]+$",
+          "description": "{quoteSeriesId}@{sourcePublishedAt|fetchedAt}"
         },
         "quoteSeriesId": {
           "type": "string",
-          "maxLength": 20000
+          "maxLength": 256,
+          "pattern": "^fx3:[^:@\\s]+:(cash|account):(branch|online|atm|unknown):[A-Z]{2}:[^:@\\s]+:[A-Z]{3}-[A-Z]{3}$",
+          "description": "fx3:{provider}:{deliveryMethod}:{channel}:{country}:{branch|-}:{from}-{to}"
         },
         "providerId": {
           "type": "string",
@@ -200,13 +209,11 @@
           "pattern": "^[A-Z]{3}$",
           "maxLength": 512
         },
-        "providerSide": {
-          "enum": ["buy", "sell"]
-        },
         "status": {
           "enum": ["available", "unavailable"]
         },
         "rate": {
+          "description": "每 1 fromCurrency 可取得的 toCurrency；來源直接值保留原始位數，倒數保留 12 位小數 ROUND_HALF_EVEN",
           "anyOf": [
             {
               "type": "string",
@@ -219,7 +226,14 @@
           ]
         },
         "unavailableReason": {
-          "enum": ["not_quoted", null]
+          "enum": ["not_quoted", "not_collected", "market_closed", "suppressed", null],
+          "description": "status=unavailable 的原因；null 代表可用。對應 ECB CL_OBS_STATUS。",
+          "x-ecbObsStatus": {
+            "not_quoted": "M",
+            "not_collected": "L",
+            "market_closed": "H",
+            "suppressed": "Q"
+          }
         },
         "sourceQuote": {
           "$ref": "#/$defs/SourceQuote"
@@ -234,14 +248,12 @@
         "providerId",
         "fromCurrency",
         "toCurrency",
-        "providerSide",
         "status",
         "rate",
         "unavailableReason",
         "sourceQuote",
         "methodVersion"
-      ],
-      "additionalProperties": false
+      ]
     },
     "EstimateRequest": {
       "type": "object",
@@ -320,8 +332,7 @@
           "enum": ["unknown", "no_additional_fee", "unsupported"]
         }
       },
-      "required": ["status", "fromAmount", "toAmount", "quoteId", "rate", "reason", "feeStatus"],
-      "additionalProperties": false
+      "required": ["status", "fromAmount", "toAmount", "quoteId", "rate", "reason", "feeStatus"]
     },
     "SelectionContext": {
       "type": "object",
@@ -363,7 +374,6 @@
     },
     "DerivedCrossQuote": {
       "type": "object",
-      "additionalProperties": false,
       "properties": {
         "kind": {
           "const": "derived_cross"
@@ -415,8 +425,7 @@
           "pattern": "^[a-f0-9]{64}$"
         }
       },
-      "required": ["path", "sha256"],
-      "additionalProperties": false
+      "required": ["path", "sha256"]
     },
     "Provider": {
       "type": "object",
@@ -467,12 +476,14 @@
         "termsUrl",
         "redistributionStatus",
         "attribution"
-      ],
-      "additionalProperties": false
+      ]
     },
     "ProviderSnapshot": {
       "type": "object",
       "properties": {
+        "$schema": {
+          "const": "https://app.haotool.org/ratewise/api/v3/contract.schema.json"
+        },
         "schemaVersion": {
           "const": "3.0"
         },
@@ -490,18 +501,42 @@
           "maxItems": 10000
         }
       },
-      "required": ["schemaVersion", "providerId", "quotes"],
-      "additionalProperties": false
+      "required": ["$schema", "schemaVersion", "providerId", "quotes"]
     },
     "ReleaseManifest": {
       "type": "object",
       "properties": {
+        "$schema": {
+          "const": "https://app.haotool.org/ratewise/api/v3/contract.schema.json"
+        },
         "schemaVersion": {
           "const": "3.0"
         },
         "generatedAt": {
           "type": "string",
           "format": "date-time"
+        },
+        "publisher": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "url": {
+              "type": "string",
+              "format": "uri"
+            },
+            "termsUrl": {
+              "type": "string",
+              "format": "uri"
+            },
+            "requiredText": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": ["name", "url", "termsUrl", "requiredText"]
         },
         "providers": {
           "type": "array",
@@ -522,10 +557,56 @@
               "lastSuccessfulCheckAt": {
                 "type": "string",
                 "format": "date-time"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 512
+              },
+              "kind": {
+                "enum": ["bank", "exchange_shop"]
+              },
+              "sourceUrl": {
+                "type": "string",
+                "format": "uri"
+              },
+              "termsUrl": {
+                "type": ["string", "null"]
+              },
+              "redistributionStatus": {
+                "enum": ["verified", "unknown", "restricted"]
+              },
+              "attribution": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 512
+              },
+              "nextSourceCheckAt": {
+                "description": "下次檢查時間；不承諾上游必然更新，未排程承諾時為 null",
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
-            "required": ["providerId", "snapshot", "checkStatus", "lastSuccessfulCheckAt"],
-            "additionalProperties": false
+            "required": [
+              "providerId",
+              "snapshot",
+              "checkStatus",
+              "lastSuccessfulCheckAt",
+              "name",
+              "kind",
+              "sourceUrl",
+              "termsUrl",
+              "redistributionStatus",
+              "attribution",
+              "nextSourceCheckAt"
+            ]
           },
           "maxItems": 1000
         },
@@ -547,8 +628,7 @@
                 "$ref": "#/$defs/ObjectReference"
               }
             },
-            "required": ["providerId", "date", "snapshot"],
-            "additionalProperties": false
+            "required": ["providerId", "date", "snapshot"]
           },
           "maxItems": 100000
         },
@@ -583,12 +663,26 @@
               "maxLength": 512
             }
           },
-          "required": ["activatedAt", "sunsetAt", "replacement"],
-          "additionalProperties": false
+          "required": ["activatedAt", "sunsetAt", "replacement"]
+        },
+        "calculationRule": {
+          "const": "toAmount = fromAmount × rate（rate 為每 1 fromCurrency 的 toCurrency）；EXACT_OUT 以來源原值計算 fromAmount = ceil_minor(toAmount × unitAmount ÷ providerPrice)；倒數 rate 保留 12 位小數 ROUND_HALF_EVEN；金額依 ISO 4217 minor unit 捨入"
+        },
+        "quoteAvailability": {
+          "const": "indicative_not_transaction_guarantee"
         }
       },
-      "required": ["schemaVersion", "generatedAt", "providers", "history", "deprecation"],
-      "additionalProperties": false
+      "required": [
+        "$schema",
+        "schemaVersion",
+        "generatedAt",
+        "publisher",
+        "providers",
+        "history",
+        "deprecation",
+        "calculationRule",
+        "quoteAvailability"
+      ]
     },
     "CurrentRelease": {
       "type": "object",
@@ -604,8 +698,7 @@
           "$ref": "#/$defs/ObjectReference"
         }
       },
-      "required": ["schemaVersion", "releaseId", "manifest"],
-      "additionalProperties": false
+      "required": ["schemaVersion", "releaseId", "manifest"]
     },
     "DerivedEstimateResult": {
       "type": "object",
@@ -683,46 +776,7 @@
         "kind",
         "legs",
         "recommendable"
-      ],
-      "additionalProperties": false
+      ]
     }
-  },
-  "oneOf": [
-    {
-      "$ref": "#/$defs/SourceQuote"
-    },
-    {
-      "$ref": "#/$defs/QuoteSnapshot"
-    },
-    {
-      "$ref": "#/$defs/EstimateRequest"
-    },
-    {
-      "$ref": "#/$defs/EstimateResult"
-    },
-    {
-      "$ref": "#/$defs/SelectionContext"
-    },
-    {
-      "$ref": "#/$defs/DerivedCrossQuote"
-    },
-    {
-      "$ref": "#/$defs/ObjectReference"
-    },
-    {
-      "$ref": "#/$defs/Provider"
-    },
-    {
-      "$ref": "#/$defs/ProviderSnapshot"
-    },
-    {
-      "$ref": "#/$defs/ReleaseManifest"
-    },
-    {
-      "$ref": "#/$defs/CurrentRelease"
-    },
-    {
-      "$ref": "#/$defs/DerivedEstimateResult"
-    }
-  ]
+  }
 }

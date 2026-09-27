@@ -34,22 +34,23 @@ const source = {
   subjectCurrency: 'USD',
   priceCurrency: 'TWD',
   unitAmount: '1',
-  buy: '30',
-  sell: '32',
+  providerBuyPrice: '30',
+  providerSellPrice: '32',
   sourcePublishedAt: '2020-01-01T00:00:00Z',
   fetchedAt: now,
   lastSuccessfulCheckAt: now,
   serviceCountry: 'TW',
   deliveryMethod: 'cash' as const,
   channel: 'branch' as const,
+  dataKind: 'published_board' as const,
 };
 const rows = [
   ...normalizeQuote(source),
   ...normalizeQuote({
     ...source,
     subjectCurrency: 'JPY',
-    buy: '0.2',
-    sell: '0.25',
+    providerBuyPrice: '0.2',
+    providerSellPrice: '0.25',
     sourcePublishedAt: now,
   }),
 ];

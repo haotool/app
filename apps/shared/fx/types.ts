@@ -4,27 +4,23 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export type FxContract =
-  | SourceQuote
-  | QuoteSnapshot
-  | EstimateRequest
-  | EstimateResult
-  | SelectionContext
-  | DerivedCrossQuote
-  | ObjectReference
-  | Provider
-  | ProviderSnapshot
-  | ReleaseManifest
-  | CurrentRelease
-  | DerivedEstimateResult;
-
+/**
+ * This interface was referenced by `FxContract`'s JSON-Schema
+ * via the `definition` "SourceQuote".
+ */
 export interface SourceQuote {
   providerId: string;
   subjectCurrency: string;
   priceCurrency: string;
   unitAmount: string;
-  buy: string | null;
-  sell: string | null;
+  /**
+   * 業者買入 subjectCurrency 的牌告價：每 unitAmount 單位 subjectCurrency 的 priceCurrency 金額；業者未報價為 null
+   */
+  providerBuyPrice: string | null;
+  /**
+   * 業者賣出 subjectCurrency 的牌告價：每 unitAmount 單位 subjectCurrency 的 priceCurrency 金額；業者未報價為 null
+   */
+  providerSellPrice: string | null;
   sourcePublishedAt: string | null;
   fetchedAt: string;
   lastSuccessfulCheckAt: string;
@@ -46,33 +42,63 @@ export interface SourceQuote {
    */
   qualifications?: string[];
   feeStatus?: 'unknown' | 'no_additional_fee' | 'unsupported';
-  sourceUrl?: string;
   originalBuyField?: string;
   originalSellField?: string;
   mappingVersion?: string;
   originalUnitAmount?: string;
-  dataKind?: 'published_board' | 'fixed_fallback' | 'reference' | 'derived_cross';
+  dataKind: 'published_board' | 'fixed_fallback' | 'reference' | 'derived_cross';
   feeEvidenceUrl?: string;
+  /**
+   * providerBuyPrice 為 null 的原因；省略代表 not_quoted
+   */
+  providerBuyUnavailableReason?: 'not_quoted' | 'not_collected' | 'market_closed' | 'suppressed';
+  /**
+   * providerSellPrice 為 null 的原因；省略代表 not_quoted
+   */
+  providerSellUnavailableReason?: 'not_quoted' | 'not_collected' | 'market_closed' | 'suppressed';
 }
+/**
+ * This interface was referenced by `FxContract`'s JSON-Schema
+ * via the `definition` "QuoteSnapshot".
+ */
 export interface QuoteSnapshot {
+  /**
+   * {quoteSeriesId}@{sourcePublishedAt|fetchedAt}
+   */
   quoteId: string;
+  /**
+   * fx3:{provider}:{deliveryMethod}:{channel}:{country}:{branch|-}:{from}-{to}
+   */
   quoteSeriesId: string;
   providerId: string;
   fromCurrency: string;
   toCurrency: string;
-  providerSide: 'buy' | 'sell';
   status: 'available' | 'unavailable';
+  /**
+   * 每 1 fromCurrency 可取得的 toCurrency；來源直接值保留原始位數，倒數保留 12 位小數 ROUND_HALF_EVEN
+   */
   rate: string | null;
-  unavailableReason: 'not_quoted' | null;
+  /**
+   * status=unavailable 的原因；null 代表可用。對應 ECB CL_OBS_STATUS。
+   */
+  unavailableReason: 'not_quoted' | 'not_collected' | 'market_closed' | 'suppressed' | null;
   sourceQuote: SourceQuote;
   methodVersion: '1';
 }
+/**
+ * This interface was referenced by `FxContract`'s JSON-Schema
+ * via the `definition` "EstimateRequest".
+ */
 export interface EstimateRequest {
   fromCurrency: string;
   toCurrency: string;
   amount: string;
   mode: 'EXACT_IN' | 'EXACT_OUT';
 }
+/**
+ * This interface was referenced by `FxContract`'s JSON-Schema
+ * via the `definition` "EstimateResult".
+ */
 export interface EstimateResult {
   status: 'available' | 'unavailable';
   fromAmount: string | null;
@@ -82,6 +108,10 @@ export interface EstimateResult {
   reason: string | null;
   feeStatus: 'unknown' | 'no_additional_fee' | 'unsupported';
 }
+/**
+ * This interface was referenced by `FxContract`'s JSON-Schema
+ * via the `definition` "SelectionContext".
+ */
 export interface SelectionContext {
   now: string;
   country: string;
@@ -91,6 +121,10 @@ export interface SelectionContext {
   denomination?: string;
   qualifications?: string[];
 }
+/**
+ * This interface was referenced by `FxContract`'s JSON-Schema
+ * via the `definition` "DerivedCrossQuote".
+ */
 export interface DerivedCrossQuote {
   kind: 'derived_cross';
   providerId: string;
@@ -104,10 +138,18 @@ export interface DerivedCrossQuote {
   legs: [string, string];
   recommendable: false;
 }
+/**
+ * This interface was referenced by `FxContract`'s JSON-Schema
+ * via the `definition` "ObjectReference".
+ */
 export interface ObjectReference {
   path: string;
   sha256: string;
 }
+/**
+ * This interface was referenced by `FxContract`'s JSON-Schema
+ * via the `definition` "Provider".
+ */
 export interface Provider {
   providerId: string;
   kind: 'bank' | 'exchange_shop';
@@ -121,7 +163,12 @@ export interface Provider {
   redistributionStatus: 'verified' | 'unknown' | 'restricted';
   attribution: string;
 }
+/**
+ * This interface was referenced by `FxContract`'s JSON-Schema
+ * via the `definition` "ProviderSnapshot".
+ */
 export interface ProviderSnapshot {
+  $schema: 'https://app.haotool.org/ratewise/api/v3/contract.schema.json';
   schemaVersion: '3.0';
   providerId: string;
   /**
@@ -130,9 +177,20 @@ export interface ProviderSnapshot {
    */
   quotes: [QuoteSnapshot, ...QuoteSnapshot[]];
 }
+/**
+ * This interface was referenced by `FxContract`'s JSON-Schema
+ * via the `definition` "ReleaseManifest".
+ */
 export interface ReleaseManifest {
+  $schema: 'https://app.haotool.org/ratewise/api/v3/contract.schema.json';
   schemaVersion: '3.0';
   generatedAt: string;
+  publisher: {
+    name: string;
+    url: string;
+    termsUrl: string;
+    requiredText: string;
+  };
   /**
    * @maxItems 1000
    */
@@ -141,6 +199,16 @@ export interface ReleaseManifest {
     snapshot: ObjectReference;
     checkStatus: 'ok' | 'failed' | 'carried_forward';
     lastSuccessfulCheckAt: string;
+    name: string;
+    kind: 'bank' | 'exchange_shop';
+    sourceUrl: string;
+    termsUrl: string | null;
+    redistributionStatus: 'verified' | 'unknown' | 'restricted';
+    attribution: string;
+    /**
+     * 下次檢查時間；不承諾上游必然更新，未排程承諾時為 null
+     */
+    nextSourceCheckAt: string | null;
   }[];
   /**
    * @maxItems 100000
@@ -155,12 +223,22 @@ export interface ReleaseManifest {
     sunsetAt: string | null;
     replacement: string;
   };
+  calculationRule: 'toAmount = fromAmount × rate（rate 為每 1 fromCurrency 的 toCurrency）；EXACT_OUT 以來源原值計算 fromAmount = ceil_minor(toAmount × unitAmount ÷ providerPrice)；倒數 rate 保留 12 位小數 ROUND_HALF_EVEN；金額依 ISO 4217 minor unit 捨入';
+  quoteAvailability: 'indicative_not_transaction_guarantee';
 }
+/**
+ * This interface was referenced by `FxContract`'s JSON-Schema
+ * via the `definition` "CurrentRelease".
+ */
 export interface CurrentRelease {
   schemaVersion: '3.0';
   releaseId: string;
   manifest: ObjectReference;
 }
+/**
+ * This interface was referenced by `FxContract`'s JSON-Schema
+ * via the `definition` "DerivedEstimateResult".
+ */
 export interface DerivedEstimateResult {
   status: 'available' | 'unavailable';
   fromAmount: string | null;

@@ -525,6 +525,13 @@ const pairInfoSchema = {
   ],
 };
 
+const deprecateLegacy = (schemas) =>
+  FX_V3_PUBLIC
+    ? Object.fromEntries(
+        Object.entries(schemas).map(([name, schema]) => [name, { ...schema, deprecated: true }]),
+      )
+    : schemas;
+
 const FX_V3_PATHS = {
   '/public/rates/v3/current.json': {
     get: {
@@ -942,12 +949,15 @@ const openApiSpec = {
   components: {
     schemas: {
       ...(FX_V3_PUBLIC ? FX_V3_SCHEMAS : {}),
-      CurrencyRateDetail: currencyRateDetailSchema,
-      CurrencyRateV2: currencyRateV2Schema,
-      SemanticRateTypeBlock: semanticRateTypeBlockSchema,
-      ExchangeShopRateV2: exchangeShopRateBlockSchema,
-      ExchangeShopRatesResponse: exchangeShopRatesResponseSchema,
-      RatesResponse: ratesResponseSchema,
+      // B3 #10：v3 公開後 v2 legacy schema 一律標 deprecated（expand–contract；公開前維持 main 語意）。
+      ...deprecateLegacy({
+        CurrencyRateDetail: currencyRateDetailSchema,
+        CurrencyRateV2: currencyRateV2Schema,
+        SemanticRateTypeBlock: semanticRateTypeBlockSchema,
+        ExchangeShopRateV2: exchangeShopRateBlockSchema,
+        ExchangeShopRatesResponse: exchangeShopRatesResponseSchema,
+        RatesResponse: ratesResponseSchema,
+      }),
       PairInfo: pairInfoSchema,
       RateProvider: rateProviderSchema,
     },

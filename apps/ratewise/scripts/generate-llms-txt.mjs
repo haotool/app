@@ -268,7 +268,7 @@ ${
   FX_V3_PUBLIC
     ? `# 2. Fetch the manifest and verify each referenced object's SHA-256 before use.
 #    Each provider snapshot contains canonical quotes:
-#    { fromCurrency: "USD", toCurrency: "TWD", rate: "31.355", providerSide: "buy" }
+#    { fromCurrency: "USD", toCurrency: "TWD", rate: "31.355", sourceQuote: { providerBuyPrice: "31.355" } }
 #    rate means target units per 1 source unit; never infer direction from a field name.
 `
     : `# 2. Parse response — key fields:

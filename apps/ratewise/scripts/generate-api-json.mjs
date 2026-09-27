@@ -72,7 +72,10 @@ const latestJson = {
     ? { schemaVersion: '3.0', legacySchemaVersion: API_SEMANTICS_SCHEMA_VERSION }
     : { schemaVersion: API_SEMANTICS_SCHEMA_VERSION }),
   semanticsDoc: API_SEMANTICS_DOC.publicUrl,
-  semanticFieldMapping: buildSemanticFieldMapping(),
+  // B3 #10：宣告 3.0 時以 $schema 取代 v2 semanticFieldMapping，不得並存。
+  ...(FX_V3_PUBLIC
+    ? { $schema: 'https://app.haotool.org/ratewise/api/v3/contract.schema.json' }
+    : { semanticFieldMapping: buildSemanticFieldMapping() }),
   description: FX_V3_PUBLIC
     ? '匯率 API v3 — 以不可變 release manifest、SHA-256 objects 與 fromCurrency→toCurrency quote 為 canonical contract；legacy latest/history 端點僅作相容投影。'
     : '臺灣銀行牌告匯率靜態 API — 資料約每 5 分鐘檢查更新，並提供 App 匯率模式欄位對照',

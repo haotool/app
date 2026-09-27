@@ -9,7 +9,13 @@ import {
   validateCurrentRelease,
   validateProviderSnapshot,
   exportLegacyRates,
+  buildProviderSnapshot,
+  buildReleaseManifest,
 } from '../apps/shared/fx/index.ts';
+import {
+  validateProducerProviderSnapshot,
+  validateProducerReleaseManifest,
+} from '../apps/shared/fx/producer-validators.js';
 
 export const sunsetAt = (activatedAt) =>
   activatedAt === null
@@ -126,7 +132,13 @@ function validateManifestReferences(root, manifest) {
 export async function publishRelease(root, inputs, now = new Date().toISOString(), history) {
   const previous = readPrevious(root);
   // 每個 provider 保留自身最後一次檢查結果；本輪未執行的 provider 不改寫狀態。
-  const providers = new Map((previous?.providers ?? []).map((p) => [p.providerId, p]));
+  const status = ({ providerId, snapshot, checkStatus, lastSuccessfulCheckAt }) => ({
+    providerId,
+    snapshot,
+    checkStatus,
+    lastSuccessfulCheckAt,
+  });
+  const providers = new Map((previous?.providers ?? []).map((p) => [p.providerId, status(p)]));
   const snapshots = new Map();
   for (const [providerId, input] of Object.entries(inputs)) {
     if (input === null) {
@@ -138,8 +150,11 @@ export async function publishRelease(root, inputs, now = new Date().toISOString(
       providerId
     ];
     if (!normalizer) throw new Error(`Unknown provider adapter: ${providerId}`);
-    const data = { schemaVersion: '3.0', providerId, quotes: normalizer(input) };
-    if (!data.quotes.length || !validateProviderSnapshot(data))
+    const quotes = normalizer(input);
+    if (!quotes.length) throw new Error('Empty or invalid provider snapshot');
+    const data = buildProviderSnapshot(providerId, quotes);
+    // producer 嚴格模式：未知或拼錯欄位不得進入公開物件（consumer 則為 tolerant reader）。
+    if (!validateProducerProviderSnapshot(data) || !validateProviderSnapshot(data))
       throw new Error('Empty or invalid provider snapshot');
     const snapshot = writeObject(root, data);
     const prior = providers.get(providerId);
@@ -163,14 +178,13 @@ export async function publishRelease(root, inputs, now = new Date().toISOString(
   if (
     previous &&
     history === undefined &&
-    JSON.stringify(nextProviders) === JSON.stringify(previous.providers)
+    JSON.stringify(nextProviders) === JSON.stringify(previous.providers.map(status))
   ) {
     const current = JSON.parse(readFileSync(resolve(root, 'current.json'), 'utf8'));
     return { current, manifest: previous, snapshots, unchanged: true };
   }
   const activatedAt = previous?.deprecation.activatedAt ?? null;
-  const manifest = {
-    schemaVersion: '3.0',
+  const manifest = buildReleaseManifest({
     generatedAt: now,
     providers: nextProviders,
     history: history ?? previous?.history ?? [],
@@ -179,8 +193,9 @@ export async function publishRelease(root, inputs, now = new Date().toISOString(
       sunsetAt: sunsetAt(activatedAt),
       replacement: 'https://app.haotool.org/ratewise/open-data/',
     },
-  };
-  if (!validManifest(manifest)) throw new Error('Invalid release manifest');
+  });
+  if (!validateProducerReleaseManifest(manifest) || !validManifest(manifest))
+    throw new Error('Invalid release manifest');
   validateManifestReferences(root, manifest);
   const ref = writeObject(root, manifest, 'releases');
   const current = { schemaVersion: '3.0', releaseId: ref.sha256, manifest: ref };

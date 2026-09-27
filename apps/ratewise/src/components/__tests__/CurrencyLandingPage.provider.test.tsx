@@ -40,8 +40,8 @@ const mockProvider: AlternativeProvider = {
     subjectCurrency: 'TWD',
     priceCurrency: 'KRW',
     unitAmount: '1',
-    buy: '46',
-    sell: '46.7',
+    providerBuyPrice: '46',
+    providerSellPrice: '46.7',
     sourcePublishedAt: '2026-03-31T00:00:00Z',
     fetchedAt: '2026-03-31T00:00:00Z',
     lastSuccessfulCheckAt: '2026-03-31T00:00:00Z',
@@ -49,6 +49,7 @@ const mockProvider: AlternativeProvider = {
     deliveryMethod: 'cash',
     channel: 'branch',
     branchId: 'myeongdong',
+    dataKind: 'published_board',
   }),
 };
 

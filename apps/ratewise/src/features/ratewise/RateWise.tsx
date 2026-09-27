@@ -272,7 +272,10 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
                       <p>
                         {getRateProvider(selectedQuote.providerId)?.label ??
                           selectedQuote.providerId}
-                        ：業者{selectedQuote.providerSide === 'buy' ? '買入' : '賣出'}{' '}
+                        ：業者
+                        {selectedQuote.fromCurrency === selectedQuote.sourceQuote.subjectCurrency
+                          ? '買入'
+                          : '賣出'}{' '}
                         {selectedQuote.sourceQuote.subjectCurrency}。來源發布時間：
                         {selectedQuote.sourceQuote.sourcePublishedAt ?? '未知'}。
                       </p>
@@ -281,8 +284,8 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
                         <p>
                           每 {selectedQuote.sourceQuote.unitAmount}{' '}
                           {selectedQuote.sourceQuote.subjectCurrency}：業者買入{' '}
-                          {selectedQuote.sourceQuote.buy ?? '未提供'}、賣出{' '}
-                          {selectedQuote.sourceQuote.sell ?? '未提供'}{' '}
+                          {selectedQuote.sourceQuote.providerBuyPrice ?? '未提供'}、賣出{' '}
+                          {selectedQuote.sourceQuote.providerSellPrice ?? '未提供'}{' '}
                           {selectedQuote.sourceQuote.priceCurrency}。
                         </p>
                         <p>

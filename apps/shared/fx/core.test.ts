@@ -6,8 +6,9 @@ export const row = {
   subjectCurrency: 'KRW',
   priceCurrency: 'TWD',
   unitAmount: '1',
-  buy: '0.023',
-  sell: '0.025',
+  providerBuyPrice: '0.023',
+  providerSellPrice: '0.025',
+  dataKind: 'published_board' as const,
   sourcePublishedAt: '2026-09-22T00:00:00Z',
   fetchedAt: '2026-09-22T00:05:00Z',
   lastSuccessfulCheckAt: '2026-09-22T00:05:00Z',
@@ -18,9 +19,9 @@ export const row = {
 describe('directional quotes', () => {
   it('uses the provider buy side for foreign to local and sell side for local to foreign', () => {
     const quotes = normalizeQuote(row);
-    expect(quotes.map((q) => [q.fromCurrency, q.toCurrency, q.rate, q.providerSide])).toEqual([
-      ['KRW', 'TWD', '0.023', 'buy'],
-      ['TWD', 'KRW', '40', 'sell'],
+    expect(quotes.map((q) => [q.fromCurrency, q.toCurrency, q.rate])).toEqual([
+      ['KRW', 'TWD', '0.023'],
+      ['TWD', 'KRW', '40'],
     ]);
   });
 });
@@ -36,7 +37,7 @@ import {
   freshness,
 } from './index';
 it('rejects unavailable quotes and keeps zero distinct', () => {
-  const quotes = normalizeQuote({ ...row, buy: null });
+  const quotes = normalizeQuote({ ...row, providerBuyPrice: null });
   expect(
     estimate(quotes[0]!, { fromCurrency: 'KRW', toCurrency: 'TWD', amount: '10', mode: 'EXACT_IN' })
       .status,
@@ -57,8 +58,8 @@ it('exact out is sufficient and minimal with IDR ISO two decimals', () => {
     ...row,
     subjectCurrency: 'USD',
     priceCurrency: 'IDR',
-    sell: '3',
-    buy: '2',
+    providerSellPrice: '3',
+    providerBuyPrice: '2',
   })[1]!;
   expect(
     estimate(q, { fromCurrency: 'IDR', toCurrency: 'USD', amount: '1', mode: 'EXACT_OUT' })
@@ -70,15 +71,18 @@ it('normalizes per 100 and MoneyBox legacy side names', () => {
     timestamp: row.fetchedAt,
     rates: { JPY: { sell: 900, buy: 950 } },
   });
-  expect(q.map((x) => x.rate)).toEqual(['9', '0.1052631578947368421052631578947368']);
-  expect(boardMidpoint({ ...row, unitAmount: '100', buy: '900', sell: '950' })).toBe('9.25');
+  // PRD §18.4：倒數保留 12 位小數 ROUND_HALF_EVEN；來源直接值保留原始位數。
+  expect(q.map((x) => x.rate)).toEqual(['9', '0.105263157895']);
+  expect(
+    boardMidpoint({ ...row, unitAmount: '100', providerBuyPrice: '900', providerSellPrice: '950' }),
+  ).toBe('9.25');
 });
 it('filters stale, qualification and denomination then ranks real results', () => {
   const q = normalizeQuote(row)[1]!;
   const other = normalizeQuote({
     ...row,
     providerId: 'third-bank',
-    sell: '0.02',
+    providerSellPrice: '0.02',
     denominations: ['100'],
     qualifications: ['member'],
   })[1]!;
@@ -108,7 +112,12 @@ it('rejects forged normalized rates and unsupported fee claims', () => {
 });
 import { deriveCrossQuote, exportLegacyRates } from './index';
 it('derives a same-provider cross route with both legs, never a direct recommended quote', () => {
-  const usd = normalizeQuote({ ...row, subjectCurrency: 'USD', buy: '32', sell: '33' })[0]!;
+  const usd = normalizeQuote({
+    ...row,
+    subjectCurrency: 'USD',
+    providerBuyPrice: '32',
+    providerSellPrice: '33',
+  })[0]!;
   const krw = normalizeQuote(row)[1]!;
   const derived = deriveCrossQuote(usd, krw);
   expect(derived).toMatchObject({
@@ -160,7 +169,11 @@ it('keeps condition boundaries and exact-out ordering consistent for a third sho
   expect(rankQuotes([q], { ...request, amount: '200' }, ctx)).toHaveLength(1);
   expect(rankQuotes([q], { ...request, amount: '200.01' }, ctx)).toHaveLength(0);
   expect(rankQuotes([q], request, { ...ctx, branchId: 'busan' })).toHaveLength(0);
-  const better = normalizeQuote({ ...base, providerId: 'fourth-shop', sell: '0.02' })[1]!;
+  const better = normalizeQuote({
+    ...base,
+    providerId: 'fourth-shop',
+    providerSellPrice: '0.02',
+  })[1]!;
   expect(
     rankQuotes([q, better], { ...request, amount: '5000', mode: 'EXACT_OUT' }, ctx).map(
       (x) => x.quote.providerId,
@@ -193,36 +206,45 @@ it('never recommends missing-time, fallback, reference, unsupported-fee or zero 
 it('clones original evidence and rejects later mutations of a quoted source', () => {
   const mutable = { ...row };
   const q = normalizeQuote(mutable)[1]!;
-  mutable.sell = '500';
-  expect(q.sourceQuote.sell).toBe('0.025');
-  q.sourceQuote.sell = '100';
+  mutable.providerSellPrice = '500';
+  expect(q.sourceQuote.providerSellPrice).toBe('0.025');
+  q.sourceQuote.providerSellPrice = '100';
   expect(validateQuoteSnapshot(q)).toBe(false);
 });
-it('has stable series IDs while quote IDs follow prices, not successful polling', () => {
+it('keys quote IDs by source publication time, not successful polling (ADR B3 #5)', () => {
   const original = normalizeQuote(row)[1]!;
   const checked = normalizeQuote({ ...row, lastSuccessfulCheckAt: '2026-09-22T00:06:00Z' })[1]!;
-  const changed = normalizeQuote({ ...row, sell: '0.03' })[1]!;
-  expect(original.quoteSeriesId).toBe(changed.quoteSeriesId);
-  expect(original.quoteId).not.toBe(changed.quoteId);
+  const republished = normalizeQuote({
+    ...row,
+    providerSellPrice: '0.03',
+    sourcePublishedAt: '2026-09-22T01:00:00Z',
+  })[1]!;
+  expect(original.quoteSeriesId).toBe(republished.quoteSeriesId);
+  expect(original.quoteId).not.toBe(republished.quoteId);
   expect(original.quoteId).toBe(checked.quoteId);
 });
 it('rejects a nonpositive side instead of borrowing the opposite side', () => {
   for (const bad of ['0', '-1', '1x', 'Infinity'])
-    expect(() => normalizeQuote({ ...row, buy: bad })).toThrow();
-  expect(boardMidpoint({ ...row, buy: null })).toBeNull();
+    expect(() => normalizeQuote({ ...row, providerBuyPrice: bad })).toThrow();
+  expect(boardMidpoint({ ...row, providerBuyPrice: null })).toBeNull();
 });
 it('does not invent a provider for identity conversion and rounds half-even', () => {
   expect(
     estimate(null, { fromCurrency: 'USD', toCurrency: 'USD', amount: '1', mode: 'EXACT_IN' }),
   ).toMatchObject({ quoteId: null, rate: '1', toAmount: '1' });
-  const q = normalizeQuote({ ...row, subjectCurrency: 'USD', buy: '1.005' })[0]!;
+  const q = normalizeQuote({ ...row, subjectCurrency: 'USD', providerBuyPrice: '1.005' })[0]!;
   expect(
     estimate(q, { fromCurrency: 'USD', toCurrency: 'TWD', amount: '1', mode: 'EXACT_IN' }).toAmount,
   ).toBe('1');
 });
 import { estimateDerived } from './index';
 it('computes a traceable cross estimate with canonical rate and no recommendation', () => {
-  const first = normalizeQuote({ ...row, subjectCurrency: 'USD', buy: '32', sell: '33' })[0]!;
+  const first = normalizeQuote({
+    ...row,
+    subjectCurrency: 'USD',
+    providerBuyPrice: '32',
+    providerSellPrice: '33',
+  })[0]!;
   const second = normalizeQuote(row)[1]!;
   expect(
     estimateDerived(first, second, {
@@ -302,8 +324,8 @@ it('keeps the economic series stable when source metadata and denominator change
     subjectCurrency: 'JPY',
     priceCurrency: 'KRW',
     unitAmount: '100',
-    buy: '900',
-    sell: '950',
+    providerBuyPrice: '900',
+    providerSellPrice: '950',
     sourceUrl: 'https://legacy.example/rates',
     mappingVersion: 'legacy-1',
   });
@@ -313,8 +335,8 @@ it('keeps the economic series stable when source metadata and denominator change
     subjectCurrency: 'JPY',
     priceCurrency: 'KRW',
     unitAmount: '1',
-    buy: '9',
-    sell: '9.5',
+    providerBuyPrice: '9',
+    providerSellPrice: '9.5',
     sourceUrl: 'https://canonical.example/rates',
     mappingVersion: 'canonical-2',
   });
@@ -330,8 +352,8 @@ describe('R3a money correctness', () => {
       ...row,
       subjectCurrency: 'JPY',
       priceCurrency: 'TWD',
-      buy: '0.1957',
-      sell: '0.2057',
+      providerBuyPrice: '0.1957',
+      providerSellPrice: '0.2057',
     }).find((quote) => quote.fromCurrency === 'TWD')!;
     const result = estimate(jpy, {
       fromCurrency: 'TWD',
@@ -377,24 +399,37 @@ describe('R3a money correctness', () => {
     },
   );
 
-  it('excludes only the malformed row instead of rejecting the whole provider snapshot', () => {
+  it('marks a single-side 0 or invalid value unavailable instead of dropping the row (B3 #11)', () => {
     const bank = normalizeBankSnapshot({
       timestamp: row.fetchedAt,
       details: {
         USD: { cash: { buy: '31', sell: '32' } },
         JPY: { cash: { buy: 'broken', sell: '0.21' } },
+        THB: { cash: { buy: '0', sell: '1.1' } },
       },
     });
-    expect(new Set(bank.map((quote) => quote.sourceQuote.subjectCurrency))).toEqual(
-      new Set(['USD']),
-    );
+    const side = (from: string, to: string) =>
+      bank.find((quote) => quote.fromCurrency === from && quote.toCurrency === to)!;
+    expect(side('JPY', 'TWD')).toMatchObject({
+      status: 'unavailable',
+      unavailableReason: 'not_collected',
+      rate: null,
+    });
+    expect(side('TWD', 'JPY')).toMatchObject({ status: 'available', unavailableReason: null });
+    expect(side('THB', 'TWD')).toMatchObject({
+      status: 'unavailable',
+      unavailableReason: 'suppressed',
+    });
+    expect(side('USD', 'TWD').status).toBe('available');
+    for (const quote of bank) expect(validateQuoteSnapshot(quote)).toBe(true);
     const shop = normalizeMoneyboxSnapshot({
       timestamp: row.fetchedAt,
       rates: { TWD: { sell: 41.5, buy: 42 }, USD: { sell: -1, buy: 1400 } },
     });
-    expect(new Set(shop.map((quote) => quote.sourceQuote.subjectCurrency))).toEqual(
-      new Set(['TWD']),
+    expect(shop.find((quote) => quote.fromCurrency === 'USD')?.unavailableReason).toBe(
+      'not_collected',
     );
+    expect(shop.filter((quote) => quote.status === 'available')).toHaveLength(3);
     expect(() => normalizeBankSnapshot({ details: {} })).toThrow('Missing provider fetch time');
   });
 });
@@ -413,5 +448,79 @@ describe('R3a freshness thresholds (PRD SSOT)', () => {
   it('reports unknown, not stale, when the source omits its publication time', () => {
     const quote = normalizeQuote({ ...row, sourcePublishedAt: null })[1]!;
     expect(freshness(quote, at(1))).toBe('unknown');
+  });
+});
+
+import schema from './schema.json';
+import { validateProducerQuoteSnapshot } from './producer-validators.js';
+describe('B3 public contract', () => {
+  const usd = normalizeQuote({
+    ...row,
+    subjectCurrency: 'USD',
+    providerBuyPrice: '31.67',
+    providerSellPrice: '32.17',
+  });
+  const twdToUsd = usd.find((quote) => quote.fromCurrency === 'TWD')!;
+
+  it('computes EXACT_OUT from the source price, never the rounded reciprocal', () => {
+    const request = { fromCurrency: 'TWD', toCurrency: 'USD', mode: 'EXACT_OUT' as const };
+    expect(estimate(twdToUsd, { ...request, amount: '1' }).fromAmount).toBe('32.17');
+    expect(estimate(twdToUsd, { ...request, amount: '100' }).fromAmount).toBe('3217');
+  });
+
+  it('keeps direct source values and rounds reciprocals to 12 dp HALF_EVEN', () => {
+    expect(usd.find((quote) => quote.fromCurrency === 'USD')!.rate).toBe('31.67');
+    expect(twdToUsd.rate).toBe('0.031084861672');
+    const tie = (unitAmount: string) =>
+      normalizeQuote({ ...row, unitAmount, providerSellPrice: '1' })[1]!.rate;
+    expect(tie('0.0000000000025')).toBe('0.000000000002');
+    expect(tie('0.0000000000035')).toBe('0.000000000004');
+  });
+
+  it('formats short quote and series IDs without embedded source JSON', () => {
+    const shop = normalizeMoneyboxSnapshot({
+      timestamp: '2026-09-27T02:14:28.446Z',
+      rates: { TWD: { sell: 41.5, buy: 42 } },
+    });
+    expect(shop.map((quote) => quote.quoteSeriesId)).toEqual([
+      'fx3:moneybox:cash:branch:KR:myeongdong:TWD-KRW',
+      'fx3:moneybox:cash:branch:KR:myeongdong:KRW-TWD',
+    ]);
+    expect(twdToUsd.quoteSeriesId).toBe('fx3:bot:cash:branch:TW:-:TWD-USD');
+    expect(twdToUsd.quoteId).toBe(`${twdToUsd.quoteSeriesId}@${row.sourcePublishedAt}`);
+    for (const quote of [...shop, ...usd]) {
+      expect(quote.quoteId.length).toBeLessThanOrEqual(256);
+      expect(quote.quoteId).not.toMatch(/[{}"%]/);
+      expect(quote).not.toHaveProperty('providerSide');
+      expect(quote.sourceQuote).not.toHaveProperty('sourceUrl');
+    }
+  });
+
+  it('rejects unknown fields at the producer while the consumer validator tolerates them', () => {
+    const extended = { ...twdToUsd, futureField: 'x' };
+    expect(validateProducerQuoteSnapshot(twdToUsd)).toBe(true);
+    expect(validateProducerQuoteSnapshot(extended)).toBe(false);
+    expect(validateQuoteSnapshot(extended)).toBe(true);
+    const typo = { ...twdToUsd, sourceQuote: { ...twdToUsd.sourceQuote, providerSelPrice: '1' } };
+    expect(validateProducerQuoteSnapshot(typo)).toBe(false);
+  });
+
+  it('defines the full unavailableReason enum once with ECB OBS_STATUS mapping', () => {
+    const reason = schema.$defs.QuoteSnapshot.properties.unavailableReason;
+    expect(reason.enum).toEqual([
+      'not_quoted',
+      'not_collected',
+      'market_closed',
+      'suppressed',
+      null,
+    ]);
+    expect(reason['x-ecbObsStatus']).toEqual({
+      not_quoted: 'M',
+      not_collected: 'L',
+      market_closed: 'H',
+      suppressed: 'Q',
+    });
+    expect(schema).not.toHaveProperty('oneOf');
+    expect(schema.$defs.SourceQuote.required).toContain('dataKind');
   });
 });

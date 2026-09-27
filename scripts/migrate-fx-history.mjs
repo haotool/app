@@ -7,6 +7,7 @@ import {
   normalizeMoneyboxSnapshot,
   exportLegacyRates,
   validateProviderSnapshot,
+  buildProviderSnapshot,
 } from '../apps/shared/fx/index.ts';
 import { bytesHash, writeObject } from './publish-fx-release.mjs';
 
@@ -79,7 +80,7 @@ export function migrateHistory(revision, output) {
         quoteInput,
       );
       if (!quotes.length) throw new Error('No provable sides');
-      const snapshot = { schemaVersion: '3.0', providerId, quotes };
+      const snapshot = buildProviderSnapshot(providerId, quotes);
       if (!validateProviderSnapshot(snapshot)) throw new Error('Invalid normalized snapshot');
       const legacy = exportLegacyRates(quotes, providerId);
       for (const [currency, row] of Object.entries(legacy)) {

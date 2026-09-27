@@ -31,6 +31,43 @@ describe('v3 publication', () => {
     }
   });
 
+  it('publishes manifest-level publisher, provider attribution, rule and $schema once', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'fx-release-manifest-'));
+    const time = '2026-09-21T01:00:00Z';
+    try {
+      const { manifest, snapshots } = await publishRelease(
+        dir,
+        { bot: { timestamp: time, details: { USD: { cash: { buy: '31', sell: '32' } } } } },
+        time,
+      );
+      const schemaUrl = 'https://app.haotool.org/ratewise/api/v3/contract.schema.json';
+      expect(manifest).toMatchObject({
+        $schema: schemaUrl,
+        publisher: {
+          name: '匯率好工具 RateWise',
+          url: 'https://app.haotool.org/ratewise/',
+          termsUrl: expect.stringMatching(/^https:\/\//),
+          requiredText: expect.stringContaining('RateWise'),
+        },
+        calculationRule: expect.stringContaining('toAmount = fromAmount × rate'),
+        quoteAvailability: 'indicative_not_transaction_guarantee',
+      });
+      expect(manifest.providers[0]).toMatchObject({
+        providerId: 'bot',
+        name: '臺灣銀行',
+        kind: 'bank',
+        sourceUrl: 'https://rate.bot.com.tw/xrt?Lang=zh-TW',
+        termsUrl: null,
+        redistributionStatus: 'unknown',
+        attribution: '資料來源：臺灣銀行牌告匯率',
+        nextSourceCheckAt: null,
+      });
+      expect(snapshots.get('bot')).toMatchObject({ $schema: schemaUrl, schemaVersion: '3.0' });
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it('keeps each provider on its own last check result instead of carried_forward', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'fx-release-status-'));
     const time = '2026-09-21T01:00:00Z';

@@ -7,21 +7,21 @@ const quotes = normalizeQuote({
   subjectCurrency: 'USD',
   priceCurrency: 'TWD',
   unitAmount: '1',
-  buy: '31',
-  sell: '32',
+  providerBuyPrice: '31',
+  providerSellPrice: '32',
   sourcePublishedAt: null,
   fetchedAt: '2026-09-21T00:00:00Z',
   lastSuccessfulCheckAt: '2026-09-21T00:00:00Z',
   serviceCountry: 'TW',
   deliveryMethod: 'cash',
   channel: 'branch',
+  dataKind: 'published_board',
 });
 describe('SEO directional projection', () => {
   it('uses buy for USD to TWD and preserves unknown source time', () => {
     expect(projectSeoQuote(quotes, 'USD', 'to-twd', '100')).toMatchObject({
       rate: '31',
       amount: '3100',
-      providerSide: 'buy',
       sourcePublishedAt: null,
     });
   });
@@ -29,11 +29,10 @@ describe('SEO directional projection', () => {
     expect(projectSeoQuote(quotes, 'USD', 'twd-to-foreign', '100')).toMatchObject({
       rate: '0.03125',
       amount: '3.12',
-      providerSide: 'sell',
     });
     expect(
       projectSeoQuote(
-        quotes.filter((q) => q.providerSide === 'sell'),
+        quotes.filter((q) => q.fromCurrency === 'TWD'),
         'USD',
         'to-twd',
         '100',
