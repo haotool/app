@@ -1,5 +1,5 @@
 /**
- * Tools SSOT Tests — 7 工具、連結格式、分類 enum
+ * Tools SSOT Tests — 8 工具、連結格式、分類 enum
  */
 import { existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -10,8 +10,8 @@ import { TOOLS, TOOL_CATEGORIES, getActiveCategories, getToolIconUrl, getToolUrl
 const HAOTOOL_PUBLIC_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../../public');
 
 describe('TOOLS SSOT', () => {
-  it('包含 7 個工具', () => {
-    expect(TOOLS).toHaveLength(7);
+  it('包含 8 個工具', () => {
+    expect(TOOLS).toHaveLength(8);
   });
 
   it('id 唯一且涵蓋全部子 app', () => {
@@ -26,13 +26,14 @@ describe('TOOLS SSOT', () => {
         'quake-school',
         'starpuff',
         'papertrade',
+        'a320-flight-deck',
       ]),
     );
   });
 
   it('path 一律為根相對路徑並帶尾斜線', () => {
     for (const tool of TOOLS) {
-      expect(tool.path).toMatch(/^\/[a-z-]+\/$/);
+      expect(tool.path).toMatch(/^\/[a-z0-9-]+\/$/);
     }
   });
 

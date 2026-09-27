@@ -100,6 +100,16 @@ export const TOOLS: readonly Tool[] = [
     techChips: ['React 19', 'SSG', 'SVG 動畫'],
     status: 'live',
   },
+  {
+    id: 'a320-flight-deck',
+    name: 'A320neo 沉浸式駕駛艙',
+    category: '教育類',
+    description: '物理驅動的網頁飛行模擬：可操作 3D 駕駛艙、自動駕駛與 ILS 自動降落',
+    path: '/a320-flight-deck/',
+    iconPath: '/a320-flight-deck/icons/icon.svg',
+    techChips: ['three.js', 'WebGL', 'PWA'],
+    status: 'live',
+  },
 ] as const;
 
 /**

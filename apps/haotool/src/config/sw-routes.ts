@@ -22,4 +22,5 @@ export const SIBLING_APP_DENYLIST: RegExp[] = [
   /^\/split-meow(?:\/.*)?$/,
   /^\/starpuff(?:\/.*)?$/,
   /^\/papertrade(?:\/.*)?$/,
+  /^\/a320-flight-deck(?:\/.*)?$/,
 ];

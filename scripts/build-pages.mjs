@@ -30,6 +30,7 @@ const EXPECTED_APPS = [
   'split-meow',
   'starpuff',
   'papertrade',
+  'a320-flight-deck',
 ];
 const SUBPATH_APPS = EXPECTED_APPS.filter((app) => app !== 'haotool');
 const EXCLUDED_DEPLOYMENT_FILES = new Set(['_headers', '_redirects']);
@@ -45,6 +46,7 @@ const REDIRECTS = `# Cloudflare Pages routing SSOT for the assembled multi-app s
 /split-meow /split-meow/ 301
 /starpuff /starpuff/ 301
 /papertrade /papertrade/ 301
+/a320-flight-deck /a320-flight-deck/ 301
 /tools /tools/ 301
 /about /about/ 301
 /contact /contact/ 301

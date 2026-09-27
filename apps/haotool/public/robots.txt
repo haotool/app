@@ -19,6 +19,7 @@ Sitemap: https://app.haotool.org/papertrade/sitemap.xml
 Sitemap: https://app.haotool.org/park-keeper/sitemap.xml
 Sitemap: https://app.haotool.org/nihonname/sitemap.xml
 Sitemap: https://app.haotool.org/quake-school/sitemap.xml
+Sitemap: https://app.haotool.org/a320-flight-deck/sitemap.xml
 
 # --- Tier 1: TRAINING (基礎模型訓練語料) ---
 User-agent: GPTBot
