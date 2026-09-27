@@ -68,17 +68,42 @@ export function isValidAmount(value: string): boolean {
     new D(value).lte('9007199254740991')
   );
 }
+/**
+ * App 輸入邊界：計算機結果可能帶超過 8 位小數、指數或負號。
+ * 依幣別 minor unit 四捨五入（半位取偶）後再估算；負數以絕對值估算並回報符號。
+ */
+export function normalizeAmountInput(
+  value: string,
+  currency: string,
+): { amount: string; negative: boolean } | null {
+  const trimmed = value.trim();
+  if (!/^-?(\d+\.?\d*|\.\d+)(e[+-]?\d+)?$/i.test(trimmed)) return null;
+  let scale: number;
+  try {
+    scale = minorUnit(currency);
+  } catch {
+    scale = 8;
+  }
+  const parsed = new D(trimmed);
+  const amount = parsed.abs().toDecimalPlaces(scale, Decimal.ROUND_HALF_EVEN).toFixed();
+  if (!isValidAmount(amount)) return null;
+  return { amount, negative: parsed.isNegative() && !new D(amount).isZero() };
+}
 function positive(value: string | null): value is string {
   return value !== null && new D(value).gt(0);
 }
 function canonical(value: Decimal): string {
   return value.toSignificantDigits(34, Decimal.ROUND_HALF_EVEN).toFixed();
 }
+/** 與語系無關的 code-point 排序；localeCompare 會因 cs/sk 等 collation 改變 quoteId。 */
+export function compareCodePoints(a: string, b: string): number {
+  return a < b ? -1 : a > b ? 1 : 0;
+}
 function stable(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(stable).sort().join(',')}]`;
   if (value !== null && typeof value === 'object')
     return `{${Object.entries(value)
-      .sort(([a], [b]) => a.localeCompare(b))
+      .sort(([a], [b]) => compareCodePoints(a, b))
       .map(([k, v]) => `${JSON.stringify(k)}:${stable(v)}`)
       .join(',')}}`;
   return JSON.stringify(value);
@@ -185,11 +210,21 @@ export function estimate(quote: QuoteSnapshot | null, request: EstimateRequest):
     return unavailable('not_quoted', quote?.quoteId ?? null);
   if (quote.fromCurrency !== request.fromCurrency || quote.toCurrency !== request.toCurrency)
     return unavailable('direction_mismatch', quote.quoteId);
+  const row = quote.sourceQuote;
+  // EXACT_OUT 以原始牌告直算所需支付金額（sell × amount ÷ unitAmount），
+  // 不經倒數 canonical rate 再除回，避免 34 位截斷誤差被 ROUND_CEIL 放大成多收一個 minor unit。
+  const sourcePerTarget =
+    quote.providerSide === 'sell' && row.sell !== null
+      ? new D(row.sell).div(row.unitAmount)
+      : quote.providerSide === 'buy' && row.buy !== null
+        ? new D(row.unitAmount).div(row.buy)
+        : null;
   return estimateAmounts(
     quote.rate,
     request,
     quote.quoteId,
-    quote.sourceQuote.feeStatus ?? 'unknown',
+    row.feeStatus ?? 'unknown',
+    sourcePerTarget,
   );
 }
 function estimateAmounts(
@@ -197,6 +232,7 @@ function estimateAmounts(
   request: EstimateRequest,
   quoteId: string | null,
   feeStatus: EstimateResult['feeStatus'],
+  sourcePerTarget: Decimal | null = null,
 ): EstimateResult {
   let fromScale: number;
   let toScale: number;
@@ -211,7 +247,10 @@ function estimateAmounts(
   const from =
     request.mode === 'EXACT_IN'
       ? amount
-      : amount.div(rate).toDecimalPlaces(fromScale, Decimal.ROUND_CEIL);
+      : (sourcePerTarget ? amount.mul(sourcePerTarget) : amount.div(rate)).toDecimalPlaces(
+          fromScale,
+          Decimal.ROUND_CEIL,
+        );
   const to =
     request.mode === 'EXACT_OUT'
       ? amount
@@ -308,9 +347,9 @@ export function rankQuotes(
     .sort((a, b) =>
       request.mode === 'EXACT_IN'
         ? new D(b.estimate.toAmount ?? '0').cmp(a.estimate.toAmount ?? '0') ||
-          a.quote.quoteId.localeCompare(b.quote.quoteId)
+          compareCodePoints(a.quote.quoteId, b.quote.quoteId)
         : new D(a.estimate.fromAmount ?? '0').cmp(b.estimate.fromAmount ?? '0') ||
-          a.quote.quoteId.localeCompare(b.quote.quoteId),
+          compareCodePoints(a.quote.quoteId, b.quote.quoteId),
     );
 }
 
@@ -346,70 +385,84 @@ function times(
     throw new Error('Invalid check time');
   return { sourcePublishedAt, fetchedAt, lastSuccessfulCheckAt };
 }
+/** 單列壞值只排除該列（不發布、不推測），其餘列照常可用；payload 層錯誤仍整體拒絕。 */
+function validRows(build: () => QuoteSnapshot[]): QuoteSnapshot[] {
+  try {
+    return build();
+  } catch {
+    return [];
+  }
+}
 export function normalizeBankSnapshot(value: unknown): QuoteSnapshot[] {
   const payload = record(value),
-    rows = record(payload['sourceQuotes'] ?? payload['details']);
+    rows = record(payload['sourceQuotes'] ?? payload['details']),
+    time = times(payload);
   const dataKind =
     payload['dataKind'] === 'fixed_fallback' ? { dataKind: 'fixed_fallback' as const } : {};
-  return Object.entries(rows).flatMap(([currency, value]) => {
-    const detail = record(value);
-    return (['cash', 'spot'] as const).flatMap((method) => {
-      if (detail[method] === undefined) return [];
-      const prices = record(detail[method]);
-      return normalizeQuote({
-        providerId: 'bot',
-        subjectCurrency: currency,
-        priceCurrency: 'TWD',
-        unitAmount: '1',
-        buy: decimalValue(prices['buy']),
-        sell: decimalValue(prices['sell']),
-        ...times(payload),
-        serviceCountry: 'TW',
-        deliveryMethod: method === 'cash' ? 'cash' : 'account',
-        channel: method === 'cash' ? 'branch' : 'online',
-        feeStatus: 'unknown',
-        originalBuyField: `${method}.buy`,
-        originalSellField: `${method}.sell`,
-        mappingVersion: 'bot-1',
-        sourceUrl: 'https://rate.bot.com.tw/xrt?Lang=zh-TW',
-        ...dataKind,
-      });
-    });
-  });
+  return Object.entries(rows).flatMap(([currency, value]) =>
+    (['cash', 'spot'] as const).flatMap((method) =>
+      validRows(() => {
+        const detail = record(value);
+        if (detail[method] === undefined) return [];
+        const prices = record(detail[method]);
+        return normalizeQuote({
+          providerId: 'bot',
+          subjectCurrency: currency,
+          priceCurrency: 'TWD',
+          unitAmount: '1',
+          buy: decimalValue(prices['buy']),
+          sell: decimalValue(prices['sell']),
+          ...time,
+          serviceCountry: 'TW',
+          deliveryMethod: method === 'cash' ? 'cash' : 'account',
+          channel: method === 'cash' ? 'branch' : 'online',
+          feeStatus: 'unknown',
+          originalBuyField: `${method}.buy`,
+          originalSellField: `${method}.sell`,
+          mappingVersion: 'bot-1',
+          sourceUrl: 'https://rate.bot.com.tw/xrt?Lang=zh-TW',
+          ...dataKind,
+        });
+      }),
+    ),
+  );
 }
 export function normalizeMoneyboxSnapshot(value: unknown): QuoteSnapshot[] {
   const payload = record(value),
     canonicalRows = payload['sourceQuotes'] !== undefined,
-    rows = record(payload['sourceQuotes'] ?? payload['rates']);
-  return Object.entries(rows).flatMap(([currency, value]) => {
-    if (currency === 'KRW') return [];
-    const prices = record(value);
-    // 舊 MoneyBox sell 是業者買入外幣；新版 sourceQuotes 已使用業者視角。
-    const unitAmount = canonicalRows
-      ? decimalValue(prices['unitAmount'])
-      : ['JPY', 'IDR', 'VND'].includes(currency)
-        ? '100'
-        : '1';
-    if (unitAmount === null) throw new Error('Missing quote unit');
-    return normalizeQuote({
-      providerId: 'moneybox',
-      subjectCurrency: currency,
-      priceCurrency: 'KRW',
-      unitAmount,
-      buy: decimalValue(prices[canonicalRows ? 'buy' : 'sell']),
-      sell: decimalValue(prices[canonicalRows ? 'sell' : 'buy']),
-      ...times(payload),
-      serviceCountry: 'KR',
-      deliveryMethod: 'cash',
-      channel: 'branch',
-      branchId: 'myeongdong',
-      feeStatus: 'unknown',
-      originalBuyField: canonicalRows ? 'buyRate' : 'sell',
-      originalSellField: canonicalRows ? 'sellRate' : 'buy',
-      mappingVersion: canonicalRows ? 'moneybox-2' : 'moneybox-legacy-1',
-      sourceUrl: 'https://moneybox-exchange.com/zh-CHT/exchange/',
-    });
-  });
+    rows = record(payload['sourceQuotes'] ?? payload['rates']),
+    time = times(payload);
+  return Object.entries(rows).flatMap(([currency, value]) =>
+    validRows(() => {
+      if (currency === 'KRW') return [];
+      const prices = record(value);
+      // 舊 MoneyBox sell 是業者買入外幣；新版 sourceQuotes 已使用業者視角。
+      const unitAmount = canonicalRows
+        ? decimalValue(prices['unitAmount'])
+        : ['JPY', 'IDR', 'VND'].includes(currency)
+          ? '100'
+          : '1';
+      if (unitAmount === null) throw new Error('Missing quote unit');
+      return normalizeQuote({
+        providerId: 'moneybox',
+        subjectCurrency: currency,
+        priceCurrency: 'KRW',
+        unitAmount,
+        buy: decimalValue(prices[canonicalRows ? 'buy' : 'sell']),
+        sell: decimalValue(prices[canonicalRows ? 'sell' : 'buy']),
+        ...time,
+        serviceCountry: 'KR',
+        deliveryMethod: 'cash',
+        channel: 'branch',
+        branchId: 'myeongdong',
+        feeStatus: 'unknown',
+        originalBuyField: canonicalRows ? 'buyRate' : 'sell',
+        originalSellField: canonicalRows ? 'sellRate' : 'buy',
+        mappingVersion: canonicalRows ? 'moneybox-2' : 'moneybox-legacy-1',
+        sourceUrl: 'https://moneybox-exchange.com/zh-CHT/exchange/',
+      });
+    }),
+  );
 }
 
 /** Structural validation and reconstruction of the economic meaning are both required. */

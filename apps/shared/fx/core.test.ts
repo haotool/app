@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { normalizeQuote } from './index';
 
 export const row = {
@@ -31,6 +31,8 @@ import {
   normalizeMoneyboxSnapshot,
   isValidAmount,
   boardMidpoint,
+  normalizeAmountInput,
+  normalizeBankSnapshot,
 } from './index';
 it('rejects unavailable quotes and keeps zero distinct', () => {
   const quotes = normalizeQuote({ ...row, buy: null });
@@ -60,7 +62,7 @@ it('exact out is sufficient and minimal with IDR ISO two decimals', () => {
   expect(
     estimate(q, { fromCurrency: 'IDR', toCurrency: 'USD', amount: '1', mode: 'EXACT_OUT' })
       .fromAmount,
-  ).toBe('3.01');
+  ).toBe('3');
 });
 it('normalizes per 100 and MoneyBox legacy side names', () => {
   const q = normalizeMoneyboxSnapshot({
@@ -319,4 +321,77 @@ it('keeps the economic series stable when source metadata and denominator change
     canonical.map((quote) => quote.quoteSeriesId),
   );
   expect(legacy.map((quote) => quote.rate)).toEqual(canonical.map((quote) => quote.rate));
+});
+
+describe('R3a money correctness', () => {
+  it('computes EXACT_OUT payment directly from the source board without overcharging', () => {
+    const jpy = normalizeQuote({
+      ...row,
+      subjectCurrency: 'JPY',
+      priceCurrency: 'TWD',
+      buy: '0.1957',
+      sell: '0.2057',
+    }).find((quote) => quote.fromCurrency === 'TWD')!;
+    const result = estimate(jpy, {
+      fromCurrency: 'TWD',
+      toCurrency: 'JPY',
+      amount: '10000',
+      mode: 'EXACT_OUT',
+    });
+    expect(result.fromAmount).toBe('2057');
+    expect(result.toAmount).toBe('10000');
+  });
+
+  it('normalizes calculator input to the currency minor unit at the app boundary', () => {
+    expect(normalizeAmountInput('1.123456789', 'TWD')).toEqual({ amount: '1.12', negative: false });
+    expect(normalizeAmountInput('12.5', 'KRW')).toEqual({ amount: '12', negative: false });
+    expect(normalizeAmountInput('1e-7', 'USD')).toEqual({ amount: '0', negative: false });
+    expect(normalizeAmountInput('-5.005', 'TWD')).toEqual({ amount: '5', negative: true });
+    expect(normalizeAmountInput('-0.001', 'TWD')).toEqual({ amount: '0', negative: false });
+    expect(normalizeAmountInput('abc', 'TWD')).toBeNull();
+    expect(normalizeAmountInput('1e30', 'TWD')).toBeNull();
+    expect(isValidAmount(normalizeAmountInput('0.1234567891', 'XAU')!.amount)).toBe(true);
+  });
+
+  it.each(['cs', 'sk'])(
+    'keeps quote identity and ranking independent of %s collation',
+    (locale) => {
+      const baseline = normalizeQuote(row).map((quote) => quote.quoteId);
+      const collator = new Intl.Collator(locale);
+      const spy = vi.spyOn(String.prototype, 'localeCompare').mockImplementation(function (
+        this: string,
+        other: string,
+      ) {
+        return collator.compare(String(this), other);
+      });
+      try {
+        // 'channel' 在 cs/sk 排在 'h' 之後，localeCompare 會改變 stable key 順序。
+        expect(collator.compare('channel', 'deliveryMethod')).toBeGreaterThan(0);
+        expect(normalizeQuote(row).map((quote) => quote.quoteId)).toEqual(baseline);
+      } finally {
+        spy.mockRestore();
+      }
+    },
+  );
+
+  it('excludes only the malformed row instead of rejecting the whole provider snapshot', () => {
+    const bank = normalizeBankSnapshot({
+      timestamp: row.fetchedAt,
+      details: {
+        USD: { cash: { buy: '31', sell: '32' } },
+        JPY: { cash: { buy: 'broken', sell: '0.21' } },
+      },
+    });
+    expect(new Set(bank.map((quote) => quote.sourceQuote.subjectCurrency))).toEqual(
+      new Set(['USD']),
+    );
+    const shop = normalizeMoneyboxSnapshot({
+      timestamp: row.fetchedAt,
+      rates: { TWD: { sell: 41.5, buy: 42 }, USD: { sell: -1, buy: 1400 } },
+    });
+    expect(new Set(shop.map((quote) => quote.sourceQuote.subjectCurrency))).toEqual(
+      new Set(['TWD']),
+    );
+    expect(() => normalizeBankSnapshot({ details: {} })).toThrow('Missing provider fetch time');
+  });
 });

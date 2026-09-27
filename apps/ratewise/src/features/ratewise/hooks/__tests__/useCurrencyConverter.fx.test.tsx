@@ -58,6 +58,16 @@ describe('v3 direction quotes', () => {
     act(() => result.current.handleToAmountChange('11'));
     await waitFor(() => expect(result.current.fromAmount).toBe('352'));
   });
+
+  it('normalizes calculator results with excess decimals or a negative sign before estimating', async () => {
+    const { result } = renderHook(() =>
+      useCurrencyConverter({ fxQuotes: quotes, rateType: 'cash' }),
+    );
+    act(() => result.current.handleFromAmountChange('320.004999999999'));
+    await waitFor(() => expect(result.current.toAmount).toBe('10'));
+    act(() => result.current.handleFromAmountChange('-320'));
+    await waitFor(() => expect(result.current.toAmount).toBe('-10'));
+  });
 });
 
 it('does not substitute a missing manual provider, and distinguishes zero from unavailable', async () => {
@@ -164,7 +174,7 @@ it('exposes applicable provider quotes and ranks EXACT_OUT by required payment',
   expect(
     result.current.rankedProviderQuotes.map((q) => [q.provider.providerId, q.resultAmount]),
   ).toEqual([
-    ['third-bank', 330.01],
+    ['third-bank', 330],
     ['second-bank', 352],
   ]);
 });

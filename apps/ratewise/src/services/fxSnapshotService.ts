@@ -52,7 +52,7 @@ export async function refreshActiveRelease(): Promise<ActiveRelease> {
 /** History is a separate atomic unit; unavailable history never invalidates latest. */
 export async function fetchFxHistory(quoteSeriesId: string) {
   const { fetchVerifiedObject } = await import('@app/shared/fx/release');
-  const { validateProviderSnapshot } = await import('@app/shared/fx');
+  const { validateProviderSnapshot, compareCodePoints } = await import('@app/shared/fx');
   const release = await readActiveRelease();
   if (!release) throw new Error('尚無已驗證的匯率快照');
   const selected = release.snapshots
@@ -61,7 +61,7 @@ export async function fetchFxHistory(quoteSeriesId: string) {
   if (!selected) throw new Error('找不到指定牌告系列');
   const refs = release.manifest.history
     .filter((entry) => entry.providerId === selected.providerId)
-    .sort((a, b) => b.date.localeCompare(a.date))
+    .sort((a, b) => compareCodePoints(b.date, a.date))
     .slice(0, 30);
   if (!refs.length) throw new Error('尚無此來源的已驗證歷史');
   const key = `ratewise.fx.v3.history:${release.current.releaseId}:${quoteSeriesId}`;

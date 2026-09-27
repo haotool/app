@@ -7,6 +7,7 @@ import {
   normalizeBankSnapshot,
   rankQuotes,
   isQuoteApplicable,
+  normalizeAmountInput,
   type QuoteSnapshot,
   type EstimateRequest,
   type EstimateResult,
@@ -225,7 +226,7 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     [serviceCountry, rateType, branchId],
   );
 
-  const estimatePair = useCallback(
+  const estimateQuotePair = useCallback(
     (
       amount: string,
       from: CurrencyCode,
@@ -274,6 +275,28 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
       return estimate(null, request);
     },
     [fxQuotes, providerPreference, getQuoteContext, providerStatuses],
+  );
+
+  // 輸入邊界：計算機結果依輸入幣別 minor unit 正規化；負數以絕對值估算後還原符號。
+  const estimatePair = useCallback(
+    (
+      amount: string,
+      from: CurrencyCode,
+      to: CurrencyCode,
+      inputMode: EstimateRequest['mode'] = 'EXACT_IN',
+    ): EstimateResult | DerivedEstimateResult => {
+      const normalized = normalizeAmountInput(amount, inputMode === 'EXACT_IN' ? from : to);
+      const result = estimateQuotePair(normalized?.amount ?? amount, from, to, inputMode);
+      if (!normalized?.negative || result.status !== 'available') return result;
+      const signed = (value: string | null) =>
+        value === null || /^0(\.0*)?$/.test(value) ? value : `-${value}`;
+      return {
+        ...result,
+        fromAmount: signed(result.fromAmount),
+        toAmount: signed(result.toAmount),
+      };
+    },
+    [estimateQuotePair],
   );
 
   useEffect(() => {
@@ -597,8 +620,11 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
       : 'fresh';
   const effectiveSource =
     getRateProvider(selectedQuote?.providerId ?? '')?.sourceKind ?? rateSource ?? 'bank';
+  const activeAmount = lastEdited === 'from' ? fromAmount : toAmount;
   const activeRequest: EstimateRequest = {
-    amount: lastEdited === 'from' ? fromAmount : toAmount,
+    amount:
+      normalizeAmountInput(activeAmount, lastEdited === 'from' ? fromCurrency : toCurrency)
+        ?.amount ?? activeAmount,
     fromCurrency,
     toCurrency,
     mode: lastEdited === 'from' ? 'EXACT_IN' : 'EXACT_OUT',
