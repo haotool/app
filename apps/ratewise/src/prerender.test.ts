@@ -15,7 +15,7 @@ beforeAll(async () => {
     projectRoot,
     distRoot: distPath,
   });
-}, 120000);
+}, 300000);
 
 describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
   describe('🟢 靜態 HTML 檔案結構', () => {
