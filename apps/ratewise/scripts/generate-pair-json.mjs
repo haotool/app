@@ -14,6 +14,7 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CURRENCY_SEO_PATHS, SITE_CONFIG, RAW_DATA_BASE } from '../seo-paths.config.mjs';
+import { FX_V3_PUBLIC } from '../src/config/api-endpoints.ts';
 import {
   API_SEMANTICS_DOC,
   API_SEMANTICS_SCHEMA_VERSION,
@@ -54,30 +55,37 @@ for (const path of CURRENCY_SEO_PATHS) {
     pair: `${fromCode}/${toCode}`,
     from: fromCode,
     to: toCode,
-    schemaVersion: '3.0',
-    legacySchemaVersion: API_SEMANTICS_SCHEMA_VERSION,
+    ...(FX_V3_PUBLIC
+      ? { schemaVersion: '3.0', legacySchemaVersion: API_SEMANTICS_SCHEMA_VERSION }
+      : { schemaVersion: API_SEMANTICS_SCHEMA_VERSION }),
     semanticsDoc: API_SEMANTICS_DOC.publicUrl,
     semanticFieldMapping: buildSemanticFieldMapping(),
     slug,
     pageUrl: `${SITE_CONFIG.url}${slug}/`,
     liveRateUrl: `${CDN_BASE_URL}/latest.json`,
-    v3CurrentUrl: `${CDN_BASE_URL}/v3/current.json`,
-    v3ContractUrl: 'https://app.haotool.org/ratewise/api/v3/contract.schema.json',
-    v3Availability: FX_V3_AVAILABILITY,
-    canonicalFields: {
-      current: `${CDN_BASE_URL}/v3/current.json`,
-      quote: 'ProviderSnapshot.quotes[]',
-      direction: 'fromCurrency → toCurrency',
-      rate: 'decimal string: target units per 1 fromCurrency',
-      hash: 'SHA-256 over final UTF-8 bytes',
-    },
+    ...(FX_V3_PUBLIC
+      ? {
+          v3CurrentUrl: `${CDN_BASE_URL}/v3/current.json`,
+          v3ContractUrl: 'https://app.haotool.org/ratewise/api/v3/contract.schema.json',
+          v3Availability: FX_V3_AVAILABILITY,
+          canonicalFields: {
+            current: `${CDN_BASE_URL}/v3/current.json`,
+            quote: 'ProviderSnapshot.quotes[]',
+            direction: 'fromCurrency → toCurrency',
+            rate: 'decimal string: target units per 1 fromCurrency',
+            hash: 'SHA-256 over final UTF-8 bytes',
+          },
+        }
+      : {}),
     rateFieldPath: `details.${fromCode}`,
     source: '臺灣銀行牌告匯率',
     sourceUrl: 'https://rate.bot.com.tw/xrt',
     updateFrequency: 'every 5 minutes',
     rateTypes: RATE_TYPE_DESCRIPTIONS,
     rateModes: RATE_MODE_STRATEGIES,
-    note: 'v3 以 fromCurrency → toCurrency 定義方向，rate 為每 1 單位來源幣可取得的目標幣數量；legacy sell/buy 僅供相容讀取。',
+    note: FX_V3_PUBLIC
+      ? 'v3 以 fromCurrency → toCurrency 定義方向，rate 為每 1 單位來源幣可取得的目標幣數量；legacy sell/buy 僅供相容讀取。'
+      : '賣出（sell）= 銀行賣給你外幣的價格，即你拿台幣換外幣看此價；買入（buy）= 銀行收你外幣的價格，即你拿外幣換台幣看此價。若要與 App 顯示一致，請依 rateModes 選取對應欄位。',
     disclaimer: '匯率僅供參考，實際交易請以金融機構公告為準。',
   };
 

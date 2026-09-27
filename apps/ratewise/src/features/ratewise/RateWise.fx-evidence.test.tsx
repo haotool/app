@@ -5,7 +5,12 @@ import { beforeEach, expect, it, vi } from 'vitest';
 import { normalizeQuote } from '@app/shared/fx';
 import { useConverterStore } from '../../stores/converterStore';
 import RateWise from './RateWise';
+import type * as ApiEndpointsModule from '../../config/api-endpoints';
 
+vi.mock('../../config/api-endpoints', async (importOriginal) => ({
+  ...(await importOriginal<typeof ApiEndpointsModule>()),
+  FX_V3_PUBLIC: true,
+}));
 vi.mock('../../components/Toast', () => ({ useToast: () => ({ showToast: vi.fn() }) }));
 vi.mock('./hooks/useExchangeRates', () => ({
   useExchangeRates: () => ({
@@ -75,6 +80,8 @@ it('discloses stale underlying data for a manually selected cross-currency route
   expect(
     screen.getByText('經中介幣別的兩腿推算，非業者直接牌告；不納入推薦。'),
   ).toBeInTheDocument();
-  expect(screen.getByText('資料時間未知或已過期，僅供參考。')).toBeInTheDocument();
+  expect(
+    screen.getByText('牌告已超過更新門檻（台銀 36 小時、換錢所 24 小時），僅供參考。'),
+  ).toBeInTheDocument();
   expect(screen.getByText(/USD → TWD：來源發布時間 2020-01-01/)).toBeInTheDocument();
 });

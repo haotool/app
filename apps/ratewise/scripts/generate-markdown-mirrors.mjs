@@ -21,6 +21,7 @@ import { fileURLToPath } from 'node:url';
 import { SITE_CONFIG } from '../seo-paths.config.mjs';
 import { ALL_AI_CRAWLERS } from './lib/ai-crawlers.mjs';
 import { APP_INFO } from '../src/config/app-info.ts';
+import { FX_V3_PUBLIC } from '../src/config/api-endpoints.ts';
 
 /**
  * RATES_API 端點重建（與 src/config/api-endpoints.ts 同構）。
@@ -51,9 +52,16 @@ const pkg = JSON.parse(readFileSync(resolve(ROOT, 'package.json'), 'utf-8'));
 const VERSION = pkg.version;
 const BASE_URL = SITE_CONFIG.url;
 
-const seoMetadataSrc =
+// 來源文字中的 `FX_V3_PUBLIC ? '<v3>' : '<legacy>'` 依 SSOT 常數先行展開，鏡像與 HTML 同步切換。
+const STRING_LITERAL = String.raw`(?:\x60(?:\\[\s\S]|[^\x60\\])*\x60|'(?:\\[\s\S]|[^'\\])*')`;
+const FX_V3_TERNARY = new RegExp(
+  String.raw`FX_V3_PUBLIC\s*\?\s*(${STRING_LITERAL})\s*:\s*(${STRING_LITERAL})`,
+  'g',
+);
+const seoMetadataSrc = (
   readFileSync(resolve(ROOT, 'src/config/seo-metadata/core.ts'), 'utf-8') +
-  readFileSync(resolve(ROOT, 'src/config/seo-metadata/currency-landing.ts'), 'utf-8');
+  readFileSync(resolve(ROOT, 'src/config/seo-metadata/currency-landing.ts'), 'utf-8')
+).replace(FX_V3_TERNARY, (_, v3, legacy) => (FX_V3_PUBLIC ? v3 : legacy));
 const constantsSrc = readFileSync(resolve(ROOT, 'src/features/ratewise/constants.ts'), 'utf-8');
 const SUPPORTED_CURRENCY_COUNT = [...constantsSrc.matchAll(/^\s+([A-Z]{3}):\s*\{/gm)].length;
 
@@ -272,8 +280,13 @@ ${APP_INFO.shortName} 是以臺灣銀行牌告匯率為基礎的換匯工具，�
 
 - 資料來源為臺灣銀行官方牌告匯率，涵蓋 ${SUPPORTED_CURRENCY_COUNT} 種貨幣。
 - 約每 5 分鐘檢查更新最新報價，涵蓋現金買入、現金賣出、即期買入、即期賣出四種。
-- 資料管線：GitHub Actions 抓取 provider 牌告，v3 snapshot 保留來源/擷取時間與 SHA-256 provenance，經 Pull Request 驗證後合併至 data branch。
-- 匯差範例數字透過 SSG（vite-react-ssg）於 build 期嵌入靜態 HTML，搜尋引擎無需執行 JavaScript 即可讀取。
+${
+  FX_V3_PUBLIC
+    ? `- 資料管線：GitHub Actions 抓取 provider 牌告，v3 snapshot 保留來源/擷取時間與 SHA-256 provenance，經 Pull Request 驗證後合併至 data branch。
+`
+    : `- 資料管線：GitHub Actions 抓取 provider 牌告，經 Pull Request 驗證後合併至 data branch。
+`
+}- 匯差範例數字透過 SSG（vite-react-ssg）於 build 期嵌入靜態 HTML，搜尋引擎無需執行 JavaScript 即可讀取。
 
 ## 技術與資料面能力
 
@@ -399,28 +412,44 @@ function buildOpenDataMd() {
 
 | 類型 | URL |
 |------|-----|
-| v3 current pointer（主要，jsDelivr CDN） | \`${RATES_API.v3CurrentCdn}\` |
+${
+  FX_V3_PUBLIC
+    ? `| v3 current pointer（主要，jsDelivr CDN） | \`${RATES_API.v3CurrentCdn}\` |
 | v3 current pointer（備援，GitHub Raw） | \`${RATES_API.v3CurrentRaw}\` |
-| 最新匯率（主要，jsDelivr CDN） | \`${RATES_API.latestCdn}\` |
+`
+    : ``
+}| 最新匯率（主要，jsDelivr CDN） | \`${RATES_API.latestCdn}\` |
 | 最新匯率（備援，GitHub Raw） | \`${RATES_API.latestRaw}\` |
 | 歷史匯率 | \`${CDN_DATA_BASE}/public/rates/history/{YYYY-MM-DD}.json\` |
 | OpenAPI 規格 | ${BASE_URL}openapi.json |
 
-- **免 API Key**、**公開讀取**、**CORS 已啟用**；資料使用與再散布依各 provider 條款。
+${
+  FX_V3_PUBLIC
+    ? `- **免 API Key**、**公開讀取**、**CORS 已啟用**；資料使用與再散布依各 provider 條款。
 - v3 current pointer 只有在 data branch 啟用發布 gate 後才會存在；未啟用時請使用明確標示的 legacy adapter。
 - 更新頻率：約每 5 分鐘檢查 provider；canonical v3 release 以 manifest 與 SHA-256 objects 綁定。
 - v3 quote 使用 fromCurrency → toCurrency 與 decimal string rate；legacy latest/history 僅作相容投影。
-
+`
+    : `- **免 API Key**、**公開讀取**、**CORS 已啟用**；資料使用與再散布依各 provider 條款。
+- 更新頻率：約每 5 分鐘檢查更新臺灣銀行牌告。
+- 涵蓋 ${SUPPORTED_CURRENCY_COUNT} 種貨幣的現金買/賣、即期買/賣四種報價。
+`
+}
 ## 呼叫範例
 
-### curl（v3 pointer）
+${
+  FX_V3_PUBLIC
+    ? `### curl（v3 pointer）
 
 \`\`\`bash
 curl -s ${RATES_API.v3CurrentCdn} | jq .
 \`\`\`
 
 ### curl（legacy adapter）
-
+`
+    : `### curl
+`
+}
 \`\`\`bash
 curl -s ${RATES_API.latestCdn} | jq '.details.USD'
 \`\`\`
@@ -428,24 +457,47 @@ curl -s ${RATES_API.latestCdn} | jq '.details.USD'
 ### JavaScript / Node.js
 
 \`\`\`javascript
-const res = await fetch('${RATES_API.v3CurrentCdn}');
+${
+  FX_V3_PUBLIC
+    ? `const res = await fetch('${RATES_API.v3CurrentCdn}');
 const current = await res.json();
 // 依 current.manifest 讀取並驗證 manifest/object SHA-256，再使用 snapshot.quotes。
 console.log(current.releaseId);
-\`\`\`
+`
+    : `const res = await fetch('${RATES_API.latestCdn}');
+const data = await res.json();
+console.log('USD 現金賣出：', data.details.USD.cash.sell);
+console.log('USD 即期賣出：', data.details.USD.spot.sell);
+`
+}\`\`\`
 
 ### Python
 
 \`\`\`python
 import urllib.request, json
-url = '${RATES_API.v3CurrentCdn}'
-with urllib.request.urlopen(url) as r:
+${
+  FX_V3_PUBLIC
+    ? `url = '${RATES_API.v3CurrentCdn}'
+`
+    : `url = '${RATES_API.latestCdn}'
+`
+}with urllib.request.urlopen(url) as r:
     data = json.loads(r.read())
-print(data['releaseId'])
-\`\`\`
+${
+  FX_V3_PUBLIC
+    ? `print(data['releaseId'])
+`
+    : `print(data['details']['JPY']['cash']['buy'])
+`
+}\`\`\`
 
-## legacy adapter 資料格式
-
+${
+  FX_V3_PUBLIC
+    ? `## legacy adapter 資料格式
+`
+    : `## 資料格式
+`
+}
 \`\`\`json
 {
   "schemaVersion": "2.0",
@@ -459,11 +511,19 @@ print(data['releaseId'])
 }
 \`\`\`
 
-- v3 \`QuoteSnapshot.fromCurrency\`：來源幣別
+${
+  FX_V3_PUBLIC
+    ? `- v3 \`QuoteSnapshot.fromCurrency\`：來源幣別
 - v3 \`QuoteSnapshot.toCurrency\`：目標幣別
 - v3 \`QuoteSnapshot.rate\`：每 1 來源幣可取得的目標幣 decimal string
 - v3 \`sourceQuote\`：現金/即期、通路、來源發布時間與擷取時間等適用條件
-
+`
+    : `- \`cash.buy\`：現金買入（銀行向您收購外幣現鈔）
+- \`cash.sell\`：現金賣出（您臨櫃向銀行買外幣現鈔）
+- \`spot.buy\`：即期買入（外幣帳戶結匯回台幣）
+- \`spot.sell\`：即期賣出（外幣帳戶購匯或匯款）
+`
+}
 ## 速率限制
 
 - jsDelivr CDN：依其公開限制；正常使用不會受限。

@@ -32,6 +32,7 @@ import type {
   RateSourceKind,
 } from '../features/ratewise/rateProviderTypes';
 import { fromLegacyRateSource, resolveRateTypeForSource } from '../config/rateProviders';
+import { FX_V3_PUBLIC } from '../config/api-endpoints';
 import {
   CONVERTER_MODES,
   CURRENCY_DEFINITIONS,
@@ -241,6 +242,16 @@ function buildSanitizePatch(state: ConverterState): Partial<PersistentFields> | 
     dirty = true;
   }
 
+  if (!FX_V3_PUBLIC) {
+    // v3 未公開時維持 main 不變式：換錢所只提供現鈔，rateType 必須收斂為 cash。
+    const resolvedRateSource = patch.rateSource ?? state.rateSource;
+    const resolvedRateType = patch.rateType ?? state.rateType;
+    const providerRateType = resolveRateTypeForSource(resolvedRateSource, resolvedRateType);
+    if (providerRateType !== resolvedRateType) {
+      patch.rateType = providerRateType;
+      dirty = true;
+    }
+  }
   if (!Array.isArray(state.favorites)) {
     patch.favorites = [...DEFAULT_FAVORITES] as CurrencyCode[];
     dirty = true;
@@ -418,15 +429,21 @@ export const useConverterStore = create<ConverterState>()(
 
       setRateMode: (rateMode) => set({ rateMode }),
 
-      setRateType: (rateType) => set({ rateType }),
+      setRateType: (rateType) =>
+        set((state) => ({
+          rateType: FX_V3_PUBLIC ? rateType : resolveRateTypeForSource(state.rateSource, rateType),
+        })),
 
       setProviderPreference: (next) =>
-        set(() => {
+        set((state) => {
           const sanitized = sanitizeProviderPreference(next);
           const derivedRateSource = deriveRateSourceFromPreference(sanitized);
           return {
             providerPreference: sanitized,
             rateSource: derivedRateSource,
+            ...(FX_V3_PUBLIC
+              ? {}
+              : { rateType: resolveRateTypeForSource(derivedRateSource, state.rateType) }),
           };
         }),
 

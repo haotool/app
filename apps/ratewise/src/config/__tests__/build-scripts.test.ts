@@ -1023,7 +1023,8 @@ describe('ratewise build scripts', () => {
     expect(typeof fixture.updateTime).toBe('string');
     expect(fixture.details).not.toHaveProperty('TWD');
 
-    expect(openApiGenerator).toContain("const API_VERSION = '3.0.0'");
+    // v3 公開前 openapi 維持 2.1.0；FX_V3_PUBLIC 翻轉時才升為 3.0.0。
+    expect(openApiGenerator).toContain("const API_VERSION = FX_V3_PUBLIC ? '3.0.0' : '2.1.0'");
     expect(openApiGenerator).toContain("schemaVersion: '3.0'");
     expect(openApiGenerator).toContain("'/public/rates/v3/current.json'");
     expect(openApiGenerator).toContain('ExchangeShopRateV2');

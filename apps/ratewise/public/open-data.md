@@ -1,6 +1,6 @@
 # HaoRate 開放資料 API
 
-> HaoRate 提供臺灣銀行與 MoneyBox 的 v3 方向化匯率 JSON：不可變 release manifest、SHA-256 objects、來源/擷取時間與 legacy adapter，支援 curl / JS / Python 查詢。免 API Key；資料使用依各 provider 條款。
+> HaoRate 開放台灣銀行牌告匯率 JSON 資料：jsDelivr CDN 與 GitHub Raw 雙端點，支援 curl / JS / Python 查詢。免費、免 API Key。
 
 - Canonical: https://app.haotool.org/ratewise/open-data/
 - Version: v2.28.3
@@ -9,27 +9,18 @@
 
 | 類型 | URL |
 |------|-----|
-| v3 current pointer（主要，jsDelivr CDN） | `https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/v3/current.json` |
-| v3 current pointer（備援，GitHub Raw） | `https://raw.githubusercontent.com/haotool/app/data/public/rates/v3/current.json` |
 | 最新匯率（主要，jsDelivr CDN） | `https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json` |
 | 最新匯率（備援，GitHub Raw） | `https://raw.githubusercontent.com/haotool/app/data/public/rates/latest.json` |
 | 歷史匯率 | `https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/history/{YYYY-MM-DD}.json` |
 | OpenAPI 規格 | https://app.haotool.org/ratewise/openapi.json |
 
 - **免 API Key**、**公開讀取**、**CORS 已啟用**；資料使用與再散布依各 provider 條款。
-- v3 current pointer 只有在 data branch 啟用發布 gate 後才會存在；未啟用時請使用明確標示的 legacy adapter。
-- 更新頻率：約每 5 分鐘檢查 provider；canonical v3 release 以 manifest 與 SHA-256 objects 綁定。
-- v3 quote 使用 fromCurrency → toCurrency 與 decimal string rate；legacy latest/history 僅作相容投影。
+- 更新頻率：約每 5 分鐘檢查更新臺灣銀行牌告。
+- 涵蓋 18 種貨幣的現金買/賣、即期買/賣四種報價。
 
 ## 呼叫範例
 
-### curl（v3 pointer）
-
-```bash
-curl -s https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/v3/current.json | jq .
-```
-
-### curl（legacy adapter）
+### curl
 
 ```bash
 curl -s https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json | jq '.details.USD'
@@ -38,23 +29,23 @@ curl -s https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json | 
 ### JavaScript / Node.js
 
 ```javascript
-const res = await fetch('https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/v3/current.json');
-const current = await res.json();
-// 依 current.manifest 讀取並驗證 manifest/object SHA-256，再使用 snapshot.quotes。
-console.log(current.releaseId);
+const res = await fetch('https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json');
+const data = await res.json();
+console.log('USD 現金賣出：', data.details.USD.cash.sell);
+console.log('USD 即期賣出：', data.details.USD.spot.sell);
 ```
 
 ### Python
 
 ```python
 import urllib.request, json
-url = 'https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/v3/current.json'
+url = 'https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json'
 with urllib.request.urlopen(url) as r:
     data = json.loads(r.read())
-print(data['releaseId'])
+print(data['details']['JPY']['cash']['buy'])
 ```
 
-## legacy adapter 資料格式
+## 資料格式
 
 ```json
 {
@@ -69,10 +60,10 @@ print(data['releaseId'])
 }
 ```
 
-- v3 `QuoteSnapshot.fromCurrency`：來源幣別
-- v3 `QuoteSnapshot.toCurrency`：目標幣別
-- v3 `QuoteSnapshot.rate`：每 1 來源幣可取得的目標幣 decimal string
-- v3 `sourceQuote`：現金/即期、通路、來源發布時間與擷取時間等適用條件
+- `cash.buy`：現金買入（銀行向您收購外幣現鈔）
+- `cash.sell`：現金賣出（您臨櫃向銀行買外幣現鈔）
+- `spot.buy`：即期買入（外幣帳戶結匯回台幣）
+- `spot.sell`：即期賣出（外幣帳戶購匯或匯款）
 
 ## 速率限制
 
@@ -93,7 +84,7 @@ print(data['releaseId'])
 
 ### 1. 如何取得最新匯率資料？
 
-新整合請先 GET v3 current pointer（https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/v3/current.json），再依 manifest 的 SHA-256 references 讀取 provider snapshot；每筆 quote 以 fromCurrency、toCurrency、rate（每 1 來源幣可取得的目標幣 decimal string）表達。https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json 仍保留作 legacy adapter，不能取代 v3 hash chain。
+直接 GET `https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json`，無需 API Key。回傳 JSON 包含 18 種貨幣的現金買入、現金賣出、即期買入、即期賣出四種報價。建議 client 端自行快取 5 分鐘，與資料更新頻率一致，避免無意義重複請求。
 
 ### 2. jsDelivr CDN 和 GitHub Raw 端點有何差異？
 
@@ -101,7 +92,7 @@ jsDelivr CDN（建議）：全球 PoP 節點加速，無明確請求上限；Git
 
 ### 3. 有備援端點嗎？
 
-有。v3 current pointer 與 immutable objects 同時提供 jsDelivr CDN 與 GitHub Raw；CDN 不可用時可沿同一 manifest path 改讀 https://raw.githubusercontent.com/haotool/app/data/public/rates/v3/current.json 與 raw objects，並在使用前驗證 SHA-256。legacy adapter 備援端點為 `https://raw.githubusercontent.com/haotool/app/data/public/rates/latest.json`。
+有。jsDelivr CDN 不可用時會自動切換至 GitHub Raw 端點 `https://raw.githubusercontent.com/haotool/app/data/public/rates/latest.json`，無快取，每次請求直接取得最新資料。注意未認證 IP 每小時限 60 次請求。
 
 ### 4. 如何查詢歷史匯率？
 

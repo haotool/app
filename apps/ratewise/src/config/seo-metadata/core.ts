@@ -4,7 +4,7 @@ import { APP_INFO, AUTHOR_PERSON, SEO_SOCIAL_LINKS } from '../app-info';
 import { DEFAULT_TITLE, GUIDE_PAGE_TITLE } from '../seo-static';
 import { type RateExample, type AlternativeProvider } from '../generated/seo-rate-examples';
 import { RATING_SNAPSHOT } from '../generated/rating-snapshot';
-import { RATES_API } from '../api-endpoints';
+import { FX_V3_PUBLIC, RATES_API } from '../api-endpoints';
 import {
   PRERENDER_PATHS,
   SEO_PATHS,
@@ -555,7 +555,9 @@ export function buildOpenDataDatasetJsonLd(): JsonLdBlock {
     '@context': 'https://schema.org',
     '@type': 'Dataset',
     name: `${APP_INFO.shortName} 匯率開放資料`,
-    description: `${APP_INFO.shortName} 提供臺灣銀行牌告匯率與 MoneyBox 換錢所（KRW/TWD）的 v3 方向化開放 JSON 資料集，包含 ${SUPPORTED_CURRENCY_COUNT} 種台銀外幣的現金與即期報價、來源時間與不可變快照；並提供 v3 contract、最新 release、歷史匯率與 OpenAPI 規格。程式碼採 GPL 授權，來源資料的使用與再散布仍以各 provider 條款為準。`,
+    description: FX_V3_PUBLIC
+      ? `${APP_INFO.shortName} 提供臺灣銀行牌告匯率與 MoneyBox 換錢所（KRW/TWD）的 v3 方向化開放 JSON 資料集，包含 ${SUPPORTED_CURRENCY_COUNT} 種台銀外幣的現金與即期報價、來源時間與不可變快照；並提供 v3 contract、最新 release、歷史匯率與 OpenAPI 規格。程式碼採 GPL 授權，來源資料的使用與再散布仍以各 provider 條款為準。`
+      : `${APP_INFO.shortName} 提供臺灣銀行牌告匯率與 MoneyBox 換錢所（KRW/TWD）的開放 JSON 資料集，包含 ${SUPPORTED_CURRENCY_COUNT} 種台銀外幣的現金與即期四種報價，以及 v2 語意欄位（customerBuyForeignRate、quoteUnit）對照；並提供最新匯率、歷史匯率與 OpenAPI 規格。程式碼採 GPL 授權，來源資料的使用與再散布仍以各 provider 條款為準。`,
     url: buildCanonicalUrl('/open-data/'),
     sameAs: 'https://rate.bot.com.tw/xrt',
     isBasedOn: {
@@ -1222,7 +1224,9 @@ export const GUIDE_PAGE_SEO = {
 export const OPEN_DATA_PAGE_FAQ = [
   {
     question: '如何取得最新匯率資料？',
-    answer: `新整合請先 GET v3 current pointer（${RATES_API.v3CurrentCdn}），再依 manifest 的 SHA-256 references 讀取 provider snapshot；每筆 quote 以 fromCurrency、toCurrency、rate（每 1 來源幣可取得的目標幣 decimal string）表達。${RATES_API.latestCdn} 仍保留作 legacy adapter，不能取代 v3 hash chain。`,
+    answer: FX_V3_PUBLIC
+      ? `新整合請先 GET v3 current pointer（${RATES_API.v3CurrentCdn}），再依 manifest 的 SHA-256 references 讀取 provider snapshot；每筆 quote 以 fromCurrency、toCurrency、rate（每 1 來源幣可取得的目標幣 decimal string）表達。${RATES_API.latestCdn} 仍保留作 legacy adapter，不能取代 v3 hash chain。`
+      : `直接 GET \`${RATES_API.latestCdn}\`，無需 API Key。回傳 JSON 包含 ${SUPPORTED_CURRENCY_COUNT} 種貨幣的現金買入、現金賣出、即期買入、即期賣出四種報價。建議 client 端自行快取 5 分鐘，與資料更新頻率一致，避免無意義重複請求。`,
   },
   {
     question: 'jsDelivr CDN 和 GitHub Raw 端點有何差異？',
@@ -1230,7 +1234,9 @@ export const OPEN_DATA_PAGE_FAQ = [
   },
   {
     question: '有備援端點嗎？',
-    answer: `有。v3 current pointer 與 immutable objects 同時提供 jsDelivr CDN 與 GitHub Raw；CDN 不可用時可沿同一 manifest path 改讀 ${RATES_API.v3CurrentRaw} 與 raw objects，並在使用前驗證 SHA-256。legacy adapter 備援端點為 \`${RATES_API.latestRaw}\`。`,
+    answer: FX_V3_PUBLIC
+      ? `有。v3 current pointer 與 immutable objects 同時提供 jsDelivr CDN 與 GitHub Raw；CDN 不可用時可沿同一 manifest path 改讀 ${RATES_API.v3CurrentRaw} 與 raw objects，並在使用前驗證 SHA-256。legacy adapter 備援端點為 \`${RATES_API.latestRaw}\`。`
+      : `有。jsDelivr CDN 不可用時會自動切換至 GitHub Raw 端點 \`${RATES_API.latestRaw}\`，無快取，每次請求直接取得最新資料。注意未認證 IP 每小時限 60 次請求。`,
   },
   {
     question: '如何查詢歷史匯率？',
@@ -1239,8 +1245,12 @@ export const OPEN_DATA_PAGE_FAQ = [
 ] as const satisfies readonly FAQEntry[];
 
 export const OPEN_DATA_PAGE_SEO = {
-  title: '開放資料 API v3 — 方向化匯率 JSON 端點',
-  description: `${APP_INFO.shortName} 提供臺灣銀行與 MoneyBox 的 v3 方向化匯率 JSON：不可變 release manifest、SHA-256 objects、來源/擷取時間與 legacy adapter，支援 curl / JS / Python 查詢。免 API Key；資料使用依各 provider 條款。`,
+  title: FX_V3_PUBLIC
+    ? '開放資料 API v3 — 方向化匯率 JSON 端點'
+    : '開放資料 API — 台銀牌告匯率 JSON 端點',
+  description: FX_V3_PUBLIC
+    ? `${APP_INFO.shortName} 提供臺灣銀行與 MoneyBox 的 v3 方向化匯率 JSON：不可變 release manifest、SHA-256 objects、來源/擷取時間與 legacy adapter，支援 curl / JS / Python 查詢。免 API Key；資料使用依各 provider 條款。`
+    : `${APP_INFO.shortName} 開放台灣銀行牌告匯率 JSON 資料：jsDelivr CDN 與 GitHub Raw 雙端點，支援 curl / JS / Python 查詢。免費、免 API Key。`,
   pathname: '/open-data/',
   breadcrumb: [
     { name: `${APP_INFO.shortName} 首頁`, item: '/' },
@@ -1249,7 +1259,9 @@ export const OPEN_DATA_PAGE_SEO = {
   answerCapsule: [
     {
       question: '要串接最新台銀牌告匯率，應該用哪個端點？',
-      answer: `新整合應讀取 v3 current pointer：${RATES_API.v3CurrentCdn}，再沿 manifest 取得台銀 provider snapshot 並驗證 SHA-256；legacy latest.json 僅供相容讀取。`,
+      answer: FX_V3_PUBLIC
+        ? `新整合應讀取 v3 current pointer：${RATES_API.v3CurrentCdn}，再沿 manifest 取得台銀 provider snapshot 並驗證 SHA-256；legacy latest.json 僅供相容讀取。`
+        : `最新台銀牌告匯率建議直接讀取 latest.json：${RATES_API.latestCdn}。這是免 API Key 的主要 CDN 端點，適合正式環境。`,
     },
     {
       question: `SEO 與 AI 引用應該連到哪種 ${APP_INFO.shortName} URL？`,
@@ -1260,23 +1272,30 @@ export const OPEN_DATA_PAGE_SEO = {
   faqContent: [...OPEN_DATA_PAGE_FAQ],
   howTo: {
     name: `如何呼叫 ${APP_INFO.shortName} 開放匯率 API`,
-    description:
-      '透過 v3 current pointer 與 content-addressed snapshot 取得方向化牌告匯率；免 API Key，資料使用依 provider 條款。',
+    description: FX_V3_PUBLIC
+      ? '透過 v3 current pointer 與 content-addressed snapshot 取得方向化牌告匯率；免 API Key，資料使用依 provider 條款。'
+      : '透過 jsDelivr CDN 端點取得台銀牌告匯率 JSON 資料，免費、免 API Key。',
     steps: [
       {
         position: 1,
         name: '選擇端點',
-        text: `先讀取 ${RATES_API.v3CurrentCdn}；CDN 失敗時改用 raw current pointer，兩者都必須沿 manifest 驗證 SHA-256。`,
+        text: FX_V3_PUBLIC
+          ? `先讀取 ${RATES_API.v3CurrentCdn}；CDN 失敗時改用 raw current pointer，兩者都必須沿 manifest 驗證 SHA-256。`
+          : '建議使用 jsDelivr CDN 主要端點，全球加速，適合生產環境。GitHub Raw 為備援。',
       },
       {
         position: 2,
         name: '呼叫最新匯率',
-        text: `使用 curl 或任何 HTTP 客戶端 GET ${RATES_API.v3CurrentCdn}，無需 API Key，再依 manifest 讀取 provider snapshot。`,
+        text: FX_V3_PUBLIC
+          ? `使用 curl 或任何 HTTP 客戶端 GET ${RATES_API.v3CurrentCdn}，無需 API Key，再依 manifest 讀取 provider snapshot。`
+          : `使用 curl 或任何 HTTP 客戶端，GET ${RATES_API.latestCdn}，無需 API Key。`,
       },
       {
         position: 3,
         name: '解析 JSON',
-        text: 'snapshot 的 canonical quote 以 fromCurrency、toCurrency、rate decimal string 與 sourceQuote 條件表達；不要從 buy/sell 欄位名稱猜方向。',
+        text: FX_V3_PUBLIC
+          ? 'snapshot 的 canonical quote 以 fromCurrency、toCurrency、rate decimal string 與 sourceQuote 條件表達；不要從 buy/sell 欄位名稱猜方向。'
+          : '回傳 JSON 包含 details.{幣別}.cash.buy/sell 與 details.{幣別}.spot.buy/sell 四種報價。',
       },
     ],
   },
@@ -1288,7 +1307,9 @@ export const OPEN_DATA_PAGE_SEO = {
     ),
     buildTechArticleJsonLd(
       '開放資料 API — 台銀牌告匯率 JSON 端點',
-      `${APP_INFO.shortName} 開放台灣銀行牌告匯率 JSON 資料：v3 current pointer、SHA-256 manifest/object 驗證與 legacy adapter，支援 curl / JS / Python 查詢。免 API Key；資料使用依 provider 條款。`,
+      FX_V3_PUBLIC
+        ? `${APP_INFO.shortName} 開放台灣銀行牌告匯率 JSON 資料：v3 current pointer、SHA-256 manifest/object 驗證與 legacy adapter，支援 curl / JS / Python 查詢。免 API Key；資料使用依 provider 條款。`
+        : `${APP_INFO.shortName} 開放台灣銀行牌告匯率 JSON 資料：jsDelivr CDN 與 GitHub Raw 雙端點，支援 curl / JS / Python 查詢。免費、免 API Key。`,
       '/open-data/',
       GUIDE_PUBLISH_DATES.openData,
       {
@@ -1304,7 +1325,9 @@ export const OPEN_DATA_PAGE_SEO = {
           'curl',
           'fetch',
         ],
-        articleBody: `${APP_INFO.shortName} 提供台灣銀行牌告匯率的開放 JSON 資料，無需 API Key。主要端點是 v3 current pointer，透過 manifest 與 SHA-256 objects 追溯 provider snapshot；GitHub Raw 是備援。legacy latest/history 端點只作相容投影。資料使用與再散布依 provider 條款，涵蓋 ${SUPPORTED_CURRENCY_COUNT} 種貨幣的現金與即期四種報價。`,
+        articleBody: FX_V3_PUBLIC
+          ? `${APP_INFO.shortName} 提供台灣銀行牌告匯率的開放 JSON 資料，無需 API Key。主要端點是 v3 current pointer，透過 manifest 與 SHA-256 objects 追溯 provider snapshot；GitHub Raw 是備援。legacy latest/history 端點只作相容投影。資料使用與再散布依 provider 條款，涵蓋 ${SUPPORTED_CURRENCY_COUNT} 種貨幣的現金與即期四種報價。`
+          : `${APP_INFO.shortName} 提供台灣銀行牌告匯率的開放 JSON 資料，無需 API Key，免費使用。主要端點透過 jsDelivr CDN 加速，備援端點透過 GitHub Raw。支援最新匯率（約每 5 分鐘檢查更新）與歷史匯率查詢，涵蓋 ${SUPPORTED_CURRENCY_COUNT} 種貨幣的現金與即期四種報價。`,
         speakableCssSelectors: ['h1', 'h3'],
         proficiencyLevel: 'Beginner',
         dependencies: ['HTTP', 'JSON', 'curl 或 fetch'],
@@ -1335,8 +1358,9 @@ export const ABOUT_PAGE_FAQ = [
   },
   {
     question: '匯差數字如何保持最新且讓搜尋引擎正確讀取？',
-    answer:
-      '牌告範例由銀行與換錢所快照生成，與換算器共用 v3 方向選擇及十進位試算。來源發布時間與擷取時間分開記錄；未知來源時間不補成今天。產物透過 Pull Request 驗證後嵌入靜態 HTML，頁面、API 及結構化資料可依報價識別碼追溯。牌告中點只作數學參考，不視為外部市場價或成交價。',
+    answer: FX_V3_PUBLIC
+      ? '牌告範例由銀行與換錢所快照生成，與換算器共用 v3 方向選擇及十進位試算。來源發布時間與擷取時間分開記錄；未知來源時間不補成今天。產物透過 Pull Request 驗證後嵌入靜態 HTML，頁面、API 及結構化資料可依報價識別碼追溯。牌告中點只作數學參考，不視為外部市場價或成交價。'
+      : '牌告範例由銀行與換錢所快照生成，來源發布時間與擷取時間分開記錄；未知來源時間不補成今天。產物透過 Pull Request 驗證後嵌入靜態 HTML（vite-react-ssg SSG 預渲染），Google 爬蟲無需執行 JavaScript 即可讀取。牌告中點只作數學參考，不視為外部市場價或成交價。',
   },
 ] as const satisfies readonly FAQEntry[];
 
@@ -1382,7 +1406,9 @@ export const ABOUT_PAGE_SEO = {
           '匯差計算',
           'LLM 引用',
         ],
-        articleBody: `${APP_INFO.name}是專為台灣用戶設計的即時匯率 PWA 工具，資料來源為臺灣銀行官方牌告匯率，支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣換算與離線使用。完全免費、無廣告，資料約每 5 分鐘檢查更新，涵蓋現金買入、現金賣出、即期買入、即期賣出四種報價。各頁面部署 schema.org JSON-LD 結構化標記，採用 SSG 靜態預渲染確保爬蟲可讀性，v3 快照保留來源與擷取時間並由 release manifest 綁定。`,
+        articleBody: FX_V3_PUBLIC
+          ? `${APP_INFO.name}是專為台灣用戶設計的即時匯率 PWA 工具，資料來源為臺灣銀行官方牌告匯率，支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣換算與離線使用。完全免費、無廣告，資料約每 5 分鐘檢查更新，涵蓋現金買入、現金賣出、即期買入、即期賣出四種報價。各頁面部署 schema.org JSON-LD 結構化標記，採用 SSG 靜態預渲染確保爬蟲可讀性，v3 快照保留來源與擷取時間並由 release manifest 綁定。`
+          : `${APP_INFO.name}是專為台灣用戶設計的即時匯率 PWA 工具，資料來源為臺灣銀行官方牌告匯率，支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣換算與離線使用。完全免費、無廣告，資料約每 5 分鐘檢查更新，涵蓋現金買入、現金賣出、即期買入、即期賣出四種報價。各頁面部署 schema.org JSON-LD 結構化標記，採用 SSG 靜態預渲染確保爬蟲可讀性。`,
         speakableCssSelectors: ['h1', 'h3'],
       },
     ),

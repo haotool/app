@@ -18,6 +18,7 @@ import {
   buildSemanticFieldMapping,
 } from '../src/config/api-semantics-v2.ts';
 import { buildPublicRateProviderMetadata } from '../src/config/rateProviderPublicMetadata.ts';
+import { FX_V3_PUBLIC } from '../src/config/api-endpoints.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
@@ -48,15 +49,33 @@ const exchangeShopProvider = providerMetadata.providers.find(
   (provider) => provider.sourceKind === 'exchange-shop',
 );
 
+function buildV3Descriptor() {
+  return {
+    contract: FX_V3_SCHEMA_URL,
+    availability: FX_V3_AVAILABILITY,
+    current: `${DATA_BASE_URL}/v3/current.json`,
+    cdnCurrent: `${CDN_BASE_URL}/v3/current.json`,
+    releaseObjectTemplate: `${DATA_BASE_URL}/v3/objects/{sha256}.json`,
+    releaseManifestTemplate: `${DATA_BASE_URL}/v3/releases/{releaseId}.json`,
+    rateSemantics: 'fromCurrency -> toCurrency; rate is decimal string per 1 fromCurrency',
+    estimateModes: ['EXACT_IN', 'EXACT_OUT'],
+    hash: 'SHA-256 over final UTF-8 bytes',
+    clientRule:
+      'Verify current pointer, manifest and every referenced object before using a quote; rate is target units per 1 fromCurrency.',
+  };
+}
+
 const latestJson = {
   name: `${APP_INFO.shortName} Exchange Rate API`,
   version: pkg.version,
-  schemaVersion: '3.0',
-  legacySchemaVersion: API_SEMANTICS_SCHEMA_VERSION,
+  ...(FX_V3_PUBLIC
+    ? { schemaVersion: '3.0', legacySchemaVersion: API_SEMANTICS_SCHEMA_VERSION }
+    : { schemaVersion: API_SEMANTICS_SCHEMA_VERSION }),
   semanticsDoc: API_SEMANTICS_DOC.publicUrl,
   semanticFieldMapping: buildSemanticFieldMapping(),
-  description:
-    '匯率 API v3 — 以不可變 release manifest、SHA-256 objects 與 fromCurrency→toCurrency quote 為 canonical contract；legacy latest/history 端點僅作相容投影。',
+  description: FX_V3_PUBLIC
+    ? '匯率 API v3 — 以不可變 release manifest、SHA-256 objects 與 fromCurrency→toCurrency quote 為 canonical contract；legacy latest/history 端點僅作相容投影。'
+    : '臺灣銀行牌告匯率靜態 API — 資料約每 5 分鐘檢查更新，並提供 App 匯率模式欄位對照',
   source: '臺灣銀行牌告匯率',
   sourceUrl: 'https://rate.bot.com.tw/xrt',
   updateFrequency: 'every 5 minutes',
@@ -77,19 +96,7 @@ const latestJson = {
     moneybox: exchangeShopProvider?.cdnCurrentEndpoint,
     moneyboxHistory: exchangeShopProvider?.cdnHistoryEndpoint,
   },
-  v3: {
-    contract: FX_V3_SCHEMA_URL,
-    availability: FX_V3_AVAILABILITY,
-    current: `${DATA_BASE_URL}/v3/current.json`,
-    cdnCurrent: `${CDN_BASE_URL}/v3/current.json`,
-    releaseObjectTemplate: `${DATA_BASE_URL}/v3/objects/{sha256}.json`,
-    releaseManifestTemplate: `${DATA_BASE_URL}/v3/releases/{releaseId}.json`,
-    rateSemantics: 'fromCurrency -> toCurrency; rate is decimal string per 1 fromCurrency',
-    estimateModes: ['EXACT_IN', 'EXACT_OUT'],
-    hash: 'SHA-256 over final UTF-8 bytes',
-    clientRule:
-      'Verify current pointer, manifest and every referenced object before using a quote; rate is target units per 1 fromCurrency.',
-  },
+  ...(FX_V3_PUBLIC ? { v3: buildV3Descriptor() } : {}),
   providerSelection,
   providers: providers.map((provider) => ({
     ...provider,

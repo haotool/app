@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { SITE_CONFIG, RAW_DATA_BASE, CDN_DATA_BASE } from '../seo-paths.config.mjs';
 import { APP_INFO } from '../src/config/app-info.ts';
 import { API_SEMANTICS_DOC, API_SEMANTICS_SCHEMA_VERSION } from '../src/config/api-semantics-v2.ts';
-import { PROVIDER_RATES_PATH } from '../src/config/api-endpoints.ts';
+import { FX_V3_PUBLIC, PROVIDER_RATES_PATH } from '../src/config/api-endpoints.ts';
 import { buildPublicRateProviderMetadata } from '../src/config/rateProviderPublicMetadata.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -13,7 +13,8 @@ const ROOT = resolve(__dirname, '..');
 const pkg = JSON.parse(readFileSync(resolve(ROOT, 'package.json'), 'utf-8'));
 const APP_VERSION = pkg.version;
 
-const API_VERSION = '3.0.0';
+// FX_V3_PUBLIC=false 時維持 v2 公開契約版本，v3 schema 不被宣告為主要入口。
+const API_VERSION = FX_V3_PUBLIC ? '3.0.0' : '2.1.0';
 
 const FX_V3_CONTRACT = JSON.parse(readFileSync(resolve(ROOT, '../shared/fx/schema.json'), 'utf-8'));
 const FX_V3_SCHEMAS = Object.fromEntries(
@@ -489,16 +490,20 @@ const pairInfoSchema = {
       description: '在 liveRateUrl 回應中定位此幣別資料的路徑',
       example: 'details.USD',
     },
-    v3CurrentUrl: {
-      type: 'string',
-      format: 'uri',
-      description: 'v3 atomic current pointer；使用前須驗證 manifest 與 objects 的 SHA-256。',
-    },
-    v3ContractUrl: { type: 'string', format: 'uri' },
-    canonicalFields: {
-      type: 'object',
-      additionalProperties: { type: 'string' },
-    },
+    ...(FX_V3_PUBLIC
+      ? {
+          v3CurrentUrl: {
+            type: 'string',
+            format: 'uri',
+            description: 'v3 atomic current pointer；使用前須驗證 manifest 與 objects 的 SHA-256。',
+          },
+          v3ContractUrl: { type: 'string', format: 'uri' },
+          canonicalFields: {
+            type: 'object',
+            additionalProperties: { type: 'string' },
+          },
+        }
+      : {}),
     rateModes: {
       type: 'object',
       description: 'App 匯率模式對應的欄位選擇策略；用於依使用者模式取正確 buy/sell/mid 欄位。',
@@ -514,12 +519,92 @@ const pairInfoSchema = {
     'pageUrl',
     'liveRateUrl',
     'rateFieldPath',
-    'v3CurrentUrl',
-    'v3ContractUrl',
-    'canonicalFields',
+    ...(FX_V3_PUBLIC ? ['v3CurrentUrl', 'v3ContractUrl', 'canonicalFields'] : []),
     'rateModes',
     'source',
   ],
+};
+
+const FX_V3_PATHS = {
+  '/public/rates/v3/current.json': {
+    get: {
+      summary: '取得 v3 已驗證發布指標',
+      description:
+        '回傳不可變 v3 manifest 的內容位址。用戶端必須先驗證 manifest 與 provider snapshot 的 SHA-256，再使用 canonical rate 試算。',
+      operationId: 'getFxV3CurrentRelease',
+      tags: ['FX API v3'],
+      responses: {
+        200: {
+          description: 'v3 current release pointer',
+          content: {
+            'application/json': { schema: { $ref: '#/components/schemas/CurrentRelease' } },
+          },
+        },
+        404: {
+          description:
+            'v3 data branch gate is not enabled or no current release has been published',
+        },
+      },
+    },
+  },
+  '/public/rates/v3/releases/{releaseId}.json': {
+    get: {
+      summary: '取得 v3 不可變 release manifest',
+      operationId: 'getFxV3ReleaseManifest',
+      tags: ['FX API v3'],
+      parameters: [
+        {
+          name: 'releaseId',
+          in: 'path',
+          required: true,
+          schema: { type: 'string', pattern: '^[a-f0-9]{64}$' },
+        },
+      ],
+      responses: {
+        200: {
+          description: 'v3 release manifest',
+          content: {
+            'application/json': { schema: { $ref: '#/components/schemas/ReleaseManifest' } },
+          },
+        },
+        404: { description: 'Release 不存在' },
+      },
+    },
+  },
+  '/public/rates/v3/objects/{objectId}.json': {
+    get: {
+      summary: '取得 v3 內容定址資料物件',
+      operationId: 'getFxV3Object',
+      tags: ['FX API v3'],
+      parameters: [
+        {
+          name: 'objectId',
+          in: 'path',
+          required: true,
+          schema: { type: 'string', pattern: '^[a-f0-9]{64}$' },
+        },
+      ],
+      responses: {
+        200: {
+          description:
+            'v3 provider snapshot or history object; response bytes must match manifest sha256',
+          content: {
+            'application/json': { schema: { $ref: '#/components/schemas/ProviderSnapshot' } },
+          },
+        },
+        404: { description: 'Object 不存在' },
+      },
+    },
+  },
+};
+
+const FX_V3_CONTRACT_SUMMARY = {
+  schemaVersion: '3.0',
+  schemaUrl: FX_V3_CONTRACT.$id,
+  canonicalRate: 'published canonical rate; decimal string; 34 significant digits; HALF_EVEN',
+  estimateModes: ['EXACT_IN', 'EXACT_OUT'],
+  releasePointer: '/public/rates/v3/current.json',
+  hashAlgorithm: 'SHA-256 over final UTF-8 bytes',
 };
 
 const openApiSpec = {
@@ -529,7 +614,9 @@ const openApiSpec = {
     title: `${APP_INFO.shortName} 匯率 API`,
     version: API_VERSION,
     description: [
-      '方向明確的匯率 v3 靜態 JSON API，以不可變 release manifest、SHA-256 content-addressed objects 與 provider snapshot 為 canonical contract；legacy latest/history 端點僅作相容投影。',
+      FX_V3_PUBLIC
+        ? '方向明確的匯率 v3 靜態 JSON API，以不可變 release manifest、SHA-256 content-addressed objects 與 provider snapshot 為 canonical contract；legacy latest/history 端點僅作相容投影。'
+        : '臺灣銀行牌告匯率靜態 JSON API，每 5 分鐘由 GitHub Actions 自動同步。',
       '',
       '**匯率類型說明：**',
       '- `cash_buy`（現金買入）：銀行以此價收購外幣現鈔（你拿外幣換台幣）',
@@ -537,7 +624,14 @@ const openApiSpec = {
       '- `spot_buy`（即期買入）：電匯/帳戶轉入匯率（你匯款回台灣）',
       '- `spot_sell`（即期賣出）：電匯/帳戶轉出匯率（你從台灣匯款出去）',
       '',
-      '**v3 核心規則：** `rate` 永遠表示每 1 `fromCurrency` 可取得的 `toCurrency`；試算固定為 `received = sent × rate`。',
+      ...(FX_V3_PUBLIC
+        ? [
+            '**v3 核心規則：** `rate` 永遠表示每 1 `fromCurrency` 可取得的 `toCurrency`；試算固定為 `received = sent × rate`。',
+          ]
+        : [
+            '**重要提示：** 賣出（sell）= 銀行賣給你外幣的價格 = 你拿台幣換外幣看此價；',
+            '買入（buy）= 銀行收你外幣的價格 = 你拿外幣換台幣看此價。',
+          ]),
       '',
       '**App 匯率模式對應：**',
       '- `auto`：來源外幣用 `{rateType}.buy`，目標外幣用 `{rateType}.sell`；TWD 視為 1。',
@@ -566,8 +660,9 @@ const openApiSpec = {
     'x-webapp': SITE_CONFIG.url,
     'x-documentation': `${SITE_CONFIG.url}open-data/`,
     'x-app-version': APP_VERSION,
-    'x-schema-version': '3.0',
-    'x-legacy-schema-version': API_SEMANTICS_SCHEMA_VERSION,
+    ...(FX_V3_PUBLIC
+      ? { 'x-schema-version': '3.0', 'x-legacy-schema-version': API_SEMANTICS_SCHEMA_VERSION }
+      : { 'x-schema-version': API_SEMANTICS_SCHEMA_VERSION }),
     'x-semantics-doc': API_SEMANTICS_DOC.publicUrl,
     'x-code-license': 'GPL-3.0',
     'x-data-license-note':
@@ -623,76 +718,7 @@ const openApiSpec = {
     },
   ],
   paths: {
-    '/public/rates/v3/current.json': {
-      get: {
-        summary: '取得 v3 已驗證發布指標',
-        description:
-          '回傳不可變 v3 manifest 的內容位址。用戶端必須先驗證 manifest 與 provider snapshot 的 SHA-256，再使用 canonical rate 試算。',
-        operationId: 'getFxV3CurrentRelease',
-        tags: ['FX API v3'],
-        responses: {
-          200: {
-            description: 'v3 current release pointer',
-            content: {
-              'application/json': { schema: { $ref: '#/components/schemas/CurrentRelease' } },
-            },
-          },
-          404: {
-            description:
-              'v3 data branch gate is not enabled or no current release has been published',
-          },
-        },
-      },
-    },
-    '/public/rates/v3/releases/{releaseId}.json': {
-      get: {
-        summary: '取得 v3 不可變 release manifest',
-        operationId: 'getFxV3ReleaseManifest',
-        tags: ['FX API v3'],
-        parameters: [
-          {
-            name: 'releaseId',
-            in: 'path',
-            required: true,
-            schema: { type: 'string', pattern: '^[a-f0-9]{64}$' },
-          },
-        ],
-        responses: {
-          200: {
-            description: 'v3 release manifest',
-            content: {
-              'application/json': { schema: { $ref: '#/components/schemas/ReleaseManifest' } },
-            },
-          },
-          404: { description: 'Release 不存在' },
-        },
-      },
-    },
-    '/public/rates/v3/objects/{objectId}.json': {
-      get: {
-        summary: '取得 v3 內容定址資料物件',
-        operationId: 'getFxV3Object',
-        tags: ['FX API v3'],
-        parameters: [
-          {
-            name: 'objectId',
-            in: 'path',
-            required: true,
-            schema: { type: 'string', pattern: '^[a-f0-9]{64}$' },
-          },
-        ],
-        responses: {
-          200: {
-            description:
-              'v3 provider snapshot or history object; response bytes must match manifest sha256',
-            content: {
-              'application/json': { schema: { $ref: '#/components/schemas/ProviderSnapshot' } },
-            },
-          },
-          404: { description: 'Object 不存在' },
-        },
-      },
-    },
+    ...(FX_V3_PUBLIC ? FX_V3_PATHS : {}),
     [EXCHANGE_SHOP_LATEST_PATH]: {
       get: {
         summary: '取得指定 provider 最新換錢所匯率',
@@ -915,7 +941,7 @@ const openApiSpec = {
   },
   components: {
     schemas: {
-      ...FX_V3_SCHEMAS,
+      ...(FX_V3_PUBLIC ? FX_V3_SCHEMAS : {}),
       CurrencyRateDetail: currencyRateDetailSchema,
       CurrencyRateV2: currencyRateV2Schema,
       SemanticRateTypeBlock: semanticRateTypeBlockSchema,
@@ -946,14 +972,7 @@ const openApiSpec = {
   'x-rate-providers': {
     ...publicProviderMetadata,
   },
-  'x-fx-v3-contract': {
-    schemaVersion: '3.0',
-    schemaUrl: FX_V3_CONTRACT.$id,
-    canonicalRate: 'published canonical rate; decimal string; 34 significant digits; HALF_EVEN',
-    estimateModes: ['EXACT_IN', 'EXACT_OUT'],
-    releasePointer: '/public/rates/v3/current.json',
-    hashAlgorithm: 'SHA-256 over final UTF-8 bytes',
-  },
+  ...(FX_V3_PUBLIC ? { 'x-fx-v3-contract': FX_V3_CONTRACT_SUMMARY } : {}),
   'x-pair-endpoints': {
     description: '各幣對靜態 JSON 端點（供搜尋系統與 AI agent 查詢特定幣對匯率資訊）',
     template: `${SITE_CONFIG.url}api/pairs/{PAIR}.json`,

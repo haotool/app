@@ -33,6 +33,7 @@ import {
   boardMidpoint,
   normalizeAmountInput,
   normalizeBankSnapshot,
+  freshness,
 } from './index';
 it('rejects unavailable quotes and keeps zero distinct', () => {
   const quotes = normalizeQuote({ ...row, buy: null });
@@ -96,7 +97,7 @@ it('filters stale, qualification and denomination then ranks real results', () =
       qualifications: ['member'],
     }).map((x) => x.quote.providerId),
   ).toEqual(['third-bank', 'bot']);
-  expect(rankQuotes([q], req, { ...context, now: '2026-09-23T00:10:00Z' })).toEqual([]);
+  expect(rankQuotes([q], req, { ...context, now: '2026-09-23T12:00:01Z' })).toEqual([]);
   expect(rankQuotes([q], req, context, new Map([['bot', 'failed'] as const]))).toEqual([]);
 });
 import { validateQuoteSnapshot } from './index';
@@ -393,5 +394,22 @@ describe('R3a money correctness', () => {
       new Set(['TWD']),
     );
     expect(() => normalizeBankSnapshot({ details: {} })).toThrow('Missing provider fetch time');
+  });
+});
+
+describe('R3a freshness thresholds (PRD SSOT)', () => {
+  const at = (hours: number) =>
+    new Date(Date.parse(row.sourcePublishedAt) + hours * 3600000).toISOString();
+  it('uses source publication age only: Taiwan Bank 36h, MoneyBox 24h', () => {
+    const bot = normalizeQuote({ ...row, lastSuccessfulCheckAt: row.sourcePublishedAt })[1]!;
+    expect(freshness(bot, at(35))).toBe('fresh');
+    expect(freshness(bot, at(37))).toBe('stale');
+    const shop = normalizeQuote({ ...row, providerId: 'moneybox' })[1]!;
+    expect(freshness(shop, at(23))).toBe('fresh');
+    expect(freshness(shop, at(25))).toBe('stale');
+  });
+  it('reports unknown, not stale, when the source omits its publication time', () => {
+    const quote = normalizeQuote({ ...row, sourcePublishedAt: null })[1]!;
+    expect(freshness(quote, at(1))).toBe('unknown');
   });
 });

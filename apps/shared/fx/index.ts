@@ -266,16 +266,23 @@ function estimateAmounts(
     feeStatus: feeStatus,
   };
 }
+/** PRD 049 新鮮度門檻 SSOT：以來源發布時間計算；未列 provider 採較嚴格的 24 小時。 */
+export const FRESHNESS_MAX_HOURS: Readonly<Record<string, number>> = Object.freeze({
+  bot: 36,
+  moneybox: 24,
+});
+/**
+ * `unknown`：來源未提供發布時間（或時間不合法／晚於現在），不可當成已過期。
+ * `stale`：來源發布時間超過 provider 門檻。檢查時間不參與判斷（不落盤、不造成 churn）。
+ */
 export function freshness(quote: QuoteSnapshot, now: string): 'fresh' | 'stale' | 'unknown' {
   const row = quote.sourceQuote;
   if (row.sourcePublishedAt === null) return 'unknown';
   const time = Date.parse(now),
-    published = Date.parse(row.sourcePublishedAt),
-    checked = Date.parse(row.lastSuccessfulCheckAt);
-  if (![time, published, checked].every(Number.isFinite) || published > time || checked > time)
-    return 'unknown';
-  const maxHours = row.providerId === 'bot' ? 36 : 24;
-  return time - published <= maxHours * 3600000 && time - checked <= 30 * 60000 ? 'fresh' : 'stale';
+    published = Date.parse(row.sourcePublishedAt);
+  if (![time, published].every(Number.isFinite) || published > time) return 'unknown';
+  const maxHours = FRESHNESS_MAX_HOURS[row.providerId] ?? 24;
+  return time - published <= maxHours * 3600000 ? 'fresh' : 'stale';
 }
 export function isQuoteApplicable(
   quote: QuoteSnapshot,

@@ -3,7 +3,12 @@
  * legacy buy/sell 保留；v2 欄位為 additive customer-centric 語意層。
  */
 
+import { FX_V3_PUBLIC } from './api-endpoints.ts';
+
 export const API_SEMANTICS_SCHEMA_VERSION = '2.0' as const;
+
+/** v3 未公開前不得在 v2 欄位說明中指向 v3 入口。 */
+const V3_MIGRATION_HINT = FX_V3_PUBLIC ? '；請使用 v3 rate' : '';
 
 export const API_SEMANTICS_DOC = {
   specPath: 'docs/superpowers/specs/2026-06-26-ratewise-2026-product-ux-spec.md',
@@ -276,7 +281,7 @@ export function buildProviderSemanticFieldMapping(
           description:
             quoteUnit === 'KRW_PER_TWD'
               ? '每 1 TWD 可換的 KRW（直接報價）'
-              : '已棄用：保留舊 1 / sell 數值，非 per-1 正規化；請使用 v3 rate',
+              : `已棄用：保留舊 1 / sell 數值，非 per-1 正規化${V3_MIGRATION_HINT}`,
         },
       },
       examples: {
@@ -319,8 +324,7 @@ export function buildProviderSemanticFieldMapping(
       },
       bankSellTwdPerUnit: {
         legacyPath: '1 / sell',
-        description:
-          '已棄用的誤命名欄位：實值為每 1 TWD 可換多少外幣（1 / sell），數值維持 v2 相容；新整合請使用 v3 fromCurrency/toCurrency/rate。',
+        description: `已棄用的誤命名欄位：實值為每 1 TWD 可換多少外幣（1 / sell），數值維持 v2 相容${FX_V3_PUBLIC ? '；新整合請使用 v3 fromCurrency/toCurrency/rate' : ''}。`,
         deprecated: true,
       },
     },

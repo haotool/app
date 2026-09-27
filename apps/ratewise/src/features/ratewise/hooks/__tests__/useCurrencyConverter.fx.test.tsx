@@ -3,7 +3,12 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { normalizeQuote, type QuoteSnapshot } from '@app/shared/fx';
 import { useConverterStore } from '../../../../stores/converterStore';
-import { useCurrencyConverter } from '../useCurrencyConverter';
+import type * as ApiEndpointsModule from '../../../../config/api-endpoints';
+import { useFxCurrencyConverter as useCurrencyConverter } from '../useCurrencyConverter';
+vi.mock('../../../../config/api-endpoints', async (importOriginal) => ({
+  ...(await importOriginal<typeof ApiEndpointsModule>()),
+  FX_V3_PUBLIC: true,
+}));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 vi.mock('../../../../components/Toast', () => ({ useToast: () => ({ showToast: vi.fn() }) }));
 vi.mock('../useMoneyBoxRates', () => ({ useMoneyBoxRates: () => ({ rate: null }) }));
