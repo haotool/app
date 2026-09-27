@@ -385,7 +385,7 @@ export const RateTrendChart = ({ currencyCode, days = 7 }) => {
 
 **A**: 不會：
 
-- Zeabur/Vercel 仍從 `main` 分支部署程式碼
+- Cloudflare Pages 仍從 `main` 分支部署程式碼
 - `data` 分支僅供 CDN 讀取資料
 - 兩者完全隔離
 

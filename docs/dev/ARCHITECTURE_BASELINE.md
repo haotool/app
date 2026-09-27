@@ -15,8 +15,7 @@ deployment，Pull Request 產生 preview，`data` branch 不部署前端。
 
 正式網域不直接改指 Pages。`security-headers` Worker 維持公開路由、安全標頭與
 `rating-api`／KV 責任邊界，待 Pages preview 的 URL、SEO、PWA、404、header 與 API
-驗證完成後，才將 Worker 的 `STATIC_ORIGIN` 切至 Pages。Vercel 與 Zeabur 在觀察期
-保留，任何 origin fetch、canonical、sitemap、PWA 或 API 回歸都可移除
+驗證完成後，才將 Worker 的 `STATIC_ORIGIN` 切至 Pages。Zeabur 保留作回退，任何 origin fetch、canonical、sitemap、PWA 或 API 回歸都可移除
 `STATIC_ORIGIN` 回退。
 
 ## Linus 架構哲學
@@ -209,10 +208,9 @@ Cloudflare security-headers Worker
                     └─ `.pages-dist/` → 多個靜態 app
 ```
 
-觀察期可由 Vercel 承接根目錄 `Dockerfile.vercel` 產生的靜態多 app image，Zeabur 保留作為
-回退 origin；不得把 `docker-compose.yml`、Cloudflare API token 或 KV secret 放進 Pages／
-Vercel。正式切換前以 Pages `*.pages.dev` URL 驗證完整路由，移除 `STATIC_ORIGIN` 即回到
-觀察期的 Vercel origin，兩者皆未設定則回到 Zeabur。
+Zeabur 保留作為回退 origin；不得把 `docker-compose.yml`、Cloudflare API token 或 KV secret
+放進 Pages。正式切換前以 Pages `*.pages.dev` URL 驗證完整路由，移除 `STATIC_ORIGIN` 即回到
+Zeabur。
 
 ## 3. 狀態管理架構
 

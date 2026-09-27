@@ -27,14 +27,13 @@
 - CSP、HSTS、Permissions-Policy、Rate Limiting
 - TLS 終結、憑證更新
 - `security-headers` Worker 優先以嚴格驗證的 `STATIC_ORIGIN` 將靜態 origin
-  切換至 Cloudflare Pages；觀察期可用 `VERCEL_ORIGIN` 回退，未設定或不合法時回到既有 origin
+  切換至 Cloudflare Pages；未設定或不合法時回到既有 origin
 
 ### Origin 與 API
 
-- Cloudflare Pages、Zeabur 或 Vercel origin 只提供建置後的靜態多 app 資產，不存放 Cloudflare secret
-- `rating-api` Worker 與 KV 維持在 Cloudflare，不能由 Vercel Docker image 取代
-- `STATIC_ORIGIN`／`VERCEL_ORIGIN` 是 Worker 端的非機密 origin 設定，可由 `wrangler.jsonc` 固定但不得進入 client bundle 或前端環境變數；Cloudflare API token 與 KV secret 不得進 repo
-- Web Analytics 由 Cloudflare Pages 自動注入；前端不依賴 Vercel Analytics intake route
+- Cloudflare Pages 或 Zeabur origin 只提供建置後的靜態多 app 資產，不存放 Cloudflare secret
+- `rating-api` Worker 與 KV 維持在 Cloudflare，不能由靜態 origin 取代
+- `STATIC_ORIGIN` 是 Worker 端的非機密 origin 設定，可由 `wrangler.jsonc` 固定但不得進入 client bundle 或前端環境變數；Cloudflare API token 與 KV secret 不得進 repo
 
 ### 應用層（Vite + React）
 
@@ -58,9 +57,8 @@
 | 依賴安全審計    | ⚠️ production 0 high/critical、3 moderate React Router advisories 待處理                    |
 | 日誌外送        | ❌ 未上傳至遠端（Phase 0 計畫處理）                                                         |
 | `.env` 漏掃     | ✅ Gitleaks 覆蓋 repo；執行期 provider variables 仍需平台權限控管                           |
-| Pages origin    | ⚠️ 已支援可回退切換；尚未切換正式流量                                                       |
-| Vercel origin   | ⚠️ 保留作觀察期回退；尚未切換正式流量                                                       |
-| Rating API 邊界 | ✅ 維持 Cloudflare Worker + KV，不納入 Vercel image                                         |
+| Pages origin    | ✅ 已由 `STATIC_ORIGIN` 承接正式流量；移除即回退至 route 原 origin                          |
+| Rating API 邊界 | ✅ 維持 Cloudflare Worker + KV，不納入靜態 origin                                           |
 
 ## 3. Cloudflare 推薦設定
 

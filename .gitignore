@@ -43,7 +43,6 @@ lerna-debug.log*
 !apps/ratewise/.env.production
 
 # Deployment
-.vercel
 .next
 
 # OS

@@ -6,10 +6,9 @@
 	"preview_urls": false,
 	"compatibility_date": "2026-03-14",
 	"vars": {
-		// Public origin names are configuration, not credentials. Keeping both in the
-		// Worker config makes every CI deployment reproducible and rollback-safe.
+		// Public origin name is configuration, not a credential. Keeping it in the
+		// Worker config makes every CI deployment reproducible.
 		"STATIC_ORIGIN": "https://haotool-static.pages.dev",
-		"VERCEL_ORIGIN": "https://haotool-app.vercel.app",
 	},
 	"routes": [
 		{

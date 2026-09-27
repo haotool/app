@@ -67,38 +67,7 @@ docker-compose down
 docker stop ratewise && docker rm ratewise
 ```
 
-### Vercel Docker 部署（GitHub monorepo）
-
-Vercel 使用根目錄的 `Dockerfile.vercel` 建置同一個多 app Nginx image；不要把
-`docker-compose.yml` 當成 Vercel 部署目標。Vercel container 使用 port `80`，而 Zeabur
-既有 Dockerfile 維持 port `8080`，兩者共用同一份 `nginx.conf` 路由政策。
-
-#### Vercel Project 設定
-
-1. 從 GitHub 匯入 `haotool/app`，Root Directory 保持 repo root。
-2. Framework Preset 選 `Other`，讓 Vercel 使用 `Dockerfile.vercel`。
-3. Production Branch 設為 `main`；Pull Request 與其他 branch 保留 Preview Deployment。
-4. 僅設定必要的公開 build variables；不得放入 Cloudflare token、KV secret 或其他私密值。
-5. 先使用 Vercel `*.vercel.app` Production URL 做 origin 驗證，不要先把公開網域直連 Vercel。
-
-#### GitHub 自動部署
-
-連結 GitHub 後，Vercel 會在 push 與 Pull Request 建立 deployment。主網域仍由 Cloudflare
-`security-headers` Worker 接收；完成 Preview／Production 驗證後，才在 Worker Variables
-設定非機密的 `VERCEL_ORIGIN=https://<vercel-project>.vercel.app`。
-
-#### Vercel origin 切換與回退
-
-```text
-使用者 → Cloudflare security-headers → Vercel Dockerfile.vercel → Nginx 多 app 靜態站
-                         └──────────→ Cloudflare rating-api Worker + KV
-```
-
-切換前必須驗證根站、所有子 app、SEO 文件、PWA service worker、`/health`、404、redirect、
-CSP／HSTS 與 `/ratewise/api/ratings`。移除 `VERCEL_ORIGIN` 並重新部署
-`security-headers` 即可回到原 Zeabur origin。
-
-### Cloudflare Pages Direct Upload（目前遷移目標）
+### Cloudflare Pages Direct Upload（正式部署）
 
 靜態前端使用根目錄 `scripts/build-pages.mjs` 將 9 個 app 組裝至單一
 `.pages-dist/`，再由 GitHub Actions 以 Wrangler Pages Direct Upload 部署至
@@ -127,13 +96,9 @@ integration 的自動 Production／Preview deployment 必須停用；否則會�
 Pages Git integration 的保留設定仍對齊 `pnpm build:pages` 與 `.pages-dist/`，避免日後誤開自動部署時
 回到錯誤的 root `npm run build`／`dist`。
 
-Vercel 仍可在觀察期保留原有 GitHub deployment；根目錄 `vercel.json` 會讓
-`data` branch 的 Vercel build 以 exit code 0 略過，其他 branch 維持建置。這個設定
-必須在變更合併至 GitHub 後才會對遠端 Vercel 專案生效。
-
 Pages 不直接接正式 DNS。正式請求仍由 Cloudflare `security-headers` Worker
 接收，Worker 的靜態 origin 在 preview、SEO、PWA、header 與 API 驗證完成後才切換；
-`STATIC_ORIGIN` 保留前一個 origin 作為回退，且 Vercel 與 Zeabur 至少觀察 24–48 小時。
+移除 `STATIC_ORIGIN` 並重新部署 Worker 即回到 route 原 origin。
 
 Pages assembly 另外保留 `/health` 的 `healthy` 回應，與現有 Nginx health check 相容；此端點
 不代表 Worker、Rating API 或 KV 已健康，三者仍須分開驗證。

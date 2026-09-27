@@ -306,7 +306,7 @@ git push --force
 
 ❌ 不會：
 
-- Zeabur/Vercel 仍從 `main` 分支部署
+- Cloudflare Pages 仍從 `main` 分支部署
 - 只有 CDN 讀取從 `rates` 分支
 - 兩者完全獨立
 
