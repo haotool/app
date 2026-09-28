@@ -1,8 +1,11 @@
-import { projectSeoQuote } from './fx-projection';
 import { SUPPORTED_CURRENCY_COUNT } from '../../features/ratewise/constants';
 import { APP_INFO, AUTHOR_PERSON, SEO_SOCIAL_LINKS } from '../app-info';
 import { DEFAULT_TITLE, GUIDE_PAGE_TITLE } from '../seo-static';
-import { type RateExample, type AlternativeProvider } from '../generated/seo-rate-examples';
+import {
+  SEO_RATE_EXAMPLES_DATE,
+  type RateExample,
+  type AlternativeProvider,
+} from '../generated/seo-rate-examples';
 import { RATING_SNAPSHOT } from '../generated/rating-snapshot';
 import { FX_V3_PUBLIC, RATES_API } from '../api-endpoints';
 import {
@@ -415,9 +418,8 @@ interface WebPageOptions {
 export function buildExchangeRateSpecificationJsonLd(
   fromCurrency: string,
   toCurrency: string,
-  rate: number | string,
+  rate: number,
   rateDescription: string,
-  sourcePublishedAt?: string | null,
 ): JsonLdBlock {
   return {
     '@context': 'https://schema.org',
@@ -428,7 +430,7 @@ export function buildExchangeRateSpecificationJsonLd(
       price: String(rate),
       priceCurrency: toCurrency,
       description: rateDescription,
-      ...(sourcePublishedAt ? { validFrom: sourcePublishedAt } : {}),
+      validFrom: SEO_RATE_EXAMPLES_DATE,
     },
   };
 }
@@ -447,16 +449,15 @@ export function buildExchangeRateSpecificationJsonLd(
 export function buildAmountExchangeRateSpecificationJsonLd(
   fromCurrency: string,
   toCurrency: string,
-  rate: number | string,
+  rate: number,
   amount: number,
   result: number,
   direction: 'to-twd' | 'twd-to-foreign',
-  sourcePublishedAt?: string | null,
 ): JsonLdBlock {
   const isTwdToForeign = direction === 'twd-to-foreign';
   const rateDescription = isTwdToForeign
     ? `臺灣銀行現金賣出價（${amount.toLocaleString('zh-TW')} TWD 可買 ${result.toLocaleString('zh-TW')} ${toCurrency}）`
-    : `臺灣銀行現金買入價（支付 ${amount.toLocaleString('zh-TW')} ${fromCurrency} 估算取得 ${result.toLocaleString('zh-TW')} TWD，未含費用）`;
+    : `臺灣銀行現金賣出價（買 ${amount.toLocaleString('zh-TW')} ${fromCurrency} 所需 ${result.toLocaleString('zh-TW')} TWD）`;
 
   return {
     '@context': 'https://schema.org',
@@ -467,7 +468,7 @@ export function buildAmountExchangeRateSpecificationJsonLd(
       price: String(rate),
       priceCurrency: toCurrency,
       description: rateDescription,
-      ...(sourcePublishedAt ? { validFrom: sourcePublishedAt } : {}),
+      validFrom: SEO_RATE_EXAMPLES_DATE,
     },
   };
 }
@@ -780,26 +781,26 @@ export function buildAlternativeProviderFaq(
   if (!example.alternativeProviders?.length) return [];
 
   return example.alternativeProviders.map((provider) => {
-    const amount = direction === 'to-twd' ? '1000000' : String(example.exampleTWD);
-    const projected = projectSeoQuote(provider.quotes, 'KRW', direction, amount);
-    const bank = projectSeoQuote(example.quotes, 'KRW', direction, amount);
-    const from = direction === 'to-twd' ? 'KRW' : 'TWD';
-    const to = direction === 'to-twd' ? 'TWD' : 'KRW';
-    if (!projected)
+    if (direction === 'to-twd') {
+      // KRW→TWD 方向：旅客返台前在明洞換回台幣（使用 rateBuy）
+      const exampleKRW = 1_000_000;
+      const rateBuy = provider.rateBuy ?? provider.rate;
+      const providerTWD = Math.floor(exampleKRW / rateBuy);
       return {
-        question: `${provider.name}可以辦理 ${from} 換 ${to} 嗎？`,
-        answer: '此方向缺少有效牌告，無法試算；請向明洞分店確認。',
+        question: `帶韓元回台灣，可以在${provider.name}先換好台幣嗎？`,
+        answer: `${provider.name}（${provider.nameEn}）同時提供韓元換台幣的現場換匯服務。以 ${exampleKRW.toLocaleString()} 韓元為例，現場換匯約可換 ${providerTWD.toLocaleString()} 台幣（匯率 ${rateBuy.toFixed(1)} KRW/TWD）。返台前在首爾兌換通常比回台灣再換更划算，需現場持韓元現鈔親自前往（資料來源：${provider.source}，更新日期 ${provider.rateDate}）。`,
       };
-    const difference = bank ? Number(projected.amount) - Number(bank.amount) : null;
-    const comparison =
-      difference === null
-        ? '台銀此方向缺少報價，無法比較。'
-        : difference === 0
-          ? '兩者牌告試算相同。'
-          : `與台灣台銀牌告相比，明洞方案${difference > 0 ? '多' : '少'}約 ${Math.abs(difference).toLocaleString('zh-TW')} ${to}。`;
+    }
+
+    // twd-to-foreign 方向：出境前換韓元（使用 rate，即 sell 率）
+    const exampleTWD = example.exampleTWD;
+    const taiwanBankKRW = example.foreignAtCash;
+    const providerKRW = Math.floor(exampleTWD * provider.rate);
+    const diffKRW = providerKRW - taiwanBankKRW;
+    const diffPct = ((diffKRW / taiwanBankKRW) * 100).toFixed(1);
     return {
-      question: `${provider.name}的 ${from} 換 ${to} 牌告如何比較？`,
-      answer: `${provider.name}（${provider.nameEn}）適用韓國明洞分店現場現鈔。支付 ${Number(amount).toLocaleString('zh-TW')} ${from}，牌告估算取得 ${Number(projected.amount).toLocaleString('zh-TW')} ${to}。${bank ? `台灣台銀方案估算 ${Number(bank.amount).toLocaleString('zh-TW')} ${to}。` : ''}${comparison}兩方案換匯地點不同，均未含未知費用，不代表保證成交或最低總成本。來源：${provider.source}${provider.sourcePublishedAt ? `；來源發布時間：${provider.sourcePublishedAt}` : ''}。`,
+      question: `去首爾前，換韓元可以去${provider.name}嗎？比台銀划算多少？`,
+      answer: `${provider.name}（${provider.nameEn}）提供現場現金換匯服務。以 ${exampleTWD.toLocaleString()} 元新台幣為例：台銀現金賣出約可換 ${taiwanBankKRW.toLocaleString()} 韓元，而在明洞現場換匯約可換 ${providerKRW.toLocaleString()} 韓元，多換約 ${diffKRW.toLocaleString()} 韓元（約多 ${diffPct}%）。需注意需現場親自前往，建議出發前確認最新匯率（資料來源：${provider.source}，更新日期 ${provider.rateDate}）。`,
     };
   });
 }
@@ -829,9 +830,10 @@ export function buildFaqPageJsonLd(faqEntries: readonly FAQEntry[], maxItems = 5
   };
 }
 
-// 牌告中點的全站描述 SSOT；它是同一 provider 買賣價的數學參考，不是外部市場中價。
+// 中間價與台銀實際賣出價差距的全站描述 SSOT，統一多處曾互相矛盾的數字。
+// 依據：SEO_RATE_EXAMPLES 每日實測 diffPct（主要貨幣約 1～2%，東南亞與非主流貨幣可達 6% 以上）。
 export const MID_RATE_SPREAD_NOTE =
-  '牌告中點只由同一 provider 的買入與賣出價計算，差距依幣別、通路與時點而異；它不是外部市場中價，也不代表實際成交價格。';
+  '中間價與台銀實際賣出價的差距依幣別而異：主要貨幣通常約 1～2%，東南亞與非主流貨幣可能超過 6%（依台銀牌告與市場中間價每日實測）。';
 
 export const HOMEPAGE_FAQ_CONTENT = [
   {
@@ -1358,9 +1360,8 @@ export const ABOUT_PAGE_FAQ = [
   },
   {
     question: '匯差數字如何保持最新且讓搜尋引擎正確讀取？',
-    answer: FX_V3_PUBLIC
-      ? '牌告範例由銀行與換錢所快照生成，與換算器共用 v3 方向選擇及十進位試算。來源發布時間與擷取時間分開記錄；未知來源時間不補成今天。產物透過 Pull Request 驗證後嵌入靜態 HTML，頁面、API 及結構化資料可依報價識別碼追溯。牌告中點只作數學參考，不視為外部市場價或成交價。'
-      : '牌告範例由銀行與換錢所快照生成，來源發布時間與擷取時間分開記錄；未知來源時間不補成今天。產物透過 Pull Request 驗證後嵌入靜態 HTML（vite-react-ssg SSG 預渲染），Google 爬蟲無需執行 JavaScript 即可讀取。牌告中點只作數學參考，不視為外部市場價或成交價。',
+    answer:
+      '匯差範例數據由 GitHub Actions 每日自動執行：同時抓取台灣銀行牌告匯率與 open.er-api.com 市場中間價（Google、XE、Wise、Apple 計算機的共同基準），進行雙重驗證（兩個中間價差距須在 2% 以內），生成靜態 TypeScript 常數，透過 Pull Request 自動審核後進入主分支。最終數字直接嵌入靜態 HTML（vite-react-ssg SSG 預渲染），Google 爬蟲無需執行 JavaScript 即可讀取所有匯差數字。',
   },
 ] as const satisfies readonly FAQEntry[];
 
@@ -1406,9 +1407,7 @@ export const ABOUT_PAGE_SEO = {
           '匯差計算',
           'LLM 引用',
         ],
-        articleBody: FX_V3_PUBLIC
-          ? `${APP_INFO.name}是專為台灣用戶設計的即時匯率 PWA 工具，資料來源為臺灣銀行官方牌告匯率，支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣換算與離線使用。完全免費、無廣告，資料約每 5 分鐘檢查更新，涵蓋現金買入、現金賣出、即期買入、即期賣出四種報價。各頁面部署 schema.org JSON-LD 結構化標記，採用 SSG 靜態預渲染確保爬蟲可讀性，v3 快照保留來源與擷取時間並由 release manifest 綁定。`
-          : `${APP_INFO.name}是專為台灣用戶設計的即時匯率 PWA 工具，資料來源為臺灣銀行官方牌告匯率，支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣換算與離線使用。完全免費、無廣告，資料約每 5 分鐘檢查更新，涵蓋現金買入、現金賣出、即期買入、即期賣出四種報價。各頁面部署 schema.org JSON-LD 結構化標記，採用 SSG 靜態預渲染確保爬蟲可讀性。`,
+        articleBody: `${APP_INFO.name}是專為台灣用戶設計的即時匯率 PWA 工具，資料來源為臺灣銀行官方牌告匯率，支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣換算與離線使用。完全免費、無廣告，資料約每 5 分鐘檢查更新，涵蓋現金買入、現金賣出、即期買入、即期賣出四種報價。各頁面部署 schema.org JSON-LD 結構化標記，採用 SSG 靜態預渲染確保爬蟲可讀性，匯差數據每日自動雙重驗證更新。`,
         speakableCssSelectors: ['h1', 'h3'],
       },
     ),

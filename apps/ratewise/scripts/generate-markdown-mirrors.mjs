@@ -281,7 +281,7 @@ ${
   FX_V3_PUBLIC
     ? `- 資料管線：GitHub Actions 抓取 provider 牌告，v3 snapshot 保留來源/擷取時間與 SHA-256 provenance，經 Pull Request 驗證後合併至 data branch。
 `
-    : `- 資料管線：GitHub Actions 抓取 provider 牌告，經 Pull Request 驗證後合併至 data branch。
+    : `- 資料管線：GitHub Actions 每日抓取 + 雙重驗證（台銀牌告 vs open.er-api.com 中間價，誤差 ≤ 2%）+ Pull Request 自動審核後合併至 data branch。
 `
 }- 匯差範例數字透過 SSG（vite-react-ssg）於 build 期嵌入靜態 HTML，搜尋引擎無需執行 JavaScript 即可讀取。
 
