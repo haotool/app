@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+6（reward 6、penalty 0、neutral 0）｜累計總分：+389
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+390
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-09-28
+- ID：reward-ratewise-release-version-build-metadata
+- 原因：Release 等待正式站版本以嚴格相等比對，正式站回報 2.28.4+build.2336 而逾時。
+- 解法：依 SemVer §10 忽略 build metadata，兩處比對共用 matchesReleaseVersion 並補回歸測試。
 
 - 日期：2026-09-22
 - ID：reward-ratewise-prerender-coverage-timeout

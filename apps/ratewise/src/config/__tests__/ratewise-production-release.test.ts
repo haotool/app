@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -55,5 +55,47 @@ describe('ratewise-production-release script', () => {
         'app.haotool.org/ratewise/static-loader-data-manifest',
       ],
     });
+  });
+
+  it('should ignore SemVer build metadata when matching the release version', async () => {
+    const script = await loadRatewiseProductionReleaseModule();
+
+    expect(script.matchesReleaseVersion('2.28.4+build.2336', '2.28.4')).toBe(true);
+    expect(script.matchesReleaseVersion('2.28.4', '2.28.4')).toBe(true);
+    expect(script.matchesReleaseVersion('2.28.4', '2.28.4+build.1')).toBe(true);
+    expect(script.matchesReleaseVersion('2.28.5', '2.28.4')).toBe(false);
+    expect(script.matchesReleaseVersion('2.28.4-rc.1', '2.28.4')).toBe(false);
+    expect(script.matchesReleaseVersion('2.28.40', '2.28.4')).toBe(false);
+    expect(script.matchesReleaseVersion(null, '2.28.4')).toBe(false);
+    expect(
+      script.isExpectedAppVersion(
+        '<meta name="app-version" content="2.28.4+build.2336">',
+        '2.28.4',
+      ),
+    ).toBe(true);
+  });
+
+  it('should finish waiting when production reports the version with build metadata', async () => {
+    const script = await loadRatewiseProductionReleaseModule();
+    const fetchImpl = vi.fn(() =>
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        text: () => Promise.resolve('<meta name="app-version" content="2.28.4+build.9">'),
+      }),
+    );
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    try {
+      const result = await script.waitForExpectedVersion('2.28.4', {
+        fetchImpl,
+        timeoutMs: 1000,
+        intervalMs: 0,
+      });
+      expect(result).toEqual({ attempts: 1, version: '2.28.4+build.9' });
+      expect(fetchImpl).toHaveBeenCalledTimes(1);
+    } finally {
+      logSpy.mockRestore();
+    }
   });
 });
