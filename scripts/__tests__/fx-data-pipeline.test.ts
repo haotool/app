@@ -9,7 +9,7 @@ import {
   existsSync,
 } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { migrateHistory } from '../migrate-fx-history.mjs';
 import { publishRelease, retainedHistory } from '../publish-fx-release.mjs';
 
@@ -267,6 +267,54 @@ describe('data workflow contract', () => {
   });
 });
 
+it('keeps MoneyBox publishedAt monotonic across runs and leaves unchanged state clean', async () => {
+  const root = tempDir();
+  const v3 = join(root, 'public/rates/v3');
+  const fetchedAt = '2026-09-21T10:15:00Z';
+  const input = (publishedAt: string) => ({
+    timestamp: fetchedAt,
+    fetchedAt,
+    sourcePublishedAt: publishedAt,
+    rates: { TWD: { buy: '46', sell: '45' } },
+  });
+  const publishedAt = (release: Awaited<ReturnType<typeof publishRelease>>) => {
+    const snapshot = release.snapshots.get('moneybox') as
+      | { quotes: { sourceQuote: { sourcePublishedAt: string | null } }[] }
+      | undefined;
+    return snapshot?.quotes[0]?.sourceQuote.sourcePublishedAt;
+  };
+  try {
+    git(root, 'init');
+    configureGit(root);
+    expect(
+      publishedAt(await publishRelease(v3, { moneybox: input('2026-09-21T10:00:00Z') }, fetchedAt)),
+    ).toBe('2026-09-21T10:00:00.000Z');
+    for (const run of [1, 2]) {
+      expect(
+        publishedAt(
+          await publishRelease(
+            v3,
+            { moneybox: input('2026-09-21T09:00:00Z') },
+            `2026-09-21T10:${20 + run * 5}:00Z`,
+          ),
+        ),
+      ).toBeNull();
+    }
+    expect(
+      publishedAt(await publishRelease(v3, { moneybox: input('2026-09-21T10:05:00Z') }, fetchedAt)),
+    ).toBe('2026-09-21T10:05:00.000Z');
+    git(root, 'add', '.');
+    git(root, 'commit', '-m', 'initial');
+    await publishRelease(v3, { moneybox: input('2026-09-21T10:05:00Z') }, '2026-09-21T10:30:00Z');
+    expect(git(root, 'status', '--short')).toBe('');
+    expect(readFileSync(join(v3, 'state/moneybox-watermark.json'), 'utf8')).toBe(
+      '{"publishedAt":"2026-09-21T10:05:00.000Z"}\n',
+    );
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 describe('history directory reads', () => {
   const botHistory = (date: string) => ({
     timestamp: `${date}T10:00:00.000Z`,
@@ -363,7 +411,72 @@ describe('history directory reads', () => {
       join(output, 'history-index.json'),
       JSON.stringify([{ providerId: 'moneybox', date: '2026-09-20' }]),
     );
-    expect(() => migrateHistory('revision', output, dataRoot)).toThrow(/ENOENT/);
+    expect(() => migrateHistory('revision', output, dataRoot)).toThrow(
+      /Missing moneybox history directory/,
+    );
+  });
+
+  it('retains an in-window published snapshot when its source becomes corrupt', () => {
+    const root = tempDir();
+    const dataRoot = join(root, 'public/rates');
+    const output = join(dataRoot, 'v3');
+    const date = '2026-09-15';
+    const now = new Date('2026-09-29T12:00:00Z');
+    mkdirSync(join(dataRoot, 'history'), { recursive: true });
+    writeFileSync(join(dataRoot, `history/${date}.json`), JSON.stringify(botHistory(date)));
+    migrateHistory('revision', output, dataRoot, now);
+    const previous = JSON.parse(readFileSync(join(output, 'history-index.json'), 'utf8'))[0];
+    writeFileSync(join(dataRoot, `history/${date}.json`), '{"broken":true}');
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      const result = migrateHistory('revision', output, dataRoot, now);
+      expect(result).toMatchObject({ total: 1, converted: 0, quarantined: 1 });
+      expect(JSON.parse(readFileSync(join(output, 'history-index.json'), 'utf8'))).toContainEqual(
+        previous,
+      );
+      expect(warning).toHaveBeenCalledWith(
+        expect.stringContaining('Retaining previously published bot history'),
+      );
+      expect(result.entries[0]).toMatchObject({
+        status: 'quarantined',
+        reason: expect.any(String),
+      });
+    } finally {
+      warning.mockRestore();
+    }
+  });
+
+  it('quarantines a corrupt source date that was never published without adding history', () => {
+    const root = tempDir();
+    const dataRoot = join(root, 'public/rates');
+    const output = join(dataRoot, 'v3');
+    mkdirSync(join(dataRoot, 'history'), { recursive: true });
+    writeFileSync(join(dataRoot, 'history/2026-09-15.json'), '{"broken":true}');
+    const result = migrateHistory('revision', output, dataRoot, new Date('2026-09-29T12:00:00Z'));
+    expect(result).toMatchObject({ total: 1, converted: 0, quarantined: 1 });
+    expect(JSON.parse(readFileSync(join(output, 'history-index.json'), 'utf8'))).toEqual([]);
+  });
+
+  it('aborts when the prior snapshot needed for retention fails hash verification', () => {
+    const root = tempDir();
+    const dataRoot = join(root, 'public/rates');
+    const output = join(dataRoot, 'v3');
+    const date = '2026-09-15';
+    const now = new Date('2026-09-29T12:00:00Z');
+    mkdirSync(join(dataRoot, 'history'), { recursive: true });
+    writeFileSync(join(dataRoot, `history/${date}.json`), JSON.stringify(botHistory(date)));
+    migrateHistory('revision', output, dataRoot, now);
+    const previous = JSON.parse(readFileSync(join(output, 'history-index.json'), 'utf8')) as {
+      snapshot: { path: string };
+    }[];
+    expect(previous).toHaveLength(1);
+    const snapshotPath = previous[0]?.snapshot.path;
+    if (!snapshotPath) throw new Error('Missing migrated snapshot path');
+    writeFileSync(join(output, snapshotPath), '{}');
+    writeFileSync(join(dataRoot, `history/${date}.json`), '{"broken":true}');
+    expect(() => migrateHistory('revision', output, dataRoot, now)).toThrow(
+      `Invalid previously published bot history object for ${date}`,
+    );
   });
 
   it('fails closed on non-ENOENT history directory read errors', () => {

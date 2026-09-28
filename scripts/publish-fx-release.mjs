@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, existsSync, renameSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, renameSync, mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { execFileSync } from 'node:child_process';
@@ -20,6 +20,12 @@ import {
   validateProducerProviderSnapshot,
   validateProducerReleaseManifest,
 } from '../apps/shared/fx/producer-validators.js';
+
+const PROVIDER_NORMALIZERS = {
+  bot: normalizeBankSnapshot,
+  moneybox: normalizeMoneyboxSnapshot,
+};
+export const FX_PROVIDERS = Object.freeze(Object.keys(PROVIDER_NORMALIZERS));
 
 export const sunsetAt = (activatedAt) =>
   activatedAt === null
@@ -157,6 +163,16 @@ export function retainedHistory(dataRoot, now = new Date()) {
 }
 export async function publishRelease(root, inputs, now = new Date().toISOString(), history) {
   const previous = readPrevious(root);
+  const watermarkPath = resolve(root, 'state/moneybox-watermark.json');
+  const moneyboxWatermark = existsSync(watermarkPath)
+    ? JSON.parse(readFileSync(watermarkPath, 'utf8')).publishedAt
+    : null;
+  if (
+    moneyboxWatermark !== null &&
+    (typeof moneyboxWatermark !== 'string' || !Number.isFinite(Date.parse(moneyboxWatermark)))
+  )
+    throw new Error('Invalid MoneyBox publishedAt watermark');
+  let acceptedMoneyboxPublishedAt = null;
   // 每個 provider 保留自身最後一次檢查結果；本輪未執行的 provider 不改寫狀態。
   const status = ({ providerId, snapshot, checkStatus, lastSuccessfulCheckAt }) => ({
     providerId,
@@ -172,9 +188,7 @@ export async function publishRelease(root, inputs, now = new Date().toISOString(
       if (prior) providers.set(providerId, { ...prior, checkStatus: 'failed' });
       continue;
     }
-    const normalizer = { bot: normalizeBankSnapshot, moneybox: normalizeMoneyboxSnapshot }[
-      providerId
-    ];
+    const normalizer = PROVIDER_NORMALIZERS[providerId];
     if (!normalizer) throw new Error(`Unknown provider adapter: ${providerId}`);
     const prior = providers.get(providerId);
     let normalizedInput = input;
@@ -186,21 +200,29 @@ export async function publishRelease(root, inputs, now = new Date().toISOString(
       const historicalSnapshot = priorHistoryEntry
         ? readVerifiedObject(root, priorHistoryEntry.snapshot)
         : null;
-      const previousPublishedAt =
-        previousSnapshot?.quotes
-          .map((quote) => quote.sourceQuote.sourcePublishedAt)
-          .find(Boolean) ??
-        historicalSnapshot?.quotes
-          .map((quote) => quote.sourceQuote.sourcePublishedAt)
-          .find(Boolean);
+      const previousPublishedAt = [
+        moneyboxWatermark,
+        ...(previousSnapshot?.quotes ?? []).map((quote) => quote.sourceQuote.sourcePublishedAt),
+        ...(historicalSnapshot?.quotes ?? []).map((quote) => quote.sourceQuote.sourcePublishedAt),
+      ]
+        .filter(Boolean)
+        .sort()
+        .at(-1);
+      const checkedPublishedAt = guardPublishedAt(
+        input.sourcePublishedAt,
+        input.fetchedAt ?? input.timestamp,
+        previousPublishedAt ?? null,
+      );
       normalizedInput = {
         ...input,
-        sourcePublishedAt: guardPublishedAt(
-          input.sourcePublishedAt,
-          input.fetchedAt ?? input.timestamp,
-          previousPublishedAt ?? null,
-        ).value,
+        sourcePublishedAt:
+          checkedPublishedAt.value &&
+          previousPublishedAt &&
+          Date.parse(checkedPublishedAt.value) < Date.parse(previousPublishedAt)
+            ? null
+            : checkedPublishedAt.value,
       };
+      acceptedMoneyboxPublishedAt = normalizedInput.sourcePublishedAt;
     }
     const quotes = normalizer(normalizedInput);
     if (!quotes.length) throw new Error('Empty or invalid provider snapshot');
@@ -233,6 +255,7 @@ export async function publishRelease(root, inputs, now = new Date().toISOString(
     JSON.stringify(nextHistory) === JSON.stringify(previous.history)
   ) {
     const current = JSON.parse(readFileSync(resolve(root, 'current.json'), 'utf8'));
+    persistMoneyboxWatermark();
     return { current, manifest: previous, snapshots, unchanged: true };
   }
   const activatedAt = previous?.deprecation.activatedAt ?? null;
@@ -254,7 +277,16 @@ export async function publishRelease(root, inputs, now = new Date().toISOString(
   // Only this mutable pointer is replaced; failures above leave last-known-good intact.
   writeFileSync(resolve(root, 'current.json.tmp'), JSON.stringify(current) + '\n');
   renameSync(resolve(root, 'current.json.tmp'), resolve(root, 'current.json'));
+  persistMoneyboxWatermark();
   return { current, manifest, snapshots };
+
+  function persistMoneyboxWatermark() {
+    if (!acceptedMoneyboxPublishedAt) return;
+    const state = JSON.stringify({ publishedAt: acceptedMoneyboxPublishedAt }) + '\n';
+    mkdirSync(resolve(root, 'state'), { recursive: true });
+    if (!existsSync(watermarkPath) || readFileSync(watermarkPath, 'utf8') !== state)
+      writeFileSync(watermarkPath, state);
+  }
 }
 /** v2 prices are projected from original source fields, never a reciprocal of rounded v3 rates. */
 export function legacyPayload(snapshot, original) {
@@ -308,8 +340,7 @@ export function legacyPayload(snapshot, original) {
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const dataRoot = resolve(process.env.FX_DATA_ROOT ?? 'public/rates');
   const provider = process.env.FX_PROVIDER;
-  if (!['bot', 'moneybox'].includes(provider))
-    throw new Error('FX_PROVIDER must be bot or moneybox');
+  if (!FX_PROVIDERS.includes(provider)) throw new Error('FX_PROVIDER must be bot or moneybox');
   const path = resolve(
     dataRoot,
     provider === 'bot' ? 'latest.json' : 'providers/moneybox/latest.json',
@@ -317,13 +348,14 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const input = process.env.FX_FETCH_FAILED === '1' ? null : JSON.parse(readFileSync(path, 'utf8'));
   const { migrateHistory } = await import('./migrate-fx-history.mjs');
   const revision = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
-  migrateHistory(revision, resolve(dataRoot, 'v3'), dataRoot);
+  const now = new Date();
+  migrateHistory(revision, resolve(dataRoot, 'v3'), dataRoot, now);
   // v3 發布不得改寫 v2 latest.json（expand–contract：v2 棄用標記待 S4 公開切換時處理）。
   const result = await publishRelease(
     resolve(dataRoot, 'v3'),
     { [provider]: input },
-    new Date().toISOString(),
-    retainedHistory(dataRoot),
+    now.toISOString(),
+    retainedHistory(dataRoot, now),
   );
   console.log(result.unchanged ? 'v3 release unchanged' : `v3 release ${result.current.releaseId}`);
 }

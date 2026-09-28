@@ -42,8 +42,27 @@ function priorHistory(output) {
   return history;
 }
 
+function retainedReference(output, previous, providerId, date) {
+  const reference = previous.snapshot;
+  if (
+    !reference ||
+    !/^(?:[a-zA-Z0-9_-]+\/)*[a-zA-Z0-9_-]+\.json$/.test(reference.path ?? '') ||
+    !/^[a-f0-9]{64}$/.test(reference.sha256 ?? '')
+  )
+    throw new Error(
+      `Missing previously published ${providerId} history for ${date}: invalid retained reference`,
+    );
+  const bytes = readFileSync(resolve(output, reference.path));
+  if (bytesHash(bytes) !== reference.sha256)
+    throw new Error(`Invalid previously published ${providerId} history object for ${date}`);
+  const snapshot = JSON.parse(bytes.toString('utf8'));
+  if (!validateProviderSnapshot(snapshot) || snapshot.providerId !== providerId)
+    throw new Error(`Invalid previously published ${providerId} history object for ${date}`);
+  return reference;
+}
+
 /** 以固定 commit 或指定資料目錄遷移；不連網、不猜時間。 */
-export function migrateHistory(revision, output, dataRoot = null) {
+export function migrateHistory(revision, output, dataRoot = null, now = new Date()) {
   if (!dataRoot && !/^[a-f\d]{40}$/i.test(revision))
     throw new Error('Git revision must be a full 40-character commit SHA');
   const previousHistory = dataRoot ? priorHistory(output) : [];
@@ -58,6 +77,10 @@ export function migrateHistory(revision, output, dataRoot = null) {
         } catch (error) {
           const providerId = folder.startsWith('providers/') ? 'moneybox' : 'bot';
           if (error.code === 'ENOENT' && !previousProviders.has(providerId)) return [];
+          if (error.code === 'ENOENT' && previousProviders.has(providerId))
+            throw new Error(`Missing ${providerId} history directory: ${directory}`, {
+              cause: error,
+            });
           throw error;
         }
       })
@@ -71,6 +94,46 @@ export function migrateHistory(revision, output, dataRoot = null) {
         )
         .sort();
   paths.sort();
+  const dates = new Map();
+  for (const entry of [
+    ...previousHistory,
+    ...paths.map((path) => ({
+      providerId: path.includes('moneybox') ? 'moneybox' : 'bot',
+      date: path.slice(-15, -5),
+    })),
+  ]) {
+    if (!dates.has(entry.providerId)) dates.set(entry.providerId, new Set());
+    dates.get(entry.providerId).add(entry.date);
+  }
+  const todayByProvider = {
+    bot: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Taipei' }).format(now),
+    moneybox: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(now),
+  };
+  const earliest = new Date(`${todayByProvider.bot}T00:00:00Z`);
+  earliest.setUTCDate(earliest.getUTCDate() - HISTORY_WINDOW_DAYS);
+  const minimumBankDate = earliest.toISOString().slice(0, 10);
+  const retainedDatesByProvider = new Map([
+    [
+      'bot',
+      new Set(
+        [...(dates.get('bot') ?? [])].filter(
+          (date) => date >= minimumBankDate && date < todayByProvider.bot,
+        ),
+      ),
+    ],
+    [
+      'moneybox',
+      new Set(
+        [...(dates.get('moneybox') ?? [])]
+          .filter((date) => date <= todayByProvider.moneybox)
+          .sort()
+          .slice(-HISTORY_WINDOW_DAYS),
+      ),
+    ],
+  ]);
+  const previousByDate = new Map(
+    previousHistory.map((entry) => [`${entry.providerId}:${entry.date}`, entry]),
+  );
   const entries = [],
     history = [];
   let previousMoneyboxPublishedAt = null;
@@ -176,8 +239,41 @@ export function migrateHistory(revision, output, dataRoot = null) {
       history.push({ providerId, date, snapshot: ref });
     } catch (error) {
       entry.reason = error.message;
+      const previous = previousByDate.get(`${providerId}:${date}`);
+      if (previous && retainedDatesByProvider.get(providerId)?.has(date)) {
+        const reference = retainedReference(output, previous, providerId, date);
+        history.push({ providerId, date, snapshot: reference });
+        console.warn(
+          `Retaining previously published ${providerId} history for ${date}: ${entry.reason}`,
+        );
+      }
     }
     entries.push(entry);
+  }
+  for (const [key, previous] of previousByDate) {
+    const [providerId, date] = key.split(':');
+    if (
+      retainedDatesByProvider.get(providerId)?.has(date) &&
+      !entries.some((entry) => entry.providerId === providerId && entry.date === date) &&
+      !history.some((entry) => entry.providerId === providerId && entry.date === date)
+    ) {
+      const reference = retainedReference(output, previous, providerId, date);
+      history.push({ providerId, date, snapshot: reference });
+      entries.push({
+        path: `public/rates/${providerId === 'moneybox' ? 'providers/moneybox/' : ''}history/${date}.json`,
+        date,
+        providerId,
+        sourceHash: null,
+        sourceVersion: null,
+        methodVersion: '1',
+        status: 'quarantined',
+        reason: 'Historical source file is missing; retained the previously published snapshot',
+        snapshot: reference,
+      });
+      console.warn(
+        `Retaining previously published ${providerId} history for ${date}: source file missing`,
+      );
+    }
   }
   const result = {
     revision,
@@ -187,41 +283,19 @@ export function migrateHistory(revision, output, dataRoot = null) {
     entries,
   };
   if (dataRoot && previousHistory.length) {
-    const dates = new Map();
-    for (const entry of [
-      ...previousHistory,
-      ...paths.map((path) => ({
-        providerId: path.includes('moneybox') ? 'moneybox' : 'bot',
-        date: path.slice(-15, -5),
-      })),
-    ]) {
-      if (!dates.has(entry.providerId)) dates.set(entry.providerId, new Set());
-      dates.get(entry.providerId).add(entry.date);
-    }
-    const todayByProvider = {
-      bot: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Taipei' }).format(new Date()),
-      moneybox: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(new Date()),
-    };
-    const earliest = new Date(`${todayByProvider.bot}T00:00:00Z`);
-    earliest.setUTCDate(earliest.getUTCDate() - HISTORY_WINDOW_DAYS);
-    const minimumBankDate = earliest.toISOString().slice(0, 10);
     for (const providerId of previousProviders) {
       const previousDates = new Set(
         previousHistory
           .filter((entry) => entry.providerId === providerId)
           .map((entry) => entry.date),
       );
-      const candidates = [...(dates.get(providerId) ?? [])].sort();
-      const retainedDates =
-        providerId === 'bot'
-          ? candidates.filter((date) => date >= minimumBankDate && date < todayByProvider.bot)
-          : candidates
-              .filter((date) => date <= todayByProvider.moneybox)
-              .slice(-HISTORY_WINDOW_DAYS);
+      const retainedDates = retainedDatesByProvider.get(providerId) ?? new Set();
       for (const date of previousDates) {
         const entry = entries.find((item) => item.providerId === providerId && item.date === date);
-        const hasEvidence = entry?.status === 'quarantined' && entry.evidence?.path;
-        if (retainedDates.includes(date) && entry?.status !== 'converted' && !hasEvidence) {
+        if (
+          retainedDates.has(date) &&
+          !history.some((item) => item.providerId === providerId && item.date === date)
+        ) {
           throw new Error(`Missing previously published ${providerId} history for ${date}`);
         }
       }

@@ -744,3 +744,28 @@ it('reports per-provider history, date gaps and quarantines; rejects a provider 
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+it('requires bot and MoneyBox providers in the verified release', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'fx-required-providers-'));
+  const v3 = join(dir, 'v3');
+  const time = '2026-09-20T10:00:00Z';
+  try {
+    const result = await publishRelease(
+      v3,
+      {
+        bot: {
+          timestamp: time,
+          sourcePublishedAt: time,
+          details: { USD: { cash: { buy: '31', sell: '32' } } },
+        },
+      },
+      time,
+      [],
+    );
+    expect(result.manifest.providers.map((provider) => provider.providerId)).toEqual(['bot']);
+    writeFileSync(join(v3, 'migration.json'), JSON.stringify({ entries: [] }));
+    expect(() => verifyDataRoot(dir)).toThrow('Missing required provider: moneybox');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});

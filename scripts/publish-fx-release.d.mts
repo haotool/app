@@ -23,6 +23,7 @@ export interface PublicationResult {
   unchanged?: boolean;
 }
 
+export const FX_PROVIDERS: readonly ('bot' | 'moneybox')[];
 export function publishRelease(
   root: string,
   inputs: Record<string, unknown | null>,

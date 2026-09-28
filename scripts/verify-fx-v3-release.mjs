@@ -3,11 +3,15 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { HISTORY_WINDOW_DAYS } from '../apps/shared/fx/history.mjs';
-import { verifyRelease } from './publish-fx-release.mjs';
+import { FX_PROVIDERS, verifyRelease } from './publish-fx-release.mjs';
 
 export function verifyDataRoot(dataRoot) {
   const v3 = resolve(dataRoot, 'v3');
   const manifest = verifyRelease(v3);
+  for (const providerId of FX_PROVIDERS) {
+    if (!manifest.providers.some((provider) => provider.providerId === providerId))
+      throw new Error(`Missing required provider: ${providerId}`);
+  }
   const migration = JSON.parse(readFileSync(resolve(v3, 'migration.json'), 'utf8'));
   if (!Array.isArray(migration.entries)) throw new Error('Invalid FX migration manifest');
   const providers = Object.fromEntries(
