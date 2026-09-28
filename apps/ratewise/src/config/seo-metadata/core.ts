@@ -799,7 +799,7 @@ export function buildAlternativeProviderFaq(
           : `與台灣台銀牌告相比，明洞方案${difference > 0 ? '多' : '少'}約 ${Math.abs(difference).toLocaleString('zh-TW')} ${to}。`;
     return {
       question: `${provider.name}的 ${from} 換 ${to} 牌告如何比較？`,
-      answer: `${provider.name}（${provider.nameEn}）適用韓國明洞分店現場現鈔。支付 ${Number(amount).toLocaleString('zh-TW')} ${from}，牌告估算取得 ${Number(projected.amount).toLocaleString('zh-TW')} ${to}。${bank ? `台灣台銀方案估算 ${Number(bank.amount).toLocaleString('zh-TW')} ${to}。` : ''}${comparison}兩方案換匯地點不同，均未含未知費用，不代表保證成交或最低總成本。來源：${provider.source}；來源發布時間：${provider.sourcePublishedAt ?? '未知'}。`,
+      answer: `${provider.name}（${provider.nameEn}）適用韓國明洞分店現場現鈔。支付 ${Number(amount).toLocaleString('zh-TW')} ${from}，牌告估算取得 ${Number(projected.amount).toLocaleString('zh-TW')} ${to}。${bank ? `台灣台銀方案估算 ${Number(bank.amount).toLocaleString('zh-TW')} ${to}。` : ''}${comparison}兩方案換匯地點不同，均未含未知費用，不代表保證成交或最低總成本。來源：${provider.source}${provider.sourcePublishedAt ? `；來源發布時間：${provider.sourcePublishedAt}` : ''}。`,
     };
   });
 }

@@ -7,7 +7,8 @@
     "./analytics": "./analytics/index.ts",
     "./fx": "./fx/index.ts",
     "./fx/release": "./fx/release.ts",
-    "./fx/public": "./fx/public.ts"
+    "./fx/public": "./fx/public.ts",
+    "./fx/minor-units": "./fx/minor-units.mjs"
   },
   "peerDependencies": {
     "react": ">=18",

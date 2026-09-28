@@ -498,8 +498,9 @@ export function CurrencyLandingPage({
                           </div>
                         )}
                         <div className="text-[10px] text-text-muted mt-2">
-                          {provider.source} · 來源發布時間：
-                          {alternative.sourcePublishedAt ?? '未知'}
+                          {provider.source}
+                          {alternative.sourcePublishedAt &&
+                            ` · 來源發布時間：${alternative.sourcePublishedAt}`}
                         </div>
                       </div>
                     );

@@ -236,7 +236,7 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
           {/* 單幣別轉換區塊 - RWD 全頁面佈局 */}
           <section className={rateWiseLayoutTokens.section.className}>
             <div className={rateWiseLayoutTokens.card.className}>
-              {fxEstimate && (
+              {(__FX_V3_PUBLIC_BUILD__ ?? FX_V3_PUBLIC) && fxEstimate && (
                 <>
                   <p className="px-3 text-sm" role="status">
                     {fxEstimate.status === 'unavailable'

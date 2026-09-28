@@ -23,12 +23,17 @@ import {
 } from './core';
 
 // 以台銀現金賣出價生成單位匯率動態句，避免特化 FAQ 手寫匯率數字過期。
+/** 來源未提供發布時間時省略整句，不輸出「未知」也不以擷取時間回填（PRD §11 #3）。 */
+function publishedClause(publishedAt: string | null, before = '', after = ''): string {
+  return publishedAt ? `${before}來源發布時間 ${publishedAt}${after}` : '';
+}
+
 // 數據來自 SEO_RATE_EXAMPLES（每日 GitHub Actions 自動更新）。
 function buildUnitRateSentence(code: string): string {
   const ex = SEO_RATE_EXAMPLES[code];
   const result = projectSeoQuote(ex?.quotes ?? [], code, 'to-twd', '1');
   return result
-    ? `依台銀現金買入牌告，1 ${code} 約可換 ${result.amount} TWD；未含費用，資料擷取日 ${SEO_RATE_EXAMPLES_DATE}，來源發布時間${result.sourcePublishedAt ?? '未知'}。`
+    ? `依台銀現金買入牌告，1 ${code} 約可換 ${result.amount} TWD；未含費用，資料擷取日 ${SEO_RATE_EXAMPLES_DATE}${publishedClause(result.sourcePublishedAt, '，')}。`
     : '此方向缺少有效牌告，請向銀行確認。';
 }
 
@@ -703,14 +708,14 @@ function buildCashSellRateSentence(code: string, baseAmount: number): string {
   const ex = SEO_RATE_EXAMPLES[code];
   const result = projectSeoQuote(ex?.quotes ?? [], code, 'to-twd', String(baseAmount));
   return result
-    ? `依台銀現金買入牌告，支付 ${formatAmount(baseAmount)} ${code} 估算取得 ${formatAmount(Number(result.amount))} TWD（1 ${code} = ${result.rate} TWD）。未含費用；來源發布時間 ${result.sourcePublishedAt ?? '未知'}，擷取日 ${SEO_RATE_EXAMPLES_DATE}。`
+    ? `依台銀現金買入牌告，支付 ${formatAmount(baseAmount)} ${code} 估算取得 ${formatAmount(Number(result.amount))} TWD（1 ${code} = ${result.rate} TWD）。未含費用；${publishedClause(result.sourcePublishedAt, '', '，')}擷取日 ${SEO_RATE_EXAMPLES_DATE}。`
     : '此方向缺少有效牌告。';
 }
 function buildTwdToForeignRateSentence(code: string, twdAmount: number): string {
   const ex = SEO_RATE_EXAMPLES[code];
   const result = projectSeoQuote(ex?.quotes ?? [], code, 'twd-to-foreign', String(twdAmount));
   return result
-    ? `依台銀現金賣出牌告，支付 ${formatAmount(twdAmount)} TWD 估算取得 ${formatAmount(Number(result.amount))} ${code}。未含費用；來源發布時間 ${result.sourcePublishedAt ?? '未知'}，擷取日 ${SEO_RATE_EXAMPLES_DATE}。`
+    ? `依台銀現金賣出牌告，支付 ${formatAmount(twdAmount)} TWD 估算取得 ${formatAmount(Number(result.amount))} ${code}。未含費用；${publishedClause(result.sourcePublishedAt, '', '，')}擷取日 ${SEO_RATE_EXAMPLES_DATE}。`
     : '此方向缺少有效牌告。';
 }
 

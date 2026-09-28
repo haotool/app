@@ -12,6 +12,7 @@ import {
   resolveOfflineDocumentFallback,
   resolveOfflineStaticResourceFallback,
 } from './utils/pwaOfflineFallback';
+import { FX_V3_PUBLIC } from './config/api-endpoints';
 
 declare const self: ServiceWorkerGlobalScope & typeof globalThis;
 
@@ -157,13 +158,17 @@ async function checkAndCleanupCacheBudget(): Promise<void> {
     );
 
     // 清理優先順序：舊歷史資料 > 圖片 > 字型（保留 precache 與 html-cache）
-    const cleanupOrder = [
-      'history-rates-cdn',
-      'history-rates-raw',
-      'history-validated-v2',
-      'image-cache',
-      'font-cache',
-    ];
+    // FX_V3_PUBLIC=false 與 main 相同；開啟後 legacy aggregate 快取不再使用，一併列入清理。
+    const cleanupOrder = FX_V3_PUBLIC
+      ? [
+          'history-rates-cdn',
+          'history-rates-raw',
+          'history-aggregate-cache',
+          'history-validated-v2',
+          'image-cache',
+          'font-cache',
+        ]
+      : ['history-rates-cdn', 'history-rates-raw', 'image-cache', 'font-cache'];
     for (const cacheName of cleanupOrder) {
       const cacheExists = await caches.has(cacheName);
       if (cacheExists) {
@@ -389,28 +394,90 @@ async function handleNavigationRequest({
 
 registerRoute(new NavigationRoute(handleNavigationRequest));
 
-// v3 完整性由 release client 驗 hash 後管理；SW 不把未驗證回應放入 legacy cache。
-registerRoute(
-  ({ url }: { url: URL }) => url.pathname.includes('/public/rates/v3/'),
-  new NetworkOnly(),
-);
+if (FX_V3_PUBLIC) {
+  // v3 完整性由 release client 驗 hash 後管理；SW 不把未驗證回應放入 legacy cache。
+  registerRoute(
+    ({ url }: { url: URL }) => url.pathname.includes('/public/rates/v3/'),
+    new NetworkOnly(),
+  );
 
-// 日期與 aggregate URL 可被修正，必須重新驗證；兩來源與 CDN/raw 保留獨立項目。
-registerRoute(
-  ({ url }: { url: URL }) =>
-    ['https://cdn.jsdelivr.net', 'https://raw.githubusercontent.com'].includes(url.origin) &&
-    /\/public\/rates\/(?:providers\/moneybox\/)?(?:history\/\d{4}-\d{2}-\d{2}|history-30d)\.json$/.test(
-      url.pathname,
-    ),
-  new NetworkFirst({
-    cacheName: 'history-validated-v2',
-    networkTimeoutSeconds: 5,
-    plugins: [
-      new CacheableResponsePlugin({ statuses: [200] }),
-      new ExpirationPlugin({ maxEntries: 128, maxAgeSeconds: 60 * 60 * 24 * 30 }),
-    ],
-  }),
-);
+  // 日期與 aggregate URL 可被修正，必須重新驗證；兩來源與 CDN/raw 保留獨立項目。
+  registerRoute(
+    ({ url }: { url: URL }) =>
+      ['https://cdn.jsdelivr.net', 'https://raw.githubusercontent.com'].includes(url.origin) &&
+      /\/public\/rates\/(?:providers\/moneybox\/)?(?:history\/\d{4}-\d{2}-\d{2}|history-30d)\.json$/.test(
+        url.pathname,
+      ),
+    new NetworkFirst({
+      cacheName: 'history-validated-v2',
+      networkTimeoutSeconds: 5,
+      plugins: [
+        new CacheableResponsePlugin({ statuses: [200] }),
+        new ExpirationPlugin({ maxEntries: 128, maxAgeSeconds: 60 * 60 * 24 * 30 }),
+      ],
+    }),
+  );
+} else {
+  // FX_V3_PUBLIC=false：歷史快取策略與 main 相同（S4 切換時才改為 NetworkFirst 重新驗證）。
+  // 歷史匯率 aggregate（30 天合併 JSON）：StaleWhileRevalidate，每日更新。
+  registerRoute(
+    ({ url }: { url: URL }) =>
+      url.pathname.includes('/public/rates/history-30d.json') ||
+      url.pathname.includes('/public/rates/providers/moneybox/history-30d.json') ||
+      (url.origin === 'https://cdn.jsdelivr.net' &&
+        (url.pathname.includes('/public/rates/history-30d.json') ||
+          url.pathname.includes('/public/rates/providers/moneybox/history-30d.json'))) ||
+      (url.origin === 'https://raw.githubusercontent.com' &&
+        (url.pathname.includes('/public/rates/history-30d.json') ||
+          url.pathname.includes('/public/rates/providers/moneybox/history-30d.json'))),
+    new StaleWhileRevalidate({
+      cacheName: 'history-aggregate-cache',
+      plugins: [
+        new CacheableResponsePlugin({ statuses: [0, 200] }),
+        new ExpirationPlugin({
+          maxEntries: 1,
+          maxAgeSeconds: 60 * 60 * 24, // 1 天（每日更新）
+        }),
+      ],
+    }),
+  );
+
+  // 歷史匯率（CDN）：CacheFirst，不可變資料永久快取。
+  registerRoute(
+    ({ url }: { url: URL }) =>
+      url.origin === 'https://cdn.jsdelivr.net' &&
+      url.pathname.includes('/public/rates/history/') &&
+      url.pathname.endsWith('.json'),
+    new CacheFirst({
+      cacheName: 'history-rates-cdn',
+      plugins: [
+        new CacheableResponsePlugin({ statuses: [0, 200] }),
+        new ExpirationPlugin({
+          maxEntries: 180,
+          maxAgeSeconds: 60 * 60 * 24 * 365, // 1 年
+        }),
+      ],
+    }),
+  );
+
+  // 歷史匯率（GitHub raw 備援）：CacheFirst。
+  registerRoute(
+    ({ url }: { url: URL }) =>
+      url.origin === 'https://raw.githubusercontent.com' &&
+      url.pathname.includes('/public/rates/history/') &&
+      url.pathname.endsWith('.json'),
+    new CacheFirst({
+      cacheName: 'history-rates-raw',
+      plugins: [
+        new CacheableResponsePlugin({ statuses: [0, 200] }),
+        new ExpirationPlugin({
+          maxEntries: 180,
+          maxAgeSeconds: 60 * 60 * 24 * 365,
+        }),
+      ],
+    }),
+  );
+}
 
 const LATEST_RATE_SWR_PLUGINS = [
   new CacheableResponsePlugin({ statuses: [0, 200] }),

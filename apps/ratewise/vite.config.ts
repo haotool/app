@@ -1,4 +1,5 @@
 import { defineConfig, loadEnv } from 'vite';
+import { FX_V3_PUBLIC } from '../shared/fx/public';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import viteCompression from 'vite-plugin-compression';
@@ -218,6 +219,8 @@ export default defineConfig(({ mode }) => {
     define: {
       __APP_VERSION__: JSON.stringify(appVersion),
       __BUILD_TIME__: JSON.stringify(buildTime),
+      // v3 公開切換的建置期字面常數（SSOT：shared/fx/public.ts），供 tree-shaking 消除未公開 v3 路徑。
+      __FX_V3_PUBLIC_BUILD__: JSON.stringify(FX_V3_PUBLIC),
       'import.meta.env.VITE_APP_VERSION': JSON.stringify(appVersion),
       'import.meta.env.VITE_BUILD_TIME': JSON.stringify(buildTime),
     },
@@ -365,6 +368,12 @@ export default defineConfig(({ mode }) => {
       target: 'es2020',
       sourcemap: 'hidden',
       rolldownOptions: {
+        // shared/fx 只有純函式與常數；workspace 原始碼不經 node_modules 解析，package.json sideEffects
+        // 不生效，故在此宣告無副作用：FX_V3_PUBLIC=false 時未使用的 v3 匯入（schema 驗證器、decimal、
+        // release client）整個移除，不進首頁 initial JS／modulepreload。
+        treeshake: {
+          moduleSideEffects: [{ test: /[\\/]shared[\\/]fx[\\/]/, sideEffects: false }],
+        },
         output: {
           minify: {
             compress: {
@@ -464,6 +473,12 @@ export default defineConfig(({ mode }) => {
             // Animation（重量級動畫庫）
             if (id.includes('motion') || id.includes('framer-motion')) {
               return 'vendor-motion';
+            }
+
+            // 高精度十進位（v3 匯率核心專用）：獨立 chunk 隨 fx chunk 按需載入；
+            // 若落入 vendor-commons 會讓 FX_V3_PUBLIC=false 的首頁仍預載約 13KB gzip。
+            if (id.includes('/node_modules/decimal.js/')) {
+              return 'vendor-decimal';
             }
 
             // 其他 vendor 依賴統一打包

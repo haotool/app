@@ -1,4 +1,3 @@
-import { fetchFxHistory } from '../../../services/fxSnapshotService';
 import type { EstimateResult, QuoteSnapshot } from '@app/shared/fx';
 /**
  * SingleConverter Component - Single Currency Converter
@@ -36,6 +35,7 @@ import {
 } from '../../../services/exchangeRateHistoryService';
 import { formatExchangeRate, formatAmountDisplay } from '../../../utils/currencyFormatter';
 import { singleConverterLayoutTokens } from '../../../config/design-tokens';
+import { FX_V3_PUBLIC } from '../../../config/api-endpoints';
 // 直接 import 以確保離線冷啟動可用
 import { CalculatorKeyboard } from '../../calculator/components/CalculatorKeyboard';
 import { logger } from '../../../utils/logger';
@@ -214,11 +214,14 @@ export const SingleConverter = ({
       try {
         if (!isMounted) return;
         setLoadingTrend(true);
-        if (fxQuote !== undefined) {
+        // 建置期閘門（見 useCurrencyConverter）：flag off 時整段（含動態匯入）於建置期消除。
+        if ((__FX_V3_PUBLIC_BUILD__ ?? FX_V3_PUBLIC) && fxQuote !== undefined) {
           if (!fxQuote) {
             setTrendData([]);
             return;
           }
+          // 動態匯入：v3 驗證器與 decimal 只在 v3 路徑載入，不進首頁 initial JS。
+          const { fetchFxHistory } = await import('../../../services/fxSnapshotService');
           const points = await fetchFxHistory(fxQuote.quoteSeriesId);
           if (!isMounted) return;
           const hasGap = points.some((point) => point.rate === null);
