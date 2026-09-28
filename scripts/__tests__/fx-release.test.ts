@@ -1,11 +1,42 @@
 import { describe, expect, it, vi } from 'vitest';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, rmdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { legacyPayload, publishRelease, sunsetAt } from '../publish-fx-release.mjs';
+import {
+  legacyPayload,
+  publishRelease,
+  retainedHistory,
+  sunsetAt,
+} from '../publish-fx-release.mjs';
+import { parseRequiredProviders, verifyDataRoot } from '../verify-fx-v3-release.mjs';
 import { FX_PUBLISHER } from '../../apps/shared/fx/publisher-metadata.mjs';
 
 describe('v3 publication', () => {
+  it('reads and validates the MoneyBox watermark only for MoneyBox publication', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'fx-release-watermark-'));
+    const time = '2026-09-21T01:00:00Z';
+    mkdirSync(join(dir, 'state'));
+    writeFileSync(join(dir, 'state/moneybox-watermark.json'), '{broken');
+    try {
+      await expect(
+        publishRelease(
+          dir,
+          { bot: { timestamp: time, details: { USD: { cash: { buy: '31', sell: '32' } } } } },
+          time,
+        ),
+      ).resolves.toBeDefined();
+      await expect(
+        publishRelease(
+          dir,
+          { moneybox: { timestamp: time, rates: { TWD: { buy: '46', sell: '45' } } } },
+          time,
+        ),
+      ).rejects.toThrow('Invalid MoneyBox publishedAt watermark');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it('writes content-addressed objects before moving current and carries failed providers', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'fx-release-'));
     const time = '2026-09-21T01:00:00Z';
@@ -89,6 +120,27 @@ describe('v3 publication', () => {
     }
   });
 
+  it('stores response-generation publishedAt as unknown on the v3 current snapshot', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'fx-release-published-at-'));
+    const time = '2026-09-21T01:00:00.000Z';
+    const input = {
+      timestamp: time,
+      fetchedAt: time,
+      sourcePublishedAt: time,
+      rates: { TWD: { buy: '46', sell: '45' } },
+    };
+    try {
+      const result = await publishRelease(dir, { moneybox: input }, time);
+      expect(input.sourcePublishedAt).toBe(time);
+      const snapshot = result.snapshots.get('moneybox') as {
+        quotes: { sourceQuote: { sourcePublishedAt: string | null } }[];
+      };
+      expect(snapshot.quotes[0]?.sourceQuote.sourcePublishedAt).toBeNull();
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it('does not write a new release when content and provider status are unchanged', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'fx-release-churn-'));
     const time = '2026-09-21T01:00:00Z';
@@ -108,6 +160,34 @@ describe('v3 publication', () => {
       expect(failed.unchanged).toBeUndefined();
       const stillFailed = await publishRelease(dir, { bot: null }, '2026-09-21T01:15:00Z');
       expect(stillFailed.unchanged).toBe(true);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('does not churn manifests when supplied history references are unchanged', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'fx-release-history-stable-'));
+    const time = '2026-09-21T01:00:00Z';
+    const bot = {
+      timestamp: time,
+      sourcePublishedAt: time,
+      details: { USD: { cash: { buy: '31', sell: '32' } } },
+    };
+    try {
+      const initial = await publishRelease(dir, { bot }, time);
+      const history = [
+        {
+          providerId: 'bot',
+          date: '2026-09-21',
+          snapshot: initial.manifest.providers[0]!.snapshot,
+        },
+      ];
+      const first = await publishRelease(dir, { bot }, time, history);
+      const next = await publishRelease(dir, { bot }, '2026-09-21T01:05:00Z', history);
+      expect(first.manifest.history).toEqual(history);
+      expect(next.manifest.history).toEqual(history);
+      expect(next.unchanged).toBe(true);
+      expect(next.current.releaseId).toBe(first.current.releaseId);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -403,6 +483,14 @@ it('preserves bank detail and side metadata for spot-only and missing-side legac
 });
 
 const historicalFiles = vi.hoisted(() => new Map<string, string>());
+const removeScratchIfEmpty = (path: string) => {
+  try {
+    rmdirSync(path);
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code;
+    if (code !== 'ENOENT' && code !== 'ENOTEMPTY') throw error;
+  }
+};
 vi.mock('node:child_process', () => ({
   execFileSync: (_command: string, args: string[]) => {
     if (args[0] === 'ls-tree') return [...historicalFiles.keys()].join('\n');
@@ -413,6 +501,12 @@ vi.mock('node:child_process', () => ({
   },
 }));
 import { migrateHistory } from '../migrate-fx-history.mjs';
+
+it('requires a full 40-hex commit SHA only in Git revision mode', () => {
+  expect(() => migrateHistory('revision', '/tmp/fx-migration-output')).toThrow(
+    /full 40-character commit SHA/,
+  );
+});
 
 it('quarantines conflicting historical identities and preserves known legacy without a schema version', () => {
   const dir = mkdtempSync(join(tmpdir(), 'fx-migration-identities-'));
@@ -479,4 +573,291 @@ it('converts a legacy MoneyBox snapshot when only one side is declared', () => {
     historicalFiles.clear();
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+it('migrates real-shaped 30-day bank histories with gaps and the MoneyBox Seoul filename day', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'fx-migration-window-'));
+  historicalFiles.clear();
+  for (let day = 1; day <= 30; day++) {
+    if (day === 7) continue;
+    const date = `2026-05-${String(day).padStart(2, '0')}`;
+    historicalFiles.set(
+      `public/rates/history/${date}.json`,
+      JSON.stringify({
+        timestamp: `${date}T00:05:00.000Z`,
+        updateTime: `${date.replaceAll('-', '/')} 08:05:00`,
+        base: 'TWD',
+        source: 'Taiwan Bank',
+        details: { USD: { cash: { buy: 31, sell: 32 } } },
+        rates: { USD: 32 },
+      }),
+    );
+  }
+  historicalFiles.set(
+    'public/rates/providers/moneybox/history/2026-05-12.json',
+    JSON.stringify({
+      timestamp: '2026-05-12T15:01:00.000Z', // 2026-05-13 00:01 KST
+      updateTime: '2026/05/12 23:59:58',
+      base: 'KRW',
+      source: 'MoneyBox',
+      rates: { TWD: { buy: 43, sell: 42, spbuy: null, spsell: null } },
+    }),
+  );
+  try {
+    const result = migrateHistory('c'.repeat(40), dir);
+    expect(result).toMatchObject({ total: 30, converted: 30, quarantined: 0 });
+    const history = JSON.parse(readFileSync(join(dir, 'history-index.json'), 'utf8'));
+    expect(history).toContainEqual(
+      expect.objectContaining({ providerId: 'moneybox', date: '2026-05-12' }),
+    );
+    expect(history).not.toContainEqual(
+      expect.objectContaining({ providerId: 'moneybox', date: '2026-05-13' }),
+    );
+  } finally {
+    historicalFiles.clear();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+it('quarantines an old MoneyBox file whose Seoul snapshot day differs from its filename and continues migration', () => {
+  const scratch = join(process.cwd(), '.tmp');
+  mkdirSync(scratch, { recursive: true });
+  const dir = mkdtempSync(join(scratch, 'fx-migration-quarantine-old-moneybox-'));
+  historicalFiles.clear();
+  historicalFiles.set(
+    'public/rates/history/2026-05-12.json',
+    JSON.stringify({
+      timestamp: '2026-05-12T10:00:00.000Z',
+      base: 'TWD',
+      source: 'Taiwan Bank',
+      details: { USD: { cash: { buy: 31, sell: 32 } } },
+      rates: { USD: 32 },
+    }),
+  );
+  historicalFiles.set(
+    'public/rates/providers/moneybox/history/2026-05-12.json',
+    JSON.stringify({
+      timestamp: '2026-05-12T15:15:00.000Z',
+      updateTime: '2026/05/13 00:15:00',
+      base: 'KRW',
+      source: 'MoneyBox',
+      rates: { TWD: { buy: 43, sell: 42, spbuy: null, spsell: null } },
+    }),
+  );
+  try {
+    const result = migrateHistory('d'.repeat(40), dir);
+    expect(result).toMatchObject({ total: 2, converted: 1, quarantined: 1 });
+    expect(result.entries).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          path: 'public/rates/providers/moneybox/history/2026-05-12.json',
+          status: 'quarantined',
+          reason: 'MoneyBox history date differs from legacy Seoul snapshot date',
+          evidence: expect.objectContaining({ path: expect.stringContaining('evidence/') }),
+        }),
+      ]),
+    );
+    const entry = result.entries.find((candidate) => candidate.status === 'quarantined');
+    expect(readFileSync(join(dir, entry!.evidence!.path), 'utf8')).toContain('2026/05/13 00:15:00');
+    expect(JSON.parse(readFileSync(join(dir, 'history-index.json'), 'utf8'))).toContainEqual(
+      expect.objectContaining({ providerId: 'bot', date: '2026-05-12' }),
+    );
+  } finally {
+    historicalFiles.clear();
+    rmSync(dir, { recursive: true, force: true });
+    removeScratchIfEmpty(scratch);
+  }
+});
+
+it('retains a 30-day bank calendar window and the latest 30 MoneyBox snapshots', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'fx-retained-window-'));
+  const v3 = join(dir, 'v3');
+  const dataRoot = dir;
+  const dates = (start: string, count: number) =>
+    Array.from({ length: count }, (_, index) => {
+      const date = new Date(`${start}T00:00:00Z`);
+      date.setUTCDate(date.getUTCDate() + index);
+      return date.toISOString().slice(0, 10);
+    });
+  try {
+    const entries = [
+      ...dates('2026-08-30', 32).map((date) => ({ providerId: 'bot', date })),
+      ...dates('2026-08-30', 32).map((date) => ({ providerId: 'moneybox', date })),
+    ];
+    mkdirSync(v3, { recursive: true });
+    writeFileSync(join(v3, 'history-index.json'), JSON.stringify(entries));
+    const retained = retainedHistory(dataRoot, new Date('2026-09-30T00:00:00Z'));
+    expect(retained.filter((entry) => entry.providerId === 'bot')).toHaveLength(30);
+    expect(retained.find((entry) => entry.providerId === 'bot')?.date).toBe('2026-08-31');
+    expect(retained.filter((entry) => entry.providerId === 'bot').at(-1)?.date).toBe('2026-09-29');
+    expect(retained.filter((entry) => entry.providerId === 'moneybox')).toHaveLength(30);
+    expect(retained.filter((entry) => entry.providerId === 'moneybox').at(-1)?.date).toBe(
+      '2026-09-30',
+    );
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+it('uses each provider calendar when UTC crosses into the next Seoul day', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'fx-provider-calendars-'));
+  const v3 = join(dir, 'v3');
+  try {
+    mkdirSync(v3, { recursive: true });
+    writeFileSync(
+      join(v3, 'history-index.json'),
+      JSON.stringify([
+        { providerId: 'bot', date: '2026-09-27' },
+        { providerId: 'bot', date: '2026-09-28' },
+        { providerId: 'moneybox', date: '2026-09-29' },
+      ]),
+    );
+    const retained = retainedHistory(dir, new Date('2026-09-28T15:30:00Z'));
+    expect(retained).toContainEqual({ providerId: 'bot', date: '2026-09-27' });
+    expect(retained).not.toContainEqual({ providerId: 'bot', date: '2026-09-28' });
+    expect(retained).toContainEqual({ providerId: 'moneybox', date: '2026-09-29' });
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+it('reports per-provider history, date gaps and quarantines; rejects a provider with no history', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'fx-provider-coverage-'));
+  const v3 = join(dir, 'v3');
+  const time = '2026-09-20T10:00:00Z';
+  const inputs = {
+    bot: {
+      timestamp: time,
+      sourcePublishedAt: time,
+      details: { USD: { cash: { buy: '31', sell: '32' } } },
+    },
+    moneybox: { timestamp: time, rates: { TWD: { buy: '46', sell: '45' } } },
+  };
+  try {
+    const initial = await publishRelease(v3, inputs, time);
+    const history = initial.manifest.providers.flatMap(({ providerId, snapshot }) =>
+      providerId === 'bot'
+        ? [
+            { providerId, date: '2026-09-20', snapshot },
+            { providerId, date: '2026-09-22', snapshot },
+          ]
+        : [{ providerId, date: '2026-09-20', snapshot }],
+    );
+    await publishRelease(v3, inputs, '2026-09-22T10:00:00Z', history);
+    writeFileSync(
+      join(v3, 'migration.json'),
+      JSON.stringify({
+        entries: [
+          { providerId: 'bot', status: 'quarantined' },
+          { providerId: 'moneybox', status: 'converted' },
+        ],
+      }),
+    );
+    const verified = verifyDataRoot(dir);
+    expect(verified.providers).toMatchObject({
+      bot: {
+        history: 2,
+        dateGaps: [{ after: '2026-09-20', before: '2026-09-22', missingDays: 1 }],
+        quarantined: 1,
+      },
+      moneybox: { history: 1, dateGaps: [], quarantined: 0 },
+    });
+
+    await publishRelease(v3, inputs, time, []);
+    expect(() => verifyDataRoot(dir)).toThrow('No history for provider: bot');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+it('requires bot and MoneyBox providers in the verified release', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'fx-required-providers-'));
+  const v3 = join(dir, 'v3');
+  const time = '2026-09-20T10:00:00Z';
+  try {
+    const initial = await publishRelease(
+      v3,
+      {
+        bot: {
+          timestamp: time,
+          sourcePublishedAt: time,
+          details: { USD: { cash: { buy: '31', sell: '32' } } },
+        },
+      },
+      time,
+      [],
+    );
+    const result = await publishRelease(v3, { bot: null }, time, [
+      {
+        providerId: 'bot',
+        date: '2026-09-20',
+        snapshot: initial.manifest.providers[0]!.snapshot,
+      },
+    ]);
+    expect(result.manifest.providers.map((provider) => provider.providerId)).toEqual(['bot']);
+    writeFileSync(join(v3, 'migration.json'), JSON.stringify({ entries: [] }));
+    expect(verifyDataRoot(dir, ['bot']).providers).toHaveProperty('bot');
+    expect(() => verifyDataRoot(dir)).toThrow('Missing required provider: moneybox');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+it('rejects a release that drops a provider from the previous published manifest', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'fx-dropped-provider-'));
+  const previousDir = join(dir, 'previous');
+  const nextDir = join(dir, 'next');
+  const nextV3 = join(nextDir, 'v3');
+  const time = '2026-09-20T10:00:00Z';
+  try {
+    const previous = await publishRelease(
+      previousDir,
+      {
+        bot: {
+          timestamp: time,
+          sourcePublishedAt: time,
+          details: { USD: { cash: { buy: '31', sell: '32' } } },
+        },
+        moneybox: { timestamp: time, rates: { TWD: { buy: '46', sell: '45' } } },
+      },
+      time,
+      [],
+    );
+    const next = await publishRelease(
+      nextV3,
+      {
+        bot: {
+          timestamp: time,
+          sourcePublishedAt: time,
+          details: { USD: { cash: { buy: '31', sell: '32' } } },
+        },
+      },
+      time,
+      [],
+    );
+    writeFileSync(join(nextV3, 'migration.json'), JSON.stringify({ entries: [] }));
+    expect(previous.manifest.providers.map(({ providerId }) => providerId)).toEqual([
+      'bot',
+      'moneybox',
+    ]);
+    expect(next.manifest.providers.map(({ providerId }) => providerId)).toEqual(['bot']);
+    expect(() => verifyDataRoot(nextDir, ['bot', 'moneybox'])).toThrow(
+      'Missing required provider: moneybox',
+    );
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+it('parses an optional comma-separated required-provider list while defaulting to both', () => {
+  expect(parseRequiredProviders(['--data-root', 'rates'])).toEqual(['bot', 'moneybox']);
+  expect(parseRequiredProviders(['--require-providers', 'bot'])).toEqual(['bot']);
+  expect(parseRequiredProviders(['--require-providers', ' bot, moneybox,bot '])).toEqual([
+    'bot',
+    'moneybox',
+  ]);
+  expect(() => parseRequiredProviders(['--require-providers'])).toThrow('--require-providers');
+  expect(() => parseRequiredProviders(['--require-providers', 'unknown'])).toThrow(
+    '--require-providers',
+  );
 });

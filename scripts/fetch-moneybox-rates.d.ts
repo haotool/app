@@ -16,6 +16,12 @@ export interface MoneyBoxSourceQuote {
 
 export type MoneyBoxRates = Record<string, MoneyBoxRateQuote>;
 
+export function guardPublishedAt(
+  value: unknown,
+  fetchedAt: string,
+  previousAcceptedAt?: string | null,
+): { value: string | null; status: 'known' | 'unknown' };
+
 export interface RateChange {
   currency: string;
   field: string;

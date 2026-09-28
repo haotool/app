@@ -3,7 +3,11 @@
 import { existsSync, readFileSync, writeFileSync, renameSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { isHistoryDate, isValidHistorySnapshot } from '../../shared/fx/history.mjs';
+import {
+  HISTORY_WINDOW_DAYS,
+  isHistoryDate,
+  isValidHistorySnapshot,
+} from '../../shared/fx/history.mjs';
 import { assertMoneyBoxRatesIntegrity } from '../../../scripts/fetch-moneybox-rates.js';
 
 export function buildHistoryAggregate(entries) {
@@ -40,8 +44,6 @@ function readSnapshot(file, date, isValid) {
   console.warn(`⚠️ Skipping invalid history snapshot: ${date}`);
   return null;
 }
-
-export const HISTORY_WINDOW_DAYS = 30;
 
 /**
  * 覆蓋率以「應有視窗」（前 30 個台北日）衡量，不與前次筆數比較：

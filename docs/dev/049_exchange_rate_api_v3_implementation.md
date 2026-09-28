@@ -17,7 +17,7 @@
 
 台銀與 MoneyBox 先轉成同一 `SourceQuote`，缺側保持 `null`，不借用另一通路或另一買賣側。現鈔、帳戶、國家、分店、面額、資格與金額範圍都是報價適用條件；未知來源發布時間、未知費用、固定 fallback、參考價與中介幣別推算不進入自動推薦。牌告中點只作業者買賣價的數學參考，不宣稱外部市場價或成交價。
 
-歷史轉換工具 `scripts/migrate-fx-history.mjs` 只接受固定 data commit，保存來源 bytes hash、轉換版本、輸出 hash、coverage 與隔離原因；路徑 provider 與 payload 的 `base`／`source`／schema identity 不一致時 quarantine。
+歷史轉換工具 `scripts/migrate-fx-history.mjs` 需要在安裝依賴的 Git checkout 執行，保存來源 bytes hash、轉換版本、輸出 hash、coverage 與隔離原因；路徑 provider 與 payload 的 `base`／`source`／schema identity 不一致時 quarantine。MoneyBox 檔名日期與 legacy Seoul snapshot 日期不符時也會隔離；若來源已超出 30 日保留視窗，保留 evidence 並排除於發布歷史即可接受，不阻斷其餘有效資料遷移。
 
 ## Release 與相容性
 
@@ -36,6 +36,8 @@ provider `failed`／`carried_forward` 快照只可供明確手動選擇，不能
 新鮮度只看來源發布時間：台銀 36 小時、MoneyBox 24 小時（`FRESHNESS_MAX_HOURS`）；`sourcePublishedAt=null` 為 `unknown`，UI 分別顯示「來源未提供發布時間」與「已超過更新門檻」。公開 contract 固定輸出至 `/ratewise/api/v3/contract.schema.json`，current pointer 更新後由工作流 purge mutable URL。
 
 排程工作流預設不切換 v3；只有 repository variable `RATEWISE_FX_V3_ENABLED=true` 才由 `publish-v3` job 呼叫共用 reusable workflow `.github/workflows/publish-fx-v3.yml`（`workflow_call`，`timeout-minutes`、`!cancelled()`）提交 v3 pointer 與 objects。v3 使用獨立 concurrency group `fx-v3-publish`，`data-branch-push` 鎖只在 v2 job 層級，v3 的安裝與發布時間不延長 v2 鎖、不致排隊中的 v2 run 被取代；data checkout 皆 `persist-credentials: false`，push 時才由 `commit-fx-v3-release.sh` 以 `http.extraheader` 注入 token。v2 job（fetch → commit → purge）不安裝依賴、不跑 `generate:fx`、不發布 v3；`publish-v3` 失敗會標紅但不阻斷 v2，也不改寫 v2 `latest.json`。v2 抓取遇壞列、未映射幣別或無時區 `publishedAt` 只跳過該列並警示，不中止 v2（與 main 一致）；v2 `latest.json` 不輸出 `lastSuccessfulCheckAt`（牌價未變不改寫檔案，最後成功檢查由 v3 manifest 記錄）；台銀掛牌時間只採信擷取前 7 天至後 10 分鐘內的值。rate workflows 只由排程、手動與既有腳本／workflow 路徑觸發，不因 `pnpm-lock.yaml` 或 `apps/shared/fx/**` push 觸發。
+
+v3 發布會在本機 data checkout 更新 `current.json` 後、commit/push/CDN purge 前驗證整個 release；驗證失敗時不推送 v3 資料，也不 purge CDN。必需 provider 集合為本輪前一份已發布 manifest 的 providers 加上本輪 provider，避免發布移除舊 provider。遷移使用共用 `history-index.json`；若台銀或 MoneyBox 任一 provider 在保留視窗內缺少已發布的來源檔，兩個 provider 的 v3 發布都會 fail-closed。復原時從先前 data commit 或備份還原該 provider/date 的原始檔，再重跑對應 workflow；若檔案存在但內容損壞，遷移會保留該日期先前已驗證的快照並隔離原始 bytes。不要手動刪除 index 條目來繞過檢查。
 
 歷史 aggregate（`generate-history-aggregate.mjs`）以「應有視窗」（前 30 個臺北日）計算覆蓋率：缺日或壞檔逐檔跳過並警示，只有視窗全空才拒寫；台銀 `history-30d.json` 保留 main 的 TWD 首欄。`update-historical-rates.yml` 與 `update-moneybox-rates.yml` 的 aggregate 步驟 `continue-on-error`，當日快照與 v2 latest 照常 commit，run 結尾再以 `::error::` 標紅。台銀 `sourcePublishedAt` 取自 CSV 回應 `Content-Disposition` 檔名 `ExchangeRate@YYYYMMDDHHmm.csv`（與牌告頁「牌價最新掛牌時間」一致，臺北時間）；瀏覽器 fallback 另存該 header，無法取得時為 `null`，不以擷取時間回填。上游 `0` 以原文保留並正規化為 `suppressed`。provider `checkStatus` 取自身最後一次檢查結果，內容與狀態未變時不產生新 release；牌價未變時 fetch 腳本不改寫 `latest.json`，避免每輪 commit／purge。此 flag、data branch migration、provider redistribution 條款、UAT 與正式部署仍是 release gate，不由綠色單元測試代替。
 
@@ -57,13 +59,13 @@ pnpm typecheck
 pnpm build:ratewise
 ```
 
-正式切換前仍需在 data branch 以固定 commit 執行歷史 migration、完成 provider／授權／部署／瀏覽器與人工產品 gate，並重新核對 current pointer 的 live hash chain。
+正式切換前仍需由啟用後的 data publisher workflow 全量遷移 data branch 歷史，完成 provider／授權／部署／瀏覽器與人工產品 gate，並重新核對 current pointer 的 live hash chain。
 
 ## S4 啟用檢查清單
 
 R5 裁決延後至 S4（`FX_V3_PUBLIC` 改為 `true` 的切換 PR）處理，切換前逐項確認：
 
-- v3 `manifest.history` 尚未填入：趨勢圖需接線 v3 歷史發佈並做首爾日期（MoneyBox 當地日曆日）檢查。
+- [x] v3 `manifest.history` 接線：publisher 每輪從 data branch 全量重算日快照遷移結果，再引用 30 日內成功轉換的 content-addressed objects；發佈前驗證 SHA-256 與 snapshot schema（`scripts/publish-fx-release.mjs`, `scripts/migrate-fx-history.mjs`, `apps/shared/fx/history.mjs`）。MoneyBox 檔名日期以 `extractSeoulSnapshotDate` 對帳，沿用 v2 `updateTime` 首爾日曆日；超出保留視窗的日期不符項目可帶 evidence 隔離。
 - [x] v3 多幣模式估算移除重複 schema 驗證、快取每 quote 衍生值並 memo per-render 輸出；100 次 × 16 幣別微基準為 58.89 → 5.19 ms（Node 24 wall time；before 模擬原選擇／估算路徑的 3 次 quote schema 驗證，S4b；公開旗標仍為 false）。
 - [x] rollback（`FX_V3_PUBLIC` 翻回 `false`）時停止 v3 請求、清理 localStorage `ratewise.fx.v3.*` 與失效 service worker history caches；history cache 保留上限為 4（S4b）。
 - manifest per-currency denominator（`unitAmount`）揭露評估。
@@ -71,9 +73,68 @@ R5 裁決延後至 S4（`FX_V3_PUBLIC` 改為 `true` 的切換 PR）處理，切
 - MoneyBox 9 位有效數字倒數（如 KRW→GBP）是否需提高倒數精度（PRD §18.4）。
 - 刪除 `S4-DELETE` 標記項目：`exportLegacyRates`、`apps/ratewise/src/config/api-semantics-v2.ts`、`useLegacyCurrencyConverter.ts`，以及 `isFxV3Public()` 建置期 plugin 改寫與 legacy SW 歷史路由。
 - v3 的 minor changeset 於 S4 切換 PR 提出（本 PR 僅 patch）。
-- v2 amend `--force-with-lease` 與 v3 push 競態：`update-latest-rates.yml` commit 步驟的 `git pull --rebase ... || true` 會吞掉 rebase 衝突；若恰與 v3 push 交錯可能覆蓋 v3 commit（`current.json` 回到前一版仍自洽），啟用 `RATEWISE_FX_V3_ENABLED` 前改用共用 concurrency group 或 v2 不 force push。
-- `update-historical-rates.yml` 上游存活守門改看 v2 job 結論，而非 run 層結論（v3 job 失敗不應影響快照判斷）。
+- [x] v2 保留既有 job-level `data-branch-push` 鎖與 cadence；所有 v2 push 改為 fast-forward、rebase 失敗不再吞錯，v3 維持獨立鎖。競態時 v2 push 會安全失敗或 rebase 保留 v3 commit（`.github/workflows/update-latest-rates.yml`, `update-moneybox-rates.yml`, `update-historical-rates.yml`, `publish-fx-v3.yml`）。
+- [x] data checkout 關閉持久憑證，push 時才注入 token；各資料 job 均有 timeout。
+- [x] `update-historical-rates.yml` 以 Actions jobs API 計算 `update-latest` v2 job 的成功結論；publish-v3 失敗不會影響 v2 liveness。三個資料 workflow 與 reusable publisher job 均設 timeout。
+- [x] MoneyBox `publishedAt` 加入未來時間、回退與 response-time 判定；response-time／不合理時間在 v3 provider snapshot 設為 `null`（unknown），v2 latest/history 保留原值（`scripts/fetch-moneybox-rates.js`, `scripts/publish-fx-release.mjs`, `scripts/__tests__/fetch-moneybox-rates.test.ts`）。現有 repo fixture 僅記錄單筆有效時間，未提供重複樣本或 data branch 歷史檔；不宣稱上游語意已由多樣本證實，判定採保守未知。
+- [x] 歷史遷移 CLI：`node scripts/migrate-fx-history.mjs --data-root <data-checkout>/public/rates`；需 Git checkout 與已安裝依賴。每次 publish job 會自動全量重算遷移結果，不需手動先遷移。
 - [x] `fxSnapshotService` 的 localStorage bounded retention、QuotaExceeded 清理與 `ratewise.fx.v3.*` 前綴回滾清理（S4b）。
-- MoneyBox `publishedAt` 語意以第二個樣本確認，並加單調性檢查。
 - 啟用後的 runtime kill switch（data 端降級）仍待處理；[x] SW `history-validated-v2` 於回滾時清理（S4b）。
 - [x] split-meow v3 MoneyBox CDN fallback 以「未驗證匯率，僅供參考」標示，僅在 v3 旗標開啟時顯示（S4b）；flag-off 文案維持原狀。
+
+## ACTIVATION RUNBOOK
+
+以下步驟只啟用 data plane；`FX_V3_PUBLIC` 保持 `false`，App 與公開站台切換另走 S4 PR。
+
+1. 啟用 v3 data publisher：
+
+   ```bash
+   gh variable set RATEWISE_FX_V3_ENABLED --body true
+   ```
+
+2. 依序 dispatch `Update Latest Exchange Rates`、`Update MoneyBox Exchange Rates`，讓兩個 provider 都有 release；publisher 會自行全量重算歷史遷移，不需手動執行 migration CLI：
+
+   ```bash
+   wait_for_dispatched_run() {
+     local workflow="$1" dispatched_at="$2" run_id=""
+     for attempt in {1..12}; do
+       run_id=$(gh run list --workflow "$workflow" --event workflow_dispatch --json databaseId,createdAt --jq "[.[] | select(.createdAt >= \"$dispatched_at\")] | max_by(.createdAt).databaseId // empty")
+       if [ -n "$run_id" ]; then echo "$run_id"; return 0; fi
+       sleep 5
+     done
+     echo "Unable to find dispatched workflow run: $workflow" >&2
+     return 1
+   }
+
+   LATEST_DISPATCHED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+   gh workflow run update-latest-rates.yml --ref main
+   LATEST_RUN_ID=$(wait_for_dispatched_run update-latest-rates.yml "$LATEST_DISPATCHED_AT") || exit 1
+   gh run watch "$LATEST_RUN_ID" --exit-status
+
+   MONEYBOX_DISPATCHED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+   gh workflow run update-moneybox-rates.yml --ref main
+   MONEYBOX_RUN_ID=$(wait_for_dispatched_run update-moneybox-rates.yml "$MONEYBOX_DISPATCHED_AT") || exit 1
+   gh run watch "$MONEYBOX_RUN_ID" --exit-status
+   ```
+
+   `publish-v3` 可能因 `fx-v3-publish` concurrency group 取消較早的 pending run；若任一 run 被取消，重新 dispatch 該 workflow。兩個 workflow 都成功後才驗證。
+
+   `migration.json` 中，超出 30 日保留視窗的 MoneyBox Seoul 日期不符項目可接受 quarantine，前提是來源 evidence 與原因均存在、其餘有效歷史轉換成功，且最後 release 驗證通過。
+
+3. checkout 最新 `data` branch，驗證 pointer、manifest、provider/history objects 的 hash 與 schema：
+
+   ```bash
+   DATA_CHECKOUT=/path/to/data-checkout
+   git -C "$DATA_CHECKOUT" pull --ff-only origin data
+   node scripts/verify-fx-v3-release.mjs --data-root "$DATA_CHECKOUT/public/rates"
+   ```
+
+   輸出需列出每個 provider 的 `history`、`dateGaps`、`quarantined`，例如 `{"providers":{"bot":{"history":30},"moneybox":{"history":30}}}`；每個 provider 必須有 1 至 30 筆 history。`dateGaps` 回報不連續日期，不會單獨令驗證失敗。再確認 `current.json` 的 `releaseId` 等於 manifest SHA，history 日期在最近 30 日。公開 pointer：`https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/v3/current.json`。
+
+4. 回滾 data plane，停用後保留 v3 objects/current 作診斷，不改 v2 `latest.json`：
+
+   ```bash
+   gh variable set RATEWISE_FX_V3_ENABLED --body false
+   ```
+
+   若 `FX_V3_PUBLIC` 已在另一次 S4 PR 開啟，先以獨立 PR 翻回 `false`，再清除 `ratewise.fx.v3.active`、`ratewise.fx.v3.history:*` localStorage keys 與對應 SW history cache。

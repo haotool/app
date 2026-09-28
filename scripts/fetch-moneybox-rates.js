@@ -38,6 +38,9 @@ const DEFAULT_MUTATION_THRESHOLD = 0.15;
 // 2026-08-22 起上游對 18/20 幣別回傳 "0.0000"（parseFloat 後經 `|| null` 轉成 null）。
 // 若只靠 TWD.sell 檢查，錯誤訊息會誤導成「TWD 單一幣別數值異常」，讓後續除錯往錯的方向查。
 const SELL_QUOTE_MIN_RATIO = 0.5;
+const PUBLISHED_AT_FUTURE_SKEW_MS = 2 * 60 * 1000;
+const PUBLISHED_AT_RESPONSE_TIME_MS = 5 * 1000;
+const PUBLISHED_AT_BACKWARD_TOLERANCE_MS = 60 * 1000;
 
 class AbortError extends Error {
   constructor(message, status) {
@@ -71,6 +74,21 @@ function writeCurrentFetchSnapshot(ratesData) {
   mkdirSync(dirname(outputFile), { recursive: true });
   writeFileSync(outputFile, JSON.stringify(ratesData, null, 2), 'utf8');
   console.log(`🧾 Current fetch snapshot saved: ${outputFile}`);
+}
+
+/** v3 不把回應生成時間當成牌告時間。 */
+export function guardPublishedAt(value, fetchedAt, previousAcceptedAt = null) {
+  const parsed = safeSourcePublishedAt(value);
+  const fetched = Date.parse(fetchedAt);
+  if (parsed === null || !Number.isFinite(fetched)) return { value: null, status: 'unknown' };
+  const published = Date.parse(parsed);
+  if (published > fetched + PUBLISHED_AT_FUTURE_SKEW_MS) return { value: null, status: 'unknown' };
+  if (Math.abs(published - fetched) <= PUBLISHED_AT_RESPONSE_TIME_MS)
+    return { value: null, status: 'unknown' };
+  const previous = previousAcceptedAt === null ? NaN : Date.parse(previousAcceptedAt);
+  if (Number.isFinite(previous) && published < previous - PUBLISHED_AT_BACKWARD_TOLERANCE_MS)
+    return { value: null, status: 'unknown' };
+  return { value: parsed, status: 'known' };
 }
 
 /**

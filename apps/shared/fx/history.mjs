@@ -1,5 +1,6 @@
 /** Validation for the legacy Taiwan Bank history boundary; v3 has its own contract. */
 const record = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
+export const HISTORY_WINDOW_DAYS = 30;
 export const isHistoryDate = (value) =>
   typeof value === 'string' &&
   /^\d{4}-\d{2}-\d{2}$/.test(value) &&

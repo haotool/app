@@ -7,12 +7,12 @@ export interface MigrationEntry {
   path: string;
   date: string;
   providerId: 'bot' | 'moneybox';
-  sourceHash: string;
+  sourceHash: string | null;
   sourceVersion: string | null;
   methodVersion: '1';
   status: 'converted' | 'quarantined';
   reason: string | null;
-  evidence: ObjectReference;
+  evidence?: ObjectReference;
   outputHash?: string;
   snapshot?: ObjectReference;
   coverage?: string[];
@@ -28,4 +28,9 @@ export interface MigrationResult {
   entries: MigrationEntry[];
 }
 
-export function migrateHistory(revision: string, output: string): MigrationResult;
+export function migrateHistory(
+  revision: string,
+  output: string,
+  dataRoot?: string | null,
+  now?: Date,
+): MigrationResult;
