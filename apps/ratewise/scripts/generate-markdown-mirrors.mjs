@@ -22,6 +22,7 @@ import { SITE_CONFIG } from '../seo-paths.config.mjs';
 import { ALL_AI_CRAWLERS } from './lib/ai-crawlers.mjs';
 import { APP_INFO } from '../src/config/app-info.ts';
 import { FX_V3_PUBLIC } from '../src/config/api-endpoints.ts';
+import { resolveFxV3Ternaries } from './lib/fx-v3-ternary.mjs';
 
 /**
  * RATES_API 端點重建（與 src/config/api-endpoints.ts 同構）。
@@ -52,16 +53,12 @@ const pkg = JSON.parse(readFileSync(resolve(ROOT, 'package.json'), 'utf-8'));
 const VERSION = pkg.version;
 const BASE_URL = SITE_CONFIG.url;
 
-// 來源文字中的 `FX_V3_PUBLIC ? '<v3>' : '<legacy>'` 依 SSOT 常數先行展開，鏡像與 HTML 同步切換。
-const STRING_LITERAL = String.raw`(?:\x60(?:\\[\s\S]|[^\x60\\])*\x60|'(?:\\[\s\S]|[^'\\])*')`;
-const FX_V3_TERNARY = new RegExp(
-  String.raw`FX_V3_PUBLIC\s*\?\s*(${STRING_LITERAL})\s*:\s*(${STRING_LITERAL})`,
-  'g',
-);
-const seoMetadataSrc = (
+// FX_V3_PUBLIC 三元式依 SSOT 常數先行展開（守門：數量須與來源一致，見 lib/fx-v3-ternary.mjs）。
+const seoMetadataSrc = resolveFxV3Ternaries(
   readFileSync(resolve(ROOT, 'src/config/seo-metadata/core.ts'), 'utf-8') +
-  readFileSync(resolve(ROOT, 'src/config/seo-metadata/currency-landing.ts'), 'utf-8')
-).replace(FX_V3_TERNARY, (_, v3, legacy) => (FX_V3_PUBLIC ? v3 : legacy));
+    readFileSync(resolve(ROOT, 'src/config/seo-metadata/currency-landing.ts'), 'utf-8'),
+  FX_V3_PUBLIC,
+);
 const constantsSrc = readFileSync(resolve(ROOT, 'src/features/ratewise/constants.ts'), 'utf-8');
 const SUPPORTED_CURRENCY_COUNT = [...constantsSrc.matchAll(/^\s+([A-Z]{3}):\s*\{/gm)].length;
 
