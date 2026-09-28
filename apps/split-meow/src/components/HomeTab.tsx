@@ -8,6 +8,7 @@ import { cn } from '../lib/utils';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { convertAmount, formatAmount } from '../config/currencies';
 import { isRateStale } from '../lib/exchangeRate';
+import { isFxV3Public } from '@app/shared/fx/public';
 
 interface HomeTabProps {
   onPawParticle?: (x: number, y: number) => void;
@@ -30,6 +31,7 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
     currency,
     krwPerTwd,
     rateUpdatedAtIso,
+    rateIsFallback,
   } = useStore();
 
   const CATEGORIES = [
@@ -185,6 +187,9 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
                 return (
                   <p className="text-xs text-on-surface-variant/50 mt-1">
                     ≈ {formatAmount(approx, to)}
+                    {isFxV3Public() && rateIsFallback && (
+                      <span className="ml-1 text-tertiary">{t('settings.rate_fallback')}</span>
+                    )}
                     {isRateStale(rateUpdatedAtIso) && (
                       <span className="ml-1 text-tertiary">{t('settings.rate_stale')}</span>
                     )}

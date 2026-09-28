@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { normalizeQuote, type QuoteSnapshot } from '@app/shared/fx';
 import { useConverterStore } from '../../../../stores/converterStore';
 import type * as ApiEndpointsModule from '../../../../config/api-endpoints';
@@ -25,6 +25,7 @@ beforeEach(() => {
   fxFeed.quotes = [];
   fxFeed.providerStatuses.clear();
 });
+afterEach(() => vi.useRealTimers());
 const quotes = normalizeQuote({
   providerId: 'second-bank',
   subjectCurrency: 'USD',
@@ -75,6 +76,35 @@ describe('v3 direction quotes', () => {
     act(() => result.current.handleFromAmountChange('-320'));
     await waitFor(() => expect(result.current.toAmount).toBe('-10'));
   });
+});
+
+it('refreshes quote freshness when a newer release arrives and while idle', async () => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date('2026-09-29T12:00:00Z'));
+  useConverterStore.setState({ providerPreference: { mode: 'best' } });
+  const quoteAt = (sourcePublishedAt: string) =>
+    normalizeQuote({
+      ...quotes[0]!.sourceQuote,
+      sourcePublishedAt,
+      fetchedAt: new Date().toISOString(),
+      lastSuccessfulCheckAt: new Date().toISOString(),
+    });
+  const { result, rerender } = renderHook(
+    ({ rows }) => useCurrencyConverter({ fxQuotes: rows, rateType: 'cash' }),
+    { initialProps: { rows: quoteAt('2026-09-28T10:00:00Z') } },
+  );
+  act(() => result.current.handleFromAmountChange('320'));
+
+  rerender({ rows: quoteAt('2026-09-28T12:00:30Z') });
+  expect(result.current.estimateFreshness).toBe('fresh');
+  expect(result.current.rankedProviderQuotes.length).toBeGreaterThan(0);
+  expect(result.current.toAmount).toBe('10');
+
+  await act(async () => vi.advanceTimersByTimeAsync(120_000));
+  expect(result.current.estimateFreshness).toBe('unknown');
+  expect(result.current.rankedProviderQuotes).toEqual([]);
+  expect(result.current.fxEstimate.status).toBe('unavailable');
+  expect(result.current.toAmount).toBe('');
 });
 
 it('does not substitute a missing manual provider, and distinguishes zero from unavailable', async () => {

@@ -32,6 +32,14 @@ import { minorUnit } from './minor-units.mjs';
 import { FX_PROVIDER_METADATA } from './provider-metadata.mjs';
 export { MINOR_UNITS, minorUnit } from './minor-units.mjs';
 const D = Decimal.clone({ precision: 80, rounding: Decimal.ROUND_HALF_EVEN });
+const validatedQuotes = new WeakSet<QuoteSnapshot>();
+function deepFreeze<T>(value: T): T {
+  if (value !== null && typeof value === 'object') {
+    if (!Object.isFrozen(value)) Object.freeze(value);
+    for (const child of Object.values(value)) deepFreeze(child);
+  }
+  return value;
+}
 export function isValidAmount(value: string): boolean {
   return (
     value.length <= 25 &&
@@ -173,7 +181,7 @@ export function normalizeQuote(row: SourceQuote): QuoteSnapshot[] {
     ] as const
   ).map(([fromCurrency, toCurrency, price, reason], index) => {
     const quoteSeriesId = quoteSeriesIdOf(row, fromCurrency, toCurrency);
-    return {
+    const quote: QuoteSnapshot = {
       quoteId: `${quoteSeriesId}@${observedAt}`,
       quoteSeriesId,
       providerId: row.providerId,
@@ -190,16 +198,24 @@ export function normalizeQuote(row: SourceQuote): QuoteSnapshot[] {
       sourceQuote: structuredClone(row),
       methodVersion: '1',
     };
+    return quote;
   });
 }
 /** EXACT_OUT 所需的「每 1 toCurrency 需支付的 fromCurrency」，直接由來源原值計算。 */
+const sourcePerTargetCache = new WeakMap<QuoteSnapshot, Decimal | null>();
+const quoteRateCache = new WeakMap<QuoteSnapshot, Decimal>();
+const POSITIVE_DECIMAL = /^(?=.*[1-9])(?:0|[1-9]\d*)(?:\.\d+)?$/;
 function sourcePerTarget(quote: QuoteSnapshot): Decimal | null {
+  if (sourcePerTargetCache.has(quote)) return sourcePerTargetCache.get(quote) ?? null;
   const row = quote.sourceQuote;
-  if (quote.fromCurrency === row.priceCurrency && row.providerSellPrice !== null)
-    return new D(row.providerSellPrice).div(row.unitAmount);
-  if (quote.fromCurrency === row.subjectCurrency && row.providerBuyPrice !== null)
-    return new D(row.unitAmount).div(row.providerBuyPrice);
-  return null;
+  const result =
+    quote.fromCurrency === row.priceCurrency && row.providerSellPrice !== null
+      ? new D(row.providerSellPrice).div(row.unitAmount)
+      : quote.fromCurrency === row.subjectCurrency && row.providerBuyPrice !== null
+        ? new D(row.unitAmount).div(row.providerBuyPrice)
+        : null;
+  sourcePerTargetCache.set(quote, result);
+  return result;
 }
 export function boardMidpoint(row: SourceQuote): string | null {
   if (
@@ -222,6 +238,28 @@ function unavailable(reason: string, quoteId: string | null = null): EstimateRes
     feeStatus: 'unknown',
   };
 }
+// External objects receive one deep semantic validation; verified objects use the weak membership cache.
+function hasUsableQuote(quote: QuoteSnapshot | null): quote is QuoteSnapshot {
+  if (!quote || typeof quote !== 'object') return false;
+  const source = quote.sourceQuote;
+  const validPrice = (value: string | null) => value === null || POSITIVE_DECIMAL.test(value);
+  return (
+    typeof quote.quoteId === 'string' &&
+    typeof quote.fromCurrency === 'string' &&
+    typeof quote.toCurrency === 'string' &&
+    quote.status === 'available' &&
+    typeof quote.rate === 'string' &&
+    POSITIVE_DECIMAL.test(quote.rate) &&
+    !!source &&
+    typeof source === 'object' &&
+    typeof source.unitAmount === 'string' &&
+    POSITIVE_DECIMAL.test(source.unitAmount) &&
+    (source.providerBuyPrice === null ||
+      (typeof source.providerBuyPrice === 'string' && validPrice(source.providerBuyPrice))) &&
+    (source.providerSellPrice === null ||
+      (typeof source.providerSellPrice === 'string' && validPrice(source.providerSellPrice)))
+  );
+}
 export function estimate(quote: QuoteSnapshot | null, request: EstimateRequest): EstimateResult {
   if (!validateEstimateRequest(request) || !isValidAmount(request.amount))
     return unavailable('invalid_amount');
@@ -235,24 +273,27 @@ export function estimate(quote: QuoteSnapshot | null, request: EstimateRequest):
       reason: null,
       feeStatus: 'no_additional_fee',
     };
-  if (
-    !quote ||
-    !validateQuoteSnapshot(quote) ||
-    quote.status !== 'available' ||
-    quote.rate === null ||
-    !positive(quote.rate)
-  )
-    return unavailable('not_quoted', quote?.quoteId ?? null);
+  const quoteId = quote?.quoteId ?? null;
+  if (!hasUsableQuote(quote) || !validateQuoteSnapshot(quote))
+    return unavailable('not_quoted', quoteId);
+  const rate = quote.rate;
+  if (rate === null) return unavailable('not_quoted', quoteId);
   if (quote.fromCurrency !== request.fromCurrency || quote.toCurrency !== request.toCurrency)
     return unavailable('direction_mismatch', quote.quoteId);
   // EXACT_OUT：from = ceil_minor(to × unitAmount ÷ providerPrice)，禁止除以捨入後的 rate。
   return estimateAmounts(
-    quote.rate,
+    rate,
     request,
     quote.quoteId,
     quote.sourceQuote.feeStatus ?? 'unknown',
     sourcePerTarget(quote),
+    quoteRateCache.get(quote) ?? cacheQuoteRate(quote, rate),
   );
+}
+function cacheQuoteRate(quote: QuoteSnapshot, value: string): Decimal {
+  const cached = new D(value);
+  quoteRateCache.set(quote, cached);
+  return cached;
 }
 function estimateAmounts(
   canonicalRate: string,
@@ -260,6 +301,7 @@ function estimateAmounts(
   quoteId: string | null,
   feeStatus: EstimateResult['feeStatus'],
   sourcePerTarget: Decimal | null = null,
+  cachedRate?: Decimal,
 ): EstimateResult {
   let fromScale: number;
   let toScale: number;
@@ -269,7 +311,7 @@ function estimateAmounts(
   } catch {
     return unavailable('unsupported_currency', quoteId);
   }
-  const rate = new D(canonicalRate),
+  const rate = cachedRate ?? new D(canonicalRate),
     amount = new D(request.amount);
   const from =
     request.mode === 'EXACT_IN'
@@ -320,10 +362,14 @@ export function isQuoteApplicable(
   if (
     !validateSelectionContext(context) ||
     !validateEstimateRequest(request) ||
-    !isValidAmount(request.amount) ||
-    !validateQuoteSnapshot(quote)
+    !isValidAmount(request.amount)
   )
     return false;
+  try {
+    if (!validateQuoteSnapshot(quote) || !hasUsableQuote(quote)) return false;
+  } catch {
+    return false;
+  }
   const row = quote.sourceQuote;
   if (
     quote.fromCurrency !== request.fromCurrency ||
@@ -538,12 +584,14 @@ export function normalizeMoneyboxSnapshot(value: unknown): QuoteSnapshot[] {
 
 /** Structural validation and reconstruction of the economic meaning are both required. */
 export function validateQuoteSnapshot(value: unknown): value is QuoteSnapshot {
+  if (value !== null && typeof value === 'object' && validatedQuotes.has(value as QuoteSnapshot))
+    return true;
   if (!validateQuoteShape(value)) return false;
   try {
     const expected = normalizeQuote(value.sourceQuote).find(
       (q) => q.fromCurrency === value.fromCurrency && q.toCurrency === value.toCurrency,
     );
-    return (
+    const valid =
       expected !== undefined &&
       [
         'quoteId',
@@ -555,8 +603,12 @@ export function validateQuoteSnapshot(value: unknown): value is QuoteSnapshot {
         'rate',
         'unavailableReason',
         'methodVersion',
-      ].every((key) => expected[key as keyof QuoteSnapshot] === value[key as keyof QuoteSnapshot])
-    );
+      ].every((key) => expected[key as keyof QuoteSnapshot] === value[key as keyof QuoteSnapshot]);
+    if (valid) {
+      deepFreeze(value);
+      validatedQuotes.add(value);
+    }
+    return valid;
   } catch {
     return false;
   }

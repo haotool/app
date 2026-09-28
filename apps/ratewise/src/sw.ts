@@ -138,6 +138,17 @@ async function clearNavigationHtmlCacheOnActivate(): Promise<void> {
   }
 }
 
+async function clearInactiveFxHistoryCachesOnActivate(): Promise<void> {
+  const unusedCaches = FX_V3_PUBLIC
+    ? ['history-rates-cdn', 'history-rates-raw', 'history-aggregate-cache']
+    : ['history-validated-v2'];
+  try {
+    await Promise.all(unusedCaches.map((name) => caches.delete(name)));
+  } catch {
+    // 快取清理失敗不可阻斷新版 SW 啟用。
+  }
+}
+
 /** iOS Safari SW cache 約 50MB 上限；超過 40MB 時清理非關鍵快取。 */
 async function checkAndCleanupCacheBudget(): Promise<void> {
   try {
@@ -193,7 +204,12 @@ self.addEventListener('install', (event: ExtendableEvent) => {
 
 // activate 時清掉舊 navigation HTML，再確保 offline.html 已快取（install 失敗時的補救）。
 self.addEventListener('activate', (event: ExtendableEvent) => {
-  event.waitUntil(clearNavigationHtmlCacheOnActivate().then(() => ensureOfflineHtmlCached()));
+  event.waitUntil(
+    Promise.all([
+      clearNavigationHtmlCacheOnActivate(),
+      clearInactiveFxHistoryCachesOnActivate(),
+    ]).then(() => ensureOfflineHtmlCached()),
+  );
 });
 
 // prompt 模式：僅在 waiting SW 收到 SKIP_WAITING 訊息後才接管。

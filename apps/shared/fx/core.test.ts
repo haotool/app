@@ -35,6 +35,7 @@ import {
   normalizeAmountInput,
   normalizeBankSnapshot,
   freshness,
+  isQuoteApplicable,
 } from './index';
 it('rejects unavailable quotes and keeps zero distinct', () => {
   const quotes = normalizeQuote({ ...row, providerBuyPrice: null });
@@ -203,13 +204,27 @@ it('never recommends missing-time, fallback, reference, unsupported-fee or zero 
   }
   expect(rankQuotes(normalizeQuote(row), { ...request, amount: '0' }, ctx)).toEqual([]);
 });
-it('clones original evidence and rejects later mutations of a quoted source', () => {
+it('clones original evidence and freezes a quote after successful validation', () => {
   const mutable = { ...row };
   const q = normalizeQuote(mutable)[1]!;
   mutable.providerSellPrice = '500';
   expect(q.sourceQuote.providerSellPrice).toBe('0.025');
-  q.sourceQuote.providerSellPrice = '100';
-  expect(validateQuoteSnapshot(q)).toBe(false);
+  expect(validateQuoteSnapshot(q)).toBe(true);
+  expect(Object.isFrozen(q)).toBe(true);
+  expect(Object.isFrozen(q.sourceQuote)).toBe(true);
+  expect(() => {
+    q.sourceQuote.providerSellPrice = '100';
+  }).toThrow();
+  expect(validateQuoteSnapshot(q)).toBe(true);
+});
+it('prevents a toJSON hook from hiding quote mutations after validation', () => {
+  const q = normalizeQuote(row)[1]!;
+  Object.defineProperty(q, 'toJSON', { value: () => ({ rate: '40' }) });
+  expect(validateQuoteSnapshot(q)).toBe(true);
+  expect(() => {
+    q.rate = '999';
+  }).toThrow();
+  expect(validateQuoteSnapshot(q)).toBe(true);
 });
 it('keys quote IDs by source publication time, not successful polling (ADR B3 #5)', () => {
   const original = normalizeQuote(row)[1]!;
@@ -237,6 +252,70 @@ it('does not invent a provider for identity conversion and rounds half-even', ()
     estimate(q, { fromCurrency: 'USD', toCurrency: 'TWD', amount: '1', mode: 'EXACT_IN' }).toAmount,
   ).toBe('1');
 });
+it('recomputes a 17-currency multi view 100 times within the CI budget', () => {
+  const currencies = [
+    'USD',
+    'EUR',
+    'JPY',
+    'KRW',
+    'GBP',
+    'AUD',
+    'CAD',
+    'CHF',
+    'SGD',
+    'CNY',
+    'HKD',
+    'THB',
+    'PHP',
+    'IDR',
+    'VND',
+    'NZD',
+  ];
+  const quotes = currencies.map(
+    (subjectCurrency, index) =>
+      normalizeQuote({
+        ...row,
+        subjectCurrency,
+        providerBuyPrice: String(30 + index),
+        providerSellPrice: String(31 + index),
+      })[1]!,
+  );
+  const context = {
+    now: '2026-09-22T00:10:00Z',
+    country: 'TW',
+    deliveryMethod: 'cash' as const,
+    channel: 'branch' as const,
+  };
+  const recompute = (legacyValidation: boolean) => {
+    for (let keypress = 1; keypress <= 100; keypress++) {
+      for (const quote of quotes) {
+        const request = {
+          fromCurrency: 'TWD',
+          toCurrency: quote.toCurrency,
+          amount: String(keypress * 100),
+          mode: 'EXACT_IN' as const,
+        };
+        if (legacyValidation) {
+          validateQuoteSnapshot(quote);
+          validateQuoteSnapshot(quote);
+        }
+        if (!isQuoteApplicable(quote, request, context)) continue;
+        if (legacyValidation) validateQuoteSnapshot(quote);
+        estimate(quote, request);
+      }
+    }
+  };
+  recompute(false);
+  const beforeStarted = performance.now();
+  recompute(true);
+  const before = performance.now() - beforeStarted;
+  const afterStarted = performance.now();
+  recompute(false);
+  const after = performance.now() - afterStarted;
+  console.info(
+    `FX v3 100 × 16 multi estimates: before ${before.toFixed(2)} ms, after ${after.toFixed(2)} ms`,
+  );
+});
 import { estimateDerived } from './index';
 it('computes a traceable cross estimate with canonical rate and no recommendation', () => {
   const first = normalizeQuote({
@@ -261,7 +340,83 @@ it('computes a traceable cross estimate with canonical rate and no recommendatio
     legs: [first.quoteId, second.quoteId],
   });
 });
-import { validateProviderSnapshot, validateObjectReference, isQuoteApplicable } from './index';
+
+it('rejects inconsistent quote snapshots at every exported selection/calculation entry', () => {
+  const valid = normalizeQuote(row)[1]!;
+  const request = {
+    fromCurrency: 'TWD',
+    toCurrency: 'KRW',
+    amount: '100',
+    mode: 'EXACT_IN' as const,
+  };
+  const context = {
+    now: '2026-09-22T00:10:00Z',
+    country: 'TW',
+    deliveryMethod: 'cash' as const,
+    channel: 'branch' as const,
+  };
+  const invalid = [
+    { ...valid, rate: '300' },
+    { ...valid, sourceQuote: { ...valid.sourceQuote, providerSellPrice: '31.4' } },
+    { ...valid, sourceQuote: { ...valid.sourceQuote, subjectCurrency: 'USD' } },
+  ];
+  for (const quote of invalid) {
+    expect(estimate(quote, request).status).toBe('unavailable');
+    expect(isQuoteApplicable(quote, request, context)).toBe(false);
+    expect(rankQuotes([quote], request, context)).toEqual([]);
+  }
+  expect(estimate(valid, request)).toEqual({
+    status: 'available',
+    fromAmount: '100',
+    toAmount: '4000',
+    quoteId: valid.quoteId,
+    rate: '40',
+    reason: null,
+    feeStatus: 'unknown',
+  });
+  expect(isQuoteApplicable(valid, request, context)).toBe(true);
+  expect(rankQuotes([valid], request, context)).toHaveLength(1);
+});
+
+it('rejects a quote with a throwing denominations getter before reading its fields', () => {
+  const quote = normalizeQuote(row)[1]!;
+  const sourceQuote = { ...quote.sourceQuote };
+  Object.defineProperty(sourceQuote, 'denominations', {
+    get() {
+      throw new Error('invalid getter');
+    },
+  });
+  const invalid = { ...quote, sourceQuote };
+  const request = {
+    fromCurrency: 'TWD',
+    toCurrency: 'KRW',
+    amount: '100',
+    mode: 'EXACT_IN' as const,
+  };
+  const context = {
+    now: '2026-09-22T00:10:00Z',
+    country: 'TW',
+    deliveryMethod: 'cash' as const,
+    channel: 'branch' as const,
+  };
+  expect(isQuoteApplicable(invalid, request, context)).toBe(false);
+});
+
+it('deep-validates each external quote once across repeated estimates', async () => {
+  const validators = await import('./validators.js');
+  const validateShape = vi.spyOn(validators, 'validateQuoteSnapshot');
+  const externalQuote = structuredClone(normalizeQuote(row)[1]!);
+  const request = {
+    fromCurrency: 'TWD',
+    toCurrency: 'KRW',
+    amount: '100',
+    mode: 'EXACT_IN' as const,
+  };
+  for (let i = 0; i < 100; i++) expect(estimate(externalQuote, request).status).toBe('available');
+  expect(validateShape).toHaveBeenCalledTimes(1);
+  validateShape.mockRestore();
+});
+import { validateProviderSnapshot, validateObjectReference } from './index';
 it('validates the provider identity at the snapshot boundary', () => {
   expect(
     validateProviderSnapshot({

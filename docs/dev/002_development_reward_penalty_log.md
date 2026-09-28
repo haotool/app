@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+392
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+393
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-09-29
+- ID：reward-ratewise-fx-v3-app-readiness
+- 原因：v3 路徑每鍵重複深層驗證、localStorage 無上限、回滾未清快取，不足以正式啟用。
+- 解法：載入時驗證並快取衍生值、限制快取保留、依旗標清理 SW 與 storage，補回滾測試。
 
 - 日期：2026-09-28
 - ID：reward-ratewise-sellback-faq

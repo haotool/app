@@ -64,8 +64,8 @@ pnpm build:ratewise
 R5 裁決延後至 S4（`FX_V3_PUBLIC` 改為 `true` 的切換 PR）處理，切換前逐項確認：
 
 - v3 `manifest.history` 尚未填入：趨勢圖需接線 v3 歷史發佈並做首爾日期（MoneyBox 當地日曆日）檢查。
-- v3 多幣模式每鍵 16–31ms：驗證前移與 memo，回到 INP 預算內。
-- rollback（`FX_V3_PUBLIC` 翻回 `false`）後清理 localStorage `ratewise.fx.v3.active` 與 `ratewise.fx.v3.history:*`。
+- [x] v3 多幣模式估算移除重複 schema 驗證、快取每 quote 衍生值並 memo per-render 輸出；100 次 × 16 幣別微基準為 58.89 → 5.19 ms（Node 24 wall time；before 模擬原選擇／估算路徑的 3 次 quote schema 驗證，S4b；公開旗標仍為 false）。
+- [x] rollback（`FX_V3_PUBLIC` 翻回 `false`）時停止 v3 請求、清理 localStorage `ratewise.fx.v3.*` 與失效 service worker history caches；history cache 保留上限為 4（S4b）。
 - manifest per-currency denominator（`unitAmount`）揭露評估。
 - provider 再散布條款 human gate（PRD §17 #6、§21 F8）；S3 條款頁已上線至程式與靜態產物，仍須確認正式站部署，且不解除上游再散布 gate。
 - MoneyBox 9 位有效數字倒數（如 KRW→GBP）是否需提高倒數精度（PRD §18.4）。
@@ -73,7 +73,7 @@ R5 裁決延後至 S4（`FX_V3_PUBLIC` 改為 `true` 的切換 PR）處理，切
 - v3 的 minor changeset 於 S4 切換 PR 提出（本 PR 僅 patch）。
 - v2 amend `--force-with-lease` 與 v3 push 競態：`update-latest-rates.yml` commit 步驟的 `git pull --rebase ... || true` 會吞掉 rebase 衝突；若恰與 v3 push 交錯可能覆蓋 v3 commit（`current.json` 回到前一版仍自洽），啟用 `RATEWISE_FX_V3_ENABLED` 前改用共用 concurrency group 或 v2 不 force push。
 - `update-historical-rates.yml` 上游存活守門改看 v2 job 結論，而非 run 層結論（v3 job 失敗不應影響快照判斷）。
-- `fxSnapshotService` 的 localStorage LRU 與 `ratewise.fx.v3.*` 前綴清理。
+- [x] `fxSnapshotService` 的 localStorage bounded retention、QuotaExceeded 清理與 `ratewise.fx.v3.*` 前綴回滾清理（S4b）。
 - MoneyBox `publishedAt` 語意以第二個樣本確認，並加單調性檢查。
-- 啟用後的 runtime kill switch（data 端降級）；SW `history-validated-v2` 快取於回滾時清理。
-- split-meow v3 fallback 參考值（`isFallback`）的 UI 標示：final round 已還原 flag off 可達文案為 main，S4 需重新設計提示文案。
+- 啟用後的 runtime kill switch（data 端降級）仍待處理；[x] SW `history-validated-v2` 於回滾時清理（S4b）。
+- [x] split-meow v3 MoneyBox CDN fallback 以「未驗證匯率，僅供參考」標示，僅在 v3 旗標開啟時顯示（S4b）；flag-off 文案維持原狀。

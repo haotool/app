@@ -1,5 +1,7 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { act } from 'react';
+const fxGate = vi.hoisted(() => ({ enabled: false }));
+vi.mock('@app/shared/fx/public', () => ({ isFxV3Public: () => fxGate.enabled }));
 import {
   useStore,
   migratePersistedState,
@@ -29,7 +31,10 @@ function resetStore() {
 }
 
 describe('useStore', () => {
-  beforeEach(() => resetStore());
+  beforeEach(() => {
+    fxGate.enabled = false;
+    resetStore();
+  });
 
   // ── Tab ────────────────────────────────────────────────────
   describe('setActiveTab', () => {
@@ -446,6 +451,19 @@ describe('useStore', () => {
       act(() => useStore.getState().setCurrency('TWD'));
       act(() => useStore.getState().saveExpense());
       expect(useStore.getState().expenses).toHaveLength(0);
+    });
+
+    it('FX v3 開啟時把 fallback provenance 存在個別費用', () => {
+      fxGate.enabled = true;
+      useStore.setState({ calculatorValue: '100', rateIsFallback: true });
+      act(() => useStore.getState().saveExpense());
+      expect(useStore.getState().expenses[0]?.rateIsFallback).toBe(true);
+    });
+
+    it('FX v3 關閉時新費用省略 fallback provenance', () => {
+      useStore.setState({ calculatorValue: '100', rateIsFallback: true });
+      act(() => useStore.getState().saveExpense());
+      expect(useStore.getState().expenses[0]).not.toHaveProperty('rateIsFallback');
     });
   });
 });

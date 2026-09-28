@@ -56,6 +56,7 @@ import { isFxV3Public } from '../../../config/api-endpoints';
 export { resolveEffectiveRateSourceForConversion } from './useLegacyCurrencyConverter';
 
 const CURRENCY_CODES = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
+const QUOTE_CONTEXT_REFRESH_MS = 60_000;
 
 const createInitialMultiAmounts = (
   baseCurrency: CurrencyCode,
@@ -133,6 +134,7 @@ export const useFxCurrencyConverter = (options: UseCurrencyConverterOptions = {}
 
   const [fromAmount, setFromAmount] = useState<string>(DEFAULT_CONVERTER_AMOUNT);
   const [toAmount, setToAmount] = useState<string>('');
+  const [quoteContextTick, setQuoteContextTick] = useState(0);
 
   const [multiAmounts, setMultiAmounts] = useState<MultiAmountsState>(() =>
     createInitialMultiAmounts(useConverterStore.getState().baseCurrency),
@@ -205,6 +207,12 @@ export const useFxCurrencyConverter = (options: UseCurrencyConverterOptions = {}
     }),
     [serviceCountry, rateType, branchId],
   );
+  // Both conversion and provider ranking use the same clock snapshot.
+  const activeContext = useMemo(
+    () => getQuoteContext(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- time advances on this coarse tick.
+    [getQuoteContext, fxQuotes, fx.releaseId, quoteContextTick],
+  );
 
   const estimateQuotePair = useCallback(
     (
@@ -214,7 +222,7 @@ export const useFxCurrencyConverter = (options: UseCurrencyConverterOptions = {}
       inputMode: EstimateRequest['mode'] = 'EXACT_IN',
     ): EstimateResult | DerivedEstimateResult => {
       const request = { amount, fromCurrency: from, toCurrency: to, mode: inputMode };
-      const context = getQuoteContext();
+      const context = activeContext;
       const quote =
         providerPreference.mode === 'best'
           ? (rankQuotes(fxQuotes, request, context, providerStatuses)[0]?.quote ?? null)
@@ -254,7 +262,7 @@ export const useFxCurrencyConverter = (options: UseCurrencyConverterOptions = {}
       }
       return estimate(null, request);
     },
-    [fxQuotes, providerPreference, getQuoteContext, providerStatuses],
+    [fxQuotes, providerPreference, activeContext, providerStatuses],
   );
 
   // 輸入邊界：計算機結果依輸入幣別 minor unit 正規化；負數以絕對值估算後還原符號。
@@ -346,7 +354,6 @@ export const useFxCurrencyConverter = (options: UseCurrencyConverterOptions = {}
   // 單幣別換算效果（路由決定顯示，無需依賴 mode 狀態）
   useEffect(() => {
     if (lastEdited === 'from') {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- 響應式計算，必須在依賴變更時同步更新
       calculateFromAmount();
     } else {
       calculateToAmount();
@@ -363,7 +370,6 @@ export const useFxCurrencyConverter = (options: UseCurrencyConverterOptions = {}
 
   useEffect(() => {
     if (mode !== 'multi') return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- 多幣別模式下響應式重新計算所有金額
     setMultiAmounts((prev) => recalcMultiAmounts(baseCurrency, prev[baseCurrency] ?? '0', prev));
   }, [mode, baseCurrency, recalcMultiAmounts]);
 
@@ -577,63 +583,86 @@ export const useFxCurrencyConverter = (options: UseCurrencyConverterOptions = {}
     return [DEFAULT_BASE_CURRENCY, ...favWithoutBase, ...remaining];
   }, [favorites]);
 
-  const fxEstimate = estimatePair(
-    lastEdited === 'from' ? fromAmount : toAmount,
-    fromCurrency,
-    toCurrency,
-    lastEdited === 'from' ? 'EXACT_IN' : 'EXACT_OUT',
+  const activeAmountForPair = lastEdited === 'from' ? fromAmount : toAmount;
+  useEffect(() => {
+    const timer = window.setInterval(
+      () => setQuoteContextTick((tick) => tick + 1),
+      QUOTE_CONTEXT_REFRESH_MS,
+    );
+    return () => window.clearInterval(timer);
+  }, []);
+  const activeModeForPair = lastEdited === 'from' ? 'EXACT_IN' : 'EXACT_OUT';
+  const fxEstimate = useMemo(
+    () => estimatePair(activeAmountForPair, fromCurrency, toCurrency, activeModeForPair),
+    [estimatePair, activeAmountForPair, fromCurrency, toCurrency, activeModeForPair],
   );
-  const selectedQuote = fxQuotes.find((q) => q.quoteId === fxEstimate.quoteId) ?? null;
-  const selectedQuoteEvidence =
-    'legs' in fxEstimate
-      ? fxEstimate.legs.flatMap((id) => fxQuotes.filter((quote) => quote.quoteId === id))
-      : selectedQuote
-        ? [selectedQuote]
-        : [];
-  const evidenceStates = selectedQuoteEvidence.map((quote) =>
-    freshness(quote, new Date().toISOString()),
+  const selectedQuote = useMemo(
+    () => fxQuotes.find((quote) => quote.quoteId === fxEstimate.quoteId) ?? null,
+    [fxQuotes, fxEstimate.quoteId],
   );
-  const estimateFreshness = evidenceStates.includes('stale')
-    ? 'stale'
-    : evidenceStates.length === 0 || evidenceStates.includes('unknown')
-      ? 'unknown'
-      : 'fresh';
+  const selectedQuoteEvidence = useMemo(
+    () =>
+      'legs' in fxEstimate
+        ? fxEstimate.legs.flatMap((id) => fxQuotes.filter((quote) => quote.quoteId === id))
+        : selectedQuote
+          ? [selectedQuote]
+          : [],
+    [fxEstimate, fxQuotes, selectedQuote],
+  );
+  const estimateFreshness = useMemo(() => {
+    const states = selectedQuoteEvidence.map((quote) => freshness(quote, activeContext.now));
+    return states.includes('stale')
+      ? 'stale'
+      : states.length === 0 || states.includes('unknown')
+        ? 'unknown'
+        : 'fresh';
+  }, [selectedQuoteEvidence, activeContext.now]);
   const effectiveSource =
     getRateProvider(selectedQuote?.providerId ?? '')?.sourceKind ?? rateSource ?? 'bank';
-  const activeAmount = lastEdited === 'from' ? fromAmount : toAmount;
-  const activeRequest: EstimateRequest = {
-    amount:
-      normalizeAmountInput(activeAmount, lastEdited === 'from' ? fromCurrency : toCurrency)
-        ?.amount ?? activeAmount,
-    fromCurrency,
-    toCurrency,
-    mode: lastEdited === 'from' ? 'EXACT_IN' : 'EXACT_OUT',
-  };
-  const activeContext = getQuoteContext();
+  const activeAmount = activeAmountForPair;
+  const activeRequest = useMemo<EstimateRequest>(
+    () => ({
+      amount:
+        normalizeAmountInput(activeAmount, lastEdited === 'from' ? fromCurrency : toCurrency)
+          ?.amount ?? activeAmount,
+      fromCurrency,
+      toCurrency,
+      mode: activeModeForPair,
+    }),
+    [activeAmount, lastEdited, fromCurrency, toCurrency, activeModeForPair],
+  );
   // Numeric compatibility fields are presentation-only; monetary ranking stays decimal.
-  const presentQuote = (quote: QuoteSnapshot, result: EstimateResult): ProviderQuote => {
-    const sourceKind = getRateProvider(quote.providerId)?.sourceKind ?? 'bank';
-    return {
-      provider: { providerId: quote.providerId, sourceKind },
-      sourceKind,
-      rateType: quote.sourceQuote.deliveryMethod === 'cash' ? 'cash' : 'spot',
-      unitRate: Number(result.rate ?? 0),
-      resultAmount: Number(
-        (activeRequest.mode === 'EXACT_IN' ? result.toAmount : result.fromAmount) ?? 0,
+  const presentQuote = useCallback(
+    (quote: QuoteSnapshot, result: EstimateResult): ProviderQuote => {
+      const sourceKind = getRateProvider(quote.providerId)?.sourceKind ?? 'bank';
+      return {
+        provider: { providerId: quote.providerId, sourceKind },
+        sourceKind,
+        rateType: quote.sourceQuote.deliveryMethod === 'cash' ? 'cash' : 'spot',
+        unitRate: Number(result.rate ?? 0),
+        resultAmount: Number(
+          (activeRequest.mode === 'EXACT_IN' ? result.toAmount : result.fromAmount) ?? 0,
+        ),
+        isAvailable: result.status === 'available',
+        inputMode: activeRequest.mode,
+      };
+    },
+    [activeRequest.mode],
+  );
+  const providerQuotes = useMemo(
+    () =>
+      fxQuotes
+        .filter((quote) => isQuoteApplicable(quote, activeRequest, activeContext))
+        .map((quote) => presentQuote(quote, estimate(quote, activeRequest))),
+    [fxQuotes, activeRequest, activeContext, presentQuote],
+  );
+  const rankedProviderQuotes = useMemo(
+    () =>
+      rankQuotes(fxQuotes, activeRequest, activeContext, providerStatuses).map(
+        ({ quote, estimate: result }) => presentQuote(quote, result),
       ),
-      isAvailable: result.status === 'available',
-      inputMode: activeRequest.mode,
-    };
-  };
-  const providerQuotes = fxQuotes
-    .filter((quote) => isQuoteApplicable(quote, activeRequest, activeContext))
-    .map((quote) => presentQuote(quote, estimate(quote, activeRequest)));
-  const rankedProviderQuotes = rankQuotes(
-    fxQuotes,
-    activeRequest,
-    activeContext,
-    providerStatuses,
-  ).map(({ quote, estimate: result }) => presentQuote(quote, result));
+    [fxQuotes, activeRequest, activeContext, providerStatuses, presentQuote],
+  );
   return {
     // State
     fxQuotes,

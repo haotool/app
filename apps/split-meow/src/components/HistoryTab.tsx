@@ -13,6 +13,7 @@ import { format } from 'date-fns';
 import { useEffect, useRef, useState } from 'react';
 import { cn } from '../lib/utils';
 import { isRateStale } from '../lib/exchangeRate';
+import { isFxV3Public } from '@app/shared/fx/public';
 import { MemberAvatar } from './MemberAvatar';
 import { EditExpenseSheet } from './EditExpenseSheet';
 import { SettlementSection, BalancesSection } from './SettlementSection';
@@ -107,6 +108,7 @@ export function HistoryTab() {
       settledPayments: s.settledPayments,
     })),
   );
+  const fxV3Public = isFxV3Public();
   const deleteExpense = useStore((s) => s.deleteExpense);
   const updateExpenseNote = useStore((s) => s.updateExpenseNote);
   const updateExpense = useStore((s) => s.updateExpense);
@@ -506,12 +508,13 @@ export function HistoryTab() {
                             {formatAmount(exp.totalAmount, expenseCurrency(exp))}
                           </p>
                           {(() => {
-                            // 快照幣別 ≠ 全域幣別時顯示 ≈ 參考：KRW 用記帳當下快照匯率，TWD 用當前匯率（即期參考）。
-                            // 匯率快照過期時附 stale 短標，維持參考值狀態誠實（R10）。
+                            // KRW 沿用 main 的記帳快照；TWD 僅在 v3 開啟時使用快照。
                             const from = expenseCurrency(exp);
                             if (from === currency) return null;
                             const to = from === 'KRW' ? ('TWD' as const) : ('KRW' as const);
-                            const rate = from === 'KRW' ? exp.exchangeRateKrwPerTwd : krwPerTwd;
+                            const hasSavedRate = exp.exchangeRateKrwPerTwd != null;
+                            const useSavedRate = from === 'KRW' || (fxV3Public && hasSavedRate);
+                            const rate = useSavedRate ? exp.exchangeRateKrwPerTwd : krwPerTwd;
                             const approx = convertAmount(exp.totalAmount, from, to, rate);
                             if (approx === null) return null;
                             return (
@@ -519,14 +522,22 @@ export function HistoryTab() {
                                 <p className="text-[10px] font-medium text-on-surface-variant/70 whitespace-nowrap">
                                   ≈ {formatAmount(approx, to)}
                                 </p>
-                                {isRateStale(rateUpdatedAtIso) && (
-                                  <p className="text-[10px] font-medium text-tertiary whitespace-nowrap">
-                                    {t('settings.rate_stale')}
-                                  </p>
-                                )}
+                                {(!fxV3Public || !hasSavedRate) &&
+                                  isRateStale(rateUpdatedAtIso) && (
+                                    <p className="text-[10px] font-medium text-tertiary whitespace-nowrap">
+                                      {t('settings.rate_stale')}
+                                    </p>
+                                  )}
                               </>
                             );
                           })()}
+                          {fxV3Public &&
+                            exp.exchangeRateKrwPerTwd != null &&
+                            exp.rateIsFallback && (
+                              <p className="text-[10px] font-medium text-tertiary whitespace-nowrap">
+                                {t('settings.rate_fallback')}
+                              </p>
+                            )}
                           <p className="text-[10px] font-medium text-secondary uppercase tracking-wider">
                             {t('history.participants', { count: exp.participantIds.length })}
                           </p>
