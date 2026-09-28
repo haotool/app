@@ -20,6 +20,10 @@ describe('isRateStale', () => {
   it('不可解析字串 → true', () => {
     expect(isRateStale('not-a-date', NOW)).toBe(true);
   });
+
+  it('裝置時鐘落後（快照時間晚於 now）不算過期，與 main 相同', () => {
+    expect(isRateStale('2026-07-16T12:05:00Z', NOW)).toBe(false);
+  });
 });
 
 describe('fetchMoneyboxRate', () => {

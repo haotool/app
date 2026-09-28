@@ -19,11 +19,11 @@ export interface MoneyboxRate {
   isFallback?: boolean;
 }
 
-/** 快照缺失、不可解析或超過 TTL 視為過期。 */
+/** 快照缺失、不可解析或超過 TTL 視為過期；未來時間（裝置時鐘偏差）不視為過期（與 main 相同）。 */
 export function isRateStale(updatedAtIso: string | null, now = Date.now()): boolean {
   if (!updatedAtIso) return true;
   const ts = Date.parse(updatedAtIso);
-  return !Number.isFinite(ts) || ts > now || now - ts > RATE_TTL_MS;
+  return !Number.isFinite(ts) || now - ts > RATE_TTL_MS;
 }
 
 interface LegacyMoneyboxResponse {
