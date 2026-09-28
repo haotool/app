@@ -22,7 +22,8 @@ export interface TaiwanBankFetchResult extends TaiwanBankParseResult {
   timestamp: string;
   fetchedAt: string;
   lastSuccessfulCheckAt: string;
-  sourcePublishedAt: null;
+  /** 牌告掛牌時間（CSV Content-Disposition 檔名）；無法可靠取得時為 null。 */
+  sourcePublishedAt: string | null;
 }
 
 export function fetchTaiwanBankRates(): Promise<TaiwanBankFetchResult>;
@@ -34,3 +35,7 @@ export function assertRatesIntegrity(
 ): void;
 export function resolveMutationThreshold(env?: Record<string, string | undefined>): number;
 export function hasRateChanges(newData: unknown, previousData?: unknown): boolean;
+export function parseBoardPublishedAt(
+  contentDisposition: string | null | undefined,
+  now?: Date,
+): string | null;

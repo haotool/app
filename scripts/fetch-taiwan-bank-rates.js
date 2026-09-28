@@ -9,7 +9,7 @@
  * 模式重跑本腳本完成解析與寫檔。
  */
 
-import { writeFileSync, mkdirSync, readFileSync } from 'fs';
+import { writeFileSync, mkdirSync, readFileSync, existsSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { parseSourceRate } from './lib/source-quotes.mjs';
@@ -120,11 +120,12 @@ function parseTaiwanBankCSV(csvText) {
     const mainRate = cashSell;
 
     // 跳過無效資料 (有些貨幣沒有現金賣出價, e.g. ZAR, SEK)
-    if ([cashBuy, spotBuy, cashSell, spotSell].every((value) => value === null)) continue;
+    // 0 保留於 sourceQuotes（v3 標為 suppressed），v2 rates/details 與 main 一樣視為無報價。
+    if ([cashBuy, spotBuy, cashSell, spotSell].every((value) => !value)) continue;
     sourceQuotes[currencyCode] = raw;
 
     // 儲存主要匯率（現金賣出）
-    if (mainRate !== null) rates[currencyCode] = mainRate;
+    if (mainRate) rates[currencyCode] = mainRate;
 
     // 儲存詳細資料
     details[currencyCode] = {
@@ -174,14 +175,34 @@ function isRetryableError(error) {
   return false;
 }
 
+/**
+ * 台銀牌告掛牌時間：CSV 回應的 Content-Disposition 檔名 `ExchangeRate@YYYYMMDDHHmm.csv`
+ * 與牌告頁「牌價最新掛牌時間」一致（臺北時間）。無法可靠解析時回傳 null，
+ * 不以 updateTime／fetchedAt 回填（PRD §11 #3）。
+ */
+function parseBoardPublishedAt(contentDisposition, now = new Date()) {
+  const match = /ExchangeRate@(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})\.csv/.exec(
+    contentDisposition ?? '',
+  );
+  if (!match) return null;
+  const [, year, month, day, hour, minute] = match;
+  const published = new Date(`${year}-${month}-${day}T${hour}:${minute}:00+08:00`);
+  if (!Number.isFinite(published.getTime())) return null;
+  // 拒絕溢位日期（如 2 月 30 日）與明顯晚於擷取時間的值。
+  const taipei = new Date(published.getTime() + 8 * 3600_000).toISOString();
+  if (taipei.slice(0, 16) !== `${year}-${month}-${day}T${hour}:${minute}`) return null;
+  if (published.getTime() > now.getTime() + 10 * 60_000) return null;
+  return published.toISOString();
+}
+
 /** 由解析結果組出 latest.json payload（網路與檔案模式共用）。 */
-function buildRatesPayload(rates, details, sourceQuotes) {
+function buildRatesPayload(rates, details, sourceQuotes, sourcePublishedAt = null) {
   const fetchedAt = new Date().toISOString();
   return {
     timestamp: fetchedAt,
     fetchedAt,
     lastSuccessfulCheckAt: fetchedAt,
-    sourcePublishedAt: null,
+    sourcePublishedAt,
     sourceQuotes,
     updateTime: new Date().toLocaleString('zh-TW', {
       timeZone: 'Asia/Taipei',
@@ -220,7 +241,10 @@ async function fetchTaiwanBankRates() {
     }
 
     console.log(`✅ Successfully parsed ${Object.keys(rates).length} currencies (file mode)`);
-    return buildRatesPayload(rates, details, sourceQuotes);
+    // 瀏覽器 fallback 另存 CSV 回應的 Content-Disposition（見 fetch-taiwan-bank-rates-browser.mjs）。
+    const dispositionFile = `${process.env.CSV_INPUT_FILE}.content-disposition`;
+    const disposition = existsSync(dispositionFile) ? readFileSync(dispositionFile, 'utf8') : null;
+    return buildRatesPayload(rates, details, sourceQuotes, parseBoardPublishedAt(disposition));
   }
 
   console.log('🔄 Fetching exchange rates from Taiwan Bank...');
@@ -269,7 +293,12 @@ async function fetchTaiwanBankRates() {
 
       console.log(`✅ Successfully parsed ${Object.keys(rates).length} currencies`);
 
-      return buildRatesPayload(rates, details, sourceQuotes);
+      return buildRatesPayload(
+        rates,
+        details,
+        sourceQuotes,
+        parseBoardPublishedAt(response.headers.get('content-disposition')),
+      );
     } catch (error) {
       if (error instanceof AbortError) {
         throw error;
@@ -362,8 +391,17 @@ function hasRateChanges(newData, previousData = undefined) {
     const oldData = previousData ?? JSON.parse(readFileSync(OUTPUT_FILE, 'utf8'));
 
     // 比較匯率資料
-    const oldRatesStr = JSON.stringify([oldData.rates, oldData.details]);
-    const newRatesStr = JSON.stringify([newData.rates, newData.details]);
+    // 牌告重新掛牌（掛牌時間變更）即使價格相同也要落盤，否則新鮮度會誤判為過期。
+    const oldRatesStr = JSON.stringify([
+      oldData.rates,
+      oldData.details,
+      oldData.sourcePublishedAt ?? null,
+    ]);
+    const newRatesStr = JSON.stringify([
+      newData.rates,
+      newData.details,
+      newData.sourcePublishedAt ?? null,
+    ]);
 
     const hasChanges = oldRatesStr !== newRatesStr;
 
@@ -484,4 +522,5 @@ export {
   assertRatesIntegrity,
   resolveMutationThreshold,
   hasRateChanges,
+  parseBoardPublishedAt,
 };

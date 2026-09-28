@@ -1,4 +1,4 @@
-// 僅來源明示的空白、破折號及零表示未報價；其他壞值中止發布。
+// 空白與破折號表示未報價（null）；0 原文保留，由正規化標為業者停供（suppressed）。其他壞值中止發布。
 export function parseSourceRate(value) {
   if (value == null) return null;
   const text = String(value).trim();
@@ -6,7 +6,7 @@ export function parseSourceRate(value) {
   if (text.length > 96 || !/^\d+(?:\.\d+)?$/.test(text) || !Number.isFinite(Number(text))) {
     throw new Error('Invalid source rate');
   }
-  return Number(text) === 0 ? null : text;
+  return text;
 }
 
 // Node 24 保留 JSON 價格原文，避免讀入時先經二進位浮點捨入。
