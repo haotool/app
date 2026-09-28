@@ -1,5 +1,13 @@
 # @app/ratewise
 
+## 2.28.7
+
+### Patch Changes
+
+- 2447ee9: 為匯率 v3 正式啟用預作準備（效能、快取保留、報價新鮮度、離線快照與歷史快取保留、回滾清理）；啟用前使用者可見行為不變。
+- Updated dependencies [2447ee9]
+  - @app/shared@0.0.3
+
 ## 2.28.6
 
 ### Patch Changes
