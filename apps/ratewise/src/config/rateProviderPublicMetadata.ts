@@ -5,6 +5,7 @@ import {
   getDefaultProvider,
   shouldEnableBankProviderChoice,
 } from './rateProviders.ts';
+import { FX_PROVIDER_METADATA } from '../../../shared/fx/provider-metadata.mjs';
 
 export interface PublicRateProviderMetadataOptions {
   dataBaseUrl: string;
@@ -43,10 +44,12 @@ export interface PublicRateProvider {
   attribution: string;
 }
 
-const PROVIDER_SOURCE_URLS: Readonly<Record<string, string>> = {
-  bot: 'https://rate.bot.com.tw/xrt?Lang=zh-TW',
-  moneybox: 'https://moneybox-exchange.com/zh-CHT/exchange/',
-};
+/** 來源網址、條款與標示取自 shared/fx provider metadata（與 v3 manifest 同一 SSOT）。 */
+function providerMetadata(providerId: string) {
+  const meta = FX_PROVIDER_METADATA[providerId as keyof typeof FX_PROVIDER_METADATA];
+  if (!meta) throw new Error(`Unknown provider metadata: ${providerId}`);
+  return meta;
+}
 
 export function buildPublicRateProviderMetadata(
   options: PublicRateProviderMetadataOptions,
@@ -66,6 +69,7 @@ export function buildPublicRateProviderMetadata(
     providers: getAllRateProviders().map((provider) => {
       const currentPath = provider.apiPaths.latest;
       const historyPath = provider.apiPaths.history.replace('{YYYY-MM-DD}', historyDateToken);
+      const meta = providerMetadata(provider.id);
       return {
         providerId: provider.id,
         sourceKind: provider.sourceKind,
@@ -84,10 +88,10 @@ export function buildPublicRateProviderMetadata(
               cdnHistoryEndpoint: joinEndpoint(options.cdnBaseUrl, historyPath),
             }
           : {}),
-        sourceUrl: PROVIDER_SOURCE_URLS[provider.id] ?? '',
-        termsUrl: null,
-        redistributionStatus: 'unknown',
-        attribution: `${provider.label}；資料來源：${PROVIDER_SOURCE_URLS[provider.id] ?? 'provider source'}`,
+        sourceUrl: meta.sourceUrl,
+        termsUrl: meta.termsUrl,
+        redistributionStatus: meta.redistributionStatus,
+        attribution: meta.attribution,
       };
     }),
   };

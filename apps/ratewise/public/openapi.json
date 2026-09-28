@@ -99,7 +99,7 @@
           "sourceUrl": "https://rate.bot.com.tw/xrt?Lang=zh-TW",
           "termsUrl": null,
           "redistributionStatus": "unknown",
-          "attribution": "台灣銀行；資料來源：https://rate.bot.com.tw/xrt?Lang=zh-TW"
+          "attribution": "資料來源：臺灣銀行牌告匯率"
         },
         {
           "providerId": "moneybox",
@@ -117,7 +117,7 @@
           "sourceUrl": "https://moneybox-exchange.com/zh-CHT/exchange/",
           "termsUrl": null,
           "redistributionStatus": "unknown",
-          "attribution": "明洞換匯所；資料來源：https://moneybox-exchange.com/zh-CHT/exchange/"
+          "attribution": "資料來源：MoneyBox 明洞換匯所"
         }
       ]
     },
@@ -153,13 +153,13 @@
         "providerId": "bot",
         "termsUrl": null,
         "redistributionStatus": "unknown",
-        "attribution": "台灣銀行；資料來源：https://rate.bot.com.tw/xrt?Lang=zh-TW"
+        "attribution": "資料來源：臺灣銀行牌告匯率"
       },
       {
         "providerId": "moneybox",
         "termsUrl": null,
         "redistributionStatus": "unknown",
-        "attribution": "明洞換匯所；資料來源：https://moneybox-exchange.com/zh-CHT/exchange/"
+        "attribution": "資料來源：MoneyBox 明洞換匯所"
       }
     ]
   },
@@ -1442,7 +1442,7 @@
         "sourceUrl": "https://rate.bot.com.tw/xrt?Lang=zh-TW",
         "termsUrl": null,
         "redistributionStatus": "unknown",
-        "attribution": "台灣銀行；資料來源：https://rate.bot.com.tw/xrt?Lang=zh-TW"
+        "attribution": "資料來源：臺灣銀行牌告匯率"
       },
       {
         "providerId": "moneybox",
@@ -1460,7 +1460,7 @@
         "sourceUrl": "https://moneybox-exchange.com/zh-CHT/exchange/",
         "termsUrl": null,
         "redistributionStatus": "unknown",
-        "attribution": "明洞換匯所；資料來源：https://moneybox-exchange.com/zh-CHT/exchange/"
+        "attribution": "資料來源：MoneyBox 明洞換匯所"
       }
     ]
   },

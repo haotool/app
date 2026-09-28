@@ -60,8 +60,9 @@ describe('v3 publication', () => {
         termsUrl: null,
         redistributionStatus: 'unknown',
         attribution: '資料來源：臺灣銀行牌告匯率',
-        nextSourceCheckAt: null,
       });
+      // PRD §18.5：恆 null 欄位不輸出，日後相容新增。
+      expect(manifest.providers[0]).not.toHaveProperty('nextSourceCheckAt');
       expect(snapshots.get('bot')).toMatchObject({ $schema: schemaUrl, schemaVersion: '3.0' });
     } finally {
       rmSync(dir, { recursive: true, force: true });

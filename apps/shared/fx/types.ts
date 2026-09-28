@@ -206,9 +206,9 @@ export interface ReleaseManifest {
     redistributionStatus: 'verified' | 'unknown' | 'restricted';
     attribution: string;
     /**
-     * 下次檢查時間；不承諾上游必然更新，未排程承諾時為 null
+     * 選填：下次檢查時間，不承諾上游必然更新；未有排程承諾時不輸出（PRD §18.5），日後相容新增
      */
-    nextSourceCheckAt: string | null;
+    nextSourceCheckAt?: string | null;
   }[];
   /**
    * @maxItems 100000

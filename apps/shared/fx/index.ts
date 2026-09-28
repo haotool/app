@@ -28,6 +28,7 @@ export {
   validateDerivedEstimateResult,
 } from './validators.js';
 import { minorUnit } from './minor-units.mjs';
+import { FX_PROVIDER_METADATA } from './provider-metadata.mjs';
 export { MINOR_UNITS, minorUnit } from './minor-units.mjs';
 const D = Decimal.clone({ precision: 80, rounding: Decimal.ROUND_HALF_EVEN });
 export function isValidAmount(value: string): boolean {
@@ -56,6 +57,8 @@ export function normalizeAmountInput(
     scale = 8;
   }
   const parsed = new D(trimmed);
+  // 先界定數量級再展開：`1e999999999` 若直接 toFixed 會產生十億位字串（OOM）。
+  if (parsed.abs().gt('9007199254740991')) return null;
   const amount = parsed.abs().toDecimalPlaces(scale, Decimal.ROUND_HALF_EVEN).toFixed();
   if (!isValidAmount(amount)) return null;
   return { amount, negative: parsed.isNegative() && !new D(amount).isZero() };
@@ -85,25 +88,8 @@ export const FX_PUBLISHER = Object.freeze({
   termsUrl: 'https://app.haotool.org/ratewise/open-data/',
   requiredText: '資料整理：匯率好工具 RateWise（https://app.haotool.org/ratewise/）',
 });
-/** 上游 provider 標示；條款未查證前 redistributionStatus 維持 unknown（PRD §17 #6）。 */
-export const FX_PROVIDER_METADATA = Object.freeze({
-  bot: {
-    name: '臺灣銀行',
-    kind: 'bank',
-    sourceUrl: 'https://rate.bot.com.tw/xrt?Lang=zh-TW',
-    termsUrl: null,
-    redistributionStatus: 'unknown',
-    attribution: '資料來源：臺灣銀行牌告匯率',
-  },
-  moneybox: {
-    name: 'MoneyBox 明洞換匯所',
-    kind: 'exchange_shop',
-    sourceUrl: 'https://moneybox-exchange.com/zh-CHT/exchange/',
-    termsUrl: null,
-    redistributionStatus: 'unknown',
-    attribution: '資料來源：MoneyBox 明洞換匯所',
-  },
-} as const);
+/** 上游 provider 標示 SSOT 位於 provider-metadata.mjs（零依賴，RateWise 開放資料 metadata 共用）。 */
+export { FX_PROVIDER_METADATA } from './provider-metadata.mjs';
 /** 與 schema.json ReleaseManifest.calculationRule const 一致；producer 嚴格驗證守門。 */
 export const FX_CALCULATION_RULE =
   'toAmount = fromAmount × rate（rate 為每 1 fromCurrency 的 toCurrency）；EXACT_OUT 以來源原值計算 fromAmount = ceil_minor(toAmount × unitAmount ÷ providerPrice)；倒數 rate 保留 12 位小數 ROUND_HALF_EVEN；金額依 ISO 4217 minor unit 捨入';
@@ -147,8 +133,7 @@ export function buildReleaseManifest(input: {
         checkStatus: provider.checkStatus,
         lastSuccessfulCheckAt: provider.lastSuccessfulCheckAt,
         ...meta,
-        // 排程由 GitHub Actions cron 驅動、不承諾上游更新；不落盤每輪檢查時間以避免 churn。
-        nextSourceCheckAt: null,
+        // nextSourceCheckAt 選填不輸出（PRD §18.5）：排程由 cron 驅動、不承諾上游更新，日後相容新增。
       };
     }),
     history: input.history,
@@ -301,7 +286,8 @@ function estimateAmounts(
     request.mode === 'EXACT_OUT'
       ? amount
       : from.mul(rate).toDecimalPlaces(toScale, Decimal.ROUND_HALF_EVEN);
-  if (from.gt('9007199254740991')) return unavailable('amount_out_of_range', quoteId);
+  if (from.gt('9007199254740991') || to.gt('9007199254740991'))
+    return unavailable('amount_out_of_range', quoteId);
   return {
     status: 'available',
     fromAmount: from.toFixed(),
@@ -614,7 +600,10 @@ export function deriveCrossQuote(
     recommendable: false,
   };
 }
-/** Decimal strings retain raw precision; the legacy writer owns its numeric serialization. */
+/**
+ * Decimal strings retain raw precision; the legacy writer owns its numeric serialization.
+ * S4-DELETE：v2 legacy 投影，S4 切換並下線 v2 後刪除（見 049 實作文件 S4 清單）。
+ */
 export function exportLegacyRates(
   quotes: readonly QuoteSnapshot[],
   providerId: 'bot' | 'moneybox',

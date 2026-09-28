@@ -445,7 +445,8 @@
         },
         "sourceUrl": {
           "type": "string",
-          "format": "uri"
+          "format": "uri",
+          "pattern": "^https://"
         },
         "serviceCountries": {
           "type": "array",
@@ -456,7 +457,16 @@
           "minItems": 1
         },
         "termsUrl": {
-          "type": ["string", "null"]
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uri",
+              "pattern": "^https://"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "redistributionStatus": {
           "enum": ["verified", "unknown", "restricted"]
@@ -525,11 +535,13 @@
             },
             "url": {
               "type": "string",
-              "format": "uri"
+              "format": "uri",
+              "pattern": "^https://"
             },
             "termsUrl": {
               "type": "string",
-              "format": "uri"
+              "format": "uri",
+              "pattern": "^https://"
             },
             "requiredText": {
               "type": "string",
@@ -568,10 +580,20 @@
               },
               "sourceUrl": {
                 "type": "string",
-                "format": "uri"
+                "format": "uri",
+                "pattern": "^https://"
               },
               "termsUrl": {
-                "type": ["string", "null"]
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "uri",
+                    "pattern": "^https://"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "redistributionStatus": {
                 "enum": ["verified", "unknown", "restricted"]
@@ -582,7 +604,7 @@
                 "maxLength": 512
               },
               "nextSourceCheckAt": {
-                "description": "下次檢查時間；不承諾上游必然更新，未排程承諾時為 null",
+                "description": "選填：下次檢查時間，不承諾上游必然更新；未有排程承諾時不輸出（PRD §18.5），日後相容新增",
                 "anyOf": [
                   {
                     "type": "string",
@@ -604,8 +626,7 @@
               "sourceUrl",
               "termsUrl",
               "redistributionStatus",
-              "attribution",
-              "nextSourceCheckAt"
+              "attribution"
             ]
           },
           "maxItems": 1000

@@ -171,3 +171,44 @@ describe('release atomic unit', () => {
     ).toBeNull();
   });
 });
+
+describe('R5 manifest contract', () => {
+  it('omits nextSourceCheckAt and only accepts https provider URLs', async () => {
+    const { buildReleaseManifest } = await import('./index');
+    const { validateReleaseManifest, validateProvider } = await import('./validators.js');
+    const manifest = buildReleaseManifest({
+      generatedAt: '2026-09-28T00:00:00Z',
+      providers: [
+        {
+          providerId: 'bot',
+          snapshot: { path: `objects/${'a'.repeat(64)}.json`, sha256: 'a'.repeat(64) },
+          checkStatus: 'ok',
+          lastSuccessfulCheckAt: '2026-09-28T00:00:00Z',
+        },
+      ],
+      history: [],
+      deprecation: { activatedAt: null, sunsetAt: null, replacement: 'v3' },
+    });
+    expect(manifest.providers[0]).not.toHaveProperty('nextSourceCheckAt');
+    expect(validateReleaseManifest(manifest)).toBe(true);
+    const provider = {
+      providerId: 'bot',
+      kind: 'bank',
+      name: '臺灣銀行',
+      sourceUrl: 'https://rate.bot.com.tw/xrt',
+      serviceCountries: ['TW'],
+      termsUrl: null,
+      redistributionStatus: 'unknown',
+      attribution: '資料來源：臺灣銀行牌告匯率',
+    };
+    expect(validateProvider(provider)).toBe(true);
+    expect(validateProvider({ ...provider, sourceUrl: 'http://rate.bot.com.tw/xrt' })).toBe(false);
+    expect(validateProvider({ ...provider, termsUrl: 'javascript:alert(1)' })).toBe(false);
+    expect(
+      validateReleaseManifest({
+        ...manifest,
+        publisher: { ...manifest.publisher, termsUrl: 'http://example.com/' },
+      }),
+    ).toBe(false);
+  });
+});

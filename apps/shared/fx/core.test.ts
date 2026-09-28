@@ -524,3 +524,43 @@ describe('B3 public contract', () => {
     expect(schema.$defs.SourceQuote.required).toContain('dataKind');
   });
 });
+
+describe('R5 boundary hardening', () => {
+  it('computes the board midpoint exactly at the half unit', () => {
+    expect(
+      boardMidpoint({
+        ...row,
+        subjectCurrency: 'USD',
+        providerBuyPrice: '42.15',
+        providerSellPrice: '42.3',
+      }),
+    ).toBe('42.225');
+  });
+
+  it('bounds calculator exponents before expanding them', () => {
+    const started = performance.now();
+    expect(normalizeAmountInput('1e999999999', 'TWD')).toBeNull();
+    expect(normalizeAmountInput('9.1e15', 'TWD')).toBeNull();
+    expect(normalizeAmountInput('1e-999999999', 'TWD')).toEqual({ amount: '0', negative: false });
+    expect(performance.now() - started).toBeLessThan(1000);
+  });
+
+  it('marks results whose target amount exceeds the safe range as out of range', () => {
+    const [krwToTwd, twdToKrw] = normalizeQuote({
+      ...row,
+      subjectCurrency: 'USD',
+      priceCurrency: 'KRW',
+      providerBuyPrice: '1400',
+      providerSellPrice: '1500',
+    });
+    expect(
+      estimate(krwToTwd!, {
+        fromCurrency: 'USD',
+        toCurrency: 'KRW',
+        amount: '9000000000000000',
+        mode: 'EXACT_IN',
+      }),
+    ).toMatchObject({ status: 'unavailable', reason: 'amount_out_of_range' });
+    expect(twdToKrw).toBeDefined();
+  });
+});

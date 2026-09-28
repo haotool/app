@@ -1,6 +1,9 @@
 /**
  * API Semantics v2 SSOT（spec §二十一）。
  * legacy buy/sell 保留；v2 欄位為 additive customer-centric 語意層。
+ *
+ * S4-DELETE：v3 公開（FX_V3_PUBLIC=true）並完成 v2 sunset 後整檔刪除，
+ * 連同 openapi／api/latest.json 的 v2 semanticFieldMapping（見 049 實作文件 S4 清單）。
  */
 
 import { FX_V3_PUBLIC } from './api-endpoints.ts';

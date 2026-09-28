@@ -4190,13 +4190,15 @@ var schema27 = {
     providerId: { type: 'string', minLength: 1, maxLength: 512 },
     kind: { enum: ['bank', 'exchange_shop'] },
     name: { type: 'string', minLength: 1, maxLength: 512 },
-    sourceUrl: { type: 'string', format: 'uri' },
+    sourceUrl: { type: 'string', format: 'uri', pattern: '^https://' },
     serviceCountries: {
       type: 'array',
       items: { type: 'string', pattern: '^[A-Z]{2}$' },
       minItems: 1,
     },
-    termsUrl: { type: ['string', 'null'] },
+    termsUrl: {
+      anyOf: [{ type: 'string', format: 'uri', pattern: '^https://' }, { type: 'null' }],
+    },
     redistributionStatus: { enum: ['verified', 'unknown', 'restricted'] },
     attribution: { type: 'string', minLength: 1, maxLength: 512 },
   },
@@ -4400,17 +4402,30 @@ function validate61(
                   if (errors === _errs7) {
                     if (errors === _errs7) {
                       if (typeof data3 === 'string') {
-                        if (!formats8(data3)) {
+                        if (!pattern14.test(data3)) {
                           validate61.errors = [
                             {
                               instancePath: instancePath + '/sourceUrl',
-                              schemaPath: '#/properties/sourceUrl/format',
-                              keyword: 'format',
-                              params: { format: 'uri' },
-                              message: 'must match format "uri"',
+                              schemaPath: '#/properties/sourceUrl/pattern',
+                              keyword: 'pattern',
+                              params: { pattern: '^https://' },
+                              message: 'must match pattern "^https://"',
                             },
                           ];
                           return false;
+                        } else {
+                          if (!formats8(data3)) {
+                            validate61.errors = [
+                              {
+                                instancePath: instancePath + '/sourceUrl',
+                                schemaPath: '#/properties/sourceUrl/format',
+                                keyword: 'format',
+                                params: { format: 'uri' },
+                                message: 'must match format "uri"',
+                              },
+                            ];
+                            return false;
+                          }
                         }
                       } else {
                         validate61.errors = [
@@ -4507,17 +4522,105 @@ function validate61(
                     if (data.termsUrl !== void 0) {
                       let data6 = data.termsUrl;
                       const _errs13 = errors;
-                      if (typeof data6 !== 'string' && data6 !== null) {
-                        validate61.errors = [
-                          {
-                            instancePath: instancePath + '/termsUrl',
-                            schemaPath: '#/properties/termsUrl/type',
-                            keyword: 'type',
-                            params: { type: schema27.properties.termsUrl.type },
-                            message: 'must be string,null',
-                          },
-                        ];
+                      const _errs14 = errors;
+                      let valid2 = false;
+                      const _errs15 = errors;
+                      if (errors === _errs15) {
+                        if (errors === _errs15) {
+                          if (typeof data6 === 'string') {
+                            if (!pattern14.test(data6)) {
+                              const err0 = {
+                                instancePath: instancePath + '/termsUrl',
+                                schemaPath: '#/properties/termsUrl/anyOf/0/pattern',
+                                keyword: 'pattern',
+                                params: { pattern: '^https://' },
+                                message: 'must match pattern "^https://"',
+                              };
+                              if (vErrors === null) {
+                                vErrors = [err0];
+                              } else {
+                                vErrors.push(err0);
+                              }
+                              errors++;
+                            } else {
+                              if (!formats8(data6)) {
+                                const err1 = {
+                                  instancePath: instancePath + '/termsUrl',
+                                  schemaPath: '#/properties/termsUrl/anyOf/0/format',
+                                  keyword: 'format',
+                                  params: { format: 'uri' },
+                                  message: 'must match format "uri"',
+                                };
+                                if (vErrors === null) {
+                                  vErrors = [err1];
+                                } else {
+                                  vErrors.push(err1);
+                                }
+                                errors++;
+                              }
+                            }
+                          } else {
+                            const err2 = {
+                              instancePath: instancePath + '/termsUrl',
+                              schemaPath: '#/properties/termsUrl/anyOf/0/type',
+                              keyword: 'type',
+                              params: { type: 'string' },
+                              message: 'must be string',
+                            };
+                            if (vErrors === null) {
+                              vErrors = [err2];
+                            } else {
+                              vErrors.push(err2);
+                            }
+                            errors++;
+                          }
+                        }
+                      }
+                      var _valid0 = _errs15 === errors;
+                      valid2 = valid2 || _valid0;
+                      const _errs17 = errors;
+                      if (data6 !== null) {
+                        const err3 = {
+                          instancePath: instancePath + '/termsUrl',
+                          schemaPath: '#/properties/termsUrl/anyOf/1/type',
+                          keyword: 'type',
+                          params: { type: 'null' },
+                          message: 'must be null',
+                        };
+                        if (vErrors === null) {
+                          vErrors = [err3];
+                        } else {
+                          vErrors.push(err3);
+                        }
+                        errors++;
+                      }
+                      var _valid0 = _errs17 === errors;
+                      valid2 = valid2 || _valid0;
+                      if (!valid2) {
+                        const err4 = {
+                          instancePath: instancePath + '/termsUrl',
+                          schemaPath: '#/properties/termsUrl/anyOf',
+                          keyword: 'anyOf',
+                          params: {},
+                          message: 'must match a schema in anyOf',
+                        };
+                        if (vErrors === null) {
+                          vErrors = [err4];
+                        } else {
+                          vErrors.push(err4);
+                        }
+                        errors++;
+                        validate61.errors = vErrors;
                         return false;
+                      } else {
+                        errors = _errs14;
+                        if (vErrors !== null) {
+                          if (_errs14) {
+                            vErrors.length = _errs14;
+                          } else {
+                            vErrors = null;
+                          }
+                        }
                       }
                       var valid0 = _errs13 === errors;
                     } else {
@@ -4526,7 +4629,7 @@ function validate61(
                     if (valid0) {
                       if (data.redistributionStatus !== void 0) {
                         let data7 = data.redistributionStatus;
-                        const _errs15 = errors;
+                        const _errs19 = errors;
                         if (
                           !(data7 === 'verified' || data7 === 'unknown' || data7 === 'restricted')
                         ) {
@@ -4543,15 +4646,15 @@ function validate61(
                           ];
                           return false;
                         }
-                        var valid0 = _errs15 === errors;
+                        var valid0 = _errs19 === errors;
                       } else {
                         var valid0 = true;
                       }
                       if (valid0) {
                         if (data.attribution !== void 0) {
                           let data8 = data.attribution;
-                          const _errs16 = errors;
-                          if (errors === _errs16) {
+                          const _errs20 = errors;
+                          if (errors === _errs20) {
                             if (typeof data8 === 'string') {
                               if (func2(data8) > 512) {
                                 validate61.errors = [
@@ -4591,7 +4694,7 @@ function validate61(
                               return false;
                             }
                           }
-                          var valid0 = _errs16 === errors;
+                          var valid0 = _errs20 === errors;
                         } else {
                           var valid0 = true;
                         }
@@ -4872,8 +4975,8 @@ var schema29 = {
       type: 'object',
       properties: {
         name: { type: 'string', minLength: 1 },
-        url: { type: 'string', format: 'uri' },
-        termsUrl: { type: 'string', format: 'uri' },
+        url: { type: 'string', format: 'uri', pattern: '^https://' },
+        termsUrl: { type: 'string', format: 'uri', pattern: '^https://' },
         requiredText: { type: 'string', minLength: 1 },
       },
       required: ['name', 'url', 'termsUrl', 'requiredText'],
@@ -4890,13 +4993,15 @@ var schema29 = {
           lastSuccessfulCheckAt: { type: 'string', format: 'date-time' },
           name: { type: 'string', minLength: 1, maxLength: 512 },
           kind: { enum: ['bank', 'exchange_shop'] },
-          sourceUrl: { type: 'string', format: 'uri' },
-          termsUrl: { type: ['string', 'null'] },
+          sourceUrl: { type: 'string', format: 'uri', pattern: '^https://' },
+          termsUrl: {
+            anyOf: [{ type: 'string', format: 'uri', pattern: '^https://' }, { type: 'null' }],
+          },
           redistributionStatus: { enum: ['verified', 'unknown', 'restricted'] },
           attribution: { type: 'string', minLength: 1, maxLength: 512 },
           nextSourceCheckAt: {
             description:
-              '\u4E0B\u6B21\u6AA2\u67E5\u6642\u9593\uFF1B\u4E0D\u627F\u8AFE\u4E0A\u6E38\u5FC5\u7136\u66F4\u65B0\uFF0C\u672A\u6392\u7A0B\u627F\u8AFE\u6642\u70BA null',
+              '\u9078\u586B\uFF1A\u4E0B\u6B21\u6AA2\u67E5\u6642\u9593\uFF0C\u4E0D\u627F\u8AFE\u4E0A\u6E38\u5FC5\u7136\u66F4\u65B0\uFF1B\u672A\u6709\u6392\u7A0B\u627F\u8AFE\u6642\u4E0D\u8F38\u51FA\uFF08PRD \xA718.5\uFF09\uFF0C\u65E5\u5F8C\u76F8\u5BB9\u65B0\u589E',
             anyOf: [{ type: 'string', format: 'date-time' }, { type: 'null' }],
           },
         },
@@ -4911,7 +5016,6 @@ var schema29 = {
           'termsUrl',
           'redistributionStatus',
           'attribution',
-          'nextSourceCheckAt',
         ],
         additionalProperties: false,
       },
@@ -4960,7 +5064,7 @@ var schema29 = {
   ],
   additionalProperties: false,
 };
-var formats22 = import_formats.fullFormats.date;
+var formats26 = import_formats.fullFormats.date;
 function validate64(
   data,
   { instancePath = '', parentData, parentDataProperty, rootData = data, dynamicAnchors = {} } = {},
@@ -5182,18 +5286,32 @@ function validate64(
                               if (errors === _errs11) {
                                 if (errors === _errs11) {
                                   if (typeof data5 === 'string') {
-                                    if (!formats8(data5)) {
+                                    if (!pattern14.test(data5)) {
                                       validate64.errors = [
                                         {
                                           instancePath: instancePath + '/publisher/url',
                                           schemaPath:
-                                            '#/properties/publisher/properties/url/format',
-                                          keyword: 'format',
-                                          params: { format: 'uri' },
-                                          message: 'must match format "uri"',
+                                            '#/properties/publisher/properties/url/pattern',
+                                          keyword: 'pattern',
+                                          params: { pattern: '^https://' },
+                                          message: 'must match pattern "^https://"',
                                         },
                                       ];
                                       return false;
+                                    } else {
+                                      if (!formats8(data5)) {
+                                        validate64.errors = [
+                                          {
+                                            instancePath: instancePath + '/publisher/url',
+                                            schemaPath:
+                                              '#/properties/publisher/properties/url/format',
+                                            keyword: 'format',
+                                            params: { format: 'uri' },
+                                            message: 'must match format "uri"',
+                                          },
+                                        ];
+                                        return false;
+                                      }
                                     }
                                   } else {
                                     validate64.errors = [
@@ -5220,18 +5338,32 @@ function validate64(
                                 if (errors === _errs13) {
                                   if (errors === _errs13) {
                                     if (typeof data6 === 'string') {
-                                      if (!formats8(data6)) {
+                                      if (!pattern14.test(data6)) {
                                         validate64.errors = [
                                           {
                                             instancePath: instancePath + '/publisher/termsUrl',
                                             schemaPath:
-                                              '#/properties/publisher/properties/termsUrl/format',
-                                            keyword: 'format',
-                                            params: { format: 'uri' },
-                                            message: 'must match format "uri"',
+                                              '#/properties/publisher/properties/termsUrl/pattern',
+                                            keyword: 'pattern',
+                                            params: { pattern: '^https://' },
+                                            message: 'must match pattern "^https://"',
                                           },
                                         ];
                                         return false;
+                                      } else {
+                                        if (!formats8(data6)) {
+                                          validate64.errors = [
+                                            {
+                                              instancePath: instancePath + '/publisher/termsUrl',
+                                              schemaPath:
+                                                '#/properties/publisher/properties/termsUrl/format',
+                                              keyword: 'format',
+                                              params: { format: 'uri' },
+                                              message: 'must match format "uri"',
+                                            },
+                                          ];
+                                          return false;
+                                        }
                                       }
                                     } else {
                                       validate64.errors = [
@@ -5349,9 +5481,7 @@ function validate64(
                                   (data9.termsUrl === void 0 && (missing2 = 'termsUrl')) ||
                                   (data9.redistributionStatus === void 0 &&
                                     (missing2 = 'redistributionStatus')) ||
-                                  (data9.attribution === void 0 && (missing2 = 'attribution')) ||
-                                  (data9.nextSourceCheckAt === void 0 &&
-                                    (missing2 = 'nextSourceCheckAt'))
+                                  (data9.attribution === void 0 && (missing2 = 'attribution'))
                                 ) {
                                   validate64.errors = [
                                     {
@@ -5647,7 +5777,7 @@ function validate64(
                                                   if (errors === _errs31) {
                                                     if (errors === _errs31) {
                                                       if (typeof data16 === 'string') {
-                                                        if (!formats8(data16)) {
+                                                        if (!pattern14.test(data16)) {
                                                           validate64.errors = [
                                                             {
                                                               instancePath:
@@ -5656,13 +5786,32 @@ function validate64(
                                                                 i0 +
                                                                 '/sourceUrl',
                                                               schemaPath:
-                                                                '#/properties/providers/items/properties/sourceUrl/format',
-                                                              keyword: 'format',
-                                                              params: { format: 'uri' },
-                                                              message: 'must match format "uri"',
+                                                                '#/properties/providers/items/properties/sourceUrl/pattern',
+                                                              keyword: 'pattern',
+                                                              params: { pattern: '^https://' },
+                                                              message:
+                                                                'must match pattern "^https://"',
                                                             },
                                                           ];
                                                           return false;
+                                                        } else {
+                                                          if (!formats8(data16)) {
+                                                            validate64.errors = [
+                                                              {
+                                                                instancePath:
+                                                                  instancePath +
+                                                                  '/providers/' +
+                                                                  i0 +
+                                                                  '/sourceUrl',
+                                                                schemaPath:
+                                                                  '#/properties/providers/items/properties/sourceUrl/format',
+                                                                keyword: 'format',
+                                                                params: { format: 'uri' },
+                                                                message: 'must match format "uri"',
+                                                              },
+                                                            ];
+                                                            return false;
+                                                          }
                                                         }
                                                       } else {
                                                         validate64.errors = [
@@ -5691,28 +5840,131 @@ function validate64(
                                                   if (data9.termsUrl !== void 0) {
                                                     let data17 = data9.termsUrl;
                                                     const _errs33 = errors;
-                                                    if (
-                                                      typeof data17 !== 'string' &&
-                                                      data17 !== null
-                                                    ) {
-                                                      validate64.errors = [
-                                                        {
-                                                          instancePath:
-                                                            instancePath +
-                                                            '/providers/' +
-                                                            i0 +
-                                                            '/termsUrl',
-                                                          schemaPath:
-                                                            '#/properties/providers/items/properties/termsUrl/type',
-                                                          keyword: 'type',
-                                                          params: {
-                                                            type: schema29.properties.providers
-                                                              .items.properties.termsUrl.type,
-                                                          },
-                                                          message: 'must be string,null',
-                                                        },
-                                                      ];
+                                                    const _errs34 = errors;
+                                                    let valid4 = false;
+                                                    const _errs35 = errors;
+                                                    if (errors === _errs35) {
+                                                      if (errors === _errs35) {
+                                                        if (typeof data17 === 'string') {
+                                                          if (!pattern14.test(data17)) {
+                                                            const err0 = {
+                                                              instancePath:
+                                                                instancePath +
+                                                                '/providers/' +
+                                                                i0 +
+                                                                '/termsUrl',
+                                                              schemaPath:
+                                                                '#/properties/providers/items/properties/termsUrl/anyOf/0/pattern',
+                                                              keyword: 'pattern',
+                                                              params: { pattern: '^https://' },
+                                                              message:
+                                                                'must match pattern "^https://"',
+                                                            };
+                                                            if (vErrors === null) {
+                                                              vErrors = [err0];
+                                                            } else {
+                                                              vErrors.push(err0);
+                                                            }
+                                                            errors++;
+                                                          } else {
+                                                            if (!formats8(data17)) {
+                                                              const err1 = {
+                                                                instancePath:
+                                                                  instancePath +
+                                                                  '/providers/' +
+                                                                  i0 +
+                                                                  '/termsUrl',
+                                                                schemaPath:
+                                                                  '#/properties/providers/items/properties/termsUrl/anyOf/0/format',
+                                                                keyword: 'format',
+                                                                params: { format: 'uri' },
+                                                                message: 'must match format "uri"',
+                                                              };
+                                                              if (vErrors === null) {
+                                                                vErrors = [err1];
+                                                              } else {
+                                                                vErrors.push(err1);
+                                                              }
+                                                              errors++;
+                                                            }
+                                                          }
+                                                        } else {
+                                                          const err2 = {
+                                                            instancePath:
+                                                              instancePath +
+                                                              '/providers/' +
+                                                              i0 +
+                                                              '/termsUrl',
+                                                            schemaPath:
+                                                              '#/properties/providers/items/properties/termsUrl/anyOf/0/type',
+                                                            keyword: 'type',
+                                                            params: { type: 'string' },
+                                                            message: 'must be string',
+                                                          };
+                                                          if (vErrors === null) {
+                                                            vErrors = [err2];
+                                                          } else {
+                                                            vErrors.push(err2);
+                                                          }
+                                                          errors++;
+                                                        }
+                                                      }
+                                                    }
+                                                    var _valid0 = _errs35 === errors;
+                                                    valid4 = valid4 || _valid0;
+                                                    const _errs37 = errors;
+                                                    if (data17 !== null) {
+                                                      const err3 = {
+                                                        instancePath:
+                                                          instancePath +
+                                                          '/providers/' +
+                                                          i0 +
+                                                          '/termsUrl',
+                                                        schemaPath:
+                                                          '#/properties/providers/items/properties/termsUrl/anyOf/1/type',
+                                                        keyword: 'type',
+                                                        params: { type: 'null' },
+                                                        message: 'must be null',
+                                                      };
+                                                      if (vErrors === null) {
+                                                        vErrors = [err3];
+                                                      } else {
+                                                        vErrors.push(err3);
+                                                      }
+                                                      errors++;
+                                                    }
+                                                    var _valid0 = _errs37 === errors;
+                                                    valid4 = valid4 || _valid0;
+                                                    if (!valid4) {
+                                                      const err4 = {
+                                                        instancePath:
+                                                          instancePath +
+                                                          '/providers/' +
+                                                          i0 +
+                                                          '/termsUrl',
+                                                        schemaPath:
+                                                          '#/properties/providers/items/properties/termsUrl/anyOf',
+                                                        keyword: 'anyOf',
+                                                        params: {},
+                                                        message: 'must match a schema in anyOf',
+                                                      };
+                                                      if (vErrors === null) {
+                                                        vErrors = [err4];
+                                                      } else {
+                                                        vErrors.push(err4);
+                                                      }
+                                                      errors++;
+                                                      validate64.errors = vErrors;
                                                       return false;
+                                                    } else {
+                                                      errors = _errs34;
+                                                      if (vErrors !== null) {
+                                                        if (_errs34) {
+                                                          vErrors.length = _errs34;
+                                                        } else {
+                                                          vErrors = null;
+                                                        }
+                                                      }
                                                     }
                                                     var valid3 = _errs33 === errors;
                                                   } else {
@@ -5721,7 +5973,7 @@ function validate64(
                                                   if (valid3) {
                                                     if (data9.redistributionStatus !== void 0) {
                                                       let data18 = data9.redistributionStatus;
-                                                      const _errs35 = errors;
+                                                      const _errs39 = errors;
                                                       if (
                                                         !(
                                                           data18 === 'verified' ||
@@ -5751,15 +6003,15 @@ function validate64(
                                                         ];
                                                         return false;
                                                       }
-                                                      var valid3 = _errs35 === errors;
+                                                      var valid3 = _errs39 === errors;
                                                     } else {
                                                       var valid3 = true;
                                                     }
                                                     if (valid3) {
                                                       if (data9.attribution !== void 0) {
                                                         let data19 = data9.attribution;
-                                                        const _errs36 = errors;
-                                                        if (errors === _errs36) {
+                                                        const _errs40 = errors;
+                                                        if (errors === _errs40) {
                                                           if (typeof data19 === 'string') {
                                                             if (func2(data19) > 512) {
                                                               validate64.errors = [
@@ -5816,22 +6068,22 @@ function validate64(
                                                             return false;
                                                           }
                                                         }
-                                                        var valid3 = _errs36 === errors;
+                                                        var valid3 = _errs40 === errors;
                                                       } else {
                                                         var valid3 = true;
                                                       }
                                                       if (valid3) {
                                                         if (data9.nextSourceCheckAt !== void 0) {
                                                           let data20 = data9.nextSourceCheckAt;
-                                                          const _errs38 = errors;
-                                                          const _errs39 = errors;
-                                                          let valid4 = false;
-                                                          const _errs40 = errors;
-                                                          if (errors === _errs40) {
-                                                            if (errors === _errs40) {
+                                                          const _errs42 = errors;
+                                                          const _errs43 = errors;
+                                                          let valid5 = false;
+                                                          const _errs44 = errors;
+                                                          if (errors === _errs44) {
+                                                            if (errors === _errs44) {
                                                               if (typeof data20 === 'string') {
                                                                 if (!formats0.validate(data20)) {
-                                                                  const err0 = {
+                                                                  const err5 = {
                                                                     instancePath:
                                                                       instancePath +
                                                                       '/providers/' +
@@ -5845,14 +6097,14 @@ function validate64(
                                                                       'must match format "date-time"',
                                                                   };
                                                                   if (vErrors === null) {
-                                                                    vErrors = [err0];
+                                                                    vErrors = [err5];
                                                                   } else {
-                                                                    vErrors.push(err0);
+                                                                    vErrors.push(err5);
                                                                   }
                                                                   errors++;
                                                                 }
                                                               } else {
-                                                                const err1 = {
+                                                                const err6 = {
                                                                   instancePath:
                                                                     instancePath +
                                                                     '/providers/' +
@@ -5865,19 +6117,19 @@ function validate64(
                                                                   message: 'must be string',
                                                                 };
                                                                 if (vErrors === null) {
-                                                                  vErrors = [err1];
+                                                                  vErrors = [err6];
                                                                 } else {
-                                                                  vErrors.push(err1);
+                                                                  vErrors.push(err6);
                                                                 }
                                                                 errors++;
                                                               }
                                                             }
                                                           }
-                                                          var _valid0 = _errs40 === errors;
-                                                          valid4 = valid4 || _valid0;
-                                                          const _errs42 = errors;
+                                                          var _valid1 = _errs44 === errors;
+                                                          valid5 = valid5 || _valid1;
+                                                          const _errs46 = errors;
                                                           if (data20 !== null) {
-                                                            const err2 = {
+                                                            const err7 = {
                                                               instancePath:
                                                                 instancePath +
                                                                 '/providers/' +
@@ -5890,16 +6142,16 @@ function validate64(
                                                               message: 'must be null',
                                                             };
                                                             if (vErrors === null) {
-                                                              vErrors = [err2];
+                                                              vErrors = [err7];
                                                             } else {
-                                                              vErrors.push(err2);
+                                                              vErrors.push(err7);
                                                             }
                                                             errors++;
                                                           }
-                                                          var _valid0 = _errs42 === errors;
-                                                          valid4 = valid4 || _valid0;
-                                                          if (!valid4) {
-                                                            const err3 = {
+                                                          var _valid1 = _errs46 === errors;
+                                                          valid5 = valid5 || _valid1;
+                                                          if (!valid5) {
+                                                            const err8 = {
                                                               instancePath:
                                                                 instancePath +
                                                                 '/providers/' +
@@ -5913,24 +6165,24 @@ function validate64(
                                                                 'must match a schema in anyOf',
                                                             };
                                                             if (vErrors === null) {
-                                                              vErrors = [err3];
+                                                              vErrors = [err8];
                                                             } else {
-                                                              vErrors.push(err3);
+                                                              vErrors.push(err8);
                                                             }
                                                             errors++;
                                                             validate64.errors = vErrors;
                                                             return false;
                                                           } else {
-                                                            errors = _errs39;
+                                                            errors = _errs43;
                                                             if (vErrors !== null) {
-                                                              if (_errs39) {
-                                                                vErrors.length = _errs39;
+                                                              if (_errs43) {
+                                                                vErrors.length = _errs43;
                                                               } else {
                                                                 vErrors = null;
                                                               }
                                                             }
                                                           }
-                                                          var valid3 = _errs38 === errors;
+                                                          var valid3 = _errs42 === errors;
                                                         } else {
                                                           var valid3 = true;
                                                         }
@@ -5985,8 +6237,8 @@ function validate64(
                   if (valid0) {
                     if (data.history !== void 0) {
                       let data21 = data.history;
-                      const _errs44 = errors;
-                      if (errors === _errs44) {
+                      const _errs48 = errors;
+                      if (errors === _errs48) {
                         if (Array.isArray(data21)) {
                           if (data21.length > 1e5) {
                             validate64.errors = [
@@ -6000,12 +6252,12 @@ function validate64(
                             ];
                             return false;
                           } else {
-                            var valid5 = true;
+                            var valid6 = true;
                             const len1 = data21.length;
                             for (let i1 = 0; i1 < len1; i1++) {
                               let data22 = data21[i1];
-                              const _errs46 = errors;
-                              if (errors === _errs46) {
+                              const _errs50 = errors;
+                              if (errors === _errs50) {
                                 if (data22 && typeof data22 == 'object' && !Array.isArray(data22)) {
                                   let missing3;
                                   if (
@@ -6024,7 +6276,7 @@ function validate64(
                                     ];
                                     return false;
                                   } else {
-                                    const _errs48 = errors;
+                                    const _errs52 = errors;
                                     for (const key3 in data22) {
                                       if (
                                         !(
@@ -6047,11 +6299,11 @@ function validate64(
                                         break;
                                       }
                                     }
-                                    if (_errs48 === errors) {
+                                    if (_errs52 === errors) {
                                       if (data22.providerId !== void 0) {
                                         let data23 = data22.providerId;
-                                        const _errs49 = errors;
-                                        if (errors === _errs49) {
+                                        const _errs53 = errors;
+                                        if (errors === _errs53) {
                                           if (typeof data23 === 'string') {
                                             if (func2(data23) > 512) {
                                               validate64.errors = [
@@ -6101,18 +6353,18 @@ function validate64(
                                             return false;
                                           }
                                         }
-                                        var valid6 = _errs49 === errors;
+                                        var valid7 = _errs53 === errors;
                                       } else {
-                                        var valid6 = true;
+                                        var valid7 = true;
                                       }
-                                      if (valid6) {
+                                      if (valid7) {
                                         if (data22.date !== void 0) {
                                           let data24 = data22.date;
-                                          const _errs51 = errors;
-                                          if (errors === _errs51) {
-                                            if (errors === _errs51) {
+                                          const _errs55 = errors;
+                                          if (errors === _errs55) {
+                                            if (errors === _errs55) {
                                               if (typeof data24 === 'string') {
-                                                if (!formats22.validate(data24)) {
+                                                if (!formats26.validate(data24)) {
                                                   validate64.errors = [
                                                     {
                                                       instancePath:
@@ -6142,13 +6394,13 @@ function validate64(
                                               }
                                             }
                                           }
-                                          var valid6 = _errs51 === errors;
+                                          var valid7 = _errs55 === errors;
                                         } else {
-                                          var valid6 = true;
+                                          var valid7 = true;
                                         }
-                                        if (valid6) {
+                                        if (valid7) {
                                           if (data22.snapshot !== void 0) {
-                                            const _errs53 = errors;
+                                            const _errs57 = errors;
                                             if (
                                               !validate60(data22.snapshot, {
                                                 instancePath:
@@ -6165,9 +6417,9 @@ function validate64(
                                                   : vErrors.concat(validate60.errors);
                                               errors = vErrors.length;
                                             }
-                                            var valid6 = _errs53 === errors;
+                                            var valid7 = _errs57 === errors;
                                           } else {
-                                            var valid6 = true;
+                                            var valid7 = true;
                                           }
                                         }
                                       }
@@ -6186,8 +6438,8 @@ function validate64(
                                   return false;
                                 }
                               }
-                              var valid5 = _errs46 === errors;
-                              if (!valid5) {
+                              var valid6 = _errs50 === errors;
+                              if (!valid6) {
                                 break;
                               }
                             }
@@ -6205,15 +6457,15 @@ function validate64(
                           return false;
                         }
                       }
-                      var valid0 = _errs44 === errors;
+                      var valid0 = _errs48 === errors;
                     } else {
                       var valid0 = true;
                     }
                     if (valid0) {
                       if (data.deprecation !== void 0) {
                         let data26 = data.deprecation;
-                        const _errs54 = errors;
-                        if (errors === _errs54) {
+                        const _errs58 = errors;
+                        if (errors === _errs58) {
                           if (data26 && typeof data26 == 'object' && !Array.isArray(data26)) {
                             let missing4;
                             if (
@@ -6232,7 +6484,7 @@ function validate64(
                               ];
                               return false;
                             } else {
-                              const _errs56 = errors;
+                              const _errs60 = errors;
                               for (const key4 in data26) {
                                 if (
                                   !(
@@ -6254,18 +6506,18 @@ function validate64(
                                   break;
                                 }
                               }
-                              if (_errs56 === errors) {
+                              if (_errs60 === errors) {
                                 if (data26.activatedAt !== void 0) {
                                   let data27 = data26.activatedAt;
-                                  const _errs57 = errors;
-                                  const _errs58 = errors;
-                                  let valid8 = false;
-                                  const _errs59 = errors;
-                                  if (errors === _errs59) {
-                                    if (errors === _errs59) {
+                                  const _errs61 = errors;
+                                  const _errs62 = errors;
+                                  let valid9 = false;
+                                  const _errs63 = errors;
+                                  if (errors === _errs63) {
+                                    if (errors === _errs63) {
                                       if (typeof data27 === 'string') {
                                         if (!formats0.validate(data27)) {
-                                          const err4 = {
+                                          const err9 = {
                                             instancePath: instancePath + '/deprecation/activatedAt',
                                             schemaPath:
                                               '#/properties/deprecation/properties/activatedAt/anyOf/0/format',
@@ -6274,14 +6526,14 @@ function validate64(
                                             message: 'must match format "date-time"',
                                           };
                                           if (vErrors === null) {
-                                            vErrors = [err4];
+                                            vErrors = [err9];
                                           } else {
-                                            vErrors.push(err4);
+                                            vErrors.push(err9);
                                           }
                                           errors++;
                                         }
                                       } else {
-                                        const err5 = {
+                                        const err10 = {
                                           instancePath: instancePath + '/deprecation/activatedAt',
                                           schemaPath:
                                             '#/properties/deprecation/properties/activatedAt/anyOf/0/type',
@@ -6290,19 +6542,19 @@ function validate64(
                                           message: 'must be string',
                                         };
                                         if (vErrors === null) {
-                                          vErrors = [err5];
+                                          vErrors = [err10];
                                         } else {
-                                          vErrors.push(err5);
+                                          vErrors.push(err10);
                                         }
                                         errors++;
                                       }
                                     }
                                   }
-                                  var _valid1 = _errs59 === errors;
-                                  valid8 = valid8 || _valid1;
-                                  const _errs61 = errors;
+                                  var _valid2 = _errs63 === errors;
+                                  valid9 = valid9 || _valid2;
+                                  const _errs65 = errors;
                                   if (data27 !== null) {
-                                    const err6 = {
+                                    const err11 = {
                                       instancePath: instancePath + '/deprecation/activatedAt',
                                       schemaPath:
                                         '#/properties/deprecation/properties/activatedAt/anyOf/1/type',
@@ -6311,16 +6563,16 @@ function validate64(
                                       message: 'must be null',
                                     };
                                     if (vErrors === null) {
-                                      vErrors = [err6];
+                                      vErrors = [err11];
                                     } else {
-                                      vErrors.push(err6);
+                                      vErrors.push(err11);
                                     }
                                     errors++;
                                   }
-                                  var _valid1 = _errs61 === errors;
-                                  valid8 = valid8 || _valid1;
-                                  if (!valid8) {
-                                    const err7 = {
+                                  var _valid2 = _errs65 === errors;
+                                  valid9 = valid9 || _valid2;
+                                  if (!valid9) {
+                                    const err12 = {
                                       instancePath: instancePath + '/deprecation/activatedAt',
                                       schemaPath:
                                         '#/properties/deprecation/properties/activatedAt/anyOf',
@@ -6329,39 +6581,39 @@ function validate64(
                                       message: 'must match a schema in anyOf',
                                     };
                                     if (vErrors === null) {
-                                      vErrors = [err7];
+                                      vErrors = [err12];
                                     } else {
-                                      vErrors.push(err7);
+                                      vErrors.push(err12);
                                     }
                                     errors++;
                                     validate64.errors = vErrors;
                                     return false;
                                   } else {
-                                    errors = _errs58;
+                                    errors = _errs62;
                                     if (vErrors !== null) {
-                                      if (_errs58) {
-                                        vErrors.length = _errs58;
+                                      if (_errs62) {
+                                        vErrors.length = _errs62;
                                       } else {
                                         vErrors = null;
                                       }
                                     }
                                   }
-                                  var valid7 = _errs57 === errors;
+                                  var valid8 = _errs61 === errors;
                                 } else {
-                                  var valid7 = true;
+                                  var valid8 = true;
                                 }
-                                if (valid7) {
+                                if (valid8) {
                                   if (data26.sunsetAt !== void 0) {
                                     let data28 = data26.sunsetAt;
-                                    const _errs63 = errors;
-                                    const _errs64 = errors;
-                                    let valid9 = false;
-                                    const _errs65 = errors;
-                                    if (errors === _errs65) {
-                                      if (errors === _errs65) {
+                                    const _errs67 = errors;
+                                    const _errs68 = errors;
+                                    let valid10 = false;
+                                    const _errs69 = errors;
+                                    if (errors === _errs69) {
+                                      if (errors === _errs69) {
                                         if (typeof data28 === 'string') {
                                           if (!formats0.validate(data28)) {
-                                            const err8 = {
+                                            const err13 = {
                                               instancePath: instancePath + '/deprecation/sunsetAt',
                                               schemaPath:
                                                 '#/properties/deprecation/properties/sunsetAt/anyOf/0/format',
@@ -6370,14 +6622,14 @@ function validate64(
                                               message: 'must match format "date-time"',
                                             };
                                             if (vErrors === null) {
-                                              vErrors = [err8];
+                                              vErrors = [err13];
                                             } else {
-                                              vErrors.push(err8);
+                                              vErrors.push(err13);
                                             }
                                             errors++;
                                           }
                                         } else {
-                                          const err9 = {
+                                          const err14 = {
                                             instancePath: instancePath + '/deprecation/sunsetAt',
                                             schemaPath:
                                               '#/properties/deprecation/properties/sunsetAt/anyOf/0/type',
@@ -6386,19 +6638,19 @@ function validate64(
                                             message: 'must be string',
                                           };
                                           if (vErrors === null) {
-                                            vErrors = [err9];
+                                            vErrors = [err14];
                                           } else {
-                                            vErrors.push(err9);
+                                            vErrors.push(err14);
                                           }
                                           errors++;
                                         }
                                       }
                                     }
-                                    var _valid2 = _errs65 === errors;
-                                    valid9 = valid9 || _valid2;
-                                    const _errs67 = errors;
+                                    var _valid3 = _errs69 === errors;
+                                    valid10 = valid10 || _valid3;
+                                    const _errs71 = errors;
                                     if (data28 !== null) {
-                                      const err10 = {
+                                      const err15 = {
                                         instancePath: instancePath + '/deprecation/sunsetAt',
                                         schemaPath:
                                           '#/properties/deprecation/properties/sunsetAt/anyOf/1/type',
@@ -6407,16 +6659,16 @@ function validate64(
                                         message: 'must be null',
                                       };
                                       if (vErrors === null) {
-                                        vErrors = [err10];
+                                        vErrors = [err15];
                                       } else {
-                                        vErrors.push(err10);
+                                        vErrors.push(err15);
                                       }
                                       errors++;
                                     }
-                                    var _valid2 = _errs67 === errors;
-                                    valid9 = valid9 || _valid2;
-                                    if (!valid9) {
-                                      const err11 = {
+                                    var _valid3 = _errs71 === errors;
+                                    valid10 = valid10 || _valid3;
+                                    if (!valid10) {
+                                      const err16 = {
                                         instancePath: instancePath + '/deprecation/sunsetAt',
                                         schemaPath:
                                           '#/properties/deprecation/properties/sunsetAt/anyOf',
@@ -6425,32 +6677,32 @@ function validate64(
                                         message: 'must match a schema in anyOf',
                                       };
                                       if (vErrors === null) {
-                                        vErrors = [err11];
+                                        vErrors = [err16];
                                       } else {
-                                        vErrors.push(err11);
+                                        vErrors.push(err16);
                                       }
                                       errors++;
                                       validate64.errors = vErrors;
                                       return false;
                                     } else {
-                                      errors = _errs64;
+                                      errors = _errs68;
                                       if (vErrors !== null) {
-                                        if (_errs64) {
-                                          vErrors.length = _errs64;
+                                        if (_errs68) {
+                                          vErrors.length = _errs68;
                                         } else {
                                           vErrors = null;
                                         }
                                       }
                                     }
-                                    var valid7 = _errs63 === errors;
+                                    var valid8 = _errs67 === errors;
                                   } else {
-                                    var valid7 = true;
+                                    var valid8 = true;
                                   }
-                                  if (valid7) {
+                                  if (valid8) {
                                     if (data26.replacement !== void 0) {
                                       let data29 = data26.replacement;
-                                      const _errs69 = errors;
-                                      if (errors === _errs69) {
+                                      const _errs73 = errors;
+                                      if (errors === _errs73) {
                                         if (typeof data29 === 'string') {
                                           if (func2(data29) > 512) {
                                             validate64.errors = [
@@ -6496,9 +6748,9 @@ function validate64(
                                           return false;
                                         }
                                       }
-                                      var valid7 = _errs69 === errors;
+                                      var valid8 = _errs73 === errors;
                                     } else {
-                                      var valid7 = true;
+                                      var valid8 = true;
                                     }
                                   }
                                 }
@@ -6517,13 +6769,13 @@ function validate64(
                             return false;
                           }
                         }
-                        var valid0 = _errs54 === errors;
+                        var valid0 = _errs58 === errors;
                       } else {
                         var valid0 = true;
                       }
                       if (valid0) {
                         if (data.calculationRule !== void 0) {
-                          const _errs71 = errors;
+                          const _errs75 = errors;
                           if (
                             'toAmount = fromAmount \xD7 rate\uFF08rate \u70BA\u6BCF 1 fromCurrency \u7684 toCurrency\uFF09\uFF1BEXACT_OUT \u4EE5\u4F86\u6E90\u539F\u503C\u8A08\u7B97 fromAmount = ceil_minor(toAmount \xD7 unitAmount \xF7 providerPrice)\uFF1B\u5012\u6578 rate \u4FDD\u7559 12 \u4F4D\u5C0F\u6578 ROUND_HALF_EVEN\uFF1B\u91D1\u984D\u4F9D ISO 4217 minor unit \u6368\u5165' !==
                             data.calculationRule
@@ -6542,13 +6794,13 @@ function validate64(
                             ];
                             return false;
                           }
-                          var valid0 = _errs71 === errors;
+                          var valid0 = _errs75 === errors;
                         } else {
                           var valid0 = true;
                         }
                         if (valid0) {
                           if (data.quoteAvailability !== void 0) {
-                            const _errs72 = errors;
+                            const _errs76 = errors;
                             if ('indicative_not_transaction_guarantee' !== data.quoteAvailability) {
                               validate64.errors = [
                                 {
@@ -6561,7 +6813,7 @@ function validate64(
                               ];
                               return false;
                             }
-                            var valid0 = _errs72 === errors;
+                            var valid0 = _errs76 === errors;
                           } else {
                             var valid0 = true;
                           }
