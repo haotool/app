@@ -5,12 +5,17 @@ const gate = vi.hoisted(() => ({ enabled: true }));
 vi.mock('@app/shared/fx/public', () => ({ isFxV3Public: () => gate.enabled }));
 vi.mock('@app/shared/fx/release', () => ({
   ACTIVE_RELEASE_KEY: 'ratewise.fx.v3.active',
+  fetchVerifiedObject: vi.fn(),
   loadRelease: vi.fn(),
   restoreRelease: vi.fn((value: unknown) => Promise.resolve(value)),
 }));
+vi.mock('@app/shared/fx', () => ({
+  compareCodePoints: (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0),
+  validateProviderSnapshot: () => true,
+}));
 
-import { loadRelease } from '@app/shared/fx/release';
-import { clearFxV3Storage, refreshActiveRelease } from '../fxSnapshotService';
+import { fetchVerifiedObject, loadRelease, restoreRelease } from '@app/shared/fx/release';
+import { clearFxV3Storage, fetchFxHistory, refreshActiveRelease } from '../fxSnapshotService';
 
 const release = { current: { releaseId: 'current' }, snapshots: [], manifest: { providers: [] } };
 const keys = () =>
@@ -24,6 +29,8 @@ beforeEach(() => {
   localStorage.clear();
   gate.enabled = true;
   vi.mocked(loadRelease).mockResolvedValue(release as never);
+  vi.mocked(restoreRelease).mockImplementation((value) => Promise.resolve(value as never));
+  vi.mocked(fetchVerifiedObject).mockReset();
 });
 afterEach(() => vi.restoreAllMocks());
 
@@ -93,6 +100,42 @@ describe('FX v3 storage retention', () => {
 
     expect(localStorage.getItem('ratewise.fx.v3.history:old:series')).toBeNull();
     expect(localStorage.getItem('ratewise.fx.v3.active')).toBe(previous);
+  });
+
+  it('keeps the previous history window when saving its replacement hits persistent quota', async () => {
+    const history = {
+      current: { releaseId: 'current' },
+      snapshots: [{ quotes: [{ quoteSeriesId: 'series', providerId: 'bot' }] }],
+      manifest: {
+        history: [{ providerId: 'bot', date: '2026-09-01', snapshot: {} }],
+      },
+    };
+    const key = 'ratewise.fx.v3.history:current:series';
+    const previous = JSON.stringify({
+      savedAt: 1,
+      rows: [{ date: '2026-09-01', rate: '41', quoteId: 'previous', sourcePublishedAt: null }],
+    });
+    localStorage.setItem('ratewise.fx.v3.active', JSON.stringify(history));
+    localStorage.setItem(key, previous);
+    vi.mocked(restoreRelease).mockResolvedValue(history as never);
+    vi.mocked(fetchVerifiedObject).mockResolvedValue({
+      providerId: 'bot',
+      quotes: [
+        {
+          quoteSeriesId: 'series',
+          rate: '42',
+          quoteId: 'replacement',
+          sourceQuote: { sourcePublishedAt: null },
+        },
+      ],
+    } as never);
+    vi.spyOn(localStorage, 'setItem').mockImplementation(() => {
+      throw new DOMException('quota', 'QuotaExceededError');
+    });
+
+    await expect(fetchFxHistory('series')).resolves.toMatchObject([{ rate: '42' }]);
+
+    expect(localStorage.getItem(key)).toBe(previous);
   });
 
   it('clears the v3 namespace on rollback without touching user settings', () => {

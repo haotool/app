@@ -236,6 +236,16 @@ describe('HistoryTab', () => {
     expect(screen.getByText(/≈ ₩12,000/)).toBeInTheDocument();
   });
 
+  it('TWD 支出有記帳匯率快照時，用快照匯率顯示 ≈ 金額', () => {
+    useStore.setState({
+      expenses: [{ ...EXPENSE_1, currency: 'TWD', exchangeRateKrwPerTwd: 43.5 }],
+      currency: 'KRW',
+      krwPerTwd: 40,
+    });
+    renderWith(<HistoryTab />);
+    expect(screen.getByText(/≈ ₩13,050/)).toBeInTheDocument();
+  });
+
   it('KRW 9000 快照（rate 45）在全域 TWD 顯示 ≈ NT$ 200', () => {
     useStore.setState({
       expenses: [{ ...EXPENSE_1, totalAmount: 9000, currency: 'KRW', exchangeRateKrwPerTwd: 45 }],
@@ -259,7 +269,7 @@ describe('HistoryTab', () => {
     useStore.setState({
       expenses: [{ ...EXPENSE_1, totalAmount: 9000, currency: 'KRW', exchangeRateKrwPerTwd: null }],
       currency: 'TWD',
-      krwPerTwd: null,
+      krwPerTwd: 40,
     });
     renderWith(<HistoryTab />);
     expect(screen.queryByText(/≈/)).not.toBeInTheDocument();

@@ -507,12 +507,17 @@ export function HistoryTab() {
                             {formatAmount(exp.totalAmount, expenseCurrency(exp))}
                           </p>
                           {(() => {
-                            // 快照幣別 ≠ 全域幣別時顯示 ≈ 參考：KRW 用記帳當下快照匯率，TWD 用當前匯率（即期參考）。
-                            // 匯率快照過期時附 stale 短標，維持參考值狀態誠實（R10）。
+                            // 有記帳匯率快照時，金額與 fallback 標記都使用該筆匯率；舊資料才回退到全域匯率。
                             const from = expenseCurrency(exp);
                             if (from === currency) return null;
                             const to = from === 'KRW' ? ('TWD' as const) : ('KRW' as const);
-                            const rate = from === 'KRW' ? exp.exchangeRateKrwPerTwd : krwPerTwd;
+                            const hasSavedRate = exp.exchangeRateKrwPerTwd != null;
+                            const rate =
+                              from === 'KRW'
+                                ? exp.exchangeRateKrwPerTwd
+                                : hasSavedRate
+                                  ? exp.exchangeRateKrwPerTwd
+                                  : krwPerTwd;
                             const approx = convertAmount(exp.totalAmount, from, to, rate);
                             if (approx === null) return null;
                             return (
@@ -520,7 +525,7 @@ export function HistoryTab() {
                                 <p className="text-[10px] font-medium text-on-surface-variant/70 whitespace-nowrap">
                                   ≈ {formatAmount(approx, to)}
                                 </p>
-                                {isRateStale(rateUpdatedAtIso) && (
+                                {!hasSavedRate && isRateStale(rateUpdatedAtIso) && (
                                   <p className="text-[10px] font-medium text-tertiary whitespace-nowrap">
                                     {t('settings.rate_stale')}
                                   </p>
@@ -528,11 +533,13 @@ export function HistoryTab() {
                               </>
                             );
                           })()}
-                          {isFxV3Public() && exp.rateIsFallback && (
-                            <p className="text-[10px] font-medium text-tertiary whitespace-nowrap">
-                              {t('settings.rate_fallback')}
-                            </p>
-                          )}
+                          {isFxV3Public() &&
+                            exp.exchangeRateKrwPerTwd != null &&
+                            exp.rateIsFallback && (
+                              <p className="text-[10px] font-medium text-tertiary whitespace-nowrap">
+                                {t('settings.rate_fallback')}
+                              </p>
+                            )}
                           <p className="text-[10px] font-medium text-secondary uppercase tracking-wider">
                             {t('history.participants', { count: exp.participantIds.length })}
                           </p>

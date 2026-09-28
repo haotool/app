@@ -378,6 +378,30 @@ it('rejects inconsistent quote snapshots at every exported selection/calculation
   expect(rankQuotes([valid], request, context)).toHaveLength(1);
 });
 
+it('rejects a quote with a throwing denominations getter before reading its fields', () => {
+  const quote = normalizeQuote(row)[1]!;
+  const sourceQuote = { ...quote.sourceQuote };
+  Object.defineProperty(sourceQuote, 'denominations', {
+    get() {
+      throw new Error('invalid getter');
+    },
+  });
+  const invalid = { ...quote, sourceQuote };
+  const request = {
+    fromCurrency: 'TWD',
+    toCurrency: 'KRW',
+    amount: '100',
+    mode: 'EXACT_IN' as const,
+  };
+  const context = {
+    now: '2026-09-22T00:10:00Z',
+    country: 'TW',
+    deliveryMethod: 'cash' as const,
+    channel: 'branch' as const,
+  };
+  expect(isQuoteApplicable(invalid, request, context)).toBe(false);
+});
+
 it('deep-validates each external quote once across repeated estimates', async () => {
   const validators = await import('./validators.js');
   const validateShape = vi.spyOn(validators, 'validateQuoteSnapshot');

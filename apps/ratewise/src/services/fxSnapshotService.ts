@@ -64,9 +64,9 @@ function pruneHistoryCache(): void {
   }
 }
 
-function oldestHistoryCacheKey(): string | undefined {
+function oldestHistoryCacheKey(exclude?: string): string | undefined {
   return storageKeys()
-    .filter((key) => key.startsWith(HISTORY_CACHE_PREFIX))
+    .filter((key) => key.startsWith(HISTORY_CACHE_PREFIX) && key !== exclude)
     .map((key) => {
       let savedAt = 0;
       try {
@@ -100,7 +100,7 @@ function saveCache(key: string, value: string): void {
         quotaError?.code !== 1014
       )
         return;
-      const oldest = oldestHistoryCacheKey();
+      const oldest = oldestHistoryCacheKey(key);
       if (!oldest) return;
       storage.removeItem(oldest);
     }
@@ -194,7 +194,6 @@ export async function fetchFxHistory(quoteSeriesId: string) {
       }),
     );
     try {
-      getStorage()?.removeItem(key);
       saveCache(key, JSON.stringify({ savedAt: Date.now(), rows } satisfies CachedHistory));
       pruneHistoryCache();
     } catch {

@@ -362,10 +362,14 @@ export function isQuoteApplicable(
   if (
     !validateSelectionContext(context) ||
     !validateEstimateRequest(request) ||
-    !isValidAmount(request.amount) ||
-    !hasUsableQuote(quote)
+    !isValidAmount(request.amount)
   )
     return false;
+  try {
+    if (!validateQuoteSnapshot(quote) || !hasUsableQuote(quote)) return false;
+  } catch {
+    return false;
+  }
   const row = quote.sourceQuote;
   if (
     quote.fromCurrency !== request.fromCurrency ||
