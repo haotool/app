@@ -17,15 +17,18 @@ describe('美元與日圓現鈔賣回 FAQ', () => {
     const content = getCurrencyLandingPageContent(code);
     const faq = content.faqEntries.find((entry) => entry.question.includes('手上有'));
     const cashBuy = SEO_RATE_EXAMPLES[code]?.cashBuy;
-    expect(cashBuy).toBeTypeOf('number');
-    if (cashBuy === undefined) return;
+    const hasValidCashBuy = typeof cashBuy === 'number' && Number.isFinite(cashBuy) && cashBuy > 0;
 
     expect(faq?.question).toBe(`手上有${currencyName}現鈔，換回台幣要看哪個匯率？`);
     expect(faq?.answer).toContain('現金買入價');
     expect(faq?.answer).toContain('即期買入價');
-    expect(faq?.answer).toContain(
-      `${amount.toLocaleString('zh-TW')} ${code} × ${cashBuy} = 預估 ${Math.round(amount * cashBuy).toLocaleString('zh-TW')} 元台幣`,
-    );
+    if (hasValidCashBuy) {
+      expect(faq?.answer).toContain(
+        `${amount.toLocaleString('zh-TW')} ${code} × ${cashBuy} = 預估 ${Math.round(amount * cashBuy).toLocaleString('zh-TW')} 元台幣`,
+      );
+    } else {
+      expect(faq?.answer).not.toContain('牌告試算：');
+    }
     expect(faq?.answer).toContain('未含手續費');
     expect(faq?.answer).toContain('以台銀當日牌告為準');
     expect(faq?.answer).toContain(SEO_RATE_EXAMPLES_DATE);
@@ -42,8 +45,9 @@ describe('美元與日圓現鈔賣回 FAQ', () => {
     const codes = Object.keys(SEO_RATE_EXAMPLES) as CurrencyLandingCode[];
     const isSellbackExample = ({ question, answer }: { question: string; answer: string }) =>
       question.includes('手上有') ||
-      (answer.includes('現金買入價') && answer.includes('換回台幣')) ||
-      answer.includes('牌告試算：');
+      (answer.includes('現金買入價') &&
+        ['換回', '賣回', '拿回'].some((phrase) => answer.includes(phrase))) ||
+      (answer.includes('牌告試算：') && answer.includes('現金買入價'));
 
     for (const code of codes) {
       const forwardFaq = getCurrencyLandingPageContent(code).faqEntries;

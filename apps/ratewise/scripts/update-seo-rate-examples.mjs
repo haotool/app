@@ -20,7 +20,7 @@
  *   - 輸出：apps/ratewise/src/config/generated/seo-rate-examples.ts
  */
 
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { mkdirSync, realpathSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { RATES_API } from '../src/config/api-endpoints.ts';
@@ -426,4 +426,9 @@ async function main() {
   console.log(`[完成] 已生成：src/config/generated/seo-rate-examples.ts（${today}）`);
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main();
+if (
+  process.argv[1] &&
+  realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url))
+) {
+  main();
+}
