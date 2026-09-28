@@ -366,9 +366,10 @@ describe('Service Worker Cache Strategies', () => {
     expect(sourceCode).toContain("const HTML_CACHE_NAME = 'html-cache'");
     expect(sourceCode).toContain('clearNavigationHtmlCacheOnActivate');
     expect(sourceCode).toContain('caches.delete(HTML_CACHE_NAME)');
-    expect(sourceCode).toContain(
-      'clearNavigationHtmlCacheOnActivate().then(() => ensureOfflineHtmlCached())',
-    );
+    expect(sourceCode).toContain('clearInactiveFxHistoryCachesOnActivate');
+    expect(sourceCode).toContain('Promise.all([');
+    expect(sourceCode).toContain('clearInactiveFxHistoryCachesOnActivate(),');
+    expect(sourceCode).toContain('ensureOfflineHtmlCached()');
   });
 
   it('should delegate NavigationRoute failures to the shared offline document fallback', async () => {

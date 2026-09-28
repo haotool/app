@@ -8,6 +8,7 @@ import { cn } from '../lib/utils';
 import { CURRENCIES, type CurrencyCode, wouldCreateMixedCurrencyTrip } from '../config/currencies';
 import { isRateStale } from '../lib/exchangeRate';
 import { ConfirmDialog } from './ConfirmDialog';
+import { isFxV3Public } from '@app/shared/fx/public';
 
 const LANGUAGES: { id: SupportedLanguage; flag: string; name: string }[] = [
   { id: 'zh-TW', flag: '🇹🇼', name: '繁中' },
@@ -32,6 +33,7 @@ export function SettingsTab() {
     rateUpdatedAt,
     rateUpdatedAtIso,
     rateFetchFailed,
+    rateIsFallback,
     refreshExchangeRate,
     expenses,
     currentTripId,
@@ -275,6 +277,9 @@ export function SettingsTab() {
                   <span className="ml-1 text-tertiary">{t('settings.rate_stale')}</span>
                 )}
               </p>
+            )}
+            {isFxV3Public() && rateIsFallback && (
+              <p className="text-[11px] text-tertiary pl-10">{t('settings.rate_fallback')}</p>
             )}
             {rateFetchFailed && (
               <button

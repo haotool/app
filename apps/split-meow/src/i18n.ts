@@ -93,6 +93,7 @@ const resources = {
         version: '版本',
         rate_updated: '換錢所匯率 · 更新 {{time}}',
         rate_stale: '（可能過時）',
+        rate_fallback: '未驗證匯率，僅供參考',
         rate_retry: '匯率更新失敗，點此重試',
         currency_switch_draft_confirm: '切換幣別將清除未儲存的金額，確定要繼續嗎？',
         currency_note: '切換只影響之後的新記帳，不會改變任何歷史金額',
@@ -216,6 +217,7 @@ const resources = {
         version: 'Version',
         rate_updated: 'MoneyBox rate · Updated {{time}}',
         rate_stale: '(may be outdated)',
+        rate_fallback: 'Unverified rate · reference only',
         rate_retry: 'Rate update failed — tap to retry',
         currency_switch_draft_confirm: 'Switching currency clears the unsaved amount. Continue?',
         currency_note: 'Only affects new expenses — past amounts never change',
@@ -339,6 +341,7 @@ const resources = {
         version: '버전',
         rate_updated: '환전소 환율 · 업데이트 {{time}}',
         rate_stale: '(오래되었을 수 있음)',
+        rate_fallback: '검증되지 않은 참고 환율',
         rate_retry: '환율 업데이트 실패, 탭하여 재시도',
         currency_switch_draft_confirm:
           '통화를 전환하면 저장되지 않은 금액이 지워집니다. 계속하시겠습니까?',
@@ -463,6 +466,7 @@ const resources = {
         version: 'バージョン',
         rate_updated: '両替所レート · 更新 {{time}}',
         rate_stale: '（古い可能性あり）',
+        rate_fallback: '未検証の参考レート',
         rate_retry: 'レート更新失敗、タップして再試行',
         currency_switch_draft_confirm:
           '通貨を切り替えると未保存の金額がクリアされます。続行しますか？',

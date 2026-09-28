@@ -99,6 +99,7 @@ interface AppState {
   rateUpdatedAt: string | null;
   rateUpdatedAtIso: string | null;
   rateFetchFailed: boolean;
+  rateIsFallback: boolean;
   setCurrency: (code: CurrencyCode, manual?: boolean) => void;
   refreshExchangeRate: () => Promise<void>;
 }
@@ -193,6 +194,7 @@ export const useStore = create<AppState>()(
       rateUpdatedAt: null,
       rateUpdatedAtIso: null,
       rateFetchFailed: false,
+      rateIsFallback: false,
 
       addTrip: (name) =>
         set((state) => {
@@ -368,6 +370,7 @@ export const useStore = create<AppState>()(
             rateUpdatedAt: updatedAt,
             rateUpdatedAtIso: updatedAtIso,
             rateFetchFailed: isFallback === true,
+            rateIsFallback: isFallback === true,
           });
         } catch {
           // 離線或來源異常：沿用 persist 快取值，UI 顯示可重試狀態。

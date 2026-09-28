@@ -35,6 +35,7 @@ import {
   normalizeAmountInput,
   normalizeBankSnapshot,
   freshness,
+  isQuoteApplicable,
 } from './index';
 it('rejects unavailable quotes and keeps zero distinct', () => {
   const quotes = normalizeQuote({ ...row, providerBuyPrice: null });
@@ -237,6 +238,71 @@ it('does not invent a provider for identity conversion and rounds half-even', ()
     estimate(q, { fromCurrency: 'USD', toCurrency: 'TWD', amount: '1', mode: 'EXACT_IN' }).toAmount,
   ).toBe('1');
 });
+it('recomputes a 17-currency multi view 100 times within the CI budget', () => {
+  const currencies = [
+    'USD',
+    'EUR',
+    'JPY',
+    'KRW',
+    'GBP',
+    'AUD',
+    'CAD',
+    'CHF',
+    'SGD',
+    'CNY',
+    'HKD',
+    'THB',
+    'PHP',
+    'IDR',
+    'VND',
+    'NZD',
+  ];
+  const quotes = currencies.map(
+    (subjectCurrency, index) =>
+      normalizeQuote({
+        ...row,
+        subjectCurrency,
+        providerBuyPrice: String(30 + index),
+        providerSellPrice: String(31 + index),
+      })[1]!,
+  );
+  const context = {
+    now: '2026-09-22T00:10:00Z',
+    country: 'TW',
+    deliveryMethod: 'cash' as const,
+    channel: 'branch' as const,
+  };
+  const recompute = (legacyValidation: boolean) => {
+    for (let keypress = 1; keypress <= 100; keypress++) {
+      for (const quote of quotes) {
+        const request = {
+          fromCurrency: 'TWD',
+          toCurrency: quote.toCurrency,
+          amount: String(keypress * 100),
+          mode: 'EXACT_IN' as const,
+        };
+        if (legacyValidation) {
+          validateQuoteSnapshot(quote);
+          validateQuoteSnapshot(quote);
+        }
+        if (!isQuoteApplicable(quote, request, context)) continue;
+        if (legacyValidation) validateQuoteSnapshot(quote);
+        estimate(quote, request);
+      }
+    }
+  };
+  recompute(false);
+  const beforeStarted = performance.now();
+  recompute(true);
+  const before = performance.now() - beforeStarted;
+  const afterStarted = performance.now();
+  recompute(false);
+  const after = performance.now() - afterStarted;
+  console.info(
+    `FX v3 100 × 16 multi estimates: before ${before.toFixed(2)} ms, after ${after.toFixed(2)} ms`,
+  );
+  expect(after).toBeLessThan(50);
+});
 import { estimateDerived } from './index';
 it('computes a traceable cross estimate with canonical rate and no recommendation', () => {
   const first = normalizeQuote({
@@ -261,7 +327,7 @@ it('computes a traceable cross estimate with canonical rate and no recommendatio
     legs: [first.quoteId, second.quoteId],
   });
 });
-import { validateProviderSnapshot, validateObjectReference, isQuoteApplicable } from './index';
+import { validateProviderSnapshot, validateObjectReference } from './index';
 it('validates the provider identity at the snapshot boundary', () => {
   expect(
     validateProviderSnapshot({

@@ -1,10 +1,11 @@
 import { expect, it, vi } from 'vitest';
 import type * as ApiEndpointsModule from '../config/api-endpoints';
-const { routes } = vi.hoisted(() => ({
+const { routes, listeners } = vi.hoisted(() => ({
   routes: [] as {
     match: (args: { url: URL; request: { destination: string } }) => boolean;
     handler: { kind: string; options: Record<string, unknown> };
   }[],
+  listeners: new Map<string, (event: never) => void>(),
 }));
 vi.mock('workbox-core', () => ({ clientsClaim: vi.fn() }));
 vi.mock('workbox-precaching', () => ({
@@ -42,32 +43,58 @@ vi.mock('workbox-expiration', () => ({
 }));
 const loadSw = async (v3Public: boolean) => {
   routes.length = 0;
+  listeners.clear();
   vi.resetModules();
   vi.doMock('../config/api-endpoints', async (importOriginal) => ({
     ...(await importOriginal<typeof ApiEndpointsModule>()),
     FX_V3_PUBLIC: v3Public,
   }));
+  const cacheDeletes: string[] = [];
+  vi.stubGlobal('caches', {
+    delete: vi.fn((name: string) => {
+      cacheDeletes.push(name);
+      return Promise.resolve(true);
+    }),
+    open: vi.fn(() =>
+      Promise.resolve({
+        match: vi.fn(() => Promise.resolve(new Response('cached'))),
+        put: vi.fn(),
+      }),
+    ),
+    match: vi.fn(() => Promise.resolve(new Response('cached'))),
+  });
   vi.stubGlobal('self', {
     registration: { scope: 'https://example.com/' },
     location: { origin: 'https://example.com' },
     __WB_MANIFEST: [],
-    addEventListener: vi.fn(),
+    addEventListener: (type: string, listener: (event: never) => void) =>
+      listeners.set(type, listener),
     clients: { claim: vi.fn() },
   });
   await import('../sw');
-  vi.unstubAllGlobals();
-  return (url: string) =>
-    routes.find(
-      (route) =>
-        typeof route.match === 'function' &&
-        route.match({ url: new URL(url), request: { destination: '' } }),
-    )?.handler;
+  return {
+    cacheDeletes,
+    handlerFor: (url: string) =>
+      routes.find(
+        (route) =>
+          typeof route.match === 'function' &&
+          route.match({ url: new URL(url), request: { destination: '' } }),
+      )?.handler,
+    activate: async () => {
+      let wait: Promise<unknown> = Promise.resolve();
+      listeners.get('activate')?.({
+        waitUntil: (promise: Promise<unknown>) => (wait = promise),
+      } as never);
+      await wait;
+      vi.unstubAllGlobals();
+    },
+  };
 };
 const DATA = 'https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/';
 const RAW = 'https://raw.githubusercontent.com/haotool/app/data/public/rates/';
 
 it('keeps the main history cache strategies while FX_V3_PUBLIC is false', async () => {
-  const handlerFor = await loadSw(false);
+  const { handlerFor, activate } = await loadSw(false);
   for (const path of ['history-30d.json', 'providers/moneybox/history-30d.json']) {
     const handler = handlerFor(`${DATA}${path}`);
     expect(handler?.kind).toBe('StaleWhileRevalidate');
@@ -81,10 +108,11 @@ it('keeps the main history cache strategies while FX_V3_PUBLIC is false', async 
     'history-rates-raw',
   );
   expect(handlerFor(`${DATA}v3/current.json`)).toBeUndefined();
+  await activate();
 });
 
 it('revalidates mutable history with bounded timeout and isolates v3 once public', async () => {
-  const handlerFor = await loadSw(true);
+  const { handlerFor, activate } = await loadSw(true);
   for (const path of [
     'history/2026-09-21.json',
     'providers/moneybox/history/2026-09-21.json',
@@ -100,4 +128,19 @@ it('revalidates mutable history with bounded timeout and isolates v3 once public
     expect(expiry?.options.maxEntries).toBeGreaterThanOrEqual(4);
   }
   expect(handlerFor(`${DATA}v3/current.json`)?.kind).toBe('NetworkOnly');
+  await activate();
+});
+
+it('deletes only caches inactive for the current v3 flag during activation', async () => {
+  const legacy = await loadSw(false);
+  await legacy.activate();
+  expect(legacy.cacheDeletes).toContain('history-validated-v2');
+  expect(legacy.cacheDeletes).not.toContain('history-rates-cdn');
+
+  const v3 = await loadSw(true);
+  await v3.activate();
+  expect(v3.cacheDeletes).toEqual(
+    expect.arrayContaining(['history-rates-cdn', 'history-rates-raw', 'history-aggregate-cache']),
+  );
+  expect(v3.cacheDeletes).not.toContain('history-validated-v2');
 });

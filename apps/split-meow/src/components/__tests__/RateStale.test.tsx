@@ -3,7 +3,7 @@
  * 必須附 stale 短標（settings.rate_stale）；快照新鮮時不得出現。
  */
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { I18nextProvider } from 'react-i18next';
 import { type ReactNode } from 'react';
 import i18n from '../../i18n';
@@ -11,6 +11,10 @@ import { useStore } from '../../store/useStore';
 import { HomeTab } from '../HomeTab';
 import { HistoryTab } from '../HistoryTab';
 import { RATE_TTL_MS } from '../../lib/exchangeRate';
+import { SettingsTab } from '../SettingsTab';
+
+const gate = vi.hoisted(() => ({ enabled: false }));
+vi.mock('@app/shared/fx/public', () => ({ isFxV3Public: () => gate.enabled }));
 
 const STALE_ISO = new Date(Date.now() - RATE_TTL_MS - 60_000).toISOString();
 const FRESH_ISO = new Date().toISOString();
@@ -48,6 +52,7 @@ beforeEach(() => {
     rateUpdatedAt: '2026/07/17 08:00:00',
     rateUpdatedAtIso: STALE_ISO,
     rateFetchFailed: false,
+    rateIsFallback: false,
     calculatorValue: '',
     itemizedValues: {},
     splitMode: 'split_evenly',
@@ -93,5 +98,35 @@ describe('R10：≈ 換算參考的 stale 標注', () => {
 
     expect(screen.getByText(/≈/)).toBeInTheDocument();
     expect(screen.queryByText(i18n.t('settings.rate_stale'))).not.toBeInTheDocument();
+  });
+});
+
+describe('v3 MoneyBox legacy fallback label', () => {
+  beforeEach(() => {
+    gate.enabled = false;
+    useStore.setState({ rateIsFallback: true });
+  });
+
+  it('shows concise reference copy only when v3 is enabled', () => {
+    gate.enabled = true;
+    useStore.setState({ calculatorValue: '100' });
+    renderWith(<HomeTab />);
+    expect(screen.getByText(i18n.t('settings.rate_fallback'))).toBeInTheDocument();
+  });
+
+  it('keeps flag-off Home copy unchanged', () => {
+    useStore.setState({ calculatorValue: '100' });
+    renderWith(<HomeTab />);
+    expect(screen.queryByText(i18n.t('settings.rate_fallback'))).not.toBeInTheDocument();
+  });
+
+  it('shows fallback copy in History and Settings when enabled', () => {
+    gate.enabled = true;
+    useStore.setState({ currency: 'KRW', expenses: [EXPENSE_TWD] });
+    const history = renderWith(<HistoryTab />);
+    expect(screen.getByText(i18n.t('settings.rate_fallback'))).toBeInTheDocument();
+    history.unmount();
+    renderWith(<SettingsTab />);
+    expect(screen.getByText(i18n.t('settings.rate_fallback'))).toBeInTheDocument();
   });
 });
