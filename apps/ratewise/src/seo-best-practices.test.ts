@@ -13,6 +13,7 @@ import {
   SEO_PATHS,
 } from './config/seo-paths';
 import { APP_INFO } from './config/app-info';
+import { FX_PUBLISHER } from '../../shared/fx/publisher-metadata.mjs';
 
 const ROOT_PATH = resolve(__dirname, '..');
 const PUBLIC_PATH = resolve(ROOT_PATH, 'public');
@@ -1061,18 +1062,21 @@ describe('💵 Amount Page ExchangeRateSpecification Schema (P1-5)', () => {
     expect(description).toContain('買 50,000 KRW 所需 1,185 TWD');
   });
 
-  it('should include Dataset provenance for Bank of Taiwan source', async () => {
+  it('should include Bank of Taiwan provenance without a nested duplicate Dataset', async () => {
     const { buildOpenDataDatasetJsonLd } = await import('./config/seo-metadata');
     const schema = buildOpenDataDatasetJsonLd();
 
     expect(schema['@type']).toBe('Dataset');
     expect(schema['sameAs']).toBe('https://rate.bot.com.tw/xrt');
     expect(schema['identifier']).toBeTruthy();
-    expect(schema['isBasedOn']).toMatchObject({
-      '@type': 'Dataset',
-      name: '臺灣銀行牌告匯率',
-      url: 'https://rate.bot.com.tw/xrt',
+    expect(schema['creator']).toMatchObject({
+      '@type': 'Organization',
+      name: FX_PUBLISHER.name,
     });
+    expect(schema['license']).toBe(FX_PUBLISHER.termsUrl);
+    expect(schema['isAccessibleForFree']).toBe(true);
+    expect(schema['citation']).toBe(FX_PUBLISHER.requiredText);
+    expect(schema['isBasedOn']).toBeUndefined();
   });
 });
 

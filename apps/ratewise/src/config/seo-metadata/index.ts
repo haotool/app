@@ -5,3 +5,4 @@
  */
 export * from './core';
 export * from './currency-landing';
+export * from './api-attribution';

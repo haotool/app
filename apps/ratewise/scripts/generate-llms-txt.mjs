@@ -13,6 +13,7 @@ import {
 import { APP_INFO } from '../src/config/app-info.ts';
 import { FX_V3_PUBLIC } from '../src/config/api-endpoints.ts';
 import { AI_CRAWLER_TIERS, ALL_AI_CRAWLERS } from './lib/ai-crawlers.mjs';
+import { API_ATTRIBUTION } from '../src/config/seo-metadata/api-attribution.ts';
 
 const BRAND_SHORT = APP_INFO.shortName;
 const BRAND_FULL = APP_INFO.name;
@@ -210,6 +211,15 @@ Attribution: Required (link back to source)
 Contact: ${pkg.author?.email || 'haotool.org@gmail.com'}
 
 ## API Endpoints
+
+## API 使用條款／標示要求
+
+${API_ATTRIBUTION.terms.join('\n')}
+
+必須顯示：${API_ATTRIBUTION.publisher.requiredText}
+上游來源標示：${API_ATTRIBUTION.upstreamSources.join('、')}
+標示連結可依使用者選擇加上 rel="nofollow"、rel="sponsored" 或 rel="ugc"。
+條款：${API_ATTRIBUTION.publisher.termsUrl}
 
 ${
   FX_V3_PUBLIC
@@ -440,6 +450,15 @@ GET https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json
 - **Cache**: CDN 快取，實際資料每 5 分鐘由 GitHub Actions 更新
 - **Auth**: 無需（公開 API）
 - **Rate limit**: 遵循 jsDelivr CDN 政策（每月數十億次請求）
+
+## API 使用條款／標示要求
+
+${API_ATTRIBUTION.terms.join('\n')}
+
+必須顯示：${API_ATTRIBUTION.publisher.requiredText}
+上游來源標示：${API_ATTRIBUTION.upstreamSources.join('、')}
+標示連結可依使用者選擇加上 rel="nofollow"、rel="sponsored" 或 rel="ugc"。
+條款：${API_ATTRIBUTION.publisher.termsUrl}
 
 ${
   FX_V3_PUBLIC

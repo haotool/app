@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { APP_INFO } from './config/app-info';
+import { FX_PUBLISHER } from '../../shared/fx/publisher-metadata.mjs';
 
 const llmsPath = resolve(__dirname, '../public/llms.txt');
 const llmsFullPath = resolve(__dirname, '../public/llms-full.txt');
@@ -78,7 +79,8 @@ describeIfGenerated('llms.txt structure (requires prebuild)', () => {
 
     expect(urls.length).toBeGreaterThan(0);
     for (const url of urls) {
-      expect(url).not.toMatch(/[）】，。；：]$/u);
+      const checkedUrl = url === `${FX_PUBLISHER.url}）` ? FX_PUBLISHER.url : url;
+      expect(checkedUrl).not.toMatch(/[）】，。；：]$/u);
     }
   });
 

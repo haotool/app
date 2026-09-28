@@ -23,6 +23,7 @@ import { ALL_AI_CRAWLERS } from './lib/ai-crawlers.mjs';
 import { APP_INFO } from '../src/config/app-info.ts';
 import { FX_V3_PUBLIC } from '../src/config/api-endpoints.ts';
 import { resolveFxV3Ternaries } from './lib/fx-v3-ternary.mjs';
+import { API_ATTRIBUTION } from '../src/config/seo-metadata/api-attribution.ts';
 
 /**
  * RATES_API 端點重建（與 src/config/api-endpoints.ts 同構）。
@@ -419,6 +420,29 @@ ${
 | 最新匯率（備援，GitHub Raw） | \`${RATES_API.latestRaw}\` |
 | 歷史匯率 | \`${CDN_DATA_BASE}/public/rates/history/{YYYY-MM-DD}.json\` |
 | OpenAPI 規格 | ${BASE_URL}openapi.json |
+
+<a id="api-terms"></a>
+## API 使用條款／標示要求
+
+${API_ATTRIBUTION.terms.map((term) => `- ${term}`).join('\n')}
+
+**${API_ATTRIBUTION.publisher.requiredText}**
+
+上游來源標示：${API_ATTRIBUTION.upstreamSources.join('、')}
+
+條款網址：${API_ATTRIBUTION.publisher.termsUrl}
+
+HTML：
+
+\`\`\`html
+${API_ATTRIBUTION.htmlSnippet}
+\`\`\`
+
+Markdown：
+
+\`\`\`markdown
+${API_ATTRIBUTION.markdownSnippet}
+\`\`\`
 
 ${
   FX_V3_PUBLIC

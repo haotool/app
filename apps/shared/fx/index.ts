@@ -1,4 +1,5 @@
 import Decimal from 'decimal.js';
+import { FX_PUBLISHER } from './publisher-metadata.mjs';
 import {
   validateSourceQuote,
   validateProviderSnapshot as validateProviderShape,
@@ -82,12 +83,7 @@ export function compareCodePoints(a: string, b: string): number {
 export const FX_CONTRACT_SCHEMA_URL =
   'https://app.haotool.org/ratewise/api/v3/contract.schema.json' as const;
 /** PRD §21.3：我方網站標示（manifest 層一次）。 */
-export const FX_PUBLISHER = Object.freeze({
-  name: '匯率好工具 RateWise',
-  url: 'https://app.haotool.org/ratewise/',
-  termsUrl: 'https://app.haotool.org/ratewise/open-data/',
-  requiredText: '資料整理：匯率好工具 RateWise（https://app.haotool.org/ratewise/）',
-});
+export { FX_PUBLISHER };
 /** 上游 provider 標示 SSOT 位於 provider-metadata.mjs（零依賴，RateWise 開放資料 metadata 共用）。 */
 export { FX_PROVIDER_METADATA } from './provider-metadata.mjs';
 /** 與 schema.json ReleaseManifest.calculationRule const 一致；producer 嚴格驗證守門。 */

@@ -19,6 +19,7 @@ import {
 } from '../src/config/api-semantics-v2.ts';
 import { buildPublicRateProviderMetadata } from '../src/config/rateProviderPublicMetadata.ts';
 import { FX_V3_PUBLIC } from '../src/config/api-endpoints.ts';
+import { FX_PUBLISHER } from '../../shared/fx/publisher-metadata.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
@@ -66,6 +67,7 @@ function buildV3Descriptor() {
 }
 
 const latestJson = {
+  publisher: { ...FX_PUBLISHER },
   name: `${APP_INFO.shortName} Exchange Rate API`,
   version: pkg.version,
   ...(FX_V3_PUBLIC

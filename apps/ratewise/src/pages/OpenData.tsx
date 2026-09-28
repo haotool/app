@@ -6,6 +6,7 @@ import { PageNavHeader } from '../components/PageNavHeader';
 import { AnswerCapsule } from '../components/AnswerCapsule';
 import { MailtoLink } from '../components/MailtoLink';
 import { OPEN_DATA_PAGE_SEO } from '../config/seo-metadata';
+import { API_ATTRIBUTION } from '../config/seo-metadata/api-attribution';
 import { APP_INFO } from '../config/app-info';
 import {
   CDN_DATA_BASE,
@@ -888,6 +889,38 @@ const OpenData = () => {
               >
                 /ratewise/openapi.json
               </a>
+            </div>
+          </section>
+
+          <section id="api-terms" className="mb-12 scroll-mt-20">
+            <h2 className="mb-4 text-2xl font-semibold text-text">API 使用條款／標示要求</h2>
+            <div className="space-y-3 rounded-xl border border-surface-border bg-surface p-5 text-sm leading-relaxed text-text-muted">
+              {API_ATTRIBUTION.terms.map((term) => (
+                <p key={term}>{term}</p>
+              ))}
+              <p className="font-semibold text-text">{API_ATTRIBUTION.publisher.requiredText}</p>
+              <p>上游來源標示：{API_ATTRIBUTION.upstreamSources.join('、')}</p>
+              <p>
+                條款網址：
+                <a
+                  className="break-all text-primary hover:underline"
+                  href={API_ATTRIBUTION.publisher.termsUrl}
+                >
+                  {API_ATTRIBUTION.publisher.termsUrl}
+                </a>
+              </p>
+              <div>
+                <p className="mb-1 font-medium text-text">HTML</p>
+                <pre className="overflow-x-auto rounded bg-surface-elevated p-3">
+                  <code>{API_ATTRIBUTION.htmlSnippet}</code>
+                </pre>
+              </div>
+              <div>
+                <p className="mb-1 font-medium text-text">Markdown</p>
+                <pre className="overflow-x-auto rounded bg-surface-elevated p-3">
+                  <code>{API_ATTRIBUTION.markdownSnippet}</code>
+                </pre>
+              </div>
             </div>
           </section>
 

@@ -142,6 +142,12 @@
       "IDR"
     ],
     "x-webapp": "https://app.haotool.org/ratewise/",
+    "x-publisher": {
+      "name": "匯率好工具 RateWise",
+      "url": "https://app.haotool.org/ratewise/",
+      "termsUrl": "https://app.haotool.org/ratewise/open-data/#api-terms",
+      "requiredText": "資料來源：匯率好工具 RateWise（https://app.haotool.org/ratewise/）"
+    },
     "x-documentation": "https://app.haotool.org/ratewise/open-data/",
     "x-app-version": "2.28.4",
     "x-schema-version": "2.0",
@@ -611,6 +617,42 @@
   },
   "components": {
     "schemas": {
+      "Publisher": {
+        "type": "object",
+        "description": "RateWise API 發布者與使用條款；必須顯示 requiredText，連結可自行加 rel=\"nofollow\"、rel=\"sponsored\" 或 rel=\"ugc\"。",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "匯率好工具 RateWise"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://app.haotool.org/ratewise/"
+          },
+          "termsUrl": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://app.haotool.org/ratewise/open-data/#api-terms"
+          },
+          "requiredText": {
+            "type": "string",
+            "example": "資料來源：匯率好工具 RateWise（https://app.haotool.org/ratewise/）"
+          }
+        },
+        "required": [
+          "name",
+          "url",
+          "termsUrl",
+          "requiredText"
+        ],
+        "example": {
+          "name": "匯率好工具 RateWise",
+          "url": "https://app.haotool.org/ratewise/",
+          "termsUrl": "https://app.haotool.org/ratewise/open-data/#api-terms",
+          "requiredText": "資料來源：匯率好工具 RateWise（https://app.haotool.org/ratewise/）"
+        }
+      },
       "CurrencyRateDetail": {
         "type": "object",
         "description": "單一幣別的完整四種報價（即期與現金的買入/賣出）",
@@ -1128,6 +1170,15 @@
         "type": "object",
         "description": "匯率資料回應（每 5 分鐘由 GitHub Actions 自動同步）",
         "properties": {
+          "publisher": {
+            "$ref": "#/components/schemas/Publisher",
+            "example": {
+              "name": "匯率好工具 RateWise",
+              "url": "https://app.haotool.org/ratewise/",
+              "termsUrl": "https://app.haotool.org/ratewise/open-data/#api-terms",
+              "requiredText": "資料來源：匯率好工具 RateWise（https://app.haotool.org/ratewise/）"
+            }
+          },
           "schemaVersion": {
             "type": "string",
             "description": "API 語意版本（有別於 App semver）",
@@ -1210,6 +1261,15 @@
         "type": "object",
         "description": "幣對靜態資訊（指向即時匯率 CDN 的入口）",
         "properties": {
+          "publisher": {
+            "$ref": "#/components/schemas/Publisher",
+            "example": {
+              "name": "匯率好工具 RateWise",
+              "url": "https://app.haotool.org/ratewise/",
+              "termsUrl": "https://app.haotool.org/ratewise/open-data/#api-terms",
+              "requiredText": "資料來源：匯率好工具 RateWise（https://app.haotool.org/ratewise/）"
+            }
+          },
           "pair": {
             "type": "string",
             "example": "USD/TWD"
