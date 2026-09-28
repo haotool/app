@@ -107,10 +107,17 @@ function parseTaiwanBankCSV(csvText) {
     if (!CURRENCY_MAP[currencyCode]) continue;
 
     // 解析匯率
-    const raw = {
-      cash: { buy: parseSourceRate(columns[2]), sell: parseSourceRate(columns[12]) },
-      spot: { buy: parseSourceRate(columns[3]), sell: parseSourceRate(columns[13]) },
-    };
+    let raw;
+    try {
+      raw = {
+        cash: { buy: parseSourceRate(columns[2]), sell: parseSourceRate(columns[12]) },
+        spot: { buy: parseSourceRate(columns[3]), sell: parseSourceRate(columns[13]) },
+      };
+    } catch (error) {
+      // 單列壞值只跳過該幣別並警示，不中止整份 v2 latest（其餘幣別照常更新）。
+      console.warn(`⚠️ Skipping Taiwan Bank row ${currencyCode}: ${error.message}`);
+      continue;
+    }
     const cashBuy = raw.cash.buy === null ? null : Number(raw.cash.buy);
     const spotBuy = raw.spot.buy === null ? null : Number(raw.spot.buy);
     const cashSell = raw.cash.sell === null ? null : Number(raw.cash.sell);

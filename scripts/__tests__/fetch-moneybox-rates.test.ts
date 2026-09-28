@@ -28,8 +28,46 @@ it('保留來源發布時間與原始 per-1 十進位文字', async () => {
   expect(result.sourceQuotes['TWD']!.buy).toBe('42.15000000000000001');
 });
 
-it.each(['1junk', '-1', 'Infinity'])('拒絕上游不合法數值 %s 而非截斷成有效價格', (value) => {
-  expect(() => mapUpstreamRow({ currencyCode: 'TWD', buyRate: value, sellRate: '43' })).toThrow();
+it.each(['1junk', '-1', 'Infinity', 'N/A'])(
+  '上游不合法數值 %s 視為未報價：不截斷成有效價格、也不中止整批',
+  (value) => {
+    const [, row] = mapUpstreamRow({ currencyCode: 'TWD', buyRate: value, sellRate: '43' })!;
+    expect(row.sell).toBeNull();
+    expect(row.buy).toBe(43);
+  },
+);
+
+it('未映射幣別、壞欄位與無時區 publishedAt 只跳過該列，不中止 v2', async () => {
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          success: true,
+          data: {
+            publishedAt: '2026-09-21 10:00:00',
+            rates: [
+              { currencyCode: 'TWD', buyRate: '42.15', sellRate: '42.3' },
+              { currencyCode: 'AED', buyRate: '370', sellRate: '380' },
+              { currencyCode: 'EUR', buyRate: 'N/A', sellRate: '1500' },
+              { currencyCode: 'xx9', buyRate: '1', sellRate: '2' },
+            ],
+          },
+        }),
+      ),
+    ),
+  );
+  try {
+    const result = await fetchMoneyBoxRates();
+    expect(result.rates['TWD']).toBeDefined();
+    expect(result.sourcePublishedAt).toBeNull();
+    expect(Object.keys(result.sourceQuotes).sort()).toEqual(['AED', 'TWD']);
+    expect(result.rates['EUR']).toMatchObject({ sell: null, buy: 1500 });
+    expect(warn).toHaveBeenCalled();
+  } finally {
+    warn.mockRestore();
+  }
 });
 
 const baseRates = {
@@ -195,7 +233,9 @@ describe('fetch-moneybox-rates / 新 API 欄位對應（PRD 049 §2.2）', () =>
     expect(zero.buy).toBeNull();
     expect(zero.base).toBeNull();
 
-    expect(() => mapUpstreamRow({ currencyCode: 'USD', buyRate: 'x', sellRate: null })).toThrow();
+    const [, nan] = mapUpstreamRow({ currencyCode: 'USD', buyRate: 'x', sellRate: null })!;
+    expect(nan.sell).toBeNull();
+    expect(nan.buy).toBeNull();
   });
 
   it('缺 currencyCode 的列被丟棄', () => {

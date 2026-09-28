@@ -28,8 +28,12 @@ describe('台銀完整牌告契約', () => {
     expect(result.details['ZAR']!.cash).toEqual({ buy: null, sell: null });
   });
 
-  it.each(['-3', '31x', 'Infinity', 'NaN'])('拒絕不合法價格 %s', (invalid) => {
-    expect(() => parseTaiwanBankCSV(csv('USD', invalid, '31', '32', '31.5'))).toThrow();
+  it.each(['-3', '31x', 'Infinity', 'NaN'])('不合法價格 %s 只跳過該幣別，不中止整批', (invalid) => {
+    const text = `${csv('USD', invalid, '31', '32', '31.5')}\n${csv('JPY', '0.2', '0.21', '0.22', '0.215').split('\n')[1]}`;
+    const result = parseTaiwanBankCSV(text);
+    expect(result.rates['USD']).toBeUndefined();
+    expect(result.sourceQuotes['USD']).toBeUndefined();
+    expect(result.rates['JPY']).toBe(0.22);
   });
 
   it.each(['cash.buy', 'spot.buy', 'spot.sell'])('單獨改變 %s 仍發布', (path) => {

@@ -132,7 +132,13 @@ function mapUpstreamRow(item) {
   if (!code) return null;
 
   const readRate = (field) => {
-    const raw = parseSourceRate(item?.[field]);
+    // 不可解析欄位視為未報價（與 main 一樣不中止整批）；不截斷 `1junk` 這類壞值成有效價格。
+    let raw = null;
+    try {
+      raw = parseSourceRate(item?.[field]);
+    } catch {
+      raw = null;
+    }
     const parsed = raw === null ? null : Number(raw);
     // 0 與非有限值皆視為「上游未報價」，交由熔斷判定，不可當成有效匯率
     return Number.isFinite(parsed) && parsed > 0 ? toLegacyQuoteUnit(code, parsed) : null;
@@ -152,6 +158,37 @@ function mapUpstreamRow(item) {
       spsell: null,
     },
   ];
+}
+
+/**
+ * v3 來源原文（sourceQuotes）：幣別代碼非 ISO 三碼或欄位不可解析時只跳過該列並警示，
+ * 不得中止 v2 latest 更新（與 main 的逐列容錯一致）。
+ */
+function buildSourceQuotes(upstreamRows) {
+  const entries = [];
+  for (const row of upstreamRows) {
+    const code = typeof row?.currencyCode === 'string' ? row.currencyCode.trim() : '';
+    try {
+      if (!/^[A-Z]{3}$/.test(code)) throw new Error('Invalid currency code');
+      entries.push([
+        code,
+        { buy: parseSourceRate(row.buyRate), sell: parseSourceRate(row.sellRate), unitAmount: '1' },
+      ]);
+    } catch (error) {
+      console.warn(`⚠️ Skipping MoneyBox source row ${code || '(no code)'}: ${error.message}`);
+    }
+  }
+  return Object.fromEntries(entries);
+}
+
+/** 發布時間缺時區或不可解析時記為未知（null），不中止 v2 更新。 */
+function safeSourcePublishedAt(value) {
+  try {
+    return sourcePublishedAt(value);
+  } catch (error) {
+    console.warn(`⚠️ MoneyBox publishedAt ignored: ${error.message}`);
+    return null;
+  }
 }
 
 /**
@@ -222,21 +259,12 @@ async function fetchMoneyBoxRates() {
       console.log(`   TWD sell: ${rates.TWD.sell} KRW/TWD (旅客持台幣現金換韓元的到手匯率)`);
 
       const fetchedAt = new Date().toISOString();
-      const sourceQuotes = Object.fromEntries(
-        upstreamRows.map((row) => [
-          row.currencyCode,
-          {
-            buy: parseSourceRate(row.buyRate),
-            sell: parseSourceRate(row.sellRate),
-            unitAmount: '1',
-          },
-        ]),
-      );
+      const sourceQuotes = buildSourceQuotes(upstreamRows);
       return {
         timestamp: fetchedAt,
         fetchedAt,
         lastSuccessfulCheckAt: fetchedAt,
-        sourcePublishedAt: sourcePublishedAt(data.data.publishedAt),
+        sourcePublishedAt: safeSourcePublishedAt(data.data.publishedAt),
         sourceQuotes,
         updateTime: new Date().toLocaleString('zh-TW', {
           timeZone: 'Asia/Seoul',
