@@ -75,3 +75,17 @@ jobs:
           COMMIT_MESSAGE: 'chore(rates): publish ${{ inputs.provider }} v3 release'
           GIT_PUSH_TOKEN: ${{ github.token }}
         run: bash _fx-code/scripts/commit-fx-v3-release.sh "$COMMIT_MESSAGE"
+
+      - name: Verify published v3 release
+        run: |
+          providers="$(node -e '
+            const fs = require("node:fs");
+            const path = require("node:path");
+            const root = path.join(process.env.GITHUB_WORKSPACE, "public/rates/v3");
+            const current = JSON.parse(fs.readFileSync(path.join(root, "current.json"), "utf8"));
+            const manifest = JSON.parse(fs.readFileSync(path.join(root, current.manifest.path), "utf8"));
+            process.stdout.write(manifest.providers.map(({ providerId }) => providerId).join(","));
+          ')"
+          node _fx-code/scripts/verify-fx-v3-release.mjs \
+            --data-root "$GITHUB_WORKSPACE/public/rates" \
+            --require-providers "$providers"

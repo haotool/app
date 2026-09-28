@@ -134,6 +134,17 @@ export function migrateHistory(revision, output, dataRoot = null, now = new Date
   const previousByDate = new Map(
     previousHistory.map((entry) => [`${entry.providerId}:${entry.date}`, entry]),
   );
+  const sourcePaths = new Set(paths);
+  for (const { providerId, date } of previousHistory) {
+    if (
+      retainedDatesByProvider.get(providerId)?.has(date) &&
+      !sourcePaths.has(
+        `public/rates/${providerId === 'moneybox' ? 'providers/moneybox/' : ''}history/${date}.json`,
+      )
+    ) {
+      throw new Error(`Missing previously published ${providerId} history source file for ${date}`);
+    }
+  }
   const entries = [],
     history = [];
   let previousMoneyboxPublishedAt = null;
@@ -284,21 +295,6 @@ export function migrateHistory(revision, output, dataRoot = null, now = new Date
   };
   if (dataRoot && previousHistory.length) {
     for (const providerId of previousProviders) {
-      const previousDates = new Set(
-        previousHistory
-          .filter((entry) => entry.providerId === providerId)
-          .map((entry) => entry.date),
-      );
-      const retainedDates = retainedDatesByProvider.get(providerId) ?? new Set();
-      for (const date of previousDates) {
-        const entry = entries.find((item) => item.providerId === providerId && item.date === date);
-        if (
-          retainedDates.has(date) &&
-          !history.some((item) => item.providerId === providerId && item.date === date)
-        ) {
-          throw new Error(`Missing previously published ${providerId} history for ${date}`);
-        }
-      }
       if (!history.some((entry) => entry.providerId === providerId))
         throw new Error(`No retained ${providerId} history; previously published history exists`);
     }

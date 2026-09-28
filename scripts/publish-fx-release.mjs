@@ -164,14 +164,16 @@ export function retainedHistory(dataRoot, now = new Date()) {
 export async function publishRelease(root, inputs, now = new Date().toISOString(), history) {
   const previous = readPrevious(root);
   const watermarkPath = resolve(root, 'state/moneybox-watermark.json');
-  const moneyboxWatermark = existsSync(watermarkPath)
-    ? JSON.parse(readFileSync(watermarkPath, 'utf8')).publishedAt
-    : null;
-  if (
-    moneyboxWatermark !== null &&
-    (typeof moneyboxWatermark !== 'string' || !Number.isFinite(Date.parse(moneyboxWatermark)))
-  )
-    throw new Error('Invalid MoneyBox publishedAt watermark');
+  let moneyboxWatermark = null;
+  if (Object.hasOwn(inputs, 'moneybox') && existsSync(watermarkPath)) {
+    try {
+      moneyboxWatermark = JSON.parse(readFileSync(watermarkPath, 'utf8')).publishedAt;
+    } catch (error) {
+      throw new Error('Invalid MoneyBox publishedAt watermark', { cause: error });
+    }
+    if (typeof moneyboxWatermark !== 'string' || !Number.isFinite(Date.parse(moneyboxWatermark)))
+      throw new Error('Invalid MoneyBox publishedAt watermark');
+  }
   let acceptedMoneyboxPublishedAt = null;
   // 每個 provider 保留自身最後一次檢查結果；本輪未執行的 provider 不改寫狀態。
   const status = ({ providerId, snapshot, checkStatus, lastSuccessfulCheckAt }) => ({

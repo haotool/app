@@ -152,6 +152,12 @@ describe('data workflow contract', () => {
     // token 只注入 push 步驟。
     expect(text.match(/github\.token/g)).toHaveLength(1);
     expect(job(text, 'publish').split('GIT_PUSH_TOKEN')[0]).toContain('Commit, push and purge');
+    const commit = text.indexOf('- name: Commit, push and purge v3 pointer');
+    const verify = text.indexOf('- name: Verify published v3 release');
+    expect(verify).toBeGreaterThan(commit);
+    expect(text.slice(verify)).toContain('verify-fx-v3-release.mjs');
+    expect(text.slice(verify)).toContain('--require-providers "$providers"');
+    expect(text.slice(verify)).toContain('manifest.providers.map(({ providerId }) => providerId)');
   });
 
   it.each(['update-latest-rates.yml', 'update-moneybox-rates.yml', 'update-historical-rates.yml'])(
@@ -352,21 +358,23 @@ describe('history directory reads', () => {
     mkdirSync(output, { recursive: true });
     const missing = dateAt(-3);
     const present = dateAt(-2);
+    writeFileSync(join(dataRoot, `history/${missing}.json`), JSON.stringify(botHistory(missing)));
     writeFileSync(join(dataRoot, `history/${present}.json`), JSON.stringify(botHistory(present)));
-    writeFileSync(
-      join(output, 'history-index.json'),
-      JSON.stringify([
-        { providerId: 'bot', date: missing },
-        { providerId: 'bot', date: present },
-      ]),
-    );
+    migrateHistory('revision', output, dataRoot);
+    const previous = JSON.parse(readFileSync(join(output, 'history-index.json'), 'utf8'));
+    expect(previous).toHaveLength(2);
+    expect(previous.find((entry: { date: string }) => entry.date === missing)).toMatchObject({
+      providerId: 'bot',
+      snapshot: {
+        path: expect.stringMatching(/\.json$/),
+        sha256: expect.stringMatching(/^[a-f0-9]{64}$/),
+      },
+    });
+    rmSync(join(dataRoot, `history/${missing}.json`));
     expect(() => migrateHistory('revision', output, dataRoot)).toThrow(
-      new RegExp(`Missing previously published bot history for ${missing}`),
+      new RegExp(`Missing previously published bot history source file for ${missing}`),
     );
-    expect(JSON.parse(readFileSync(join(output, 'history-index.json'), 'utf8'))).toEqual([
-      { providerId: 'bot', date: missing },
-      { providerId: 'bot', date: present },
-    ]);
+    expect(JSON.parse(readFileSync(join(output, 'history-index.json'), 'utf8'))).toEqual(previous);
   });
 
   it('allows a normal daily roll when only the oldest bank date leaves retention', () => {
@@ -426,6 +434,10 @@ describe('history directory reads', () => {
     writeFileSync(join(dataRoot, `history/${date}.json`), JSON.stringify(botHistory(date)));
     migrateHistory('revision', output, dataRoot, now);
     const previous = JSON.parse(readFileSync(join(output, 'history-index.json'), 'utf8'))[0];
+    expect(previous.snapshot).toMatchObject({
+      path: expect.stringMatching(/\.json$/),
+      sha256: expect.stringMatching(/^[a-f0-9]{64}$/),
+    });
     writeFileSync(join(dataRoot, `history/${date}.json`), '{"broken":true}');
     const warning = vi.spyOn(console, 'warn').mockImplementation(() => {});
     try {

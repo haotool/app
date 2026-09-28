@@ -8,10 +8,35 @@ import {
   retainedHistory,
   sunsetAt,
 } from '../publish-fx-release.mjs';
-import { verifyDataRoot } from '../verify-fx-v3-release.mjs';
+import { parseRequiredProviders, verifyDataRoot } from '../verify-fx-v3-release.mjs';
 import { FX_PUBLISHER } from '../../apps/shared/fx/publisher-metadata.mjs';
 
 describe('v3 publication', () => {
+  it('reads and validates the MoneyBox watermark only for MoneyBox publication', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'fx-release-watermark-'));
+    const time = '2026-09-21T01:00:00Z';
+    mkdirSync(join(dir, 'state'));
+    writeFileSync(join(dir, 'state/moneybox-watermark.json'), '{broken');
+    try {
+      await expect(
+        publishRelease(
+          dir,
+          { bot: { timestamp: time, details: { USD: { cash: { buy: '31', sell: '32' } } } } },
+          time,
+        ),
+      ).resolves.toBeDefined();
+      await expect(
+        publishRelease(
+          dir,
+          { moneybox: { timestamp: time, rates: { TWD: { buy: '46', sell: '45' } } } },
+          time,
+        ),
+      ).rejects.toThrow('Invalid MoneyBox publishedAt watermark');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it('writes content-addressed objects before moving current and carries failed providers', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'fx-release-'));
     const time = '2026-09-21T01:00:00Z';
@@ -750,7 +775,7 @@ it('requires bot and MoneyBox providers in the verified release', async () => {
   const v3 = join(dir, 'v3');
   const time = '2026-09-20T10:00:00Z';
   try {
-    const result = await publishRelease(
+    const initial = await publishRelease(
       v3,
       {
         bot: {
@@ -762,10 +787,31 @@ it('requires bot and MoneyBox providers in the verified release', async () => {
       time,
       [],
     );
+    const result = await publishRelease(v3, { bot: null }, time, [
+      {
+        providerId: 'bot',
+        date: '2026-09-20',
+        snapshot: initial.manifest.providers[0]!.snapshot,
+      },
+    ]);
     expect(result.manifest.providers.map((provider) => provider.providerId)).toEqual(['bot']);
     writeFileSync(join(v3, 'migration.json'), JSON.stringify({ entries: [] }));
+    expect(verifyDataRoot(dir, ['bot']).providers).toHaveProperty('bot');
     expect(() => verifyDataRoot(dir)).toThrow('Missing required provider: moneybox');
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+it('parses an optional comma-separated required-provider list while defaulting to both', () => {
+  expect(parseRequiredProviders(['--data-root', 'rates'])).toEqual(['bot', 'moneybox']);
+  expect(parseRequiredProviders(['--require-providers', 'bot'])).toEqual(['bot']);
+  expect(parseRequiredProviders(['--require-providers', ' bot, moneybox,bot '])).toEqual([
+    'bot',
+    'moneybox',
+  ]);
+  expect(() => parseRequiredProviders(['--require-providers'])).toThrow('--require-providers');
+  expect(() => parseRequiredProviders(['--require-providers', 'unknown'])).toThrow(
+    '--require-providers',
+  );
 });

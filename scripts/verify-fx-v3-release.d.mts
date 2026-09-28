@@ -1,4 +1,7 @@
-export function verifyDataRoot(dataRoot: string): {
+export function verifyDataRoot(
+  dataRoot: string,
+  requiredProviders?: string[],
+): {
   generatedAt: string;
   providers: Record<
     string,
@@ -9,3 +12,4 @@ export function verifyDataRoot(dataRoot: string): {
     }
   >;
 };
+export function parseRequiredProviders(args: string[]): string[];
