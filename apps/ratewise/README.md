@@ -9,6 +9,7 @@
 
 - **即時匯率**：每 5 分鐘同步臺灣銀行牌告匯率
 - **v3 方向 API（預設未公開）**：使用 `fromCurrency → toCurrency` 與十進位字串匯率，來源買賣側、適用條件與 release hash 可追溯；`apps/shared/fx/public.ts` 的 `FX_V3_PUBLIC`（`src/config/api-endpoints.ts` 重新匯出） 為公開切換 SSOT，未公開前 App 與公開資料面維持 v2 行為
+- **v2 API attribution**：公開 latest／pair JSON 含 `publisher` 標示；使用條款與可複製引用格式見 [/open-data/#api-terms](https://app.haotool.org/ratewise/open-data/#api-terms)
 - **雙模式換算**：單幣別與多幣別同時換算
 - **收藏管理**：自訂常用貨幣快速存取
 - **趨勢圖表**：30 天歷史匯率走勢

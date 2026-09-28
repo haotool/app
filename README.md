@@ -48,7 +48,7 @@ haotool Apps 是一個專業的 pnpm Monorepo，包含多個高品質的 React 1
 - 台銀實際賣出價：顯示真正換匯成本，非市場中間價
 - 18 種貨幣、4 種匯率類型（現金/即期買入賣出）
 - 即時匯率：每 5 分鐘同步臺灣銀行牌告匯率
-- 匯率 API v3（預設未公開，`FX_V3_PUBLIC=false`）：以支付幣別 → 取得幣別表達方向，保留來源買賣側、條件與 SHA-256 release manifest；公開切換前 `/open-data/` 與 App 維持 v2 行為
+- 匯率 API v3（預設未公開，`FX_V3_PUBLIC=false`）：以支付幣別 → 取得幣別表達方向，保留來源買賣側、條件與 SHA-256 release manifest；公開切換前 `/open-data/` 與 App 維持 v2 行為。v2 JSON 提供 publisher attribution，使用條款見 RateWise 開放資料頁
 - 趨勢圖表：30 天歷史匯率走勢視覺化
 - PWA 支援：可安裝至手機，支援離線使用
 - 收藏管理：自訂常用貨幣快速存取

@@ -1,8 +1,8 @@
 # 匯率 API 語意 v3 正名與 MoneyBox 上游遷移 PRD
 
 > **建立時間**: 2026-08-26T14:00:00+08:00
-> **版本**: v11.7
-> **狀態**: ✅ 欄位語意定案；✅ PR 1 已合併（#1051）；🟡 PR 2+3 合併實作於 #1104（公開開關 `FX_V3_PUBLIC` 預設 `false`；`RATEWISE_FX_V3_ENABLED` 為 data 發佈 gate，預設關閉）；⚠️ 正式切換阻塞項未解（§0）；✅ API 標示與 SEO 策略定案（§21，S3 實作）
+> **版本**: v11.8
+> **狀態**: ✅ 欄位語意定案；✅ PR 1 已合併（#1051）；🟡 PR 2+3 合併實作於 #1104（公開開關 `FX_V3_PUBLIC` 預設 `false`；`RATEWISE_FX_V3_ENABLED` 為 data 發佈 gate，預設關閉）；⚠️ 正式切換阻塞項未解（§0）；✅ API 標示與 SEO 策略定案及 S3 實作完成（§21）
 > **作者**: Claude Code（研究與盤點）+ Codex（獨立第二意見）
 > **上位文件**: `CLAUDE.md`、`AGENTS.md`
 > **相關**: PR #472（v2 導入）、PR #1039（MoneyBox 中斷處理）
@@ -856,14 +856,14 @@ repo 既有文案佐證：`DEFAULT_DESCRIPTION`「顯示臺灣銀行牌告的**�
 
 獨立審查誠實列出**無法在此輪定案**的項目與原因：
 
-| #   | 項目                              | 為何無法定案                                                                                                                           | 暫定行為                                                                                  |
-| --- | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| 1   | 中間價來源的授權與再散布條件      | `open.er-api.com` 公開資格未確認                                                                                                       | 確認前不得發佈 `marketMidCounterfactual`                                                  |
-| 2   | 中間價的獨立 freshness 門檻       | 需與台銀 36h／MoneyBox 24h 對齊或另定                                                                                                  | 待定                                                                                      |
-| 3   | 既有 SEO `diffTWD`/`diffPct` 公式 | 未比對 fixture，無法判斷可否沿用                                                                                                       | 若公式不同須 `methodVersion: "2.0"` 版控                                                  |
-| 4   | MoneyBox 正式 rate type           | 產品類型定義證據不足                                                                                                                   | **維持 `unspecified`**（§13.3 一致）                                                      |
-| 5   | 歷史中間價共時性                  | 未證實歷史期間存在共時 benchmark                                                                                                       | 歷史 gap **必須為 `null`**，不得用今日中價回填                                            |
-| 6   | 兩個來源的再散布權利              | 台銀與 MoneyBox 條款盤點結果未提供；§21 F7 僅涵蓋年度收盤資料集，F8：`rate.bot.com.tw` 牌告匯率再散布條款仍未證實、MoneyBox 無公開條款 | `providers[].redistributionStatus: "unknown"`（enum `verified`｜`unknown`｜`restricted`） |
+| #   | 項目                              | 為何無法定案                                                                                                                           | 暫定行為                                                                                                      |
+| --- | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| 1   | 中間價來源的授權與再散布條件      | `open.er-api.com` 公開資格未確認                                                                                                       | 確認前不得發佈 `marketMidCounterfactual`                                                                      |
+| 2   | 中間價的獨立 freshness 門檻       | 需與台銀 36h／MoneyBox 24h 對齊或另定                                                                                                  | 待定                                                                                                          |
+| 3   | 既有 SEO `diffTWD`/`diffPct` 公式 | 未比對 fixture，無法判斷可否沿用                                                                                                       | 若公式不同須 `methodVersion: "2.0"` 版控                                                                      |
+| 4   | MoneyBox 正式 rate type           | 產品類型定義證據不足                                                                                                                   | **維持 `unspecified`**（§13.3 一致）                                                                          |
+| 5   | 歷史中間價共時性                  | 未證實歷史期間存在共時 benchmark                                                                                                       | 歷史 gap **必須為 `null`**，不得用今日中價回填                                                                |
+| 6   | 兩個來源的再散布權利              | 台銀與 MoneyBox 條款盤點結果未提供；§21 F7 僅涵蓋年度收盤資料集，F8：`rate.bot.com.tw` 牌告匯率再散布條款仍未證實、MoneyBox 無公開條款 | `providers[].redistributionStatus: "unknown"`；S3 條款明示上游條款適用且不承諾再散布權利，human gate 仍未解除 |
 
 > 第 5 項與 §11 第 3 點（`publishedAt` 不得回填）是同一原則：**缺的就是缺的，不用今天的數字填昨天的洞。**
 
@@ -1165,26 +1165,28 @@ v3 contract／OpenAPI／LLM 文件可在 feature branch 建立，**不連 canoni
 4. **不做**：widget／JS badge、標示連結附 UTM（理由見 §21.5）。
 5. **真正的連結權重來源是編輯性連結，非條款強制**：提交 API 至公開 API 目錄（如 GitHub public-apis 類清單）、OpenAPI 文件品質、`llms.txt`／AI 可引用摘要——列入 S3 後續，非本 epic 阻塞項。
 
-### 21.3 v3 契約增量（publisher 已入契約；其餘 S3 實作）
+### 21.3 v3 publisher 與 S3 公開標示實作
 
-v11.6 改寫：`publisher` 物件已於 PR #1104 依 ADR B3 納入契約（`apps/shared/fx/schema.json` 的 `ReleaseManifest.publisher`，發佈副本 `apps/ratewise/public/api/v3/contract.schema.json`），manifest 層輸出一次。**`publisher.termsUrl` 暫指 `/ratewise/open-data/` 作為 placeholder**，S3 條款頁上線後改指條款頁；其餘表面仍於 S3 實作：
+v3 `publisher` 物件依 ADR B3 納入 `apps/shared/fx/schema.json` 的 `ReleaseManifest.publisher`，manifest 層輸出一次。S3 已將共用 publisher SSOT 的 `termsUrl` 指向 `https://app.haotool.org/ratewise/open-data/#api-terms`；同一物件亦用於公開 v2 latest／pair JSON 與 OpenAPI。上游來源標示仍沿用 `providers[].attribution`／`termsUrl`，沒有新增重複欄位。
 
 | 表面            | 內容                                                                                                                                                    |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | payload 層級    | `publisher` 物件（我方網站標示）：`name`、`url`、`termsUrl`、`requiredText`；上游標示沿用既有 `providers[].attribution`／`termsUrl`（單一來源，不重複） |
-| 回應 header     | `Link: <termsUrl>; rel="terms-of-service"`，於 security-headers Worker 對 `/ratewise/api/*` 注入                                                        |
-| OpenData 頁     | 提供可複製 HTML／Markdown 標示片段；預設**不帶** `nofollow`，但文字說明使用者可自行加上 `rel` 限定                                                      |
+| 回應 header     | `Link: <termsUrl>; rel="terms-of-service"`，由隨 RateWise Pages 靜態產物部署的 `public/_headers` 套用至 `/ratewise/api/*` 與 `/ratewise/openapi.json`   |
+| OpenData 頁     | 提供 API 使用條款、可複製 HTML／Markdown 標示片段，明文允許使用者自行加上 `rel="nofollow"`／`"sponsored"`／`"ugc"`                                      |
 | Dataset JSON-LD | `creator`（Organization：haotool／匯率好工具）、`license`（指向條款頁）、`isAccessibleForFree: true`、`citation`（建議引用格式）（F5）                  |
 
 ### 21.4 S3 驗收標準
 
-- [ ] schema 新增 payload 層級 `publisher`（`name`、`url`、`termsUrl`、`requiredText`），runtime validator 覆蓋並有測試；不新增上游標示欄位（沿用 `providers[].attribution`／`termsUrl`）
-- [ ] `/ratewise/api/*` 回應帶 `Link: <termsUrl>; rel="terms-of-service"`（Worker 測試 + 正式站 `curl -sI` 驗證）
-- [ ] OpenData 頁含可複製 HTML／Markdown 片段與條款文字；條款明文允許 `rel="nofollow"`／`"sponsored"`／`"ugc"`
-- [ ] 條款文字不宣稱匯率數值著作權，且要求保留上游來源標示（§21.2 第 2 點）；守門測試對條款文字與 OpenData 頁原始碼套用 `/著作權所有|all rights reserved|©.*(匯率|RateWise)/i`，命中即失敗
-- [ ] Dataset JSON-LD 含 `creator`／`license`／`isAccessibleForFree`／`citation`，有測試斷言
-- [ ] 守門測試：grep 條款頁、OpenData、OpenAPI、`llms.txt` 等產物，禁止出現要求 dofollow 的文字（例如 `/(必須|須|需|require[sd]?|must).{0,20}do-?follow/i`、`/(不得|禁止|must not|may not).{0,20}nofollow/i`），命中即失敗
-- [ ] 條款頁文字屬使用者可見變更 → changeset `patch`
+- [x] v2 latest／pair JSON 與 OpenAPI additive publisher 均來自共用 SSOT；v3 contract publisher 定義保持共用
+- [x] `/ratewise/api/*` 與 `/ratewise/openapi.json` 的 `Link: <termsUrl>; rel="terms-of-service"` 由 Pages `public/_headers` 套用並有守門
+- [x] OpenData 頁、Markdown mirror 與 `llms*.txt` 提供同一標示要求及 HTML／Markdown 片段；允許 `rel="nofollow"`／`"sponsored"`／`"ugc"`
+- [x] 條款不主張匯率數值著作權，明示保留上游來源標示；regex 守門覆蓋條款與 OpenData 頁原始碼
+- [x] Dataset JSON-LD 僅一筆，含 `creator`／`license`／`isAccessibleForFree`／`citation`，並驗證既有 JSON 分發
+- [x] 守門檢查條款與生成產物不可要求 dofollow 或禁止 nofollow
+- [x] 使用者可見條款變更以 `@app/ratewise` patch changeset 記錄
+
+正式站 header 是否已部署屬 release／provider 證據，須於部署後以 `curl -sI` 另行確認；此不改變 S3 程式實作完成狀態。
 
 ### 21.5 不做清單
 
@@ -1196,7 +1198,7 @@ v11.6 改寫：`publisher` 物件已於 PR #1104 依 ADR B3 納入契約（`apps
 ### 21.6 對序列的影響
 
 - **S1 R2**：本節寫入 PRD（決策 + 驗收標準）。
-- **S3**：依 §21.2 第 3 點實作；條款頁文字屬使用者可見變更 → changeset `patch`。
+- **S3**：✅ 已完成公開 v2 標示、條款、OpenAPI、Pages headers、Dataset JSON-LD、鏡像及 guard tests；正式部署後確認 live header。
 - **S4**：F8 仍為再散布 blocker（與 §17 #6 一致）；S3 不受阻，因條款為我方服務條件，不涉上游授權宣稱。
 
 ---
@@ -1205,6 +1207,7 @@ v11.6 改寫：`publisher` 物件已於 PR #1104 依 ADR B3 納入契約（`apps
 
 | 日期       | 版本  | 變更                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | ---------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-28 | v11.8 | S3 完成 API 使用標示與 SEO：共用 v2／v3 publisher SSOT，termsUrl 指向 `#api-terms`，加入 Pages Link header、OpenData 條款與片段、Dataset JSON-LD、生成鏡像及 guard tests；§17 #6 保留上游再散布未證實狀態                                                                                                                                                                                                                                   |
 | 2026-09-28 | v11.7 | 依最終修正輪：header／§0／§5 改稱 `RATEWISE_FX_V3_ENABLED` 為 data 發佈 gate、公開開關為 `FX_V3_PUBLIC`；§0 記錄 v2 details 新增 ZAR／SEK spot-only 等 additive 欄位；§19.2 JSON-LD 列改為 flag off 沿用 main 生成器（幣別頁雙向搜尋意圖改寫移至 S3 SEO PR）                                                                                                                                                                                |
 | 2026-09-28 | v11.6 | 依 R5 裁決：§4.5（兩節）／§5／§10／§16.3–16.5 標註 superseded by §16.7；§4.3 補列 `originalBuyField`／`originalSellField`／`mappingVersion`／`originalUnitAmount` 並改正來源分母公開敘述；§4.3.1 `nextSourceCheckAt` 改選填不輸出、URL 欄位限 `https`；§18.4 記錄 12 位小數倒數半單位邊界 1 minor unit 差異與極小倒數有效位數；§19.2 衍生鏈依實作改正；§21.3 改寫（publisher 已入契約、termsUrl 暫指 /open-data/）；§0 指向 S4 啟用檢查清單 |
 | 2026-09-28 | v11.5 | 依 ADR B3 修訂公開契約：§4.3 改為 `quotes[]`／`SourceQuote` 欄位表（`providerBuyPrice`／`providerSellPrice`、移除 `providerSide`、`quoteId`／`quoteSeriesId` 格式 ≤256、`unavailableReason` 完整 enum、`dataKind` 必填）；§4.3.1 改為 manifest 層 `$schema`／`publisher`／`providers[]`／`calculationRule`／`quoteAvailability`；新增 §16.7 定案與不採用的 A 設計附註；§18.4 補 EXACT_OUT 與倒數規則；§18.5 改為不輸出恆 null 欄位          |
