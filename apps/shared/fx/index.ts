@@ -548,7 +548,7 @@ export function normalizeMoneyboxSnapshot(value: unknown): QuoteSnapshot[] {
     canonicalRows = payload['sourceQuotes'] !== undefined,
     rows = record(payload['sourceQuotes'] ?? payload['rates']),
     time = times(payload);
-  return Object.entries(rows).flatMap(([currency, value]) =>
+  const quotes = Object.entries(rows).flatMap(([currency, value]) =>
     validRows(() => {
       if (currency === 'KRW') return [];
       const prices = record(value);
@@ -569,10 +569,17 @@ export function normalizeMoneyboxSnapshot(value: unknown): QuoteSnapshot[] {
           prices[canonicalRows ? 'sell' : 'buy'],
         ),
         ...time,
-        serviceCountry: 'KR',
-        deliveryMethod: 'cash',
-        channel: 'branch',
-        branchId: 'myeongdong',
+        serviceCountry:
+          canonicalRows && typeof prices['serviceCountry'] === 'string'
+            ? prices['serviceCountry']
+            : 'KR',
+        deliveryMethod: prices['deliveryMethod'] === 'account' ? 'account' : 'cash',
+        channel: ['branch', 'online', 'atm', 'unknown'].includes(String(prices['channel']))
+          ? (prices['channel'] as SourceQuote['channel'])
+          : 'branch',
+        ...(typeof prices['branchId'] === 'string'
+          ? { branchId: prices['branchId'] }
+          : { branchId: 'myeongdong' }),
         feeStatus: 'unknown',
         originalBuyField: canonicalRows ? 'buyRate' : 'sell',
         originalSellField: canonicalRows ? 'sellRate' : 'buy',
@@ -581,6 +588,10 @@ export function normalizeMoneyboxSnapshot(value: unknown): QuoteSnapshot[] {
       });
     }),
   );
+  if (quotes.length > 0 && quotes.every((quote) => quote.status !== 'available')) {
+    throw new Error('Provider snapshot has no available quotes');
+  }
+  return quotes;
 }
 
 /** Structural validation and reconstruction of the economic meaning are both required. */

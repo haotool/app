@@ -30,7 +30,7 @@ const DATA_BASE_URL = `${RAW_DATA_BASE}/public/rates`;
 const CDN_BASE_URL = `${CDN_DATA_BASE}/public/rates`;
 const FX_V3_SCHEMA_URL = 'https://app.haotool.org/ratewise/api/v3/contract.schema.json';
 const FX_V3_AVAILABILITY =
-  'v3 current 只有 data branch 的 RATEWISE_FX_V3_ENABLED=true 發布 gate 開啟後才存在；尚未啟用時請使用 legacy 相容投影。';
+  'v3 current 是目前啟用的 canonical API；legacy latest/history 僅供相容讀取，已棄用。';
 
 const constantsPath = resolve(ROOT, 'src/features/ratewise/constants.ts');
 const constantsContent = readFileSync(constantsPath, 'utf-8');
@@ -91,12 +91,14 @@ const latestJson = {
   supportedCurrencies: currencyKeys,
   endpoints: {
     latest: `${DATA_BASE_URL}/latest.json`,
+    ...(FX_V3_PUBLIC ? { legacyLatest: `${DATA_BASE_URL}/latest.json` } : {}),
     history: `${DATA_BASE_URL}/history/{YYYY-MM-DD}.json`,
     moneybox: exchangeShopProvider?.currentEndpoint,
     moneyboxHistory: exchangeShopProvider?.historyEndpoint,
   },
   cdnEndpoints: {
     latest: `${CDN_BASE_URL}/latest.json`,
+    ...(FX_V3_PUBLIC ? { legacyLatest: `${CDN_BASE_URL}/latest.json` } : {}),
     history: `${CDN_BASE_URL}/history/{YYYY-MM-DD}.json`,
     moneybox: exchangeShopProvider?.cdnCurrentEndpoint,
     moneyboxHistory: exchangeShopProvider?.cdnHistoryEndpoint,

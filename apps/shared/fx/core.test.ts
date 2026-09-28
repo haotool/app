@@ -158,6 +158,15 @@ it('reconstructs legacy fields from source values, not reciprocal canonical rate
     TWD: { sell: '42', buy: '43' },
   });
 });
+
+it('rejects a MoneyBox snapshot when every normalized quote is unavailable', () => {
+  expect(() =>
+    normalizeMoneyboxSnapshot({
+      timestamp: row.fetchedAt,
+      sourceQuotes: { USD: { buy: null, sell: null, unitAmount: '1' } },
+    }),
+  ).toThrow('Provider snapshot has no available quotes');
+});
 it('keeps condition boundaries and exact-out ordering consistent for a third shop', () => {
   const base = {
     ...row,

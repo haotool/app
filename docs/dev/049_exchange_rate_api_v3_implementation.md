@@ -25,11 +25,11 @@
 
 provider `failed`／`carried_forward` 快照只可供明確手動選擇，不能進入 best 自動排名。
 
-**公開切換 SSOT（expand–contract）**：`apps/shared/fx/public.ts` 的 `FX_V3_PUBLIC`（RateWise 經 `api-endpoints.ts` 重新匯出，split-meow 直接匯入）同時控制 App 是否讀取 v3，以及站台生成器是否宣告 v3。S4d 已設為 `true`；`false` 是單一行 rollback，恢復 `useLegacyCurrencyConverter`、legacy 趨勢與 schemaVersion 2.0／OpenAPI 2.1.0。`RATEWISE_FX_V3_ENABLED` 是獨立 data 發佈 gate，rollback 不需關閉 data plane。公開面守門改為 `fx-v3-public-surface.test.ts` 與 split-meow `exchangeRate.v3.test.ts`；`fx-v3-inert.test.tsx` 和 flag-false 測試已移除／改寫。
+**公開切換 SSOT（expand–contract）**：`apps/shared/fx/public.ts` 的 `FX_V3_PUBLIC`（RateWise 經 `api-endpoints.ts` 重新匯出，split-meow 直接匯入）同時控制 App 是否讀取 v3，以及站台生成器是否宣告 v3。S4d 已設為 `true`；`false` 是單一行 rollback，恢復 `useLegacyCurrencyConverter`、legacy 趨勢與 schemaVersion 2.0／OpenAPI 2.1.0。`RATEWISE_FX_V3_ENABLED` 是獨立 data 發佈 gate，rollback 不需關閉 data plane。公開面由 `fx-v3-public-surface.test.ts` 與 split-meow `exchangeRate.v3.test.ts` 覆蓋；flag-off 路徑另以 `converterStore.rollback.test.ts`、`exchangeRate.rollback.test.ts` 與 `useFxQuotes.rollback.test.tsx` mock flag 回歸驗證。
 
 **建置期閘門與 bundle 惰性**：App 程式碼一律以 `isFxV3Public()`（`apps/shared/fx/public.ts`，`typeof __FX_V3_PUBLIC_BUILD__` 守護，無 define 的 vitest／Node 環境回落可 mock 的 `FX_V3_PUBLIC`）判斷。rolldown 不內聯函式也不跨模組折疊常數，因此共用的 `apps/shared/fx/vite-plugin.mjs`（RateWise 與 split-meow 皆載入）負責：define `__FX_V3_PUBLIC_BUILD__`、將 App 原始碼中的 `isFxV3Public()` 呼叫改寫為字面值、以 `treeshake.moduleSideEffects` 宣告 `shared/fx` 無副作用；RateWise 另將 `decimal.js` 拆為 `vendor-decimal` chunk。實測 gzip（`gzip -9`，gen2 round 3 @3005479b4）：RateWise 首頁 initial JS main 331,192／head 333,023（+1,831 B；reviewer 以其量法測得 +1,893 B）；split-meow 全部 app JS main 161,644／head 161,677。守門：`prerender.test.ts`（`dist/index.html` 不預載 `fx`／`release`／`vendor-decimal`）、`public.test.ts`（plugin 改寫與 define）。Service worker 的歷史快取策略與清理清單在 flag off 時與 main 相同。
 
-**SEO 頁惰性**：`FX_V3_PUBLIC=false` 時幣別頁（title／meta／FAQ／JSON-LD 含 price 與 validFrom）、首頁、about 鏡像與幣別頁 CTA 沿用 main 的 `update-seo-rate-examples.mjs` 生成器與文案；v3 方向化 SEO 文案（雙向搜尋意圖改寫）移至 S3 SEO PR。以 main 與本分支 dist 逐頁比對（時間戳與資產雜湊正規化）驗證：264 頁 0 差異，僅 `open-data` 頁／鏡像與 `llms*.txt` 授權文案不同。
+**SEO 頁惰性**：rollback 時 `FX_V3_PUBLIC=false`，幣別頁（title／meta／FAQ／JSON-LD 含 price 與 validFrom）、首頁、about 鏡像與幣別頁 CTA 沿用 main 的 `update-seo-rate-examples.mjs` 生成器與文案；v3 方向化 SEO 文案（雙向搜尋意圖改寫）移至 S3 SEO PR。以 main 與本分支 dist 逐頁比對（時間戳與資產雜湊正規化）驗證：264 頁 0 差異，僅 `open-data` 頁／鏡像與 `llms*.txt` 授權文案不同。
 
 `useLegacyCurrencyConverter.ts` 是 expand–contract 的暫存副本，於 S4 切換 PR（`FX_V3_PUBLIC` 改為 `true` 並完成 contract 階段）刪除。
 
@@ -45,7 +45,7 @@ v3 發布會在本機 data checkout 更新 `current.json` 後、commit/push/CDN 
 
 ### S3 API attribution
 
-`apps/shared/fx/publisher-metadata.mjs` 是 v2／v3 共用發布者標示 SSOT。v2 `api/latest.json`、`api/pairs/*.json` 與 OpenAPI additive publisher 從此來源產生；terms URL 指向 `/ratewise/open-data/#api-terms`。OpenData 條款內容位於 RateWise SEO metadata SSOT，Markdown 與 `llms*.txt` 由生成器輸出。`security-headers/src/worker.js` 從同一 SSOT 為 `/ratewise/api/*` 與 `/ratewise/openapi.json` 回應附加 Terms Link；FAQ Markdown alternate Link 也由此 Worker 產生。Dataset JSON-LD 由 SEO metadata builder 產生，以 `usageInfo` 指向條款並以 `isBasedOn` 列出 provider metadata 的來源 URL。此工作不變更 `FX_V3_PUBLIC=false`。
+`apps/shared/fx/publisher-metadata.mjs` 是 v2／v3 共用發布者標示 SSOT。v2 `api/latest.json`、`api/pairs/*.json` 與 OpenAPI additive publisher 從此來源產生；terms URL 指向 `/ratewise/open-data/#api-terms`。OpenData 條款內容位於 RateWise SEO metadata SSOT，Markdown 與 `llms*.txt` 由生成器輸出。`security-headers/src/worker.js` 從同一 SSOT 為 `/ratewise/api/*` 與 `/ratewise/openapi.json` 回應附加 Terms Link；FAQ Markdown alternate Link 也由此 Worker 產生。Dataset JSON-LD 由 SEO metadata builder 產生，以 `usageInfo` 指向條款並以 `isBasedOn` 列出 provider metadata 的來源 URL。S4d 將 `FX_V3_PUBLIC` 設為 `true`。
 
 消費者若直接從 jsDelivr CDN（`cdn.jsdelivr.net/gh/haotool/app@data/...`）抓取資料，不會經過 security-headers Worker；其條款由 JSON 的 `publisher.termsUrl` 與 Open Data 頁傳達，不會附在 Link header。
 
@@ -73,7 +73,7 @@ S4d 切換已完成，先前延後項目裁決與證據如下：
 - [x] 公開切換與生成器依賴 v3 合約，並完成 S4d 驗證（見下節）。
 - [ ] 上游再散布條款 human gate（PRD §17 #6、§21 F8）：程式條款頁與靜態產物已提供，但未取得上游再散布權利證據，不得將此項視為已解除。
 - [ ] S5（v3 穩定 7 日後）：刪除 `S4-DELETE` 遺留項目——`exportLegacyRates`、`apps/ratewise/src/config/api-semantics-v2.ts`、`useLegacyCurrencyConverter.ts`、`isFxV3Public()` 建置期 plugin 改寫與 legacy SW 歷史路由；另行檢視 v2 sunset gate。
-- v3 minor changeset 由 PM 在發布 PR 建立；S4d implementation seat 依任務範圍不產生 changeset。
+- S4d public switch changeset 由 PM 維護；implementation seat 不修改 `.changeset/`。
 - [x] v2 保留既有 job-level `data-branch-push` 鎖與 cadence；所有 v2 push 改為 fast-forward、rebase 失敗不再吞錯，v3 維持獨立鎖。競態時 v2 push 會安全失敗或 rebase 保留 v3 commit（`.github/workflows/update-latest-rates.yml`, `update-moneybox-rates.yml`, `update-historical-rates.yml`, `publish-fx-v3.yml`）。
 - [x] data checkout 關閉持久憑證，push 時才注入 token；各資料 job 均有 timeout。
 - [x] `update-historical-rates.yml` 以 Actions jobs API 計算 `update-latest` v2 job 的成功結論；publish-v3 失敗不會影響 v2 liveness。三個資料 workflow 與 reusable publisher job 均設 timeout。
@@ -85,11 +85,12 @@ S4d 切換已完成，先前延後項目裁決與證據如下：
 
 ## ACTIVATION RUNBOOK
 
-以下步驟只啟用 data plane；`FX_V3_PUBLIC` 保持 `false`，App 與公開站台切換另走 S4 PR。
+以下步驟記錄已完成的 data plane 與 S4d public switch；目前 `FX_V3_PUBLIC=true`。
 
 ### Public switch (S4d)
 
 - 使用者現在經 App、Open Data、JSON API、OpenAPI、Markdown mirrors 與 `llms*.txt` 使用 FX API v3；預設匯率情境為現鈔／臨櫃，報價帶來源時間、適用條件與可用性，Best 僅排名新鮮且可用的報價。EXACT_OUT 回傳最小足額付款金額；EXACT_IN 依目標幣別 minor unit 半偶捨入。
+- v2 使用者狀態遷移：既有 `rateType=spot` 若該幣對沒有帳戶牌告，會依 v3 quotes 切到可用現鈔；手動 provider 若 quotes 僅有一組服務地點與交付方式，會自動套用其 country、branch 與方式。
 - data plane 已先啟用並驗證：`RATEWISE_FX_V3_ENABLED=true`；current pointer 為 `https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/v3/current.json`。
 - 驗證：`pnpm generate:fx --check`、`pnpm test:root`、`pnpm test:fx`、RateWise／split-meow Vitest、兩 app 與 scripts typecheck、lint、format、`pnpm build:ratewise`；由 dist 檢查 `api/latest.json` schemaVersion、OpenAPI version、v3 links、modulepreload 與頁面文字差異。
 - Rollback：獨立一行 PR 將 `apps/shared/fx/public.ts` 的 `FX_V3_PUBLIC` 設回 `false`；data gate 保持開啟，避免停掉資料產出。發版後清除 `ratewise.fx.v3.*` localStorage 與失效 SW history cache（rollback cleanup 已由 `useFxQuotes.rollback` 覆蓋）。

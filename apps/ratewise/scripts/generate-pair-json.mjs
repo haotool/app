@@ -28,7 +28,7 @@ const ROOT = resolve(__dirname, '..');
 // GitHub raw 無快取，確保 liveRateUrl 指向真正即時資料（jsdelivr 有 12-24h 快取延遲，不適合用於 liveRateUrl）
 const CDN_BASE_URL = `${RAW_DATA_BASE}/public/rates`;
 const FX_V3_AVAILABILITY =
-  'v3 current 只有 data branch 的 RATEWISE_FX_V3_ENABLED=true 發布 gate 開啟後才存在；尚未啟用時請使用 legacy 相容投影。';
+  'v3 current 是目前啟用的 canonical API；legacy latest 僅供相容讀取，已棄用。';
 
 const RATE_TYPE_DESCRIPTIONS = {
   cash_sell: '現金賣出：銀行以此價賣出外幣現鈔（你拿台幣換外幣現金）',
@@ -66,7 +66,8 @@ for (const path of CURRENCY_SEO_PATHS) {
       : { semanticFieldMapping: buildSemanticFieldMapping() }),
     slug,
     pageUrl: `${SITE_CONFIG.url}${slug}/`,
-    liveRateUrl: `${CDN_BASE_URL}/latest.json`,
+    liveRateUrl: `${CDN_BASE_URL}/${FX_V3_PUBLIC ? 'v3/current.json' : 'latest.json'}`,
+    ...(FX_V3_PUBLIC ? { legacyRateUrl: `${CDN_BASE_URL}/latest.json` } : {}),
     ...(FX_V3_PUBLIC
       ? {
           v3CurrentUrl: `${CDN_BASE_URL}/v3/current.json`,

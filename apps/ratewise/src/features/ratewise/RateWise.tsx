@@ -24,7 +24,7 @@ import { FavoritesList } from './components/FavoritesList';
 import { CurrencyList } from './components/CurrencyList';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '../../components/PullToRefreshIndicator';
-import { formatDisplayTime } from '../../utils/timeFormatter';
+import { formatDisplayTime, formatIsoTimestamp } from '../../utils/timeFormatter';
 import { performFullRefresh } from '../../utils/swUtils';
 import { logger } from '../../utils/logger';
 import { SkeletonLoader } from '../../components/SkeletonLoader';
@@ -109,6 +109,8 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
     exchangeShopCurrency,
     effectiveRateSource,
     fxEstimate,
+    fxError,
+    fxFallbackActive,
     fxQuotes,
     selectedQuote,
     selectedProviderStatus,
@@ -234,6 +236,16 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
             </div>
           )}
 
+          {fxError && fxFallbackActive && (
+            <p
+              role="status"
+              data-testid="fx-v3-degraded-notice"
+              className="mb-3 text-xs text-warning-text"
+            >
+              最新報價載入失敗，暫以備援牌告顯示，換錢所報價暫不可用。
+            </p>
+          )}
+
           {/* 單幣別轉換區塊 - RWD 全頁面佈局 */}
           <section className={rateWiseLayoutTokens.section.className}>
             <div className={rateWiseLayoutTokens.card.className}>
@@ -256,20 +268,27 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
                       牌告已超過更新門檻（台銀 36 小時、換錢所 24 小時），僅供參考。
                     </p>
                   )}
-                  {providerQuotes
-                    .filter(
-                      (quote) =>
-                        quote.freshness === 'stale' &&
-                        quote.provider.providerId !== selectedQuote?.providerId,
-                    )
-                    .map((quote) => (
-                      <p className="px-3 text-sm" role="status" key={quote.provider.providerId}>
-                        {getRateProvider(quote.provider.providerId)?.label ??
-                          quote.provider.providerId}
-                        ：來源發布時間 {quote.sourcePublishedAt ?? '未知'}
-                        ，已超過更新門檻，未列入最佳推薦。
-                      </p>
-                    ))}
+                  <div className="px-3 text-sm" role="status" aria-label="其他來源牌告狀態">
+                    {providerQuotes
+                      .filter(
+                        (quote) =>
+                          quote.freshness === 'stale' &&
+                          quote.provider.providerId !== selectedQuote?.providerId,
+                      )
+                      .map((quote) => (
+                        <p
+                          key={`${quote.provider.providerId}:${quote.quoteId ?? quote.sourcePublishedAt ?? 'unknown'}`}
+                        >
+                          {getRateProvider(quote.provider.providerId)?.label ??
+                            quote.provider.providerId}
+                          ：來源發布時間{' '}
+                          {quote.sourcePublishedAt
+                            ? formatIsoTimestamp(quote.sourcePublishedAt)
+                            : '未知'}
+                          ，已超過更新門檻，未列入最佳推薦。
+                        </p>
+                      ))}
+                  </div>
                   {selectedProviderStatus && selectedProviderStatus !== 'ok' && (
                     <p className="px-3 text-sm" role="status">
                       來源最近檢查未成功，顯示上次已驗證快照，僅供參考。
@@ -279,7 +298,10 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
                     selectedQuoteEvidence.map((quote) => (
                       <p className="px-3 text-sm" key={quote.quoteId}>
                         {quote.fromCurrency} → {quote.toCurrency}：來源發布時間{' '}
-                        {quote.sourceQuote.sourcePublishedAt ?? '未知'}。
+                        {quote.sourceQuote.sourcePublishedAt
+                          ? formatIsoTimestamp(quote.sourceQuote.sourcePublishedAt)
+                          : '未知'}
+                        。
                       </p>
                     ))}
                   {selectedQuote && (
@@ -292,7 +314,10 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
                           ? '買入'
                           : '賣出'}{' '}
                         {selectedQuote.sourceQuote.subjectCurrency}。來源發布時間：
-                        {selectedQuote.sourceQuote.sourcePublishedAt ?? '未知'}。
+                        {selectedQuote.sourceQuote.sourcePublishedAt
+                          ? formatIsoTimestamp(selectedQuote.sourceQuote.sourcePublishedAt)
+                          : '未知'}
+                        。
                       </p>
                       <details>
                         <summary>進階：原始牌告與牌告中點</summary>

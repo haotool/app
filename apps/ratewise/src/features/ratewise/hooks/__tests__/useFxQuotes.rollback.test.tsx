@@ -37,3 +37,13 @@ it('stops v3 requests and clears v3 cache on rollback, preserving settings', asy
   expect(result.current.quotes).toEqual([]);
   unmount();
 });
+
+it('does not request v3 when the flag is already off', async () => {
+  gate.enabled = false;
+  const fetchMock = vi.fn();
+  vi.stubGlobal('fetch', fetchMock);
+  const { useFxQuotes } = await import('../useFxQuotes');
+  const { result } = renderHook(() => useFxQuotes());
+  expect(result.current.quotes).toEqual([]);
+  expect(fetchMock).not.toHaveBeenCalled();
+});

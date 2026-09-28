@@ -15,6 +15,7 @@ import {
 
 export interface ProviderQuote {
   provider: RateProviderRef;
+  quoteId?: string;
   rateType: RateType;
   sourceKind: RateSourceKind;
   unitRate: number;
