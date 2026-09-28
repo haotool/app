@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { evaluateExpression } from '../lib/evaluateExpression';
 import { randomAvatarSeed } from '../lib/avatar';
 import { fetchMoneyboxRate } from '../lib/exchangeRate';
+import { isFxV3Public } from '@app/shared/fx/public';
 import i18n from '../i18n';
 import type { CurrencyCode } from '../config/currencies';
 
@@ -37,6 +38,8 @@ export interface ExpenseRecord {
   currency?: CurrencyCode;
   /** 記帳當下的匯率快照（1 TWD = X KRW 賣出價）；供 KRW 金額回溯換算 TWD，舊資料為 null。 */
   exchangeRateKrwPerTwd?: number | null;
+  /** 這筆記帳使用未經 v3 驗證的 fallback 匯率。 */
+  rateIsFallback?: boolean;
 }
 
 export interface Trip {
@@ -309,6 +312,7 @@ export const useStore = create<AppState>()(
             createdAt: Date.now(),
             currency: state.currency,
             exchangeRateKrwPerTwd: state.krwPerTwd,
+            ...(isFxV3Public() && state.rateIsFallback ? { rateIsFallback: true } : {}),
           };
 
           return {

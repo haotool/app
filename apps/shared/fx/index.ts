@@ -33,9 +33,12 @@ import { FX_PROVIDER_METADATA } from './provider-metadata.mjs';
 export { MINOR_UNITS, minorUnit } from './minor-units.mjs';
 const D = Decimal.clone({ precision: 80, rounding: Decimal.ROUND_HALF_EVEN });
 const validatedQuotes = new WeakSet<QuoteSnapshot>();
-const validatedQuoteSignatures = new WeakMap<QuoteSnapshot, string>();
-function quoteSignature(quote: QuoteSnapshot): string {
-  return JSON.stringify(quote);
+function deepFreeze<T>(value: T): T {
+  if (value !== null && typeof value === 'object') {
+    if (!Object.isFrozen(value)) Object.freeze(value);
+    for (const child of Object.values(value)) deepFreeze(child);
+  }
+  return value;
 }
 export function isValidAmount(value: string): boolean {
   return (
@@ -195,8 +198,6 @@ export function normalizeQuote(row: SourceQuote): QuoteSnapshot[] {
       sourceQuote: structuredClone(row),
       methodVersion: '1',
     };
-    validatedQuotes.add(quote);
-    validatedQuoteSignatures.set(quote, quoteSignature(quote));
     return quote;
   });
 }
@@ -579,16 +580,8 @@ export function normalizeMoneyboxSnapshot(value: unknown): QuoteSnapshot[] {
 
 /** Structural validation and reconstruction of the economic meaning are both required. */
 export function validateQuoteSnapshot(value: unknown): value is QuoteSnapshot {
-  if (value !== null && typeof value === 'object' && validatedQuotes.has(value as QuoteSnapshot)) {
-    try {
-      return (
-        validatedQuoteSignatures.get(value as QuoteSnapshot) ===
-        quoteSignature(value as QuoteSnapshot)
-      );
-    } catch {
-      return false;
-    }
-  }
+  if (value !== null && typeof value === 'object' && validatedQuotes.has(value as QuoteSnapshot))
+    return true;
   if (!validateQuoteShape(value)) return false;
   try {
     const expected = normalizeQuote(value.sourceQuote).find(
@@ -608,8 +601,8 @@ export function validateQuoteSnapshot(value: unknown): value is QuoteSnapshot {
         'methodVersion',
       ].every((key) => expected[key as keyof QuoteSnapshot] === value[key as keyof QuoteSnapshot]);
     if (valid) {
+      deepFreeze(value);
       validatedQuotes.add(value);
-      validatedQuoteSignatures.set(value, quoteSignature(value));
     }
     return valid;
   } catch {

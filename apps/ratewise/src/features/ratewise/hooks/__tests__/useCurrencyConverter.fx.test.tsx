@@ -81,6 +81,7 @@ describe('v3 direction quotes', () => {
 it('refreshes quote freshness when a newer release arrives and while idle', async () => {
   vi.useFakeTimers();
   vi.setSystemTime(new Date('2026-09-29T12:00:00Z'));
+  useConverterStore.setState({ providerPreference: { mode: 'best' } });
   const quoteAt = (sourcePublishedAt: string) =>
     normalizeQuote({
       ...quotes[0]!.sourceQuote,
@@ -92,14 +93,18 @@ it('refreshes quote freshness when a newer release arrives and while idle', asyn
     ({ rows }) => useCurrencyConverter({ fxQuotes: rows, rateType: 'cash' }),
     { initialProps: { rows: quoteAt('2026-09-28T10:00:00Z') } },
   );
+  act(() => result.current.handleFromAmountChange('320'));
 
   rerender({ rows: quoteAt('2026-09-28T12:00:30Z') });
   expect(result.current.estimateFreshness).toBe('fresh');
   expect(result.current.rankedProviderQuotes.length).toBeGreaterThan(0);
+  expect(result.current.toAmount).toBe('10');
 
-  await act(async () => vi.advanceTimersByTimeAsync(60_000));
-  expect(result.current.estimateFreshness).toBe('stale');
+  await act(async () => vi.advanceTimersByTimeAsync(120_000));
+  expect(result.current.estimateFreshness).toBe('unknown');
   expect(result.current.rankedProviderQuotes).toEqual([]);
+  expect(result.current.fxEstimate.status).toBe('unavailable');
+  expect(result.current.toAmount).toBe('');
 });
 
 it('does not substitute a missing manual provider, and distinguishes zero from unavailable', async () => {

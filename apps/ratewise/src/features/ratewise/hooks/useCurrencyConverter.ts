@@ -134,6 +134,7 @@ export const useFxCurrencyConverter = (options: UseCurrencyConverterOptions = {}
 
   const [fromAmount, setFromAmount] = useState<string>(DEFAULT_CONVERTER_AMOUNT);
   const [toAmount, setToAmount] = useState<string>('');
+  const [quoteContextTick, setQuoteContextTick] = useState(0);
 
   const [multiAmounts, setMultiAmounts] = useState<MultiAmountsState>(() =>
     createInitialMultiAmounts(useConverterStore.getState().baseCurrency),
@@ -206,6 +207,12 @@ export const useFxCurrencyConverter = (options: UseCurrencyConverterOptions = {}
     }),
     [serviceCountry, rateType, branchId],
   );
+  // Both conversion and provider ranking use the same clock snapshot.
+  const activeContext = useMemo(
+    () => getQuoteContext(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- time advances on this coarse tick.
+    [getQuoteContext, fxQuotes, fx.releaseId, quoteContextTick],
+  );
 
   const estimateQuotePair = useCallback(
     (
@@ -215,7 +222,7 @@ export const useFxCurrencyConverter = (options: UseCurrencyConverterOptions = {}
       inputMode: EstimateRequest['mode'] = 'EXACT_IN',
     ): EstimateResult | DerivedEstimateResult => {
       const request = { amount, fromCurrency: from, toCurrency: to, mode: inputMode };
-      const context = getQuoteContext();
+      const context = activeContext;
       const quote =
         providerPreference.mode === 'best'
           ? (rankQuotes(fxQuotes, request, context, providerStatuses)[0]?.quote ?? null)
@@ -255,7 +262,7 @@ export const useFxCurrencyConverter = (options: UseCurrencyConverterOptions = {}
       }
       return estimate(null, request);
     },
-    [fxQuotes, providerPreference, getQuoteContext, providerStatuses],
+    [fxQuotes, providerPreference, activeContext, providerStatuses],
   );
 
   // 輸入邊界：計算機結果依輸入幣別 minor unit 正規化；負數以絕對值估算後還原符號。
@@ -577,7 +584,6 @@ export const useFxCurrencyConverter = (options: UseCurrencyConverterOptions = {}
   }, [favorites]);
 
   const activeAmountForPair = lastEdited === 'from' ? fromAmount : toAmount;
-  const [quoteContextTick, setQuoteContextTick] = useState(0);
   useEffect(() => {
     const timer = window.setInterval(
       () => setQuoteContextTick((tick) => tick + 1),
@@ -602,12 +608,6 @@ export const useFxCurrencyConverter = (options: UseCurrencyConverterOptions = {}
           ? [selectedQuote]
           : [],
     [fxEstimate, fxQuotes, selectedQuote],
-  );
-  // Keep one freshness time across the render; quote/release changes and a coarse clock tick refresh it.
-  const activeContext = useMemo(
-    () => getQuoteContext(),
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- these intentionally invalidate the time snapshot.
-    [getQuoteContext, fxQuotes, fx.releaseId, quoteContextTick],
   );
   const estimateFreshness = useMemo(() => {
     const states = selectedQuoteEvidence.map((quote) => freshness(quote, activeContext.now));

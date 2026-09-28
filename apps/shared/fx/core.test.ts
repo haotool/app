@@ -204,13 +204,27 @@ it('never recommends missing-time, fallback, reference, unsupported-fee or zero 
   }
   expect(rankQuotes(normalizeQuote(row), { ...request, amount: '0' }, ctx)).toEqual([]);
 });
-it('clones original evidence and rejects later mutations of a quoted source', () => {
+it('clones original evidence and freezes a quote after successful validation', () => {
   const mutable = { ...row };
   const q = normalizeQuote(mutable)[1]!;
   mutable.providerSellPrice = '500';
   expect(q.sourceQuote.providerSellPrice).toBe('0.025');
-  q.sourceQuote.providerSellPrice = '100';
-  expect(validateQuoteSnapshot(q)).toBe(false);
+  expect(validateQuoteSnapshot(q)).toBe(true);
+  expect(Object.isFrozen(q)).toBe(true);
+  expect(Object.isFrozen(q.sourceQuote)).toBe(true);
+  expect(() => {
+    q.sourceQuote.providerSellPrice = '100';
+  }).toThrow();
+  expect(validateQuoteSnapshot(q)).toBe(true);
+});
+it('prevents a toJSON hook from hiding quote mutations after validation', () => {
+  const q = normalizeQuote(row)[1]!;
+  Object.defineProperty(q, 'toJSON', { value: () => ({ rate: '40' }) });
+  expect(validateQuoteSnapshot(q)).toBe(true);
+  expect(() => {
+    q.rate = '999';
+  }).toThrow();
+  expect(validateQuoteSnapshot(q)).toBe(true);
 });
 it('keys quote IDs by source publication time, not successful polling (ADR B3 #5)', () => {
   const original = normalizeQuote(row)[1]!;

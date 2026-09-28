@@ -67,16 +67,32 @@ describe('FX v3 storage retention', () => {
     expect(localStorage.getItem('ratewise.fx.v3.history:f:series')).not.toBeNull();
   });
 
-  it('drops only FX cache keys when storage quota is exceeded', async () => {
-    localStorage.setItem('ratewise.fx.v3.history:current:series', '[]');
+  it('evicts oldest history and retries an active release write after quota', async () => {
+    saveHistory('ratewise.fx.v3.history:old:series', 1);
     localStorage.setItem('split-meow-storage', 'settings');
+    const setItem = vi.spyOn(localStorage, 'setItem');
+    setItem.mockImplementationOnce(() => {
+      throw new DOMException('quota', 'QuotaExceededError');
+    });
+
+    await expect(refreshActiveRelease()).resolves.toBe(release);
+    expect(localStorage.getItem('ratewise.fx.v3.history:old:series')).toBeNull();
+    expect(localStorage.getItem('ratewise.fx.v3.active')).toBe(JSON.stringify(release));
+    expect(localStorage.getItem('split-meow-storage')).toBe('settings');
+  });
+
+  it('keeps the previous active release when quota persists after history eviction', async () => {
+    const previous = JSON.stringify({ previous: true });
+    localStorage.setItem('ratewise.fx.v3.active', previous);
+    saveHistory('ratewise.fx.v3.history:old:series', 1);
     vi.spyOn(localStorage, 'setItem').mockImplementation(() => {
       throw new DOMException('quota', 'QuotaExceededError');
     });
 
     await expect(refreshActiveRelease()).resolves.toBe(release);
-    expect(localStorage.getItem('split-meow-storage')).toBe('settings');
-    expect(keys().some((key) => key.startsWith('ratewise.fx.v3.'))).toBe(false);
+
+    expect(localStorage.getItem('ratewise.fx.v3.history:old:series')).toBeNull();
+    expect(localStorage.getItem('ratewise.fx.v3.active')).toBe(previous);
   });
 
   it('clears the v3 namespace on rollback without touching user settings', () => {

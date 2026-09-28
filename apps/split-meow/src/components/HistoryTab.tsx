@@ -95,7 +95,6 @@ export function HistoryTab() {
     currency,
     krwPerTwd,
     rateUpdatedAtIso,
-    rateIsFallback,
     settledPayments,
   } = useStore(
     useShallow((s) => ({
@@ -106,7 +105,6 @@ export function HistoryTab() {
       currency: s.currency,
       krwPerTwd: s.krwPerTwd,
       rateUpdatedAtIso: s.rateUpdatedAtIso,
-      rateIsFallback: s.rateIsFallback,
       settledPayments: s.settledPayments,
     })),
   );
@@ -527,14 +525,14 @@ export function HistoryTab() {
                                     {t('settings.rate_stale')}
                                   </p>
                                 )}
-                                {from !== 'KRW' && isFxV3Public() && rateIsFallback && (
-                                  <p className="text-[10px] font-medium text-tertiary whitespace-nowrap">
-                                    {t('settings.rate_fallback')}
-                                  </p>
-                                )}
                               </>
                             );
                           })()}
+                          {isFxV3Public() && exp.rateIsFallback && (
+                            <p className="text-[10px] font-medium text-tertiary whitespace-nowrap">
+                              {t('settings.rate_fallback')}
+                            </p>
+                          )}
                           <p className="text-[10px] font-medium text-secondary uppercase tracking-wider">
                             {t('history.participants', { count: exp.participantIds.length })}
                           </p>

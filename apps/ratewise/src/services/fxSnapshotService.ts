@@ -64,17 +64,46 @@ function pruneHistoryCache(): void {
   }
 }
 
+function oldestHistoryCacheKey(): string | undefined {
+  return storageKeys()
+    .filter((key) => key.startsWith(HISTORY_CACHE_PREFIX))
+    .map((key) => {
+      let savedAt = 0;
+      try {
+        const entry: unknown = JSON.parse(getStorage()?.getItem(key) ?? 'null');
+        if (
+          entry !== null &&
+          typeof entry === 'object' &&
+          typeof (entry as { savedAt?: unknown }).savedAt === 'number'
+        )
+          savedAt = (entry as { savedAt: number }).savedAt;
+      } catch {
+        // Invalid/legacy entries are treated as oldest.
+      }
+      return { key, savedAt };
+    })
+    .sort((a, b) => a.savedAt - b.savedAt || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0))[0]?.key;
+}
+
 function saveCache(key: string, value: string): void {
-  try {
-    getStorage()?.setItem(key, value);
-  } catch (error) {
-    const quotaError = error as { name?: string; code?: number };
-    if (
-      quotaError?.name === 'QuotaExceededError' ||
-      quotaError?.code === 22 ||
-      quotaError?.code === 1014
-    )
-      clearFxV3Storage();
+  const storage = getStorage();
+  if (!storage) return;
+  for (;;) {
+    try {
+      storage.setItem(key, value);
+      return;
+    } catch (error) {
+      const quotaError = error as { name?: string; code?: number };
+      if (
+        quotaError?.name !== 'QuotaExceededError' &&
+        quotaError?.code !== 22 &&
+        quotaError?.code !== 1014
+      )
+        return;
+      const oldest = oldestHistoryCacheKey();
+      if (!oldest) return;
+      storage.removeItem(oldest);
+    }
   }
 }
 

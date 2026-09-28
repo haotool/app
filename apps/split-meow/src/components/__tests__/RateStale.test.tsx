@@ -122,11 +122,28 @@ describe('v3 MoneyBox legacy fallback label', () => {
 
   it('shows fallback copy in History and Settings when enabled', () => {
     gate.enabled = true;
-    useStore.setState({ currency: 'KRW', expenses: [EXPENSE_TWD] });
+    useStore.setState({ currency: 'KRW', expenses: [{ ...EXPENSE_TWD, rateIsFallback: true }] });
     const history = renderWith(<HistoryTab />);
     expect(screen.getByText(i18n.t('settings.rate_fallback'))).toBeInTheDocument();
     history.unmount();
     renderWith(<SettingsTab />);
     expect(screen.getByText(i18n.t('settings.rate_fallback'))).toBeInTheDocument();
+  });
+
+  it('uses each KRW expense provenance and leaves legacy expenses unlabelled', () => {
+    gate.enabled = true;
+    useStore.setState({
+      currency: 'TWD',
+      krwPerTwd: 40,
+      rateIsFallback: false,
+      expenses: [
+        { ...EXPENSE_TWD, id: 'krw', totalAmount: 9000, currency: 'KRW', rateIsFallback: true },
+        { ...EXPENSE_TWD, id: 'legacy', totalAmount: 4000, currency: 'KRW' },
+      ],
+    });
+    renderWith(<HistoryTab />);
+    expect(screen.getByText(i18n.t('settings.rate_fallback'))).toBeInTheDocument();
+    expect(screen.queryByText(/≈ NT\$/)).not.toBeInTheDocument();
+    expect(screen.getAllByText(i18n.t('settings.rate_fallback'))).toHaveLength(1);
   });
 });
