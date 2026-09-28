@@ -17,8 +17,18 @@ export function extractAppVersion(html) {
   return match?.[1] ?? null;
 }
 
+// SemVer 2.0.0 §10：比對版本時忽略 build metadata（例如 2.28.4+build.2336）
+const stripBuildMetadata = (version) => version?.split('+')[0];
+
+export function matchesReleaseVersion(observedVersion, expectedVersion) {
+  return (
+    Boolean(observedVersion) &&
+    stripBuildMetadata(observedVersion) === stripBuildMetadata(expectedVersion)
+  );
+}
+
 export function isExpectedAppVersion(html, expectedVersion) {
-  return extractAppVersion(html) === expectedVersion;
+  return matchesReleaseVersion(extractAppVersion(html), expectedVersion);
 }
 
 export function buildVersionProbeUrl(baseUrl, probeToken) {
@@ -93,7 +103,7 @@ export async function waitForExpectedVersion(expectedVersion, options = {}) {
       const html = await fetchText(probeUrl, fetchImpl);
       lastObservedVersion = extractAppVersion(html);
 
-      if (lastObservedVersion === expectedVersion) {
+      if (matchesReleaseVersion(lastObservedVersion, expectedVersion)) {
         console.log(`✅ RateWise 正式站版本已就緒：${lastObservedVersion}（${attempts} 次探測）`);
         return { attempts, version: lastObservedVersion };
       }
