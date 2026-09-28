@@ -1,5 +1,12 @@
 # @app/haotool
 
+## 1.1.6
+
+### Patch Changes
+
+- Updated dependencies [2447ee9]
+  - @app/shared@0.0.3
+
 ## 1.1.5
 
 ### Patch Changes

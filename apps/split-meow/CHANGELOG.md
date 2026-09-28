@@ -1,5 +1,13 @@
 # @app/split-meow
 
+## 0.3.4
+
+### Patch Changes
+
+- 2447ee9: 為匯率 v3 正式啟用預作準備（效能、快取保留、費用匯率快照一致（僅啟用後）與回滾清理）；啟用前使用者可見行為不變。
+- Updated dependencies [2447ee9]
+  - @app/shared@0.0.3
+
 ## 0.3.3
 
 ### Patch Changes

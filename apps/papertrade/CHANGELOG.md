@@ -1,5 +1,12 @@
 # @app/papertrade
 
+## 0.7.4
+
+### Patch Changes
+
+- Updated dependencies [2447ee9]
+  - @app/shared@0.0.3
+
 ## 0.7.3
 
 ### Patch Changes
