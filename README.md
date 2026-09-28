@@ -235,6 +235,7 @@ haotool-app/
 │       ├── update-historical-rates.yml # 歷史匯率更新
 │       ├── update-latest-rates.yml     # 最新匯率更新
 │       ├── update-moneybox-rates.yml   # MoneyBox 匯率更新
+│       ├── publish-fx-v3.yml           # 匯率 v3 發布（reusable，預設關閉）
 │       └── update-seo-rate-examples.yml # SEO 範例匯率更新
 ├── package.json          # Monorepo 根配置
 ├── pnpm-workspace.yaml   # pnpm workspace 配置
