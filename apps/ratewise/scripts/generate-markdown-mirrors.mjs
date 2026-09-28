@@ -24,6 +24,7 @@ import { APP_INFO } from '../src/config/app-info.ts';
 import { FX_V3_PUBLIC } from '../src/config/api-endpoints.ts';
 import { resolveFxV3Ternaries } from './lib/fx-v3-ternary.mjs';
 import { API_ATTRIBUTION } from '../src/config/seo-metadata/api-attribution.ts';
+import { FX_ATTRIBUTION_METADATA } from '../../shared/fx/provider-metadata.mjs';
 
 /**
  * RATES_API 端點重建（與 src/config/api-endpoints.ts 同構）。
@@ -220,6 +221,8 @@ function buildHomeMd() {
 ## 常見問題
 
 ${formatFaq(faq)}
+
+${FX_ATTRIBUTION_METADATA.exchangeRateApi.attributionLine}
 
 ## 對應內容入口
 

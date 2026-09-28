@@ -5,6 +5,13 @@ import { FX_PUBLISHER } from '../../../../shared/fx/publisher-metadata.mjs';
 import { ensurePrerenderDist } from '../../__tests__/helpers/ensurePrerenderDist';
 import { API_ATTRIBUTION } from '../seo-metadata/api-attribution';
 import { OPEN_DATA_PAGE_SEO } from '../seo-metadata/core';
+import { FX_ATTRIBUTION_METADATA } from '../../../../shared/fx/provider-metadata.mjs';
+import {
+  CURRENCY_SEO_PATHS,
+  INDEXABLE_AMOUNT_SEO_PATHS,
+  INDEXABLE_REVERSE_AMOUNT_SEO_PATHS,
+  REVERSE_CURRENCY_SEO_PATHS,
+} from '../seo-paths';
 
 const ROOT = resolve(import.meta.dirname, '../../..');
 const PUBLIC = resolve(ROOT, 'public');
@@ -13,6 +20,65 @@ const noNofollowBan = /(不得|禁止|must not|may not).{0,20}nofollow/i;
 const noRateCopyright = /著作權所有|all rights reserved|©.*(匯率|RateWise)/i;
 
 describe('RateWise API attribution SSOT', () => {
+  it('renders ExchangeRate-API attribution on the homepage and each currency comparison page', async () => {
+    const landingPaths = [
+      ...CURRENCY_SEO_PATHS,
+      ...REVERSE_CURRENCY_SEO_PATHS,
+      ...INDEXABLE_AMOUNT_SEO_PATHS,
+      ...INDEXABLE_REVERSE_AMOUNT_SEO_PATHS,
+    ];
+    const currencyPaths = landingPaths.map((path) =>
+      resolve(ROOT, 'dist', path.replace(/^\//, ''), 'index.html'),
+    );
+    const homePath = resolve(ROOT, 'dist/index.html');
+    await ensurePrerenderDist({
+      projectRoot: ROOT,
+      distRoot: resolve(ROOT, 'dist'),
+      requiredPaths: [homePath, ...currencyPaths],
+      sourcePaths: [
+        resolve(ROOT, 'src/components/CurrencyLandingPage.tsx'),
+        resolve(ROOT, 'src/components/HomepageSEOSection.tsx'),
+        resolve(ROOT, 'src/components/ExchangeRateApiAttribution.tsx'),
+      ],
+    });
+
+    const provider = FX_ATTRIBUTION_METADATA.exchangeRateApi;
+    expect(provider.name).toBe('ExchangeRate-API');
+    expect(provider.sourceUrl).toBe(['https:', '', 'www.exchangerate-api.com'].join('/'));
+    expect(provider.requiredText).toBe('Rates By Exchange Rate API');
+    const escapedUrl = provider.sourceUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const expectedLink = new RegExp(`<a href="${escapedUrl}">${provider.requiredText}<\\/a>`, 'g');
+    for (const path of [homePath, ...currencyPaths]) {
+      const html = readFileSync(path, 'utf8');
+      expect(html.match(expectedLink), path).toHaveLength(1);
+    }
+  });
+
+  it('includes the plain-text attribution in mirrors containing the spread figures', () => {
+    const provider = FX_ATTRIBUTION_METADATA.exchangeRateApi;
+    for (const file of ['index.md', 'llms.txt', 'llms-full.txt']) {
+      const content = readFileSync(resolve(PUBLIC, file), 'utf8');
+      if (content.includes('主要貨幣通常約 1～2%')) {
+        expect(content).toContain(provider.attributionLine);
+      }
+    }
+  });
+
+  it('keeps the provider URL literal in shared provider metadata only', () => {
+    const providerUrl = FX_ATTRIBUTION_METADATA.exchangeRateApi.sourceUrl;
+    const sourceRoots = [
+      resolve(ROOT, 'src'),
+      resolve(ROOT, 'scripts'),
+      resolve(ROOT, '../shared/fx'),
+    ];
+    const literals = sourceRoots
+      .flatMap(collectSourceFiles)
+      .filter((file) => readFileSync(file, 'utf8').includes(providerUrl));
+    const ssotPath = resolve(ROOT, '../shared/fx/provider-metadata.mjs');
+    expect(literals).toEqual([ssotPath]);
+    expect(readFileSync(ssotPath, 'utf8').split(providerUrl)).toHaveLength(2);
+  });
+
   it('does not require dofollow or forbid nofollow in terms or generated surfaces', () => {
     const files = [
       'open-data.md',
@@ -112,3 +178,11 @@ describe('RateWise API attribution SSOT', () => {
     );
   });
 });
+
+function collectSourceFiles(directory: string): string[] {
+  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const path = resolve(directory, entry.name);
+    if (entry.isDirectory()) return collectSourceFiles(path);
+    return /\.(?:mjs|mts|ts|tsx)$/.test(entry.name) ? [path] : [];
+  });
+}
