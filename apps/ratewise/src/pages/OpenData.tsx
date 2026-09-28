@@ -9,6 +9,8 @@ import { OPEN_DATA_PAGE_SEO } from '../config/seo-metadata';
 import { APP_INFO } from '../config/app-info';
 import {
   CDN_DATA_BASE,
+  FX_V3_AVAILABILITY_NOTE,
+  FX_V3_PUBLIC,
   PROVIDER_RATES_PATH,
   RATES_API,
   RAW_DATA_BASE,
@@ -59,7 +61,19 @@ const DATA_SOURCES = [
 
 // ─── API 端點 ──────────────────────────────────────────────────────────────────
 
+const V3_CURRENT_ENDPOINT = {
+  method: 'GET',
+  path: '/public/rates/v3/current.json',
+  cdnUrl: RATES_API.v3CurrentCdn,
+  rawUrl: RATES_API.v3CurrentRaw,
+  description: 'v3 current release pointer',
+  badge: 'SHA-256 驗證',
+  note: `先讀取 current pointer，再沿 manifest 取得 provider snapshot；使用前必須驗證每個 immutable object 的 SHA-256。${FX_V3_AVAILABILITY_NOTE}`,
+} as const;
+
+// FX_V3_PUBLIC=false 時不宣告 v3 端點，維持 v2 公開語意。
 const API_ENDPOINTS = [
+  ...(FX_V3_PUBLIC ? [V3_CURRENT_ENDPOINT] : []),
   {
     method: 'GET',
     path: '/public/rates/latest.json',
@@ -67,7 +81,9 @@ const API_ENDPOINTS = [
     rawUrl: RATES_API.latestRaw,
     description: '最新匯率',
     badge: '每 5 分鐘更新',
-    note: '包含 17 種外幣的現金與即期四種報價，TWD 為基準幣；App 匯率模式請依 rateModeStrategies 選取 buy / sell / mid 欄位。',
+    note: FX_V3_PUBLIC
+      ? 'legacy 相容投影；新整合請使用 v3 current pointer，以 fromCurrency → toCurrency 與 decimal string rate 為準。'
+      : '包含 17 種外幣的現金與即期四種報價，TWD 為基準幣；App 匯率模式請依 rateModeStrategies 選取 buy / sell / mid 欄位。',
   },
   {
     method: 'GET',
@@ -107,7 +123,16 @@ const CODE_EXAMPLES = [
     id: 'curl',
     label: 'cURL',
     language: 'bash',
-    code: `# 最新匯率
+    code: FX_V3_PUBLIC
+      ? `# v3 current pointer（使用前驗證 manifest/object SHA-256）
+curl -s "${RATES_API.v3CurrentCdn}" | python3 -m json.tool
+
+# legacy 相容投影
+curl -s "${RATES_API.latestCdn}" | python3 -m json.tool
+
+# 歷史匯率（2026-03-19）
+curl -s "${RATES_API.historyCdnExample}"`
+      : `# 最新匯率
 curl -s "${RATES_API.latestCdn}" | python3 -m json.tool
 
 # 歷史匯率（2026-03-19）
@@ -117,7 +142,26 @@ curl -s "${RATES_API.historyCdnExample}"`,
     id: 'js',
     label: 'JavaScript',
     language: 'javascript',
-    code: `const res = await fetch("${RATES_API.latestCdn}");
+    code: FX_V3_PUBLIC
+      ? `const currentUrl = "${RATES_API.v3CurrentCdn}";
+const current = await fetch(currentUrl).then((res) => res.json());
+const base = new URL("./", currentUrl).toString();
+
+async function verifiedJson(ref) {
+  const text = await fetch(new URL(ref.path, base)).then((res) => res.text());
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  const hash = [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
+  if (hash !== ref.sha256) throw new Error("SHA-256 mismatch");
+  return JSON.parse(text);
+}
+
+const manifest = await verifiedJson(current.manifest);
+const provider = manifest.providers.find(({ providerId }) => providerId === "bot");
+if (!provider) throw new Error("Taiwan Bank snapshot unavailable");
+const snapshot = await verifiedJson(provider.snapshot);
+const quote = snapshot.quotes.find((q) => q.fromCurrency === "USD" && q.toCurrency === "TWD");
+console.log(quote?.rate, quote?.sourceQuote.sourcePublishedAt);`
+      : `const res = await fetch("${RATES_API.latestCdn}");
 const data = await res.json();
 
 const rateMode = "auto"; // auto | sell | mid，對應 App 設定
@@ -142,7 +186,27 @@ console.log(data.details.USD.cash.sell, data.details.USD.cash.buy);`,
     id: 'python',
     label: 'Python',
     language: 'python',
-    code: `import requests
+    code: FX_V3_PUBLIC
+      ? `import hashlib
+import json
+import requests
+
+current_url = "${RATES_API.v3CurrentCdn}"
+current = requests.get(current_url).json()
+base = current_url.rsplit("/", 1)[0] + "/"
+
+def verified_json(ref):
+    text = requests.get(base + ref["path"]).text
+    if hashlib.sha256(text.encode()).hexdigest() != ref["sha256"]:
+        raise ValueError("SHA-256 mismatch")
+    return json.loads(text)
+
+manifest = verified_json(current["manifest"])
+provider = next(p for p in manifest["providers"] if p["providerId"] == "bot")
+snapshot = verified_json(provider["snapshot"])
+quote = next(q for q in snapshot["quotes"] if q["fromCurrency"] == "USD" and q["toCurrency"] == "TWD")
+print(quote["rate"], quote["sourceQuote"]["sourcePublishedAt"])`
+      : `import requests
 
 data = requests.get("${RATES_API.latestCdn}").json()
 
@@ -561,10 +625,19 @@ const OpenData = () => {
 
           {/* ── Hero ── */}
           <div className="mb-10">
-            <h1 className="mb-3 text-4xl font-bold text-text">開放資料 API</h1>
+            <h1 className="mb-3 text-4xl font-bold text-text">
+              {FX_V3_PUBLIC ? '開放資料 API v3' : '開放資料 API'}
+            </h1>
             <p className="mb-4 max-w-2xl text-lg text-text-muted">
-              台灣銀行牌告匯率 JSON 端點，免費、免 API Key、免帳號。
+              {FX_V3_PUBLIC
+                ? '方向明確、可驗證 hash chain 的匯率 JSON 端點，公開讀取、免 API Key；資料使用依各 provider 條款。'
+                : '台灣銀行牌告匯率 JSON 端點，免費、免 API Key、免帳號。'}
             </p>
+            {FX_V3_PUBLIC && (
+              <p className="mb-4 max-w-2xl rounded-lg border border-amber-200/50 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/20 dark:text-amber-200">
+                {FX_V3_AVAILABILITY_NOTE}
+              </p>
+            )}
             <div className="flex flex-wrap gap-2">
               {[
                 `${SUPPORTED_CURRENCIES.length} 種幣別`,
@@ -1039,8 +1112,12 @@ const OpenData = () => {
 
             <div className="space-y-2">
               {[
-                { icon: '✅', content: '允許：個人專案、學術研究、非商業 App、教學、媒體引用' },
-                { icon: '✅', content: '允許：標示「資料來源：臺灣銀行牌告匯率」' },
+                { icon: 'ℹ️', content: '使用或再散布前，請先確認各 provider 的條款與授權範圍。' },
+                {
+                  icon: 'ℹ️',
+                  content:
+                    '公開頁面要求標示資料來源與 attribution；目前 metadata 未提供 provider 授權保證。',
+                },
                 {
                   icon: '⚠️',
                   content: (
@@ -1084,7 +1161,9 @@ const OpenData = () => {
               </p>
               <p>
                 <span className="font-semibold text-text">資料版權</span>
-                ：匯率數據原始版權屬臺灣銀行。本專案以自動化方式公開抓取官方牌告，使用前請自行確認是否符合臺灣銀行使用規範。
+                ：臺灣銀行與 MoneyBox 資料的原始權利、使用及再散布條款分別由各 provider 決定；本頁與
+                provider metadata 只提供來源及 attribution，不把 GPL
+                程式碼授權套用到來源資料。使用前請自行確認 provider 規範。
               </p>
               <p>
                 <span className="font-semibold text-text">免責聲明</span>

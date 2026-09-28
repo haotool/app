@@ -6,11 +6,6 @@
 
 name: Update MoneyBox Exchange Rates
 
-# 並發控制：與台灣銀行匯率共用同一 group，避免同時推送至 data 分支衝突
-concurrency:
-  group: data-branch-push
-  cancel-in-progress: false
-
 on:
   schedule:
     # 與台銀 latest workflow 錯開 2 分鐘，降低 GitHub schedule 高峰與同 repo concurrency 衝突。
@@ -25,8 +20,17 @@ on:
       - '.github/workflows/update-moneybox-rates.yml'
 
 jobs:
+  # v2 管線：fetch → history → commit → purge。刻意不安裝依賴、不跑 generate:fx、不發布 v3，
+  # 讓 v3 發布或依賴安裝失敗永遠不會阻斷既有公開資料更新。
   update-moneybox:
     runs-on: ubuntu-latest
+    # 並發控制：確保同一時間只有一個 v2 job 推送至 data 分支（與其他 rate workflow 共用 group）。
+    # 置於 job 層級：v3 publish job 使用獨立 group，其執行時間不延長 v2 鎖、不致 v2 排隊被取代。
+    concurrency:
+      group: data-branch-push
+      cancel-in-progress: false
+    outputs:
+      fetch_outcome: ${{ steps.fetch-rates.outcome }}
 
     permissions:
       contents: write
@@ -35,7 +39,8 @@ jobs:
 
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
-      MONEYBOX_FETCH_OUTPUT_FILE: .moneybox-current-fetch.json
+      # 必須是絕對路徑：fetch 腳本在 _fx-code 執行，history step 在 data checkout 執行。
+      MONEYBOX_FETCH_OUTPUT_FILE: ${{ github.workspace }}/.moneybox-current-fetch.json
       MONEYBOX_LATEST_FILE: public/rates/providers/moneybox/latest.json
       MONEYBOX_HISTORY_DIR: public/rates/providers/moneybox/history
       MONEYBOX_AGGREGATE_FILE: public/rates/providers/moneybox/history-30d.json
@@ -59,12 +64,12 @@ jobs:
           git push -u origin data
           git checkout data
 
-      - name: Ensure data branch is up to date with scripts
-        run: |
-          git fetch origin main
-          git checkout origin/main -- scripts/fetch-moneybox-rates.js
-          git checkout origin/main -- apps/ratewise/src/config/api-semantics-v2.ts
-          git checkout origin/main -- public/rates/ 2>/dev/null || mkdir -p public/rates
+      - name: Checkout fetch scripts at the triggering code SHA
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.sha }}
+          path: _fx-code
+          persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
@@ -91,7 +96,7 @@ jobs:
         continue-on-error: true
         run: |
           echo "🔄 Fetching latest exchange rates from MoneyBox (明洞換匯所)..."
-          node scripts/fetch-moneybox-rates.js
+          FX_DATA_ROOT="$GITHUB_WORKSPACE/public/rates" node _fx-code/scripts/fetch-moneybox-rates.js
 
       # 恢復後必須關閉追蹤 issue：否則它會永久 open，使下一次中斷從第一次執行就被節流，
       # 失去「首次偵測大聲失敗」的曝光。關閉失敗不阻斷本次資料更新。
@@ -118,7 +123,7 @@ jobs:
           # 在跨日視窗不一致。提取失敗時 fallback 首爾 wall-clock。
           CURRENT_DATE=$(node --input-type=module -e "
             import { readFileSync } from 'node:fs';
-            const { extractSeoulSnapshotDate } = await import('./scripts/fetch-moneybox-rates.js');
+            const { extractSeoulSnapshotDate } = await import('./_fx-code/scripts/fetch-moneybox-rates.js');
             const data = JSON.parse(readFileSync(process.env.MONEYBOX_FETCH_OUTPUT_FILE, 'utf8'));
             const d = extractSeoulSnapshotDate(data);
             if (d) process.stdout.write(d);
@@ -175,51 +180,14 @@ jobs:
             echo "changed=true" >> $GITHUB_OUTPUT
           fi
 
+      # aggregate 失敗不得阻斷 v2 latest／當日快照 commit（壞檔已逐檔跳過並警示）；
+      # 失敗仍於 run 結尾標紅（見 "Fail run when aggregate failed"）。
       - name: Generate moneybox aggregate 30-day history
+        id: moneybox-aggregate
         if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true'
+        continue-on-error: true
         run: |
-          node --input-type=module << 'SCRIPT'
-          import { readdirSync, readFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
-          import { dirname, join } from 'node:path';
-
-          const HISTORY_DIR = process.env.MONEYBOX_HISTORY_DIR;
-          const OUTPUT_PATH = process.env.MONEYBOX_AGGREGATE_FILE;
-          const MAX_DAYS = 30;
-
-          if (!existsSync(HISTORY_DIR)) {
-            console.error(`❌ History dir not found: ${HISTORY_DIR}`);
-            process.exit(1);
-          }
-
-          const files = readdirSync(HISTORY_DIR)
-            .filter((f) => /^\d{4}-\d{2}-\d{2}\.json$/.test(f))
-            .sort()
-            .reverse()
-            .slice(0, MAX_DAYS);
-
-          const snapshots = [];
-          for (const file of files) {
-            const date = file.replace(/\.json$/, '');
-            try {
-              const raw = JSON.parse(readFileSync(join(HISTORY_DIR, file), 'utf-8'));
-              snapshots.push({ date, raw });
-            } catch (e) {
-              console.warn(`⚠️ Skip ${file}: ${e.message}`);
-            }
-          }
-
-          const aggregate = {
-            providerId: 'moneybox',
-            generatedAt: new Date().toISOString(),
-            snapshots,
-          };
-
-          const outDir = dirname(OUTPUT_PATH);
-          if (!existsSync(outDir)) mkdirSync(outDir, { recursive: true });
-          writeFileSync(OUTPUT_PATH, JSON.stringify(aggregate, null, 2) + '\n');
-
-          console.log(`✅ moneybox aggregate: ${snapshots.length} days → ${OUTPUT_PATH}`);
-          SCRIPT
+          RATE_DATA_ROOT=. FX_PROVIDER=moneybox node _fx-code/apps/ratewise/scripts/generate-history-aggregate.mjs
 
       - name: Commit and push changes
         if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true'
@@ -231,7 +199,8 @@ jobs:
           # 只 add 當日 history 檔與 aggregate，避免 git checkout origin/main -- public/rates/
           # 後把 data branch 既有的前幾日 history snapshot 一併 stage 成刪除（會清掉公開
           # MoneyBox history API 與趨勢圖前日資料）。SSOT：每次只動當日 snapshot + aggregate。
-          git add "$MONEYBOX_LATEST_FILE" "$TODAY_HISTORY_FILE" "$MONEYBOX_AGGREGATE_FILE"
+          git add "$MONEYBOX_LATEST_FILE" "$TODAY_HISTORY_FILE"
+          if [[ -f "$MONEYBOX_AGGREGATE_FILE" ]]; then git add "$MONEYBOX_AGGREGATE_FILE"; fi
 
           # 取得更新資訊
           UPDATE_TIME=$(node -p "JSON.parse(require('fs').readFileSync(process.env.MONEYBOX_LATEST_FILE)).updateTime")
@@ -484,3 +453,21 @@ jobs:
           echo "## Transient failure tolerated" >> $GITHUB_STEP_SUMMARY
           echo "This run's fetch failed; committed data is still fresh (<${STALENESS_THRESHOLD_HOURS}h)." >> $GITHUB_STEP_SUMMARY
           echo "Next scheduled run retries in 5 minutes." >> $GITHUB_STEP_SUMMARY
+
+      - name: Fail run when aggregate failed
+        if: steps.moneybox-aggregate.outcome == 'failure'
+        run: |
+          echo "::error::MoneyBox history-30d aggregate failed; latest and today's snapshot were still committed."
+          exit 1
+
+  # v3 發布：reusable workflow（publish-fx-v3.yml），於 v2 job 之後執行（v2 失敗時仍記錄 provider 檢查結果）。
+  # 失敗時該 job 標紅，不使用 continue-on-error；v2 資料已於前一個 job 完成 commit／purge。
+  publish-v3:
+    needs: update-moneybox
+    if: ${{ !cancelled() && vars.RATEWISE_FX_V3_ENABLED == 'true' }}
+    permissions:
+      contents: write
+    uses: ./.github/workflows/publish-fx-v3.yml
+    with:
+      provider: moneybox
+      fetch-failed: ${{ needs.update-moneybox.outputs.fetch_outcome != 'success' }}

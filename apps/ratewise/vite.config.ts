@@ -1,4 +1,5 @@
 import { defineConfig, loadEnv } from 'vite';
+import { fxV3PublicPlugin } from '../shared/fx/vite-plugin.mjs';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import viteCompression from 'vite-plugin-compression';
@@ -234,6 +235,8 @@ export default defineConfig(({ mode }) => {
       },
     },
     plugins: [
+      // v3 公開閘門建置期字面化（SSOT：shared/fx/public.ts），flag off 時移除 v3 分支與匯入。
+      fxV3PublicPlugin(),
       react(),
       // 圖片優化（自動生成 avif/webp/png 多格式）
       imagetools({
@@ -464,6 +467,12 @@ export default defineConfig(({ mode }) => {
             // Animation（重量級動畫庫）
             if (id.includes('motion') || id.includes('framer-motion')) {
               return 'vendor-motion';
+            }
+
+            // 高精度十進位（v3 匯率核心專用）：獨立 chunk 隨 fx chunk 按需載入；
+            // 若落入 vendor-commons 會讓 FX_V3_PUBLIC=false 的首頁仍預載約 13KB gzip。
+            if (id.includes('/node_modules/decimal.js/')) {
+              return 'vendor-decimal';
             }
 
             // 其他 vendor 依賴統一打包

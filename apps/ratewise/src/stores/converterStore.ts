@@ -32,6 +32,7 @@ import type {
   RateSourceKind,
 } from '../features/ratewise/rateProviderTypes';
 import { fromLegacyRateSource, resolveRateTypeForSource } from '../config/rateProviders';
+import { FX_V3_PUBLIC } from '../config/api-endpoints';
 import {
   CONVERTER_MODES,
   CURRENCY_DEFINITIONS,
@@ -77,6 +78,10 @@ const LEGACY_HISTORY_STORAGE_KEY = STORAGE_KEYS.CONVERSION_HISTORY;
 
 // ── Store 狀態介面 ───────────────────────────────────────────────────────────
 interface ConverterState {
+  serviceCountry: string;
+  branchId: string | null;
+  setServiceCountry: (country: string) => void;
+  setBranchId: (branchId: string | null) => void;
   // ── 持久化狀態 ──────────────────────────────────────────────────────────
   // 註：當前頁面 mode（single/multi）仍由 route 決定；lastConverterView 僅供冷啟動還原。
   /** 上次停留的換算模式（single / multi），供根路徑冷啟動還原。 */
@@ -125,6 +130,8 @@ interface ConverterState {
 
 type PersistentFields = Pick<
   ConverterState,
+  | 'serviceCountry'
+  | 'branchId'
   | 'lastConverterView'
   | 'fromCurrency'
   | 'toCurrency'
@@ -184,6 +191,14 @@ function buildSanitizePatch(state: ConverterState): Partial<PersistentFields> | 
   const patch: Partial<PersistentFields> = {};
   let dirty = false;
 
+  if (typeof state.serviceCountry !== 'string' || !/^[A-Z]{2}$/.test(state.serviceCountry)) {
+    patch.serviceCountry = 'TW';
+    dirty = true;
+  }
+  if (state.branchId !== null && typeof state.branchId !== 'string') {
+    patch.branchId = null;
+    dirty = true;
+  }
   if (!(CONVERTER_MODES as readonly string[]).includes(state.lastConverterView)) {
     patch.lastConverterView = DEFAULT_CONVERTER_MODE;
     dirty = true;
@@ -227,12 +242,15 @@ function buildSanitizePatch(state: ConverterState): Partial<PersistentFields> | 
     dirty = true;
   }
 
-  const resolvedRateSource = patch.rateSource ?? state.rateSource;
-  const resolvedRateType = patch.rateType ?? state.rateType;
-  const providerRateType = resolveRateTypeForSource(resolvedRateSource, resolvedRateType);
-  if (providerRateType !== resolvedRateType) {
-    patch.rateType = providerRateType;
-    dirty = true;
+  if (!FX_V3_PUBLIC) {
+    // v3 未公開時維持 main 不變式：換錢所只提供現鈔，rateType 必須收斂為 cash。
+    const resolvedRateSource = patch.rateSource ?? state.rateSource;
+    const resolvedRateType = patch.rateType ?? state.rateType;
+    const providerRateType = resolveRateTypeForSource(resolvedRateSource, resolvedRateType);
+    if (providerRateType !== resolvedRateType) {
+      patch.rateType = providerRateType;
+      dirty = true;
+    }
   }
   if (!Array.isArray(state.favorites)) {
     patch.favorites = [...DEFAULT_FAVORITES] as CurrencyCode[];
@@ -371,7 +389,11 @@ function migrateLegacyHistory(state: ConverterState): ConversionHistoryEntry[] |
 }
 
 export function categorizeHistoryEntry(entry: ConversionHistoryEntry): ConversionHistoryCategory {
-  if (entry.schemaVersion !== 2 || !entry.sourceKind || !entry.rateType) {
+  if (
+    (entry.schemaVersion !== 2 && entry.schemaVersion !== 3) ||
+    !entry.sourceKind ||
+    !entry.rateType
+  ) {
     return 'legacy';
   }
   if (entry.sourceKind === 'exchange-shop') return 'exchange-shop';
@@ -383,6 +405,10 @@ export const useConverterStore = create<ConverterState>()(
   persist(
     (set, get) => ({
       // ── 初始狀態 ────────────────────────────────────────────────────────
+      serviceCountry: 'TW',
+      branchId: null,
+      setServiceCountry: (serviceCountry) => set({ serviceCountry, branchId: null }),
+      setBranchId: (branchId) => set({ branchId }),
       lastConverterView: DEFAULT_CONVERTER_MODE,
       fromCurrency: DEFAULT_FROM_CURRENCY,
       toCurrency: DEFAULT_TO_CURRENCY,
@@ -405,7 +431,7 @@ export const useConverterStore = create<ConverterState>()(
 
       setRateType: (rateType) =>
         set((state) => ({
-          rateType: resolveRateTypeForSource(state.rateSource, rateType),
+          rateType: FX_V3_PUBLIC ? rateType : resolveRateTypeForSource(state.rateSource, rateType),
         })),
 
       setProviderPreference: (next) =>
@@ -415,7 +441,9 @@ export const useConverterStore = create<ConverterState>()(
           return {
             providerPreference: sanitized,
             rateSource: derivedRateSource,
-            rateType: resolveRateTypeForSource(derivedRateSource, state.rateType),
+            ...(FX_V3_PUBLIC
+              ? {}
+              : { rateType: resolveRateTypeForSource(derivedRateSource, state.rateType) }),
           };
         }),
 
@@ -481,6 +509,8 @@ export const useConverterStore = create<ConverterState>()(
     {
       name: CONVERTER_STORE_KEY,
       partialize: (state) => ({
+        serviceCountry: state.serviceCountry,
+        branchId: state.branchId,
         lastConverterView: state.lastConverterView,
         fromCurrency: state.fromCurrency,
         toCurrency: state.toCurrency,

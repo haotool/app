@@ -7,6 +7,7 @@ import { dirname, resolve } from 'node:path';
 import { createRequire } from 'node:module';
 import { readFileSync } from 'node:fs';
 import { APP_CONFIG } from './app.config.mjs';
+import { fxV3PublicPlugin } from '../shared/fx/vite-plugin.mjs';
 
 const _require = createRequire(import.meta.url);
 const { version: appVersion } = _require('./package.json') as { version: string };
@@ -51,6 +52,8 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       pwaVirtualDevFix(mode),
+      // v3 公開閘門建置期字面化（SSOT：shared/fx/public.ts），flag off 時不打包 decimal／驗證器。
+      fxV3PublicPlugin(),
       react(),
       tailwindcss(),
       VitePWA({

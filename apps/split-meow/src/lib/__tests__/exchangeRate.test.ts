@@ -20,6 +20,10 @@ describe('isRateStale', () => {
   it('不可解析字串 → true', () => {
     expect(isRateStale('not-a-date', NOW)).toBe(true);
   });
+
+  it('裝置時鐘落後（快照時間晚於 now）不算過期，與 main 相同', () => {
+    expect(isRateStale('2026-07-16T12:05:00Z', NOW)).toBe(false);
+  });
 });
 
 describe('fetchMoneyboxRate', () => {
@@ -72,5 +76,54 @@ describe('fetchMoneyboxRate', () => {
       rates: { TWD: { buy: 46, sell: 45, base: 1 } },
     });
     await expect(fetchMoneyboxRate()).rejects.toThrow('timestamp missing or invalid');
+  });
+});
+
+describe('FX_V3_PUBLIC=false 惰性：行為與 main 等價', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('只請求 v2 MoneyBox CDN，不請求 v3 current，也不標示參考值', async () => {
+    const { FX_V3_PUBLIC } = await import('@app/shared/fx/public');
+    expect(FX_V3_PUBLIC).toBe(false);
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () =>
+        Promise.resolve({
+          timestamp: '2026-07-15T14:58:17.205Z',
+          updateTime: '2026/07/15 23:58:17',
+          rates: { TWD: { buy: 46, sell: 45, base: 1 } },
+        }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const rate = await fetchMoneyboxRate();
+    expect(rate).not.toHaveProperty('isFallback');
+    expect(rate.updatedAtIso).toBe('2026-07-15T14:58:17.205Z');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(String(fetchMock.mock.calls[0]?.[0])).toBe(
+      'https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/providers/moneybox/latest.json',
+    );
+    expect(fetchMock.mock.calls.some(([url]) => String(url).includes('/v3/'))).toBe(false);
+  });
+
+  it('store 更新後 rateFetchFailed=false，Settings／Home 不顯示參考值提示', async () => {
+    const { useStore } = await import('../../store/useStore');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: () =>
+          Promise.resolve({
+            timestamp: new Date().toISOString(),
+            updateTime: '2026/07/15 23:58:17',
+            rates: { TWD: { buy: 46, sell: 45, base: 1 } },
+          }),
+      }),
+    );
+    useStore.setState({ krwPerTwd: null, rateUpdatedAtIso: null, rateFetchFailed: true });
+    await useStore.getState().refreshExchangeRate();
+    expect(useStore.getState()).toMatchObject({ krwPerTwd: 45, rateFetchFailed: false });
+    expect(useStore.getState().rateUpdatedAtIso).not.toBeNull();
   });
 });

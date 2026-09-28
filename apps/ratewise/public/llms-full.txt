@@ -285,15 +285,15 @@ GET https://app.haotool.org/ratewise/openapi.json
 
 - **專業性**：匯率計算邏輯與格式化策略具完整測試覆蓋（Vitest）。
 - **權威性**：資料來源為臺灣銀行官方牌告匯率（rate.bot.com.tw），無第三方轉手。
-- **可信度**：開源 GPL-3.0（github.com/haotool/app），透明可驗證；提供聯絡方式。
+- **可信度**：應用程式碼採 GPL-3.0（github.com/haotool/app），透明可驗證；臺灣銀行與 MoneyBox 資料的使用及再散布仍依各 provider 條款，不能由程式碼授權推定。
 - **經驗**：專為台灣用戶設計，依各國旅遊消費習慣提供常用金額按鈕（如韓元 10,000~300,000、日圓 1,000~30,000）。
 
 ---
 
 ## Data Source
 
-- Source: 臺灣銀行牌告匯率（Bank of Taiwan）
-- Source URL: https://rate.bot.com.tw/xrt
+- Source: 臺灣銀行牌告匯率（Bank of Taiwan）與 MoneyBox 換錢所 provider snapshot
+- Source URL: https://rate.bot.com.tw/xrt ; https://moneybox-exchange.com/zh-CHT/exchange/
 - Update mechanism: GitHub Actions 自動排程，約每 5 分鐘檢查更新
 - CDN: jsDelivr（全球 CDN，99.9% uptime）
 - Rate Types: 現金買入（cash_buy）、現金賣出（cash_sell）、即期買入（spot_buy）、即期賣出（spot_sell）

@@ -1,6 +1,115 @@
 import { describe, expect, it } from 'vitest';
 
-import { assertRatesIntegrity, resolveMutationThreshold } from '../fetch-taiwan-bank-rates.js';
+import {
+  assertRatesIntegrity,
+  resolveMutationThreshold,
+  parseTaiwanBankCSV,
+  hasRateChanges,
+  parseBoardPublishedAt,
+} from '../fetch-taiwan-bank-rates.js';
+import { parseSourceRate } from '../lib/source-quotes.mjs';
+import { normalizeBankSnapshot } from '../../apps/shared/fx/index';
+
+function csv(code: string, cashBuy: string, spotBuy: string, cashSell: string, spotSell: string) {
+  const columns = Array<string>(14).fill('-');
+  columns[0] = code;
+  columns[2] = cashBuy;
+  columns[3] = spotBuy;
+  columns[12] = cashSell;
+  columns[13] = spotSell;
+  return `header\n${columns.join(',')}`;
+}
+
+describe('台銀完整牌告契約', () => {
+  it('保留只有即期價格的幣別及原始十進位文字', () => {
+    const result = parseTaiwanBankCSV(csv('ZAR', '-', '1.7', '-', '1.90'));
+    expect(result.details['ZAR']!.spot).toEqual({ buy: 1.7, sell: 1.9 });
+    expect(result.sourceQuotes['ZAR']!.spot.sell).toBe('1.90');
+    expect(result.details['ZAR']!.cash).toEqual({ buy: null, sell: null });
+  });
+
+  it.each(['-3', '31x', 'Infinity', 'NaN', 'N/A'])(
+    '單一欄位不合法 %s 只把該欄記為 null，幣別保留（同 main）',
+    (invalid) => {
+      const result = parseTaiwanBankCSV(csv('USD', '31.38', invalid, '32.05', '31.855'));
+      expect(result.rates['USD']).toBe(32.05);
+      expect(result.details['USD']).toEqual({
+        name: '美金',
+        spot: { buy: null, sell: 31.855 },
+        cash: { buy: 31.38, sell: 32.05 },
+      });
+      expect(result.sourceQuotes['USD']!.spot.buy).toBeNull();
+    },
+  );
+
+  it('全部欄位不合法時不產生任何幣別（上層 No valid rates 中止）', () => {
+    const result = parseTaiwanBankCSV(csv('USD', 'x', 'y', 'z', 'w'));
+    expect(result.rates).toEqual({});
+    expect(result.details).toEqual({});
+  });
+
+  it.each(['cash.buy', 'spot.buy', 'spot.sell'])('單獨改變 %s 仍發布', (path) => {
+    const before = parseTaiwanBankCSV(csv('USD', '30', '31', '32', '31.5'));
+    const after = structuredClone(before);
+    const [kind, side] = path.split('.') as ['cash' | 'spot', 'buy' | 'sell'];
+    after.details['USD']![kind][side]! += 0.1;
+    expect(hasRateChanges(after, before)).toBe(true);
+    expect(hasRateChanges(before, before)).toBe(false);
+  });
+
+  it('上游 0 保留原文並正規化為 suppressed，v2 欄位與 main 一樣視為無報價', () => {
+    expect(parseSourceRate('0.00000')).toBe('0.00000');
+    expect(parseSourceRate('-')).toBeNull();
+    const result = parseTaiwanBankCSV(csv('USD', '0.00000', '31.705', '32.05', '31.855'));
+    expect(result.sourceQuotes['USD']!.cash.buy).toBe('0.00000');
+    expect(result.details['USD']!.cash.buy).toBeNull();
+    expect(result.rates['USD']).toBe(32.05);
+    const quote = normalizeBankSnapshot({
+      timestamp: '2026-09-28T00:31:00.000Z',
+      sourceQuotes: result.sourceQuotes,
+    }).find((q) => q.fromCurrency === 'USD' && q.sourceQuote.deliveryMethod === 'cash');
+    expect(quote).toMatchObject({ status: 'unavailable', unavailableReason: 'suppressed' });
+    // 全為 0 的幣別不進 v2 rates（避免熔斷把 0 當成壞值拒寫整份）。
+    const zero = parseTaiwanBankCSV(csv('USD', '0', '0', '0', '0'));
+    expect(zero.rates['USD']).toBeUndefined();
+  });
+
+  it('以 CSV Content-Disposition 檔名取得牌告掛牌時間（臺北時間）', () => {
+    const now = new Date('2026-09-28T00:40:00Z');
+    // 2026-09-28 實測：牌告頁「牌價最新掛牌時間：2026/09/28 08:31」，CSV 檔名 ExchangeRate@202609280831.csv。
+    expect(parseBoardPublishedAt('attachment; filename="ExchangeRate@202609280831.csv"', now)).toBe(
+      '2026-09-28T00:31:00.000Z',
+    );
+    expect(parseBoardPublishedAt(null, now)).toBeNull();
+    expect(parseBoardPublishedAt('attachment; filename="rates.csv"', now)).toBeNull();
+    expect(parseBoardPublishedAt('filename="ExchangeRate@202602301600.csv"', now)).toBeNull();
+    expect(parseBoardPublishedAt('filename="ExchangeRate@202609281600.csv"', now)).toBeNull();
+    // 長假舊牌告（7 天整、10 天）仍採信；早於擷取前 30 天才視為檔名異常。
+    expect(parseBoardPublishedAt('filename="ExchangeRate@202609210840.csv"', now)).toBe(
+      '2026-09-21T00:40:00.000Z',
+    );
+    expect(parseBoardPublishedAt('filename="ExchangeRate@202609180831.csv"', now)).toBe(
+      '2026-09-18T00:31:00.000Z',
+    );
+    expect(parseBoardPublishedAt('filename="ExchangeRate@202608270831.csv"', now)).toBeNull();
+  });
+
+  it('價格相同時掛牌時間變更或缺值不觸發改寫（同 main 只比牌價）', () => {
+    const before = {
+      ...parseTaiwanBankCSV(csv('USD', '30', '31', '32', '31.5')),
+      sourcePublishedAt: '2026-09-28T00:31:00.000Z',
+    };
+    expect(
+      hasRateChanges({ ...before, sourcePublishedAt: '2026-09-28T01:02:00.000Z' }, before),
+    ).toBe(false);
+    expect(hasRateChanges({ ...before, sourcePublishedAt: null }, before)).toBe(false);
+  });
+
+  it('首次快照也拒絕負值與非有限價格', () => {
+    expect(() => assertRatesIntegrity({ USD: -1 }, null, { minCurrencyCount: 1 })).toThrow();
+    expect(() => assertRatesIntegrity({ USD: Infinity }, null, { minCurrencyCount: 1 })).toThrow();
+  });
+});
 
 function makeRates(count: number, usd = 32.215): Record<string, number> {
   const rates: Record<string, number> = { USD: usd };

@@ -23,6 +23,16 @@ export const mockExchangeRates = {
     KRW: 0.02361,
     CNY: 4.39,
   },
+  // v3-unavailable fallback still consumes the legacy cash/spot detail shape.
+  // Keep the fixture contract complete so the converter does not lose its quote
+  // when the mocked latest endpoint resolves after the build-time snapshot.
+  details: {
+    JPY: {
+      name: '日圓',
+      spot: { buy: 0.2003, sell: 0.2053 },
+      cash: { buy: 0.193, sell: 0.2055 },
+    },
+  },
 };
 
 export const mockHistoricalRates = {

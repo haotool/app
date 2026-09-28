@@ -18,6 +18,7 @@ import {
   buildSemanticFieldMapping,
 } from '../src/config/api-semantics-v2.ts';
 import { buildPublicRateProviderMetadata } from '../src/config/rateProviderPublicMetadata.ts';
+import { FX_V3_PUBLIC } from '../src/config/api-endpoints.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
@@ -26,6 +27,9 @@ const pkg = JSON.parse(readFileSync(resolve(ROOT, 'package.json'), 'utf-8'));
 
 const DATA_BASE_URL = `${RAW_DATA_BASE}/public/rates`;
 const CDN_BASE_URL = `${CDN_DATA_BASE}/public/rates`;
+const FX_V3_SCHEMA_URL = 'https://app.haotool.org/ratewise/api/v3/contract.schema.json';
+const FX_V3_AVAILABILITY =
+  'v3 current 只有 data branch 的 RATEWISE_FX_V3_ENABLED=true 發布 gate 開啟後才存在；尚未啟用時請使用 legacy 相容投影。';
 
 const constantsPath = resolve(ROOT, 'src/features/ratewise/constants.ts');
 const constantsContent = readFileSync(constantsPath, 'utf-8');
@@ -45,13 +49,36 @@ const exchangeShopProvider = providerMetadata.providers.find(
   (provider) => provider.sourceKind === 'exchange-shop',
 );
 
+function buildV3Descriptor() {
+  return {
+    contract: FX_V3_SCHEMA_URL,
+    availability: FX_V3_AVAILABILITY,
+    current: `${DATA_BASE_URL}/v3/current.json`,
+    cdnCurrent: `${CDN_BASE_URL}/v3/current.json`,
+    releaseObjectTemplate: `${DATA_BASE_URL}/v3/objects/{sha256}.json`,
+    releaseManifestTemplate: `${DATA_BASE_URL}/v3/releases/{releaseId}.json`,
+    rateSemantics: 'fromCurrency -> toCurrency; rate is decimal string per 1 fromCurrency',
+    estimateModes: ['EXACT_IN', 'EXACT_OUT'],
+    hash: 'SHA-256 over final UTF-8 bytes',
+    clientRule:
+      'Verify current pointer, manifest and every referenced object before using a quote; rate is target units per 1 fromCurrency.',
+  };
+}
+
 const latestJson = {
   name: `${APP_INFO.shortName} Exchange Rate API`,
   version: pkg.version,
-  schemaVersion: API_SEMANTICS_SCHEMA_VERSION,
+  ...(FX_V3_PUBLIC
+    ? { schemaVersion: '3.0', legacySchemaVersion: API_SEMANTICS_SCHEMA_VERSION }
+    : { schemaVersion: API_SEMANTICS_SCHEMA_VERSION }),
   semanticsDoc: API_SEMANTICS_DOC.publicUrl,
-  semanticFieldMapping: buildSemanticFieldMapping(),
-  description: '臺灣銀行牌告匯率靜態 API — 資料約每 5 分鐘檢查更新，並提供 App 匯率模式欄位對照',
+  // B3 #10：宣告 3.0 時以 $schema 取代 v2 semanticFieldMapping，不得並存。
+  ...(FX_V3_PUBLIC
+    ? { $schema: 'https://app.haotool.org/ratewise/api/v3/contract.schema.json' }
+    : { semanticFieldMapping: buildSemanticFieldMapping() }),
+  description: FX_V3_PUBLIC
+    ? '匯率 API v3 — 以不可變 release manifest、SHA-256 objects 與 fromCurrency→toCurrency quote 為 canonical contract；legacy latest/history 端點僅作相容投影。'
+    : '臺灣銀行牌告匯率靜態 API — 資料約每 5 分鐘檢查更新，並提供 App 匯率模式欄位對照',
   source: '臺灣銀行牌告匯率',
   sourceUrl: 'https://rate.bot.com.tw/xrt',
   updateFrequency: 'every 5 minutes',
@@ -72,6 +99,7 @@ const latestJson = {
     moneybox: exchangeShopProvider?.cdnCurrentEndpoint,
     moneyboxHistory: exchangeShopProvider?.cdnHistoryEndpoint,
   },
+  ...(FX_V3_PUBLIC ? { v3: buildV3Descriptor() } : {}),
   providerSelection,
   providers: providers.map((provider) => ({
     ...provider,
@@ -102,6 +130,9 @@ const latestJson = {
   },
   disclaimer: '匯率僅供參考，實際交易請以金融機構公告為準。',
   license: pkg.license,
+  codeLicense: pkg.license,
+  dataLicenseNote:
+    'Provider data terms and redistribution rights are separate from the repository code license; see each provider attribution and termsUrl.',
   contact: pkg.author?.email || 'haotool.org@gmail.com',
 };
 
@@ -109,4 +140,11 @@ const apiDir = resolve(ROOT, 'public/api');
 mkdirSync(apiDir, { recursive: true });
 const apiOutputPath = resolve(apiDir, 'latest.json');
 writeFileSync(apiOutputPath, JSON.stringify(latestJson, null, 2) + '\n');
+const contractDir = resolve(apiDir, 'v3');
+mkdirSync(contractDir, { recursive: true });
+const contractSource = readFileSync(resolve(ROOT, '../shared/fx/schema.json'), 'utf8');
+writeFileSync(
+  resolve(contractDir, 'contract.schema.json'),
+  contractSource.endsWith('\n') ? contractSource : `${contractSource}\n`,
+);
 console.log(`✅ api/latest.json generated: v${pkg.version}, ${currencyKeys.length} currencies`);

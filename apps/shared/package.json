@@ -4,7 +4,11 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./analytics": "./analytics/index.ts"
+    "./analytics": "./analytics/index.ts",
+    "./fx": "./fx/index.ts",
+    "./fx/release": "./fx/release.ts",
+    "./fx/public": "./fx/public.ts",
+    "./fx/minor-units": "./fx/minor-units.mjs"
   },
   "peerDependencies": {
     "react": ">=18",
@@ -14,5 +18,8 @@
     "@types/react": "^19.2.17",
     "react": "^19.2.7",
     "react-router-dom": "^6.30.4"
+  },
+  "dependencies": {
+    "decimal.js": "10.6.0"
   }
 }

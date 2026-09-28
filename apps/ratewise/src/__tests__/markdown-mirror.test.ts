@@ -13,6 +13,7 @@ import { describe, it, expect } from 'vitest';
 import { RATES_API } from '../config/api-endpoints';
 import { SITE_CONFIG } from '../config/seo-paths';
 import { APP_INFO } from '../config/app-info';
+import { resolveFxV3Ternaries } from '../../scripts/lib/fx-v3-ternary.mjs';
 
 const PUBLIC_DIR = resolve(__dirname, '../../public');
 
@@ -224,4 +225,35 @@ describe('Authority guide Markdown mirrors', () => {
     expect(content).toContain('/sell-rate-vs-mid-rate/');
     expect(content).toContain('/cash-vs-spot-rate/');
   });
+});
+
+describe('FX_V3_PUBLIC 三元式展開守門', () => {
+  const sources = ['core.ts', 'currency-landing.ts']
+    .map((file) => readFileSync(resolve(__dirname, '../config/seo-metadata', file), 'utf-8'))
+    .join('');
+
+  it('SEO 原始碼中每個 FX_V3_PUBLIC 三元式都能展開（樣式匹配數與來源一致）', () => {
+    const ternaries = (sources.match(/FX_V3_PUBLIC\s*\?/g) ?? []).length;
+    expect(ternaries).toBeGreaterThan(0);
+    for (const flag of [false, true]) {
+      const output = resolveFxV3Ternaries(sources, flag);
+      expect(output).not.toMatch(/FX_V3_PUBLIC\s*\?/);
+    }
+  });
+
+  it('無法展開的三元式直接 throw，不靜默發佈', () => {
+    expect(() => resolveFxV3Ternaries("x = FX_V3_PUBLIC ? build() : 'legacy';", false)).toThrow(
+      /FX_V3_PUBLIC/,
+    );
+    expect(resolveFxV3Ternaries("x = FX_V3_PUBLIC ? 'v3' : 'legacy';", false)).toBe(
+      "x = 'legacy';",
+    );
+  });
+
+  it.each(['faq', 'about', 'privacy', 'guide', 'open-data', 'index'])(
+    '%s.md 不殘留未解析的 FX_V3_PUBLIC',
+    (slug) => {
+      expect(readMd(slug)).not.toContain('FX_V3_PUBLIC');
+    },
+  );
 });

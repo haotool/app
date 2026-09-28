@@ -6,11 +6,6 @@
 
 name: Update Latest Exchange Rates
 
-# 並發控制：確保同一時間只有一個 workflow 推送至 data 分支
-concurrency:
-  group: data-branch-push
-  cancel-in-progress: false
-
 on:
   schedule:
     # GitHub 官方不保證 schedule 準點執行；避開整點可降低高負載延遲 / 掉單機率。
@@ -26,8 +21,17 @@ on:
       - '.github/workflows/update-latest-rates.yml'
 
 jobs:
+  # v2 管線：fetch → commit → purge。刻意不安裝依賴、不跑 generate:fx、不發布 v3，
+  # 讓 v3 發布或依賴安裝失敗永遠不會阻斷既有公開資料更新。
   update-latest:
     runs-on: ubuntu-latest
+    # 並發控制：確保同一時間只有一個 v2 job 推送至 data 分支（與其他 rate workflow 共用 group）。
+    # 置於 job 層級：v3 publish job 使用獨立 group，其執行時間不延長 v2 鎖、不致 v2 排隊被取代。
+    concurrency:
+      group: data-branch-push
+      cancel-in-progress: false
+    outputs:
+      fetch_ok: ${{ steps.fetch-status.outputs.ok }}
 
     permissions:
       contents: write
@@ -50,14 +54,12 @@ jobs:
           git push -u origin data
           git checkout data
 
-      - name: Ensure data branch is up to date with scripts
-        run: |
-          # 使用觸發 ref 的腳本版本：schedule 為 main HEAD；push/dispatch 為對應分支，
-          # 讓腳本修正能在分支上先驗證，不必等合併 main。
-          git fetch origin ${{ github.sha }}
-          git checkout ${{ github.sha }} -- scripts/fetch-taiwan-bank-rates.js
-          git checkout ${{ github.sha }} -- scripts/fetch-taiwan-bank-rates-browser.mjs
-          git checkout ${{ github.sha }} -- public/rates/ 2>/dev/null || mkdir -p public/rates
+      - name: Checkout fetch scripts at the triggering code SHA
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.sha }}
+          path: _fx-code
+          persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
@@ -84,7 +86,7 @@ jobs:
         continue-on-error: true
         run: |
           echo "🔄 Fetching latest exchange rates from Taiwan Bank..."
-          node scripts/fetch-taiwan-bank-rates.js
+          FX_DATA_ROOT="$GITHUB_WORKSPACE/public/rates" node _fx-code/scripts/fetch-taiwan-bank-rates.js
 
       # 台銀 bot challenge fallback：純 fetch 被擋時改用真瀏覽器（xvfb headed Chrome）
       # 於頁面內完成 JS 驗證後下載 CSV，再以 CSV_INPUT_FILE 模式解析寫檔。
@@ -96,14 +98,14 @@ jobs:
           echo "🤖 Direct fetch blocked — falling back to real browser..."
           FALLBACK_DIR="$RUNNER_TEMP/twbank-browser"
           mkdir -p "$FALLBACK_DIR"
-          cp scripts/fetch-taiwan-bank-rates-browser.mjs "$FALLBACK_DIR/"
+          cp _fx-code/scripts/fetch-taiwan-bank-rates-browser.mjs "$FALLBACK_DIR/"
           pushd "$FALLBACK_DIR" > /dev/null
           npm init -y > /dev/null
           npm install --no-audit --no-fund --silent @playwright/test@1.61.1
           CSV_FILE="$FALLBACK_DIR/taiwan-bank.csv"
           xvfb-run -a node fetch-taiwan-bank-rates-browser.mjs "$CSV_FILE"
           popd > /dev/null
-          CSV_INPUT_FILE="$CSV_FILE" node scripts/fetch-taiwan-bank-rates.js
+          CSV_INPUT_FILE="$CSV_FILE" FX_DATA_ROOT="$GITHUB_WORKSPACE/public/rates" node _fx-code/scripts/fetch-taiwan-bank-rates.js
 
       - name: Resolve fetch status
         id: fetch-status
@@ -295,3 +297,15 @@ jobs:
 
           echo "## Transient failure tolerated" >> $GITHUB_STEP_SUMMARY
           echo "Data is still fresh (<${STALENESS_THRESHOLD_HOURS}h); next scheduled run retries in 5 minutes." >> $GITHUB_STEP_SUMMARY
+
+  # v3 發布：reusable workflow（publish-fx-v3.yml），於 v2 job 之後執行（v2 失敗時仍記錄 provider 檢查結果）。
+  # 失敗時該 job 標紅，不使用 continue-on-error；v2 資料已於前一個 job 完成 commit／purge。
+  publish-v3:
+    needs: update-latest
+    if: ${{ !cancelled() && vars.RATEWISE_FX_V3_ENABLED == 'true' }}
+    permissions:
+      contents: write
+    uses: ./.github/workflows/publish-fx-v3.yml
+    with:
+      provider: bot
+      fetch-failed: ${{ needs.update-latest.outputs.fetch_ok != 'true' }}

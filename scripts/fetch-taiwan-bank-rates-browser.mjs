@@ -43,16 +43,19 @@ async function fetchCsvOnce(channel) {
     console.log(`✅ Challenge passed, page title: ${await page.title()}`);
 
     // 必須在頁面內 fetch：沿用瀏覽器連線指紋與 challenge cookie。
-    const csvText = await page.evaluate(async (csvPath) => {
+    const { csvText, disposition } = await page.evaluate(async (csvPath) => {
       const response = await fetch(csvPath, { headers: { 'cache-control': 'no-cache' } });
-      return response.text();
+      return {
+        csvText: await response.text(),
+        disposition: response.headers.get('content-disposition'),
+      };
     }, CSV_PATH);
 
     if (!CSV_LINE_PATTERN.test(csvText)) {
       throw new Error(`CSV validation failed, got: ${csvText.slice(0, 120)}`);
     }
 
-    return csvText;
+    return { csvText, disposition };
   } finally {
     await browser.close();
   }
@@ -69,8 +72,10 @@ async function main() {
         console.log(
           `🌐 Attempt ${attempt}/${MAX_ATTEMPTS} via ${channel ?? 'bundled chromium'}...`,
         );
-        const csvText = await fetchCsvOnce(channel);
+        const { csvText, disposition } = await fetchCsvOnce(channel);
         writeFileSync(outputFile, csvText, 'utf8');
+        // 牌告掛牌時間來源：檔名 ExchangeRate@YYYYMMDDHHmm.csv（由 CSV_INPUT_FILE 模式解析）。
+        if (disposition) writeFileSync(`${outputFile}.content-disposition`, disposition, 'utf8');
         console.log(`✅ CSV saved to ${outputFile} (${csvText.trim().split('\n').length} lines)`);
         return;
       } catch (error) {

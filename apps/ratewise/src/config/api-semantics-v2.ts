@@ -1,9 +1,17 @@
 /**
  * API Semantics v2 SSOT（spec §二十一）。
  * legacy buy/sell 保留；v2 欄位為 additive customer-centric 語意層。
+ *
+ * S4-DELETE：v3 公開（FX_V3_PUBLIC=true）並完成 v2 sunset 後整檔刪除，
+ * 連同 openapi／api/latest.json 的 v2 semanticFieldMapping（見 049 實作文件 S4 清單）。
  */
 
+import { FX_V3_PUBLIC } from './api-endpoints.ts';
+
 export const API_SEMANTICS_SCHEMA_VERSION = '2.0' as const;
+
+/** v3 未公開前不得在 v2 欄位說明中指向 v3 入口。 */
+const V3_MIGRATION_HINT = FX_V3_PUBLIC ? '；請使用 v3 rate' : '';
 
 export const API_SEMANTICS_DOC = {
   specPath: 'docs/superpowers/specs/2026-06-26-ratewise-2026-product-ux-spec.md',
@@ -14,7 +22,11 @@ export const API_SEMANTICS_DOC = {
 export type ApiSemanticRateType = 'cash' | 'spot';
 
 /** 台銀：sell = TWD/外幣單位；MoneyBox TWD：sell = KRW/TWD。 */
-export type QuoteUnit = 'TWD_PER_FOREIGN' | 'KRW_PER_TWD';
+export type QuoteUnit =
+  | 'TWD_PER_FOREIGN'
+  | 'KRW_PER_TWD'
+  | 'KRW_PER_FOREIGN'
+  | 'KRW_PER_100_FOREIGN';
 
 export interface LegacyRateTypeBlock {
   buy: number | null;
@@ -83,10 +95,9 @@ export function resolveQuoteUnitForExchangeShopCurrency(
   currency: string,
   baseCurrency: string,
 ): QuoteUnit {
-  if (currency === 'TWD' && baseCurrency === 'KRW') {
-    return 'KRW_PER_TWD';
-  }
-  return 'TWD_PER_FOREIGN';
+  if (baseCurrency !== 'KRW') throw new Error('Unsupported legacy exchange-shop base currency');
+  if (currency === 'TWD') return 'KRW_PER_TWD';
+  return ['JPY', 'IDR', 'VND'].includes(currency) ? 'KRW_PER_100_FOREIGN' : 'KRW_PER_FOREIGN';
 }
 
 export function computeQuotePerBaseUnit(
@@ -255,24 +266,25 @@ export function buildProviderSemanticFieldMapping(
       fields: {
         customerBuyForeignRate: {
           legacyPath: `rates.TWD.sell`,
-          description: '客戶用 TWD 買外幣（換錢所賣出）；KRW/TWD 直接乘算',
+          description: '舊欄位：客戶以 TWD 換 KRW；實際為店家買入 TWD 的報價，KRW/TWD 直接乘算',
           twdToForeignFormula:
             quoteUnit === 'KRW_PER_TWD' ? 'amount * rates.TWD.sell' : 'amount / rates.{CCY}.sell',
         },
         customerSellForeignRate: {
           legacyPath: `rates.TWD.buy`,
-          description: '客戶用外幣賣回 TWD（換錢所買入）',
+          description: '舊欄位：客戶以 KRW 換 TWD；實際為店家賣出 TWD 的報價',
         },
         midMarketRate: {
           legacyPath: '(buy + sell) / 2',
-          description: '參考中間價',
+          description: '已棄用名稱：同業者牌告中點 (buy + sell) / 2；不是外部市場價或成交價。',
+          deprecated: true,
         },
         quotePerBaseUnit: {
           legacyPath: quoteUnit === 'KRW_PER_TWD' ? 'rates.TWD.sell' : '1 / sell',
           description:
             quoteUnit === 'KRW_PER_TWD'
               ? '每 1 TWD 可換的 KRW（直接報價）'
-              : '每 1 單位外幣的基準幣報價',
+              : `已棄用：保留舊 1 / sell 數值，非 per-1 正規化${V3_MIGRATION_HINT}`,
         },
       },
       examples: {
@@ -310,11 +322,13 @@ export function buildProviderSemanticFieldMapping(
       },
       midMarketRate: {
         legacyPath: '(buy + sell) / 2',
-        description: '參考中間價',
+        description: '已棄用名稱：同業者牌告中點 (buy + sell) / 2；不是外部市場價或成交價。',
+        deprecated: true,
       },
       bankSellTwdPerUnit: {
         legacyPath: '1 / sell',
-        description: '每 1 單位外幣的 TWD 賣價（外幣計價時）',
+        description: `已棄用的誤命名欄位：實值為每 1 TWD 可換多少外幣（1 / sell），數值維持 v2 相容${FX_V3_PUBLIC ? '；新整合請使用 v3 fromCurrency/toCurrency/rate' : ''}。`,
+        deprecated: true,
       },
     },
     examples: {

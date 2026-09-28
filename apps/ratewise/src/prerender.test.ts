@@ -5,6 +5,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { APP_ONLY_NOINDEX_PATHS } from './config/seo-paths';
 import { APP_INFO } from './config/app-info';
+import { FX_V3_PUBLIC } from './config/api-endpoints';
 import { ensurePrerenderDist } from './__tests__/helpers/ensurePrerenderDist';
 
 const distPath = resolve(__dirname, '../dist');
@@ -586,5 +587,13 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
       const hasRoutesInApp = existsSync(resolve(__dirname, 'App.tsx'));
       expect(hasRoutesInMain || hasRoutesInApp).toBe(true);
     });
+  });
+});
+
+describe.skipIf(FX_V3_PUBLIC)('FX_V3_PUBLIC=false 首頁 initial JS 與 main 等價', () => {
+  it('不預載 v3 fx／release／decimal chunk', () => {
+    const html = readFileSync(resolve(distPath, 'index.html'), 'utf-8');
+    expect(html).toMatch(/rel="modulepreload"/);
+    expect(html).not.toMatch(/assets\/(?:fx|release|vendor-decimal)-[\w-]+\.js/);
   });
 });

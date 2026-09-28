@@ -5,6 +5,7 @@ import {
   getDefaultProvider,
   shouldEnableBankProviderChoice,
 } from './rateProviders.ts';
+import { FX_PROVIDER_METADATA } from '../../../shared/fx/provider-metadata.mjs';
 
 export interface PublicRateProviderMetadataOptions {
   dataBaseUrl: string;
@@ -36,6 +37,18 @@ export interface PublicRateProvider {
   historyEndpoint: string;
   cdnCurrentEndpoint?: string;
   cdnHistoryEndpoint?: string;
+  sourceUrl: string;
+  /** Provider terms are deliberately separate from the repository's GPL code license. */
+  termsUrl: string | null;
+  redistributionStatus: 'verified' | 'unknown' | 'restricted';
+  attribution: string;
+}
+
+/** 來源網址、條款與標示取自 shared/fx provider metadata（與 v3 manifest 同一 SSOT）。 */
+function providerMetadata(providerId: string) {
+  const meta = FX_PROVIDER_METADATA[providerId as keyof typeof FX_PROVIDER_METADATA];
+  if (!meta) throw new Error(`Unknown provider metadata: ${providerId}`);
+  return meta;
 }
 
 export function buildPublicRateProviderMetadata(
@@ -56,6 +69,7 @@ export function buildPublicRateProviderMetadata(
     providers: getAllRateProviders().map((provider) => {
       const currentPath = provider.apiPaths.latest;
       const historyPath = provider.apiPaths.history.replace('{YYYY-MM-DD}', historyDateToken);
+      const meta = providerMetadata(provider.id);
       return {
         providerId: provider.id,
         sourceKind: provider.sourceKind,
@@ -74,6 +88,10 @@ export function buildPublicRateProviderMetadata(
               cdnHistoryEndpoint: joinEndpoint(options.cdnBaseUrl, historyPath),
             }
           : {}),
+        sourceUrl: meta.sourceUrl,
+        termsUrl: meta.termsUrl,
+        redistributionStatus: meta.redistributionStatus,
+        attribution: meta.attribution,
       };
     }),
   };

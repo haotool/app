@@ -1,3 +1,5 @@
+import { FxContextControls } from '../features/ratewise/components/FxContextControls';
+import { isFxV3Public } from '../config/api-endpoints';
 /**
  * Multi-Currency Converter Page - ParkKeeper 風格
  *
@@ -51,6 +53,8 @@ export default function MultiConverter() {
   } = useExchangeRates();
 
   const {
+    fxQuotes,
+    estimatePair,
     multiAmounts,
     sortedCurrencies,
     rateMode,
@@ -149,6 +153,7 @@ export default function MultiConverter() {
         <section className={multiConverterLayoutTokens.section.className}>
           <div className={multiConverterLayoutTokens.card.className}>
             <MultiConverterComponent
+              estimatePair={estimatePair}
               sortedCurrencies={sortedCurrencies}
               multiAmounts={multiAmounts}
               baseCurrency={baseCurrency}
@@ -165,6 +170,7 @@ export default function MultiConverter() {
               onBaseCurrencyChange={handleBaseCurrencyChange}
               onToggleFavorite={toggleFavorite}
             />
+            {isFxV3Public() && <FxContextControls quotes={fxQuotes} />}
           </div>
         </section>
 

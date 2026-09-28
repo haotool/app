@@ -14,7 +14,7 @@
 | 歷史匯率 | `https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/history/{YYYY-MM-DD}.json` |
 | OpenAPI 規格 | https://app.haotool.org/ratewise/openapi.json |
 
-- **免 API Key**、**免費使用**、**CORS 已啟用**。
+- **免 API Key**、**公開讀取**、**CORS 已啟用**；資料使用與再散布依各 provider 條款。
 - 更新頻率：約每 5 分鐘檢查更新臺灣銀行牌告。
 - 涵蓋 18 種貨幣的現金買/賣、即期買/賣四種報價。
 
@@ -49,6 +49,7 @@ print(data['details']['JPY']['cash']['buy'])
 
 ```json
 {
+  "schemaVersion": "2.0",
   "updateTime": "2026-04-17T08:00:00+08:00",
   "details": {
     "USD": {
@@ -72,11 +73,11 @@ print(data['details']['JPY']['cash']['buy'])
 
 ## 使用限制與授權聲明
 
-- 允許個人專案、學術研究、非商業 App、教學與媒體引用。
-- 引用時請標示「資料來源：臺灣銀行牌告匯率」。
+- 使用或再散布前，請先確認各 provider 的條款與授權範圍；目前 metadata 未提供 provider 授權保證。
+- 公開頁面請標示資料來源與 attribution。
 - 禁止大量爬取歷史資料，避免對 CDN 或 GitHub 造成異常流量。
 - 禁止宣稱本資料為官方臺灣銀行 API；HaoRate 與臺灣銀行無隸屬關係。
-- 程式碼以 GPL-3.0 授權釋出；資料原始版權屬臺灣銀行。
+- 程式碼以 GPL-3.0 授權釋出；臺灣銀行與 MoneyBox 資料的使用及再散布依各 provider 條款，不能由程式碼授權推定。
 - 匯率僅供參考，實際交易以金融機構公告為準。
 
 ## 常見問題

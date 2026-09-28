@@ -18,6 +18,8 @@
  * @see https://www.businessweekly.com.tw/business/blog/3019355
  * @updated 2026-01-26 - 依據台灣人旅遊熱門目的地重新排序
  */
+import { FX_V3_PUBLIC } from '../../config/api-endpoints.ts';
+
 export const CURRENCY_DEFINITIONS = {
   // 基準貨幣
   TWD: { name: '新台幣', flag: '🇹🇼', symbol: 'NT$', decimals: 2 },
@@ -54,7 +56,8 @@ export const DEFAULT_CONVERTER_MODE = 'single';
 /** 多幣別模式字串 SSOT；避免在元件散落 'multi' 字面量。 */
 export const MULTI_CONVERTER_MODE = 'multi';
 export const DEFAULT_RATE_MODE = 'auto';
-export const DEFAULT_RATE_TYPE = 'spot';
+/** v3 未公開時維持 main 預設（spot）；v3 以現鈔／臨櫃為預設通路。 */
+export const DEFAULT_RATE_TYPE: 'cash' | 'spot' = FX_V3_PUBLIC ? 'cash' : 'spot';
 export const DEFAULT_RATE_SOURCE = 'bank';
 export const DEFAULT_FROM_CURRENCY = 'TWD';
 export const DEFAULT_TO_CURRENCY = 'JPY'; // 日本為台灣人最熱門旅遊目的地

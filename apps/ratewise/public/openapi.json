@@ -95,7 +95,11 @@
             "cash"
           ],
           "currentEndpoint": "/public/rates/latest.json",
-          "historyEndpoint": "/public/rates/history/{date}.json"
+          "historyEndpoint": "/public/rates/history/{date}.json",
+          "sourceUrl": "https://rate.bot.com.tw/xrt?Lang=zh-TW",
+          "termsUrl": null,
+          "redistributionStatus": "unknown",
+          "attribution": "資料來源：臺灣銀行牌告匯率"
         },
         {
           "providerId": "moneybox",
@@ -109,7 +113,11 @@
             "cash"
           ],
           "currentEndpoint": "/public/rates/providers/moneybox/latest.json",
-          "historyEndpoint": "/public/rates/providers/moneybox/history/{date}.json"
+          "historyEndpoint": "/public/rates/providers/moneybox/history/{date}.json",
+          "sourceUrl": "https://moneybox-exchange.com/zh-CHT/exchange/",
+          "termsUrl": null,
+          "redistributionStatus": "unknown",
+          "attribution": "資料來源：MoneyBox 明洞換匯所"
         }
       ]
     },
@@ -137,7 +145,23 @@
     "x-documentation": "https://app.haotool.org/ratewise/open-data/",
     "x-app-version": "2.28.3",
     "x-schema-version": "2.0",
-    "x-semantics-doc": "https://app.haotool.org/ratewise/open-data/"
+    "x-semantics-doc": "https://app.haotool.org/ratewise/open-data/",
+    "x-code-license": "GPL-3.0",
+    "x-data-license-note": "Provider data terms and redistribution rights are separate from the repository code license.",
+    "x-data-providers": [
+      {
+        "providerId": "bot",
+        "termsUrl": null,
+        "redistributionStatus": "unknown",
+        "attribution": "資料來源：臺灣銀行牌告匯率"
+      },
+      {
+        "providerId": "moneybox",
+        "termsUrl": null,
+        "redistributionStatus": "unknown",
+        "attribution": "資料來源：MoneyBox 明洞換匯所"
+      }
+    ]
   },
   "x-changelog": {
     "2.1.0": {
@@ -1293,6 +1317,10 @@
               "MoneyBox (明洞換匯所聯盟)"
             ]
           },
+          "sourceUrl": {
+            "type": "string",
+            "format": "uri"
+          },
           "supportedCurrencies": {
             "type": "array",
             "items": {
@@ -1314,16 +1342,38 @@
           },
           "historyEndpoint": {
             "type": "string"
+          },
+          "termsUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri"
+          },
+          "redistributionStatus": {
+            "type": "string",
+            "enum": [
+              "verified",
+              "unknown",
+              "restricted"
+            ]
+          },
+          "attribution": {
+            "type": "string"
           }
         },
         "required": [
           "providerId",
           "sourceKind",
           "name",
+          "sourceUrl",
           "supportedCurrencies",
           "supportedRateTypes",
           "currentEndpoint",
-          "historyEndpoint"
+          "historyEndpoint",
+          "termsUrl",
+          "redistributionStatus",
+          "attribution"
         ]
       }
     }
@@ -1388,7 +1438,11 @@
           "cash"
         ],
         "currentEndpoint": "/public/rates/latest.json",
-        "historyEndpoint": "/public/rates/history/{date}.json"
+        "historyEndpoint": "/public/rates/history/{date}.json",
+        "sourceUrl": "https://rate.bot.com.tw/xrt?Lang=zh-TW",
+        "termsUrl": null,
+        "redistributionStatus": "unknown",
+        "attribution": "資料來源：臺灣銀行牌告匯率"
       },
       {
         "providerId": "moneybox",
@@ -1402,7 +1456,11 @@
           "cash"
         ],
         "currentEndpoint": "/public/rates/providers/moneybox/latest.json",
-        "historyEndpoint": "/public/rates/providers/moneybox/history/{date}.json"
+        "historyEndpoint": "/public/rates/providers/moneybox/history/{date}.json",
+        "sourceUrl": "https://moneybox-exchange.com/zh-CHT/exchange/",
+        "termsUrl": null,
+        "redistributionStatus": "unknown",
+        "attribution": "資料來源：MoneyBox 明洞換匯所"
       }
     ]
   },
