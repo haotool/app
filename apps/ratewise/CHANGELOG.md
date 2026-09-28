@@ -1,5 +1,13 @@
 # @app/ratewise
 
+## 2.28.8
+
+### Patch Changes
+
+- 422cf27: 匯率歷史彙整腳本配合 v3 資料管線調整，為正式啟用預作準備；網站行為不變。
+- Updated dependencies [422cf27]
+  - @app/shared@0.0.4
+
 ## 2.28.7
 
 ### Patch Changes
