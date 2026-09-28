@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { APP_INFO } from './config/app-info';
-import { FX_PUBLISHER } from '../../shared/fx/publisher-metadata.mjs';
 
 const llmsPath = resolve(__dirname, '../public/llms.txt');
 const llmsFullPath = resolve(__dirname, '../public/llms-full.txt');
@@ -35,7 +34,14 @@ describeIfGenerated('llms.txt structure (requires prebuild)', () => {
 
   it('includes API Endpoints section with latest.json reference', () => {
     const content = readFileSync(llmsPath, 'utf-8');
-    expect(content).toContain('## API Endpoints');
+    const termsHeading = content.indexOf('## API 使用條款／標示要求');
+    const endpointsHeading = content.indexOf('## API Endpoints');
+    const nextHeading = content.indexOf('\n## ', endpointsHeading + 1);
+
+    expect(termsHeading).toBeGreaterThanOrEqual(0);
+    expect(endpointsHeading).toBeGreaterThan(termsHeading);
+    expect(content.slice(endpointsHeading, nextHeading)).toMatch(/### /);
+    expect(content.match(/標示連結可依使用者選擇/g)).toHaveLength(1);
     expect(content).toContain('api/latest.json');
   });
 
@@ -79,8 +85,7 @@ describeIfGenerated('llms.txt structure (requires prebuild)', () => {
 
     expect(urls.length).toBeGreaterThan(0);
     for (const url of urls) {
-      const checkedUrl = url === `${FX_PUBLISHER.url}）` ? FX_PUBLISHER.url : url;
-      expect(checkedUrl).not.toMatch(/[）】，。；：]$/u);
+      expect(url).not.toMatch(/[）】，。；：]$/u);
     }
   });
 

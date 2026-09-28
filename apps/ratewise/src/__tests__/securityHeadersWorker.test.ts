@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 // @ts-expect-error Worker 由 Cloudflare runtime 執行，這裡以整合測試方式直接匯入 JS 檔。
 import worker from '../../../../security-headers/src/worker.js';
+import { FX_PUBLISHER } from '../../../shared/fx/publisher-metadata.mjs';
 import { APP_INFO } from '../config/app-info';
 
 class MockElement {
@@ -108,6 +109,19 @@ describe('security-headers worker', () => {
     expect(response.headers.get('cross-origin-embedder-policy')).toBe('require-corp');
     expect(response.headers.get('cross-origin-opener-policy')).toBe('same-origin');
     expect(response.headers.get('cross-origin-resource-policy')).toBe('same-origin');
+  });
+
+  it('為 RateWise API 與 OpenAPI 回應附加 SSOT 條款 Link', async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue(new Response('{}', { headers: { 'content-type': 'application/json' } }));
+
+    for (const path of ['/ratewise/api/latest.json', '/ratewise/openapi.json']) {
+      const response = await worker.fetch(new Request(`https://app.haotool.org${path}`));
+      expect(response.headers.get('link')).toBe(
+        `<${FX_PUBLISHER.termsUrl}>; rel="terms-of-service"`,
+      );
+    }
   });
 
   it('CSP report 端點只接受 POST 且限制媒體型別', async () => {

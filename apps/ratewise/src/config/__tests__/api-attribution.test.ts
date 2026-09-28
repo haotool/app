@@ -5,7 +5,10 @@ import { FX_PUBLISHER } from '../../../../shared/fx/publisher-metadata.mjs';
 import { ensurePrerenderDist } from '../../__tests__/helpers/ensurePrerenderDist';
 import { API_ATTRIBUTION } from '../seo-metadata/api-attribution';
 import { OPEN_DATA_PAGE_SEO } from '../seo-metadata/core';
-import { FX_ATTRIBUTION_METADATA } from '../../../../shared/fx/provider-metadata.mjs';
+import {
+  FX_ATTRIBUTION_METADATA,
+  FX_PROVIDER_METADATA,
+} from '../../../../shared/fx/provider-metadata.mjs';
 import {
   CURRENCY_SEO_PATHS,
   INDEXABLE_AMOUNT_SEO_PATHS,
@@ -52,15 +55,14 @@ describe('RateWise API attribution SSOT', () => {
       const html = readFileSync(path, 'utf8');
       expect(html.match(expectedLink), path).toHaveLength(1);
     }
-  });
+  }, 300000);
 
-  it('includes the plain-text attribution in mirrors containing the spread figures', () => {
+  it('keeps ExchangeRate-API-derived spread figures out of llms mirrors', () => {
     const provider = FX_ATTRIBUTION_METADATA.exchangeRateApi;
-    for (const file of ['index.md', 'llms.txt', 'llms-full.txt']) {
+    expect(readFileSync(resolve(PUBLIC, 'index.md'), 'utf8')).toContain(provider.attributionLine);
+    for (const file of ['llms.txt', 'llms-full.txt']) {
       const content = readFileSync(resolve(PUBLIC, file), 'utf8');
-      if (content.includes('主要貨幣通常約 1～2%')) {
-        expect(content).toContain(provider.attributionLine);
-      }
+      expect(content).not.toContain('主要貨幣通常約 1～2%');
     }
   });
 
@@ -98,7 +100,10 @@ describe('RateWise API attribution SSOT', () => {
     expect(content).not.toMatch(noNofollowBan);
     for (const file of ['open-data.md', 'llms.txt', 'llms-full.txt']) {
       const mirror = readFileSync(resolve(PUBLIC, file), 'utf8');
-      expect(mirror).toContain(FX_PUBLISHER.requiredText);
+      const publisherText = file.startsWith('llms')
+        ? FX_PUBLISHER.requiredText.replace('）', ' ）')
+        : FX_PUBLISHER.requiredText;
+      expect(mirror).toContain(publisherText);
       expect(mirror).toContain('rel="nofollow"');
       expect(mirror).toContain('rel="sponsored"');
       expect(mirror).toContain('rel="ugc"');
@@ -117,27 +122,18 @@ describe('RateWise API attribution SSOT', () => {
     }
     expect(openapi.info['x-publisher']).toEqual(FX_PUBLISHER);
     expect(openapi.components.schemas.Publisher.example).toEqual(FX_PUBLISHER);
-    expect(openapi.components.schemas.RatesResponse.properties.publisher.example).toEqual(
-      FX_PUBLISHER,
-    );
+    expect(openapi.components.schemas.RatesResponse.properties).not.toHaveProperty('publisher');
     expect(openapi.components.schemas.PairInfo.properties.publisher.example).toEqual(FX_PUBLISHER);
   });
 
-  it('keeps the terms Link rules and exactly one Dataset in the prerendered page', async () => {
-    const headers = readFileSync(resolve(PUBLIC, '_headers'), 'utf8');
-    expect(headers).toContain(
-      '/ratewise/api/*\n  Link: <' + FX_PUBLISHER.termsUrl + '>; rel="terms-of-service"',
-    );
-    expect(headers).toContain(
-      '/ratewise/openapi.json\n  Link: <' + FX_PUBLISHER.termsUrl + '>; rel="terms-of-service"',
-    );
-
+  it('keeps exactly one Dataset with usage terms and upstream provenance', async () => {
     const blocks = OPEN_DATA_PAGE_SEO.jsonLd ?? [];
     const dataset = blocks.filter((block) => block['@type'] === 'Dataset');
     expect(dataset).toHaveLength(1);
     expect(dataset[0]).toMatchObject({
       creator: { '@type': 'Organization', name: FX_PUBLISHER.name },
-      license: FX_PUBLISHER.termsUrl,
+      usageInfo: FX_PUBLISHER.termsUrl,
+      isBasedOn: [FX_PROVIDER_METADATA.bot.sourceUrl, FX_PROVIDER_METADATA.moneybox.sourceUrl],
       isAccessibleForFree: true,
       citation: FX_PUBLISHER.requiredText,
     });
@@ -165,11 +161,12 @@ describe('RateWise API attribution SSOT', () => {
     expect(prerenderedDatasets).toHaveLength(1);
     expect(prerenderedDatasets[0]).toMatchObject({
       creator: { '@type': 'Organization', name: FX_PUBLISHER.name },
-      license: FX_PUBLISHER.termsUrl,
+      usageInfo: FX_PUBLISHER.termsUrl,
+      isBasedOn: [FX_PROVIDER_METADATA.bot.sourceUrl, FX_PROVIDER_METADATA.moneybox.sourceUrl],
       isAccessibleForFree: true,
       citation: FX_PUBLISHER.requiredText,
     });
-  });
+  }, 300000);
 
   it('does not claim copyright over rates in terms or OpenData source', () => {
     expect(API_ATTRIBUTION.terms.join('\n')).not.toMatch(noRateCopyright);

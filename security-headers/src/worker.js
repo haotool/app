@@ -1,13 +1,16 @@
 /* global HTMLRewriter, performance */
 
+import { FX_PUBLISHER } from '../../apps/shared/fx/publisher-metadata.mjs';
+
 /**
- * 安全標頭 Worker v6.8
+ * 安全標頭 Worker v6.9
  *
  * 處理 Cloudflare 無法以固定規則精準表達的安全邏輯。
  * 固定站點級政策由 Cloudflare Edge 管理，Worker 專注於路由分層 CSP、
  * CSP report、分享圖 CORS 與 ratewise 跨域隔離。
  *
  * 變更記錄：
+ * - v6.9: RateWise API 與 OpenAPI 回應附加 terms-of-service Link
  * - v6.8: 移除已淘汰的 VERCEL_ORIGIN 回退，靜態 origin 僅由 STATIC_ORIGIN（Cloudflare Pages）決定
  * - v6.7: 新增 a320-flight-deck CSP profile（Google Fonts），Permissions-Policy 允許同源 accelerometer/gyroscope 供手機傾斜操控
  * - v6.6: Cloudflare Web Analytics beacon 上傳 origin 納入所有 HTML profile 的 connect-src
@@ -44,7 +47,7 @@
  * - v3.6: 改用 HTMLRewriter 解析 inline script
  */
 
-const SECURITY_POLICY_VERSION = '6.8';
+const SECURITY_POLICY_VERSION = '6.9';
 const CSP_REPORT_MAX_BYTES = 16 * 1024;
 const HASHED_ASSET_PATH = /^\/(?:[^/]+\/)?assets\/[^/]+-[A-Za-z0-9_-]{6,12}\.(?:js|css|mjs)$/;
 
@@ -1075,6 +1078,10 @@ export default {
 			if (markdownAlternate !== null) {
 				addLinkHeader(response, markdownAlternate);
 			}
+		}
+
+		if (url.pathname.startsWith('/ratewise/api/') || url.pathname === '/ratewise/openapi.json') {
+			addLinkHeader(response, `<${FX_PUBLISHER.termsUrl}>; rel="terms-of-service"`);
 		}
 
 		stripOriginLeakHeaders(response);

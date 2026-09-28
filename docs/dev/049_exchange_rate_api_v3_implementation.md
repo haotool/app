@@ -43,7 +43,7 @@ provider `failed`／`carried_forward` 快照只可供明確手動選擇，不能
 
 ### S3 API attribution
 
-`apps/shared/fx/publisher-metadata.mjs` 是 v2／v3 共用發布者標示 SSOT。v2 `api/latest.json`、`api/pairs/*.json` 與 OpenAPI additive publisher 從此來源產生；terms URL 指向 `/ratewise/open-data/#api-terms`。OpenData 條款內容位於 RateWise SEO metadata SSOT，Markdown 與 `llms*.txt` 由生成器輸出。`public/_headers` 的 `/ratewise/api/*` 與 `/ratewise/openapi.json` Link rule 在 Pages 靜態部署時生效；正式站 header 須於部署後驗證。Dataset JSON-LD 由 SEO metadata builder 產生。此工作不變更 `FX_V3_PUBLIC=false`。
+`apps/shared/fx/publisher-metadata.mjs` 是 v2／v3 共用發布者標示 SSOT。v2 `api/latest.json`、`api/pairs/*.json` 與 OpenAPI additive publisher 從此來源產生；terms URL 指向 `/ratewise/open-data/#api-terms`。OpenData 條款內容位於 RateWise SEO metadata SSOT，Markdown 與 `llms*.txt` 由生成器輸出。`security-headers/src/worker.js` 從同一 SSOT 為 `/ratewise/api/*` 與 `/ratewise/openapi.json` 回應附加 Terms Link；FAQ Markdown alternate Link 也由此 Worker 產生。Dataset JSON-LD 由 SEO metadata builder 產生，以 `usageInfo` 指向條款並以 `isBasedOn` 列出 provider metadata 的來源 URL。此工作不變更 `FX_V3_PUBLIC=false`。
 
 `api/latest.json`、pair JSON 與 OpenAPI 在 `FX_V3_PUBLIC=false` 時維持 schemaVersion 2.0，只新增 additive／deprecated metadata；來源發布時間為未知時不補成今天。最小驗證：
 

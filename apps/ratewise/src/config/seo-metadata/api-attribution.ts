@@ -8,7 +8,7 @@ export const API_ATTRIBUTION = Object.freeze({
     FX_PROVIDER_METADATA.moneybox.attribution,
   ],
   terms: [
-    '本 API 提供免費公開讀取。使用 API 時，必須在展示相關匯率資料的位置標示：',
+    '本 API 提供免費公開讀取。使用 API 時，必須在展示相關匯率資料的位置同時顯示以下發布者標示：',
     '同時保留 API 回應中的上游來源標示。這些來源文字是來源揭露，不代表我們已查證或授予上游資料的使用或再散布授權。',
     '標示連結可依使用者選擇加上 rel="nofollow"、rel="sponsored" 或 rel="ugc"。',
     '匯率僅供參考，不保證可按該匯率完成交易；資料未包含交易費用。',

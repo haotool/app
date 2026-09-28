@@ -29,7 +29,7 @@
     "refresh:rates": "node scripts/prebuild-fetch-rates.mjs",
     "refresh:fallback-rates": "RATEWISE_WRITE_FALLBACK_RATES=1 node scripts/prebuild-fetch-rates.mjs",
     "refresh:rating": "node scripts/fetch-rating-snapshot.mjs",
-    "generate:deterministic": "node ../../scripts/generate-sitemap-2026.mjs && node scripts/generate-robots-txt.mjs && node scripts/generate-manifest.mjs && node scripts/generate-offline-html.mjs && node scripts/generate-llms-txt.mjs && node scripts/generate-markdown-mirrors.mjs && node scripts/generate-api-json.mjs && node scripts/generate-pair-json.mjs && node scripts/generate-openapi.mjs && node scripts/generate-api-link-headers.mjs",
+    "generate:deterministic": "node ../../scripts/generate-sitemap-2026.mjs && node scripts/generate-robots-txt.mjs && node scripts/generate-manifest.mjs && node scripts/generate-offline-html.mjs && node scripts/generate-llms-txt.mjs && node scripts/generate-markdown-mirrors.mjs && node scripts/generate-api-json.mjs && node scripts/generate-pair-json.mjs && node scripts/generate-openapi.mjs",
     "generate:sitemap": "node ../../scripts/generate-sitemap-2026.mjs",
     "verify": "pnpm verify:artifacts",
     "verify:artifacts": "node ../../scripts/verify-ssot-sync.mjs && node ../../scripts/verify-image-resources.mjs",

@@ -83,12 +83,6 @@
   Content-Type: text/markdown; charset=utf-8
   X-Robots-Tag: noindex
 
-# API 使用條款提示（由 FX_PUBLISHER SSOT 生成）
-/ratewise/api/*
-  Link: <https://app.haotool.org/ratewise/open-data/#api-terms>; rel="terms-of-service"
-/ratewise/openapi.json
-  Link: <https://app.haotool.org/ratewise/open-data/#api-terms>; rel="terms-of-service"
-
 # Link rel="alternate" type="text/markdown" — 供 AI 爬蟲從 HTML 頁自動發現 .md 鏡像
 # RFC 8288 Web Linking；AI bot 可解析 HTTP Link 標頭，無需解析 <head><link>
 /ratewise/faq/

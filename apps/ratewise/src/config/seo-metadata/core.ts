@@ -9,6 +9,7 @@ import {
 import { RATING_SNAPSHOT } from '../generated/rating-snapshot';
 import { FX_V3_PUBLIC, RATES_API } from '../api-endpoints';
 import { FX_PUBLISHER } from '../../../../shared/fx/publisher-metadata.mjs';
+import { FX_PROVIDER_METADATA } from '../../../../shared/fx/provider-metadata.mjs';
 import {
   PRERENDER_PATHS,
   SEO_PATHS,
@@ -564,7 +565,8 @@ export function buildOpenDataDatasetJsonLd(): JsonLdBlock {
     sameAs: 'https://rate.bot.com.tw/xrt',
     identifier: `${SITE_BASE_URL}open-data/#bank-of-taiwan-exchange-rate-dataset`,
     isAccessibleForFree: true,
-    license: FX_PUBLISHER.termsUrl,
+    usageInfo: FX_PUBLISHER.termsUrl,
+    isBasedOn: [FX_PROVIDER_METADATA.bot.sourceUrl, FX_PROVIDER_METADATA.moneybox.sourceUrl],
     citation: FX_PUBLISHER.requiredText,
     inLanguage: DEFAULT_LOCALE,
     dateModified: BUILD_TIME,

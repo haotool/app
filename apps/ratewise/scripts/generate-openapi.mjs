@@ -284,7 +284,6 @@ const ratesResponseSchema = {
   type: 'object',
   description: '匯率資料回應（每 5 分鐘由 GitHub Actions 自動同步）',
   properties: {
-    publisher: { $ref: '#/components/schemas/Publisher', example: { ...FX_PUBLISHER } },
     schemaVersion: {
       type: 'string',
       description: 'API 語意版本（有別於 App semver）',

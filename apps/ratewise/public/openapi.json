@@ -146,7 +146,7 @@
       "name": "匯率好工具 RateWise",
       "url": "https://app.haotool.org/ratewise/",
       "termsUrl": "https://app.haotool.org/ratewise/open-data/#api-terms",
-      "requiredText": "資料來源：匯率好工具 RateWise（https://app.haotool.org/ratewise/）"
+      "requiredText": "資料整理：匯率好工具 RateWise（https://app.haotool.org/ratewise/）"
     },
     "x-documentation": "https://app.haotool.org/ratewise/open-data/",
     "x-app-version": "2.28.4",
@@ -637,7 +637,7 @@
           },
           "requiredText": {
             "type": "string",
-            "example": "資料來源：匯率好工具 RateWise（https://app.haotool.org/ratewise/）"
+            "example": "資料整理：匯率好工具 RateWise（https://app.haotool.org/ratewise/）"
           }
         },
         "required": [
@@ -650,7 +650,7 @@
           "name": "匯率好工具 RateWise",
           "url": "https://app.haotool.org/ratewise/",
           "termsUrl": "https://app.haotool.org/ratewise/open-data/#api-terms",
-          "requiredText": "資料來源：匯率好工具 RateWise（https://app.haotool.org/ratewise/）"
+          "requiredText": "資料整理：匯率好工具 RateWise（https://app.haotool.org/ratewise/）"
         }
       },
       "CurrencyRateDetail": {
@@ -1170,15 +1170,6 @@
         "type": "object",
         "description": "匯率資料回應（每 5 分鐘由 GitHub Actions 自動同步）",
         "properties": {
-          "publisher": {
-            "$ref": "#/components/schemas/Publisher",
-            "example": {
-              "name": "匯率好工具 RateWise",
-              "url": "https://app.haotool.org/ratewise/",
-              "termsUrl": "https://app.haotool.org/ratewise/open-data/#api-terms",
-              "requiredText": "資料來源：匯率好工具 RateWise（https://app.haotool.org/ratewise/）"
-            }
-          },
           "schemaVersion": {
             "type": "string",
             "description": "API 語意版本（有別於 App semver）",
@@ -1267,7 +1258,7 @@
               "name": "匯率好工具 RateWise",
               "url": "https://app.haotool.org/ratewise/",
               "termsUrl": "https://app.haotool.org/ratewise/open-data/#api-terms",
-              "requiredText": "資料來源：匯率好工具 RateWise（https://app.haotool.org/ratewise/）"
+              "requiredText": "資料整理：匯率好工具 RateWise（https://app.haotool.org/ratewise/）"
             }
           },
           "pair": {

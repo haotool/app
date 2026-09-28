@@ -24,6 +24,7 @@ const ROOT = resolve(__dirname, '..');
 const pkg = JSON.parse(readFileSync(resolve(ROOT, 'package.json'), 'utf-8'));
 const VERSION = pkg.version;
 const BASE_URL = SITE_CONFIG.url;
+const llmsPublisherText = API_ATTRIBUTION.publisher.requiredText.replace('）', ' ）');
 const constantsPath = resolve(ROOT, 'src/features/ratewise/constants.ts');
 const constantsContent = readFileSync(constantsPath, 'utf-8');
 const SUPPORTED_CURRENCY_COUNT = [...constantsContent.matchAll(/^\s+([A-Z]{3}):\s*\{/gm)].length;
@@ -210,16 +211,15 @@ ${buildAiCrawlerTierSummary()}
 Attribution: Required (link back to source)
 Contact: ${pkg.author?.email || 'haotool.org@gmail.com'}
 
-## API Endpoints
-
 ## API 使用條款／標示要求
 
 ${API_ATTRIBUTION.terms.join('\n')}
 
-必須顯示：${API_ATTRIBUTION.publisher.requiredText}
+必須顯示：${llmsPublisherText}
 上游來源標示：${API_ATTRIBUTION.upstreamSources.join('、')}
-標示連結可依使用者選擇加上 rel="nofollow"、rel="sponsored" 或 rel="ugc"。
 條款：${API_ATTRIBUTION.publisher.termsUrl}
+
+## API Endpoints
 
 ${
   FX_V3_PUBLIC
@@ -433,6 +433,14 @@ https://app.haotool.org/ratewise/?amount={AMOUNT}&from={FROM}&to={TO}
 
 ---
 
+## API 使用條款／標示要求
+
+${API_ATTRIBUTION.terms.join('\n')}
+
+必須顯示：${llmsPublisherText}
+上游來源標示：${API_ATTRIBUTION.upstreamSources.join('、')}
+條款：${API_ATTRIBUTION.publisher.termsUrl}
+
 ${
   FX_V3_PUBLIC
     ? `## Legacy JSON API 完整 Schema（相容投影）
@@ -450,15 +458,6 @@ GET https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json
 - **Cache**: CDN 快取，實際資料每 5 分鐘由 GitHub Actions 更新
 - **Auth**: 無需（公開 API）
 - **Rate limit**: 遵循 jsDelivr CDN 政策（每月數十億次請求）
-
-## API 使用條款／標示要求
-
-${API_ATTRIBUTION.terms.join('\n')}
-
-必須顯示：${API_ATTRIBUTION.publisher.requiredText}
-上游來源標示：${API_ATTRIBUTION.upstreamSources.join('、')}
-標示連結可依使用者選擇加上 rel="nofollow"、rel="sponsored" 或 rel="ugc"。
-條款：${API_ATTRIBUTION.publisher.termsUrl}
 
 ${
   FX_V3_PUBLIC

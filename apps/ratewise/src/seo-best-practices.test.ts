@@ -14,6 +14,7 @@ import {
 } from './config/seo-paths';
 import { APP_INFO } from './config/app-info';
 import { FX_PUBLISHER } from '../../shared/fx/publisher-metadata.mjs';
+import { FX_PROVIDER_METADATA } from '../../shared/fx/provider-metadata.mjs';
 
 const ROOT_PATH = resolve(__dirname, '..');
 const PUBLIC_PATH = resolve(ROOT_PATH, 'public');
@@ -1073,10 +1074,14 @@ describe('💵 Amount Page ExchangeRateSpecification Schema (P1-5)', () => {
       '@type': 'Organization',
       name: FX_PUBLISHER.name,
     });
-    expect(schema['license']).toBe(FX_PUBLISHER.termsUrl);
+    expect(schema['usageInfo']).toBe(FX_PUBLISHER.termsUrl);
+    expect(schema['license']).toBeUndefined();
+    expect(schema['isBasedOn']).toEqual([
+      FX_PROVIDER_METADATA.bot.sourceUrl,
+      FX_PROVIDER_METADATA.moneybox.sourceUrl,
+    ]);
     expect(schema['isAccessibleForFree']).toBe(true);
     expect(schema['citation']).toBe(FX_PUBLISHER.requiredText);
-    expect(schema['isBasedOn']).toBeUndefined();
   });
 });
 

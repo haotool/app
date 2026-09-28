@@ -3,13 +3,16 @@
  * 條款未查證前 termsUrl 為 null、redistributionStatus 維持 unknown（PRD §17 #6）。
  */
 const exchangeRateApiUrl = 'https://www.exchangerate-api.com';
+const exchangeRateApi = {
+  name: 'ExchangeRate-API',
+  sourceUrl: exchangeRateApiUrl,
+  requiredText: 'Rates By Exchange Rate API',
+};
 
 export const FX_ATTRIBUTION_METADATA = Object.freeze({
   exchangeRateApi: Object.freeze({
-    name: 'ExchangeRate-API',
-    sourceUrl: exchangeRateApiUrl,
-    requiredText: 'Rates By Exchange Rate API',
-    attributionLine: `Rates By Exchange Rate API (${exchangeRateApiUrl})`,
+    ...exchangeRateApi,
+    attributionLine: `${exchangeRateApi.requiredText} (${exchangeRateApi.sourceUrl})`,
   }),
 });
 

@@ -141,7 +141,11 @@ export function HomepageSEOSection() {
                 {entry.question}
               </summary>
               <p className="px-4 pb-4 text-sm leading-6 text-text-muted">{entry.answer}</p>
-              {index === 0 && <ExchangeRateApiAttribution />}
+              {index === 0 && (
+                <div className="px-4 pb-4">
+                  <ExchangeRateApiAttribution />
+                </div>
+              )}
             </details>
           ))}
         </div>

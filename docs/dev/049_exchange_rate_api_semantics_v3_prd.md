@@ -1160,7 +1160,7 @@ v3 contract／OpenAPI／LLM 文件可在 feature branch 建立，**不連 canoni
 
 ### 21.2 裁決
 
-1. **可要求標示，不可強制 dofollow**：API 使用條款要求「匯率好工具 RateWise」文字連結至 `https://app.haotool.org/ratewise/`。**條款可要求標示連結，但必須明文允許 `rel="nofollow"`／`"sponsored"`／`"ugc"`，不得要求 dofollow**（F1）。
+1. **可要求標示，不可強制 dofollow**：API 使用條款要求以「資料整理：匯率好工具 RateWise」連結至 `https://app.haotool.org/ratewise/`，表明 RateWise 整理匯率資料而非原始來源。**條款可要求標示連結，但必須明文允許 `rel="nofollow"`／`"sponsored"`／`"ugc"`，不得要求 dofollow**（F1）。
 2. **不主張資料著作權**：條款以「API 服務使用條件」表述，不宣稱對匯率數值的著作權或授權（F6）；同時要求保留上游來源標示「資料來源：臺灣銀行牌告匯率」／MoneyBox，作為來源揭露（禮貌與真實性），**非**已查證之授權義務（F8）。
 3. **機器可讀標示**（無 SEO 風險、提升 AI 引用）：payload `publisher` 物件、`Link` header、OpenData 可複製片段、Dataset JSON-LD（細節見 §21.3）。
 4. **不做**：widget／JS badge、標示連結附 UTM（理由見 §21.5）。
@@ -1170,20 +1170,20 @@ v3 contract／OpenAPI／LLM 文件可在 feature branch 建立，**不連 canoni
 
 v3 `publisher` 物件依 ADR B3 納入 `apps/shared/fx/schema.json` 的 `ReleaseManifest.publisher`，manifest 層輸出一次。S3 已將共用 publisher SSOT 的 `termsUrl` 指向 `https://app.haotool.org/ratewise/open-data/#api-terms`；同一物件亦用於公開 v2 latest／pair JSON 與 OpenAPI。上游來源標示仍沿用 `providers[].attribution`／`termsUrl`，沒有新增重複欄位。
 
-| 表面            | 內容                                                                                                                                                    |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| payload 層級    | `publisher` 物件（我方網站標示）：`name`、`url`、`termsUrl`、`requiredText`；上游標示沿用既有 `providers[].attribution`／`termsUrl`（單一來源，不重複） |
-| 回應 header     | `Link: <termsUrl>; rel="terms-of-service"`，由隨 RateWise Pages 靜態產物部署的 `public/_headers` 套用至 `/ratewise/api/*` 與 `/ratewise/openapi.json`   |
-| OpenData 頁     | 提供 API 使用條款、可複製 HTML／Markdown 標示片段，明文允許使用者自行加上 `rel="nofollow"`／`"sponsored"`／`"ugc"`                                      |
-| Dataset JSON-LD | `creator`（Organization：haotool／匯率好工具）、`license`（指向條款頁）、`isAccessibleForFree: true`、`citation`（建議引用格式）（F5）                  |
+| 表面            | 內容                                                                                                                                                                            |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| payload 層級    | `publisher` 物件（我方網站標示）：`name`、`url`、`termsUrl`、`requiredText`；上游標示沿用既有 `providers[].attribution`／`termsUrl`（單一來源，不重複）                         |
+| 回應 header     | `Link: <termsUrl>; rel="terms-of-service"`，由 `security-headers/src/worker.js` 套用至 `/ratewise/api/*` 與 `/ratewise/openapi.json`，termsUrl 直接取自 publisher SSOT          |
+| OpenData 頁     | 提供 API 使用條款、可複製 HTML／Markdown 標示片段，明文允許使用者自行加上 `rel="nofollow"`／`"sponsored"`／`"ugc"`                                                              |
+| Dataset JSON-LD | `creator`（Organization：haotool／匯率好工具）、`usageInfo`（指向 API 條款頁）、`isBasedOn`（provider 來源 URL）、`isAccessibleForFree: true`、`citation`（建議引用格式）（F5） |
 
 ### 21.4 S3 驗收標準
 
 - [x] v2 latest／pair JSON 與 OpenAPI additive publisher 均來自共用 SSOT；v3 contract publisher 定義保持共用
-- [x] `/ratewise/api/*` 與 `/ratewise/openapi.json` 的 `Link: <termsUrl>; rel="terms-of-service"` 由 Pages `public/_headers` 套用並有守門
+- [x] `/ratewise/api/*` 與 `/ratewise/openapi.json` 的 `Link: <termsUrl>; rel="terms-of-service"` 由 security-headers Worker 套用並有整合守門
 - [x] OpenData 頁、Markdown mirror 與 `llms*.txt` 提供同一標示要求及 HTML／Markdown 片段；允許 `rel="nofollow"`／`"sponsored"`／`"ugc"`
 - [x] 條款不主張匯率數值著作權，明示保留上游來源標示；regex 守門覆蓋條款與 OpenData 頁原始碼
-- [x] Dataset JSON-LD 僅一筆，含 `creator`／`license`／`isAccessibleForFree`／`citation`，並驗證既有 JSON 分發
+- [x] Dataset JSON-LD 僅一筆，含 `creator`／`usageInfo`／provider URL `isBasedOn`／`isAccessibleForFree`／`citation`，不把服務條款當資料授權
 - [x] 守門檢查條款與生成產物不可要求 dofollow 或禁止 nofollow
 - [x] 使用者可見條款變更以 `@app/ratewise` patch changeset 記錄
 
