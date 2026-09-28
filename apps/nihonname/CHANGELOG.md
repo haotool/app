@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.10
+
+### Patch Changes
+
+- Updated dependencies [4936883]
+  - @app/shared@0.0.2
+
 ## 1.0.9
 
 ### Patch Changes
