@@ -72,6 +72,11 @@ describe('台銀完整牌告契約', () => {
     expect(parseBoardPublishedAt('attachment; filename="rates.csv"', now)).toBeNull();
     expect(parseBoardPublishedAt('filename="ExchangeRate@202602301600.csv"', now)).toBeNull();
     expect(parseBoardPublishedAt('filename="ExchangeRate@202609281600.csv"', now)).toBeNull();
+    // 早於擷取前 7 天視為檔名異常。
+    expect(parseBoardPublishedAt('filename="ExchangeRate@202609200831.csv"', now)).toBeNull();
+    expect(parseBoardPublishedAt('filename="ExchangeRate@202609220831.csv"', now)).toBe(
+      '2026-09-22T00:31:00.000Z',
+    );
   });
 
   it('掛牌時間變更即使價格相同也視為有變化', () => {

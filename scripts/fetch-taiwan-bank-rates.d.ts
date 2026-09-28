@@ -21,7 +21,6 @@ export interface TaiwanBankParseResult {
 export interface TaiwanBankFetchResult extends TaiwanBankParseResult {
   timestamp: string;
   fetchedAt: string;
-  lastSuccessfulCheckAt: string;
   /** 牌告掛牌時間（CSV Content-Disposition 檔名）；無法可靠取得時為 null。 */
   sourcePublishedAt: string | null;
 }

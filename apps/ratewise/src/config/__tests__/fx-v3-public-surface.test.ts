@@ -48,3 +48,30 @@ describe.runIf(!FX_V3_PUBLIC)('v3 public surface stays inert', () => {
     },
   );
 });
+
+describe('v2 provider metadata 與 v3 manifest 同源', () => {
+  it('開放資料 metadata 的來源、條款與標示等於 FX_PROVIDER_METADATA', async () => {
+    const { buildPublicRateProviderMetadata } = await import('../rateProviderPublicMetadata');
+    const { FX_PROVIDER_METADATA } = await import('../../../../shared/fx/provider-metadata.mjs');
+    const { providers } = buildPublicRateProviderMetadata({
+      dataBaseUrl: 'https://example.com',
+      supportedCurrencies: ['USD'],
+    });
+    expect(providers.length).toBeGreaterThan(0);
+    for (const provider of providers) {
+      const meta = FX_PROVIDER_METADATA[provider.providerId as keyof typeof FX_PROVIDER_METADATA];
+      expect(meta).toBeDefined();
+      expect({
+        sourceUrl: provider.sourceUrl,
+        termsUrl: provider.termsUrl,
+        redistributionStatus: provider.redistributionStatus,
+        attribution: provider.attribution,
+      }).toEqual({
+        sourceUrl: meta.sourceUrl,
+        termsUrl: meta.termsUrl,
+        redistributionStatus: meta.redistributionStatus,
+        attribution: meta.attribution,
+      });
+    }
+  });
+});

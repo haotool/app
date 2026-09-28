@@ -263,7 +263,6 @@ async function fetchMoneyBoxRates() {
       return {
         timestamp: fetchedAt,
         fetchedAt,
-        lastSuccessfulCheckAt: fetchedAt,
         sourcePublishedAt: safeSourcePublishedAt(data.data.publishedAt),
         sourceQuotes,
         updateTime: new Date().toLocaleString('zh-TW', {

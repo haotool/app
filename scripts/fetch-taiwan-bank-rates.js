@@ -198,7 +198,9 @@ function parseBoardPublishedAt(contentDisposition, now = new Date()) {
   // 拒絕溢位日期（如 2 月 30 日）與明顯晚於擷取時間的值。
   const taipei = new Date(published.getTime() + 8 * 3600_000).toISOString();
   if (taipei.slice(0, 16) !== `${year}-${month}-${day}T${hour}:${minute}`) return null;
+  // 合理視窗：不晚於擷取後 10 分鐘、不早於擷取前 7 天（超出視為檔名異常，不採信）。
   if (published.getTime() > now.getTime() + 10 * 60_000) return null;
+  if (published.getTime() < now.getTime() - 7 * 86_400_000) return null;
   return published.toISOString();
 }
 
@@ -208,7 +210,8 @@ function buildRatesPayload(rates, details, sourceQuotes, sourcePublishedAt = nul
   return {
     timestamp: fetchedAt,
     fetchedAt,
-    lastSuccessfulCheckAt: fetchedAt,
+    // 不輸出 lastSuccessfulCheckAt：牌價未變時不改寫 latest.json，該值會停在上次變動時而誤導；
+    // 「最後成功檢查」由 v3 manifest provider 層（publish-fx-release.mjs）記錄。
     sourcePublishedAt,
     sourceQuotes,
     updateTime: new Date().toLocaleString('zh-TW', {

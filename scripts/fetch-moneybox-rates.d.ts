@@ -28,7 +28,6 @@ export interface MoneyBoxSnapshot {
   sourceQuotes?: Record<string, MoneyBoxSourceQuote>;
   sourcePublishedAt?: string | null;
   fetchedAt?: string;
-  lastSuccessfulCheckAt?: string;
   updateTime?: string;
   timestamp?: string;
   schemaVersion?: string;
@@ -39,7 +38,6 @@ export interface MoneyBoxFetchResult extends MoneyBoxSnapshot {
   sourceQuotes: Record<string, MoneyBoxSourceQuote>;
   sourcePublishedAt: string | null;
   fetchedAt: string;
-  lastSuccessfulCheckAt: string;
 }
 
 export interface RefreshDecision {
