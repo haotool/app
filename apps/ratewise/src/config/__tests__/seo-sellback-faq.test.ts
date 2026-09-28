@@ -26,13 +26,16 @@ describe('美元與日圓現鈔賣回 FAQ', () => {
       expect(faq?.answer).toContain(
         `${amount.toLocaleString('zh-TW')} ${code} × ${cashBuy} = 預估 ${Math.round(amount * cashBuy).toLocaleString('zh-TW')} 元台幣`,
       );
+      expect(faq?.answer).toContain('未含手續費');
+      expect(faq?.answer).toContain('以台銀當日牌告為準');
+      expect(faq?.answer).toContain(SEO_RATE_EXAMPLES_DATE);
+      expect(faq?.answer).toContain('臺灣銀行通常僅收購外幣紙鈔，硬幣一般不收兌');
     } else {
       expect(faq?.answer).not.toContain('牌告試算：');
+      expect(faq?.answer).toContain('現金買入價');
+      expect(faq?.answer).toContain('即期買入價');
+      expect(faq?.answer).toContain('臺灣銀行通常僅收購外幣紙鈔，硬幣一般不收兌');
     }
-    expect(faq?.answer).toContain('未含手續費');
-    expect(faq?.answer).toContain('以台銀當日牌告為準');
-    expect(faq?.answer).toContain(SEO_RATE_EXAMPLES_DATE);
-    expect(faq?.answer).toContain('臺灣銀行通常僅收購外幣紙鈔，硬幣一般不收兌');
   });
 
   it('cashBuy 缺漏或無效時省略數字試算句', () => {
@@ -43,6 +46,7 @@ describe('美元與日圓現鈔賣回 FAQ', () => {
 
   it('只有美元與日圓正向頁 FAQ 使用現鈔賣回內容', () => {
     const codes = Object.keys(SEO_RATE_EXAMPLES) as CurrencyLandingCode[];
+    // 以關鍵字判別賣回問答；措辭若超出這些關鍵字可能漏判（已知限制）。
     const isSellbackExample = ({ question, answer }: { question: string; answer: string }) =>
       question.includes('手上有') ||
       (answer.includes('現金買入價') &&
