@@ -2,6 +2,7 @@ import { CURRENCY_DEFINITIONS } from '../../features/ratewise/constants';
 import { APP_INFO } from '../app-info';
 import {
   SEO_RATE_EXAMPLES,
+  SEO_RATE_EXAMPLES_BOARD_DATE,
   SEO_RATE_EXAMPLES_DATE,
   type RateExample,
 } from '../generated/seo-rate-examples';
@@ -39,7 +40,7 @@ export function buildCashBuyRateSentence(
 ): string {
   const cashBuy = rateExample?.cashBuy;
   if (typeof cashBuy !== 'number' || !Number.isFinite(cashBuy) || cashBuy <= 0) return '';
-  return `牌告試算：${amount.toLocaleString('zh-TW')} ${code} × ${cashBuy} = 預估 ${Math.round(amount * cashBuy).toLocaleString('zh-TW')} 元台幣（${SEO_RATE_EXAMPLES_DATE} 牌告試算，未含手續費，以台銀當日牌告為準）。`;
+  return `牌告試算：${amount.toLocaleString('zh-TW')} ${code} × ${cashBuy} = 預估 ${Math.round(amount * cashBuy).toLocaleString('zh-TW')} 元台幣（${SEO_RATE_EXAMPLES_BOARD_DATE ? `${SEO_RATE_EXAMPLES_BOARD_DATE} ` : ''}牌告試算，未含手續費，以台銀當日牌告為準）。`;
 }
 
 const RELATED_GUIDES_TO_TWD: RelatedGuideLink[] = [

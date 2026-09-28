@@ -121,6 +121,49 @@ function formatDateInTaipei(date = new Date()) {
   }).format(date);
 }
 
+// 產出與其他常數一致的單引號字面值；缺值輸出 null。
+const formatBoardDateLiteral = (date) => (date ? `'${date}'` : 'null');
+
+export function getBoardDate(sourcePublishedAt, updateTime) {
+  const publishedAt =
+    typeof sourcePublishedAt === 'string' &&
+    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.exec(
+      sourcePublishedAt,
+    );
+  if (publishedAt) {
+    const timestamp = Date.parse(sourcePublishedAt);
+    const [, year, month, day, hour, minute, second] = publishedAt.map(Number);
+    const date = new Date(Date.UTC(year, month - 1, day, hour, minute, second));
+    if (
+      Number.isFinite(timestamp) &&
+      date.getUTCFullYear() === year &&
+      date.getUTCMonth() === month - 1 &&
+      date.getUTCDate() === day &&
+      hour < 24 &&
+      minute < 60 &&
+      second < 60
+    ) {
+      return formatDateInTaipei(new Date(timestamp));
+    }
+  }
+
+  const match =
+    typeof updateTime === 'string' &&
+    /^(\d{4})\/(\d{2})\/(\d{2}) (\d{2}):(\d{2}):(\d{2})$/.exec(updateTime);
+  if (!match) return null;
+
+  const [, year, month, day, hour, minute, second] = match.map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day, hour, minute, second));
+  return date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day &&
+    hour < 24 &&
+    minute < 60 &&
+    second < 60
+    ? `${match[1]}-${match[2]}-${match[3]}`
+    : null;
+}
+
 /**
  * 從 CDN 取得 MoneyBox 最新 TWD↔KRW 雙向匯率。
  * 資料由 GitHub Actions update-moneybox-rates.yml 每5分鐘更新至 data 分支。
@@ -416,6 +459,10 @@ async function main() {
   lines.push(``);
   lines.push(`/** 資料更新時間（台灣銀行） */`);
   lines.push(`export const SEO_RATE_EXAMPLES_UPDATE_TIME = '${updateTime}';`);
+  lines.push(``);
+  lines.push(
+    `export const SEO_RATE_EXAMPLES_BOARD_DATE = ${formatBoardDateLiteral(getBoardDate(twData.sourcePublishedAt, updateTime))};`,
+  );
   lines.push(``);
   lines.push(`/** 生成日期 */`);
   lines.push(`export const SEO_RATE_EXAMPLES_DATE = '${today}';`);

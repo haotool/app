@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SEO_RATE_EXAMPLES, SEO_RATE_EXAMPLES_DATE } from '../generated/seo-rate-examples';
+import { SEO_RATE_EXAMPLES, SEO_RATE_EXAMPLES_BOARD_DATE } from '../generated/seo-rate-examples';
 import {
   buildCashBuyRateSentence,
   getCurrencyLandingPageContent,
@@ -28,7 +28,9 @@ describe('美元與日圓現鈔賣回 FAQ', () => {
       );
       expect(faq?.answer).toContain('未含手續費');
       expect(faq?.answer).toContain('以台銀當日牌告為準');
-      expect(faq?.answer).toContain(SEO_RATE_EXAMPLES_DATE);
+      if (SEO_RATE_EXAMPLES_BOARD_DATE) {
+        expect(faq?.answer).toContain(SEO_RATE_EXAMPLES_BOARD_DATE);
+      }
       expect(faq?.answer).toContain('臺灣銀行通常僅收購外幣紙鈔，硬幣一般不收兌');
     } else {
       expect(faq?.answer).not.toContain('牌告試算：');
