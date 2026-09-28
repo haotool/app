@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, rmdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -158,6 +158,8 @@ describe('v3 publication', () => {
       ];
       const first = await publishRelease(dir, { bot }, time, history);
       const next = await publishRelease(dir, { bot }, '2026-09-21T01:05:00Z', history);
+      expect(first.manifest.history).toEqual(history);
+      expect(next.manifest.history).toEqual(history);
       expect(next.unchanged).toBe(true);
       expect(next.current.releaseId).toBe(first.current.releaseId);
     } finally {
@@ -455,6 +457,14 @@ it('preserves bank detail and side metadata for spot-only and missing-side legac
 });
 
 const historicalFiles = vi.hoisted(() => new Map<string, string>());
+const removeScratchIfEmpty = (path: string) => {
+  try {
+    rmdirSync(path);
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code;
+    if (code !== 'ENOENT' && code !== 'ENOTEMPTY') throw error;
+  }
+};
 vi.mock('node:child_process', () => ({
   execFileSync: (_command: string, args: string[]) => {
     if (args[0] === 'ls-tree') return [...historicalFiles.keys()].join('\n');
@@ -574,6 +584,56 @@ it('migrates real-shaped 30-day bank histories with gaps and the MoneyBox Seoul 
   } finally {
     historicalFiles.clear();
     rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+it('quarantines an old MoneyBox file whose Seoul snapshot day differs from its filename and continues migration', () => {
+  const scratch = join(process.cwd(), '.tmp');
+  mkdirSync(scratch, { recursive: true });
+  const dir = mkdtempSync(join(scratch, 'fx-migration-quarantine-old-moneybox-'));
+  historicalFiles.clear();
+  historicalFiles.set(
+    'public/rates/history/2026-05-12.json',
+    JSON.stringify({
+      timestamp: '2026-05-12T10:00:00.000Z',
+      base: 'TWD',
+      source: 'Taiwan Bank',
+      details: { USD: { cash: { buy: 31, sell: 32 } } },
+      rates: { USD: 32 },
+    }),
+  );
+  historicalFiles.set(
+    'public/rates/providers/moneybox/history/2026-05-12.json',
+    JSON.stringify({
+      timestamp: '2026-05-12T15:15:00.000Z',
+      updateTime: '2026/05/13 00:15:00',
+      base: 'KRW',
+      source: 'MoneyBox',
+      rates: { TWD: { buy: 43, sell: 42, spbuy: null, spsell: null } },
+    }),
+  );
+  try {
+    const result = migrateHistory('d'.repeat(40), dir);
+    expect(result).toMatchObject({ total: 2, converted: 1, quarantined: 1 });
+    expect(result.entries).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          path: 'public/rates/providers/moneybox/history/2026-05-12.json',
+          status: 'quarantined',
+          reason: 'MoneyBox history date differs from legacy Seoul snapshot date',
+          evidence: expect.objectContaining({ path: expect.stringContaining('evidence/') }),
+        }),
+      ]),
+    );
+    const entry = result.entries.find((candidate) => candidate.status === 'quarantined');
+    expect(readFileSync(join(dir, entry!.evidence!.path), 'utf8')).toContain('2026/05/13 00:15:00');
+    expect(JSON.parse(readFileSync(join(dir, 'history-index.json'), 'utf8'))).toContainEqual(
+      expect.objectContaining({ providerId: 'bot', date: '2026-05-12' }),
+    );
+  } finally {
+    historicalFiles.clear();
+    rmSync(dir, { recursive: true, force: true });
+    removeScratchIfEmpty(scratch);
   }
 });
 

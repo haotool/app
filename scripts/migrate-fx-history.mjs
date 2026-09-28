@@ -153,7 +153,8 @@ export function migrateHistory(revision, output, dataRoot = null) {
     quarantined: entries.filter((e) => e.status === 'quarantined').length,
     entries,
   };
-  writeFileSync(resolve(output, 'migration.json'), JSON.stringify(result, null, 2) + '\n');
+  const { revision: _revision, ...manifest } = result;
+  writeFileSync(resolve(output, 'migration.json'), JSON.stringify(manifest, null, 2) + '\n');
   writeFileSync(resolve(output, 'history-index.json'), JSON.stringify(history) + '\n');
   return result;
 }

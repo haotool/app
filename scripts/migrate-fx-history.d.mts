@@ -28,4 +28,8 @@ export interface MigrationResult {
   entries: MigrationEntry[];
 }
 
-export function migrateHistory(revision: string, output: string): MigrationResult;
+export function migrateHistory(
+  revision: string,
+  output: string,
+  dataRoot?: string | null,
+): MigrationResult;

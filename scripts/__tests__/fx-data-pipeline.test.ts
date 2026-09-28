@@ -1,8 +1,17 @@
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  rmdirSync,
+  writeFileSync,
+  existsSync,
+} from 'node:fs';
 import { join, resolve } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
+import { migrateHistory } from '../migrate-fx-history.mjs';
+import { publishRelease, retainedHistory } from '../publish-fx-release.mjs';
 
 const ROOT = resolve(import.meta.dirname, '../..');
 const workflow = (name: string) => readFileSync(join(ROOT, '.github/workflows', name), 'utf8');
@@ -14,13 +23,28 @@ const job = (text: string, name: string) => {
 
 const dirs: string[] = [];
 const tempDir = () => {
-  const dir = mkdtempSync(join(tmpdir(), 'fx-pipeline-'));
+  const root = join(ROOT, '.tmp');
+  mkdirSync(root, { recursive: true });
+  const dir = mkdtempSync(join(root, 'fx-pipeline-'));
   dirs.push(dir);
   return dir;
 };
 afterEach(() => {
   for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true });
+  try {
+    rmdirSync(join(ROOT, '.tmp'));
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code;
+    if (code !== 'ENOENT' && code !== 'ENOTEMPTY') throw error;
+  }
 });
+
+const git = (cwd: string, ...args: string[]) =>
+  execFileSync('git', args, { cwd, encoding: 'utf8', stdio: 'pipe' }).trim();
+const configureGit = (cwd: string) => {
+  git(cwd, 'config', 'user.name', 'FX pipeline test');
+  git(cwd, 'config', 'user.email', 'fx-pipeline-test@example.invalid');
+};
 
 describe('data workflow contract', () => {
   it('passes an absolute MoneyBox fetch snapshot path shared by fetch and history steps', () => {
@@ -41,6 +65,13 @@ describe('data workflow contract', () => {
     const v2Job = job(text, v2);
     expect(v2Job).not.toMatch(/pnpm install|generate:fx|publish-fx-release|RATEWISE_FX_V3_ENABLED/);
     expect(v2Job).not.toContain('public/rates/v3');
+    const commitStep = text.slice(
+      text.indexOf('      - name: Commit and push changes'),
+      text.indexOf('      - name: Purge jsDelivr CDN cache'),
+    );
+    expect(commitStep).not.toMatch(/--amend|--force/);
+    expect(commitStep).toContain('git pull --rebase origin data');
+    expect(commitStep).toContain('for i in 1 2 3; do');
     // v2 鎖維持 job 層級，避免 v3 發布耗時改變既有更新節奏。
     expect(v2Job).toMatch(/concurrency:\n\s+group: data-branch-push/);
     const v3Job = job(text, 'publish-v3');
@@ -125,6 +156,89 @@ describe('data workflow contract', () => {
       expect(failStep).toContain('exit 1');
     },
   );
+
+  it('rebases a new same-kind rates commit over concurrent data-branch history without losing either commit', () => {
+    const root = tempDir();
+    const remote = join(root, 'remote.git');
+    const update = join(root, 'update');
+    const concurrent = join(root, 'concurrent');
+    git(root, 'init', '--bare', '--initial-branch=data', remote);
+    git(root, 'clone', remote, update);
+    configureGit(update);
+    git(update, 'switch', '-c', 'data');
+
+    const ratesPath = join(update, 'public/rates/latest.json');
+    mkdirSync(join(update, 'public/rates'), { recursive: true });
+    writeFileSync(ratesPath, '{"updateTime":"previous"}\n');
+    git(update, 'add', 'public/rates/latest.json');
+    git(update, 'commit', '-m', 'chore(rates): update latest rates - previous');
+    git(update, 'push', '-u', 'origin', 'data');
+
+    writeFileSync(ratesPath, '{"updateTime":"new"}\n');
+    git(update, 'add', 'public/rates/latest.json');
+    git(update, 'commit', '-m', 'chore(rates): update latest rates - new');
+
+    git(root, 'clone', '--branch', 'data', remote, concurrent);
+    configureGit(concurrent);
+    mkdirSync(join(concurrent, 'public/rates/v3'), { recursive: true });
+    writeFileSync(join(concurrent, 'public/rates/v3/current.json'), '{"releaseId":"v3"}\n');
+    git(concurrent, 'add', 'public/rates/v3/current.json');
+    git(concurrent, 'commit', '-m', 'chore(rates): publish concurrent v3 release');
+    git(concurrent, 'push', 'origin', 'data');
+
+    git(update, 'pull', '--rebase', 'origin', 'data');
+    git(update, 'push', 'origin', 'data');
+    const commits = git(update, 'log', '--format=%s', 'origin/data');
+    expect(commits).toContain('chore(rates): update latest rates - previous');
+    expect(commits).toContain('chore(rates): update latest rates - new');
+    expect(commits).toContain('chore(rates): publish concurrent v3 release');
+    expect(readFileSync(join(update, 'public/rates/v3/current.json'), 'utf8')).toContain('v3');
+  });
+
+  it('keeps two unchanged migration and publish runs clean in a git checkout', async () => {
+    const root = tempDir();
+    const dataRoot = join(root, 'public/rates');
+    const v3 = join(dataRoot, 'v3');
+    const historyDate = '2026-09-20';
+    mkdirSync(join(dataRoot, 'history'), { recursive: true });
+    writeFileSync(
+      join(dataRoot, `history/${historyDate}.json`),
+      JSON.stringify({
+        timestamp: `${historyDate}T10:00:00.000Z`,
+        base: 'TWD',
+        source: 'Taiwan Bank',
+        details: { USD: { cash: { buy: '31', sell: '32' } } },
+        rates: { USD: '32' },
+      }),
+    );
+    git(root, 'init', '--initial-branch=data');
+    configureGit(root);
+    git(root, 'add', 'public/rates/history');
+    git(root, 'commit', '-m', 'chore(rates): add history input');
+    const input = {
+      timestamp: '2026-09-21T01:00:00Z',
+      sourcePublishedAt: '2026-09-21T01:00:00Z',
+      details: { USD: { cash: { buy: '31', sell: '32' } } },
+    };
+    const runPublish = async (time: string) => {
+      migrateHistory(git(root, 'rev-parse', 'HEAD'), v3, dataRoot);
+      return publishRelease(
+        v3,
+        { bot: input },
+        time,
+        retainedHistory(dataRoot, new Date('2026-09-21T02:00:00Z')),
+      );
+    };
+    const first = await runPublish('2026-09-21T01:00:00Z');
+    expect(first.manifest.history).toHaveLength(1);
+    git(root, 'add', 'public/rates/v3');
+    git(root, 'commit', '-m', 'chore(rates): publish first v3 release');
+    git(root, 'commit', '--allow-empty', '-m', 'chore(rates): unchanged source run');
+
+    const second = await runPublish('2026-09-21T01:05:00Z');
+    expect(second.unchanged).toBe(true);
+    expect(git(root, 'status', '--porcelain', '--', 'public/rates/v3')).toBe('');
+  });
 });
 
 describe('fetch scripts', () => {
