@@ -158,16 +158,18 @@ jobs:
 
           echo "💾 Permanent storage: ${HISTORY_COUNT} days preserved"
 
+      # 當日快照 commit 不得依賴 aggregate 成功（缺日／壞檔只警示）；失敗於 run 結尾標紅。
       - name: Generate aggregate 30-day history file
         if: steps.save-snapshot.outputs.snapshot_created == 'true'
         id: generate-aggregate
+        continue-on-error: true
         run: |
           RATE_DATA_ROOT=. node _fx-code/apps/ratewise/scripts/generate-history-aggregate.mjs
         env:
           RATE_DATA_ROOT: .
 
       - name: Aggregate file status
-        if: steps.save-snapshot.outputs.snapshot_created == 'true'
+        if: steps.generate-aggregate.outcome == 'success'
         run: |
           echo "🧾 history-30d.json size:"
           ls -lh public/rates/history-30d.json
@@ -177,7 +179,8 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add public/rates/history/ public/rates/history-30d.json
+          git add public/rates/history/
+          if [[ -f public/rates/history-30d.json ]]; then git add public/rates/history-30d.json; fi
 
           # 取得快照資訊
           CURRENT_DATE="${{ steps.save-snapshot.outputs.current_date }}"
@@ -246,3 +249,9 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Today's snapshot (${CURRENT_DATE}) is already saved and up to date." >> $GITHUB_STEP_SUMMARY
           echo "Next snapshot: Tomorrow at 00:00 UTC" >> $GITHUB_STEP_SUMMARY
+
+      - name: Fail run when aggregate failed
+        if: steps.generate-aggregate.outcome == 'failure'
+        run: |
+          echo "::error::history-30d.json aggregate failed; today's snapshot was still committed."
+          exit 1

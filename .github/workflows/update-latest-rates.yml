@@ -6,11 +6,6 @@
 
 name: Update Latest Exchange Rates
 
-# 並發控制：確保同一時間只有一個 workflow 推送至 data 分支
-concurrency:
-  group: data-branch-push
-  cancel-in-progress: false
-
 on:
   schedule:
     # GitHub 官方不保證 schedule 準點執行；避開整點可降低高負載延遲 / 掉單機率。
@@ -22,10 +17,6 @@ on:
     branches:
       - main
     paths:
-      - 'apps/shared/fx/**'
-      - 'scripts/lib/**'
-      - 'scripts/publish-fx-release.mjs'
-      - 'pnpm-lock.yaml'
       - 'scripts/fetch-taiwan-bank-rates.js'
       - '.github/workflows/update-latest-rates.yml'
 
@@ -34,6 +25,11 @@ jobs:
   # 讓 v3 發布或依賴安裝失敗永遠不會阻斷既有公開資料更新。
   update-latest:
     runs-on: ubuntu-latest
+    # 並發控制：確保同一時間只有一個 v2 job 推送至 data 分支（與其他 rate workflow 共用 group）。
+    # 置於 job 層級：v3 publish job 使用獨立 group，其執行時間不延長 v2 鎖、不致 v2 排隊被取代。
+    concurrency:
+      group: data-branch-push
+      cancel-in-progress: false
     outputs:
       fetch_ok: ${{ steps.fetch-status.outputs.ok }}
 
@@ -302,50 +298,14 @@ jobs:
           echo "## Transient failure tolerated" >> $GITHUB_STEP_SUMMARY
           echo "Data is still fresh (<${STALENESS_THRESHOLD_HOURS}h); next scheduled run retries in 5 minutes." >> $GITHUB_STEP_SUMMARY
 
-  # v3 發布：獨立 job，於 v2 job 之後執行（不論其成敗，以記錄 provider 檢查結果）。
-  # 失敗時本 job 標紅，不使用 continue-on-error；v2 資料已於前一個 job 完成 commit／purge。
+  # v3 發布：reusable workflow（publish-fx-v3.yml），於 v2 job 之後執行（v2 失敗時仍記錄 provider 檢查結果）。
+  # 失敗時該 job 標紅，不使用 continue-on-error；v2 資料已於前一個 job 完成 commit／purge。
   publish-v3:
     needs: update-latest
-    if: ${{ always() && vars.RATEWISE_FX_V3_ENABLED == 'true' }}
-    runs-on: ubuntu-latest
+    if: ${{ !cancelled() && vars.RATEWISE_FX_V3_ENABLED == 'true' }}
     permissions:
       contents: write
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
-    steps:
-      - name: Checkout data branch
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          ref: data
-          fetch-depth: 0
-
-      - name: Checkout the complete publisher at the triggering code SHA
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          ref: ${{ github.sha }}
-          path: _fx-code
-          persist-credentials: false
-
-      - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
-        with:
-          node-version: '24'
-
-      - name: Install exact publisher dependencies
-        working-directory: _fx-code
-        run: |
-          corepack enable
-          corepack pnpm install --frozen-lockfile --ignore-scripts
-          corepack pnpm generate:fx --check
-
-      - name: Publish verified v3 release
-        env:
-          FX_PROVIDER: bot
-          FX_DATA_ROOT: ${{ github.workspace }}/public/rates
-          FX_FETCH_FAILED: ${{ needs.update-latest.outputs.fetch_ok != 'true' && '1' || '0' }}
-        run: node _fx-code/scripts/publish-fx-release.mjs
-
-      - name: Commit, push and purge v3 pointer
-        env:
-          COMMIT_MESSAGE: 'chore(rates): publish bot v3 release'
-        run: bash _fx-code/scripts/commit-fx-v3-release.sh "$COMMIT_MESSAGE"
+    uses: ./.github/workflows/publish-fx-v3.yml
+    with:
+      provider: bot
+      fetch-failed: ${{ needs.update-latest.outputs.fetch_ok != 'true' }}

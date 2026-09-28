@@ -12,13 +12,26 @@ if [[ -z "$(git status --porcelain --untracked-files=all -- "$V3_DIR/")" ]]; the
   exit 0
 fi
 
+# checkout 不保存 credentials（persist-credentials: false）；token 只在本步驟以 extraheader 注入，
+# 不寫入 .git/config。未提供 token 時（本機驗證）沿用既有 git 認證。
+git_remote() {
+  if [[ -n "${GIT_PUSH_TOKEN:-}" ]]; then
+    local auth
+    auth=$(printf 'x-access-token:%s' "$GIT_PUSH_TOKEN" | base64 | tr -d '\n')
+    echo "::add-mask::${auth}"
+    git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic ${auth}" "$@"
+  else
+    git "$@"
+  fi
+}
+
 git config --local user.email "github-actions[bot]@users.noreply.github.com"
 git config --local user.name "github-actions[bot]"
 git add "$V3_DIR/"
 git commit -m "$MESSAGE" -m "🤖 Published by the v3 release job"
 
 for i in 1 2 3; do
-  if git pull --rebase origin data && git push origin HEAD:data; then
+  if git_remote pull --rebase origin data && git_remote push origin HEAD:data; then
     echo "✅ v3 release pushed"
     break
   fi

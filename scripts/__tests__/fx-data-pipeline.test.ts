@@ -41,13 +41,63 @@ describe('data workflow contract', () => {
     const v2Job = job(text, v2);
     expect(v2Job).not.toMatch(/pnpm install|generate:fx|publish-fx-release|RATEWISE_FX_V3_ENABLED/);
     expect(v2Job).not.toContain('public/rates/v3');
+    // v2 鎖在 job 層級：v3 發布時間不得延長 data-branch-push 鎖。
+    expect(v2Job).toMatch(/concurrency:\n\s+group: data-branch-push/);
+    expect(text.slice(0, text.indexOf('\njobs:'))).not.toContain('concurrency:');
     const v3Job = job(text, 'publish-v3');
     expect(v3Job).toContain(`needs: ${v2}`);
     expect(v3Job).toContain("vars.RATEWISE_FX_V3_ENABLED == 'true'");
-    expect(v3Job).toContain('publish-fx-release.mjs');
+    expect(v3Job).toContain('uses: ./.github/workflows/publish-fx-v3.yml');
+    expect(v3Job).toContain('!cancelled()');
+    expect(v3Job).not.toContain('always()');
     // v3 失敗必須讓 job 標紅，不得以 continue-on-error 假綠。
     expect(v3Job).not.toContain('continue-on-error');
   });
+
+  it('runs the shared v3 publisher isolated from the v2 lock and without persisted credentials', () => {
+    const text = workflow('publish-fx-v3.yml');
+    expect(text).toContain('workflow_call:');
+    expect(text).toMatch(/timeout-minutes: \d+/);
+    expect(text).toMatch(/concurrency:\n\s+group: fx-v3-publish/);
+    expect(text).not.toMatch(/group: data-branch-push/);
+    expect(text).not.toMatch(/continue-on-error:/);
+    expect(text).toContain('publish-fx-release.mjs');
+    const checkouts = text.split('uses: actions/checkout@').slice(1);
+    expect(checkouts).toHaveLength(2);
+    for (const step of checkouts) expect(step).toMatch(/persist-credentials: false/);
+    // token 只注入 push 步驟。
+    expect(text.match(/github\.token/g)).toHaveLength(1);
+    expect(job(text, 'publish').split('GIT_PUSH_TOKEN')[0]).toContain('Commit, push and purge');
+  });
+
+  it.each(['update-latest-rates.yml', 'update-moneybox-rates.yml', 'update-historical-rates.yml'])(
+    '%s is not triggered by shared FX code or lockfile pushes',
+    (file) => {
+      const paths = workflow(file).split('\njobs:')[0];
+      expect(paths).not.toMatch(/pnpm-lock\.yaml|apps\/shared\/fx|scripts\/lib|publish-fx-release/);
+    },
+  );
+
+  it.each([
+    ['update-historical-rates.yml', 'generate-aggregate', 'Commit and push snapshot'],
+    ['update-moneybox-rates.yml', 'moneybox-aggregate', 'Commit and push changes'],
+  ])(
+    '%s commits snapshots even when the aggregate fails, then fails visibly',
+    (file, id, commit) => {
+      const text = workflow(file);
+      const step = (name: string) => {
+        const start = text.indexOf(`- name: ${name}`);
+        const next = text.indexOf('\n      - name:', start + 1);
+        return text.slice(start, next === -1 ? undefined : next);
+      };
+      const aggregate = text.slice(text.lastIndexOf('\n      - name:', text.indexOf(`id: ${id}`)));
+      expect(aggregate.split('\n      - name:')[1]).toContain('continue-on-error: true');
+      expect(step(commit)).not.toContain(id);
+      const failStep = step('Fail run when aggregate failed');
+      expect(failStep).toContain(`steps.${id}.outcome == 'failure'`);
+      expect(failStep).toContain('exit 1');
+    },
+  );
 });
 
 describe('fetch scripts', () => {
