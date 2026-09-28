@@ -683,7 +683,9 @@ describe('ratewise build scripts', () => {
     expect(workflowSource).toContain('branches:\n      - main');
     expect(workflowSource).toContain('Checkout fetch scripts at the triggering code SHA');
     expect(workflowSource).toContain('path: _fx-code');
-    expect(workflowSource).toContain('corepack pnpm generate:fx --check');
+    // v2 job 不安裝依賴；generate:fx 守門只在共用 v3 publisher（publish-fx-v3.yml）。
+    expect(workflowSource).not.toContain('corepack pnpm generate:fx --check');
+    expect(workflowSource).toContain('uses: ./.github/workflows/publish-fx-v3.yml');
     expect(workflowSource).not.toContain(
       'git checkout origin/main -- scripts/fetch-moneybox-rates.js',
     );
@@ -735,16 +737,27 @@ describe('ratewise build scripts', () => {
   it('should publish a failed v3 provider status without overwriting legacy data', async () => {
     const latestWorkflow = await readLatestRatesWorkflow();
     const moneyBoxWorkflow = await readMoneyBoxWorkflow();
+    const publisher = await readFile(
+      path.resolve(__dirname, '../../../../../.github/workflows/publish-fx-v3.yml'),
+      'utf-8',
+    );
 
     for (const workflow of [latestWorkflow, moneyBoxWorkflow]) {
-      expect(workflow).toContain("if: ${{ always() && vars.RATEWISE_FX_V3_ENABLED == 'true' }}");
-      expect(workflow).toContain('FX_FETCH_FAILED:');
-      expect(workflow).toContain('commit-fx-v3-release.sh');
+      expect(workflow).toContain(
+        "if: ${{ !cancelled() && vars.RATEWISE_FX_V3_ENABLED == 'true' }}",
+      );
+      expect(workflow).toContain('fetch-failed:');
       expect(workflow).not.toContain('git add public/rates/v3/');
     }
-    expect(latestWorkflow).toContain('FX_FETCH_FAILED: ${{ needs.update-latest.outputs.fetch_ok');
+    expect(publisher).toContain('FX_FETCH_FAILED:');
+    expect(publisher).toContain('corepack pnpm generate:fx --check');
+    expect(publisher).toContain('commit-fx-v3-release.sh');
+    expect(publisher).not.toContain('git add public/rates/v3/');
+    expect(latestWorkflow).toContain(
+      "fetch-failed: ${{ needs.update-latest.outputs.fetch_ok != 'true' }}",
+    );
     expect(moneyBoxWorkflow).toContain(
-      'FX_FETCH_FAILED: ${{ needs.update-moneybox.outputs.fetch_outcome',
+      "fetch-failed: ${{ needs.update-moneybox.outputs.fetch_outcome != 'success' }}",
     );
   });
 
