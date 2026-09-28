@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+390
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+391
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-09-28
+- ID：reward-ratewise-api-attribution
+- 原因：公開 API 缺少一致的發布者標示、使用條款與來源揭露。
+- 解法：共用 publisher SSOT 並同步 v2 payload、OpenData 條款、header 與 Dataset JSON-LD。
 
 - 日期：2026-09-28
 - ID：reward-ratewise-release-version-build-metadata
