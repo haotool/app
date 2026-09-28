@@ -1,5 +1,12 @@
 # @app/park-keeper
 
+## 1.3.12
+
+### Patch Changes
+
+- Updated dependencies [422cf27]
+  - @app/shared@0.0.4
+
 ## 1.3.11
 
 ### Patch Changes

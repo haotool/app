@@ -1,5 +1,11 @@
 # @app/shared
 
+## 0.0.4
+
+### Patch Changes
+
+- 422cf27: 匯率 v3 歷史資料遷移補強首爾日期對帳，為正式啟用前的資料管線準備；各 App 行為不變。
+
 ## 0.0.3
 
 ### Patch Changes
