@@ -6,7 +6,7 @@
     "requiredText": "資料整理：匯率好工具 RateWise（https://app.haotool.org/ratewise/）"
   },
   "name": "HaoRate Exchange Rate API",
-  "version": "2.28.5",
+  "version": "2.28.6",
   "schemaVersion": "2.0",
   "semanticsDoc": "https://app.haotool.org/ratewise/open-data/",
   "semanticFieldMapping": {
