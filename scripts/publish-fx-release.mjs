@@ -228,6 +228,8 @@ export async function publishRelease(root, inputs, now = new Date().toISOString(
     }
     const quotes = normalizer(normalizedInput);
     if (!quotes.length) throw new Error('Empty or invalid provider snapshot');
+    if (!quotes.some((quote) => quote.status === 'available'))
+      throw new Error('Provider snapshot has no available quotes');
     const data = buildProviderSnapshot(providerId, quotes);
     // producer 嚴格模式：未知或拼錯欄位不得進入公開物件（consumer 則為 tolerant reader）。
     if (!validateProducerProviderSnapshot(data) || !validateProviderSnapshot(data))

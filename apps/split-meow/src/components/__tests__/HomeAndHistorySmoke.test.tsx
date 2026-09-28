@@ -280,6 +280,24 @@ describe('HistoryTab', () => {
     expect(screen.queryByText(/≈/)).not.toBeInTheDocument();
   });
 
+  it('無法顯示換算值時不顯示 fallback 徽章', () => {
+    useStore.setState({
+      expenses: [
+        {
+          ...EXPENSE_1,
+          totalAmount: Number.NaN,
+          currency: 'KRW',
+          exchangeRateKrwPerTwd: 40,
+          rateIsFallback: true,
+        },
+      ],
+      currency: 'TWD',
+      krwPerTwd: null,
+    });
+    renderWith(<HistoryTab />);
+    expect(screen.queryByText(/未驗證匯率/)).not.toBeInTheDocument();
+  });
+
   it('多筆消費顯示 settlement 區塊', () => {
     useStore.setState({
       expenses: [

@@ -114,6 +114,7 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
     selectedProviderStatus,
     selectedQuoteEvidence,
     estimateFreshness,
+    providerQuotes,
   } = useCurrencyConverter({ exchangeRates, details, rateType, rateSource, mode: 'single' });
 
   useEffect(() => {
@@ -255,6 +256,20 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
                       牌告已超過更新門檻（台銀 36 小時、換錢所 24 小時），僅供參考。
                     </p>
                   )}
+                  {providerQuotes
+                    .filter(
+                      (quote) =>
+                        quote.freshness === 'stale' &&
+                        quote.provider.providerId !== selectedQuote?.providerId,
+                    )
+                    .map((quote) => (
+                      <p className="px-3 text-sm" role="status" key={quote.provider.providerId}>
+                        {getRateProvider(quote.provider.providerId)?.label ??
+                          quote.provider.providerId}
+                        ：來源發布時間 {quote.sourcePublishedAt ?? '未知'}
+                        ，已超過更新門檻，未列入最佳推薦。
+                      </p>
+                    ))}
                   {selectedProviderStatus && selectedProviderStatus !== 'ok' && (
                     <p className="px-3 text-sm" role="status">
                       來源最近檢查未成功，顯示上次已驗證快照，僅供參考。

@@ -522,6 +522,11 @@ export function HistoryTab() {
                                 <p className="text-[10px] font-medium text-on-surface-variant/70 whitespace-nowrap">
                                   ≈ {formatAmount(approx, to)}
                                 </p>
+                                {fxV3Public && hasSavedRate && exp.rateIsFallback && (
+                                  <p className="text-[10px] font-medium text-tertiary whitespace-nowrap">
+                                    {t('settings.rate_fallback')}
+                                  </p>
+                                )}
                                 {(!fxV3Public || !hasSavedRate) &&
                                   isRateStale(rateUpdatedAtIso) && (
                                     <p className="text-[10px] font-medium text-tertiary whitespace-nowrap">
@@ -531,13 +536,6 @@ export function HistoryTab() {
                               </>
                             );
                           })()}
-                          {fxV3Public &&
-                            exp.exchangeRateKrwPerTwd != null &&
-                            exp.rateIsFallback && (
-                              <p className="text-[10px] font-medium text-tertiary whitespace-nowrap">
-                                {t('settings.rate_fallback')}
-                              </p>
-                            )}
                           <p className="text-[10px] font-medium text-secondary uppercase tracking-wider">
                             {t('history.participants', { count: exp.participantIds.length })}
                           </p>

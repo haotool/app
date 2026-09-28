@@ -23,7 +23,10 @@ import {
 import { buildPublicRateProviderMetadata } from '../config/rateProviderPublicMetadata';
 import { SITE_CONFIG } from '../config/seo-paths';
 import rateModeStrategies from '../config/rate-mode-strategies.json';
-import { CURRENCY_DEFINITIONS } from '../features/ratewise/constants';
+import {
+  CURRENCY_DEFINITIONS,
+  SUPPORTED_FOREIGN_CURRENCY_COUNT,
+} from '../features/ratewise/constants';
 import {
   FX_PROVIDER_METADATA,
   FX_PROVIDER_OPEN_DATA_NAMES,
@@ -645,7 +648,7 @@ const OpenData = () => {
             )}
             <div className="flex flex-wrap gap-2">
               {[
-                `${SUPPORTED_CURRENCIES.length} 種幣別`,
+                `${SUPPORTED_FOREIGN_CURRENCY_COUNT} 種外幣 + TWD`,
                 '每 5 分鐘更新',
                 '無需 API Key',
                 'ETag 支援',
@@ -1104,7 +1107,7 @@ const OpenData = () => {
             {/* 支援幣別 */}
             <div>
               <h3 className="mb-3 text-base font-semibold text-text">
-                支援幣別（{SUPPORTED_CURRENCIES.length} 種，基準幣 TWD）
+                支援幣別（{SUPPORTED_FOREIGN_CURRENCY_COUNT} 種外幣 + TWD 基準幣）
               </h3>
               <div className="flex min-w-0 flex-wrap gap-2">
                 {SUPPORTED_CURRENCIES.map((c) => (

@@ -453,6 +453,7 @@ const rateProviderSchema = {
     sourceUrl: { type: 'string', format: 'uri' },
     supportedCurrencies: {
       type: 'array',
+      description: `支援幣別清單包含 TWD 基準幣與 ${SUPPORTED_CURRENCIES.filter((code) => code !== 'TWD').length} 種外幣。`,
       items: { type: 'string' },
     },
     supportedRateTypes: {

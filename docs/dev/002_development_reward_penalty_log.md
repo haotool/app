@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+397
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+398
 
 ## 新增模板（4 行）
 
@@ -27,6 +27,11 @@
 - ID：reward-ratewise-governance-cf-cache-status-gate
 - 原因：Production Governance 自 9/1 起每日紅燈，正式站 HTML 與 hashed asset 已不回傳 cf-cache-status，測試仍強制斷言。
 - 解法：邊緣標頭測試改只斷言 cf-ray，快取語意交由既有 cache-control 測試，並以 workflow 同參數對正式站驗證全綠。
+
+- 日期：2026-09-29
+- ID：reward-ratewise-fx-v3-public-switch
+- 原因：v3 資料已上線但 App 仍走 legacy，且過期來源證據、全不可用快照與 AED/RUB 小數位仍有缺口。
+- 解法：翻轉 FX_V3_PUBLIC 單一旗標，補齊四項語意修正並以測試改驗 v3 行為，保留一行回滾路徑。
 
 - 日期：2026-09-29
 - ID：reward-ratewise-fx-v3-pipeline-hardening

@@ -645,9 +645,11 @@ export const useFxCurrencyConverter = (options: UseCurrencyConverterOptions = {}
         ),
         isAvailable: result.status === 'available',
         inputMode: activeRequest.mode,
+        freshness: freshness(quote, activeContext.now),
+        sourcePublishedAt: quote.sourceQuote.sourcePublishedAt,
       };
     },
-    [activeRequest.mode],
+    [activeRequest.mode, activeContext.now],
   );
   const providerQuotes = useMemo(
     () =>

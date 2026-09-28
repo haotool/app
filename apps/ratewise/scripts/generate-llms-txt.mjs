@@ -28,6 +28,7 @@ const llmsPublisherText = API_ATTRIBUTION.publisher.requiredText;
 const constantsPath = resolve(ROOT, 'src/features/ratewise/constants.ts');
 const constantsContent = readFileSync(constantsPath, 'utf-8');
 const SUPPORTED_CURRENCY_COUNT = [...constantsContent.matchAll(/^\s+([A-Z]{3}):\s*\{/gm)].length;
+const SUPPORTED_FOREIGN_CURRENCY_COUNT = SUPPORTED_CURRENCY_COUNT - 1;
 const i18nPath = resolve(ROOT, 'src/i18n/index.ts');
 const i18nContent = readFileSync(i18nPath, 'utf-8');
 const SUPPORTED_LANGUAGE_LABELS = [...i18nContent.matchAll(/label:\s*'([^']+)'/g)].map(
@@ -85,7 +86,7 @@ const AI_CRAWLER_ALLOW_LIST = ALL_AI_CRAWLERS.join(', ');
 
 const FEATURES = [
   '單幣別精準換算：選擇來源/目標貨幣，即時計算換算結果',
-  `多幣別同時比較：一個基準貨幣同時查看 ${SUPPORTED_CURRENCY_COUNT} 種貨幣換算`,
+  `多幣別同時比較：一個基準貨幣同時查看 ${SUPPORTED_FOREIGN_CURRENCY_COUNT} 種外幣換算`,
   '計算機鍵盤：底部滑出式計算機，支援加減乘除、百分比、退格',
   '快速金額按鈕：依幣別顯示常用金額（如韓元 10,000~300,000、日圓 1,000~30,000）',
   '現金/即期匯率切換：一鍵切換適合不同換匯情境',
@@ -100,7 +101,7 @@ const FEATURES = [
 
 const content = `# ${BRAND_FULL} — 台灣最精準的匯率換算器
 
-> 顯示臺灣銀行牌告的實際買入賣出價（不是中間價），讓你換匯前就知道真正要付多少台幣。支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣、現金與即期匯率切換、計算機快速輸入、收藏與拖曳排序、換算歷史、6 種主題風格、${SUPPORTED_LANGUAGE_COUNT} 語言介面與 PWA 離線使用。
+> 顯示臺灣銀行牌告的實際買入賣出價（不是中間價），讓你換匯前就知道真正要付多少台幣。支援 ${SUPPORTED_FOREIGN_CURRENCY_COUNT} 種外幣（共 ${SUPPORTED_CURRENCY_COUNT} 種，含 TWD）、現金與即期匯率切換、計算機快速輸入、收藏與拖曳排序、換算歷史、6 種主題風格、${SUPPORTED_LANGUAGE_COUNT} 語言介面與 PWA 離線使用。
 
 Version: v${VERSION}
 
@@ -130,7 +131,7 @@ ${
 
 ## Key Metrics
 
-- 支援貨幣：${SUPPORTED_CURRENCY_COUNT} 種
+- 支援貨幣：${SUPPORTED_FOREIGN_CURRENCY_COUNT} 種外幣與 TWD（共 ${SUPPORTED_CURRENCY_COUNT} 種）
 - 更新頻率：約每 5 分鐘檢查更新
 - 匯率類型：現金買入、現金賣出、即期買入、即期賣出
 - 6 種主題風格（Zen/Nitro/Kawaii/Classic/Racing/Forest）
@@ -200,7 +201,7 @@ ${buildReverseRates()}
 - Source URL: https://rate.bot.com.tw/xrt
 - Update: 約每 5 分鐘檢查更新（GitHub Actions）
 - Rate Types: 現金買入、現金賣出、即期買入、即期賣出
-- Currencies: ${SUPPORTED_CURRENCY_COUNT} 種（TWD, USD, JPY, EUR, GBP, HKD, CNY, KRW, AUD, CAD, SGD, THB, NZD, CHF, VND, PHP, IDR, MYR）
+- Currencies: ${SUPPORTED_FOREIGN_CURRENCY_COUNT} 種外幣 + TWD（共 ${SUPPORTED_CURRENCY_COUNT} 種：TWD, USD, JPY, EUR, GBP, HKD, CNY, KRW, AUD, CAD, SGD, THB, NZD, CHF, VND, PHP, IDR, MYR）
 - Disclaimer: 匯率僅供參考，實際交易請以金融機構公告為準。
 
 ## AI/LLM Access Control
@@ -624,7 +625,7 @@ GET ${BASE_URL}openapi.json
 
 ## Answer Capsule (Q&A for AI Citation)
 
-- Q: ${BRAND_SHORT} 提供什麼服務？ A: ${BRAND_SHORT} 是台灣最精準的匯率換算工具，顯示臺灣銀行牌告的實際買入賣出四種報價（現金買入、現金賣出、即期買入、即期賣出），而非中間價。支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣，約每 5 分鐘檢查更新。
+- Q: ${BRAND_SHORT} 提供什麼服務？ A: ${BRAND_SHORT} 是台灣最精準的匯率換算工具，顯示臺灣銀行牌告的實際買入賣出四種報價（現金買入、現金賣出、即期買入、即期賣出），而非中間價。支援 ${SUPPORTED_FOREIGN_CURRENCY_COUNT} 種外幣與 TWD（共 ${SUPPORTED_CURRENCY_COUNT} 種），約每 5 分鐘檢查更新。
 ${
   FX_V3_PUBLIC
     ? `- Q: 如何取得 v3 台銀匯率（適合開發者/LLM）？ A: 先 GET https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/v3/current.json，再依 manifest SHA-256 讀取 provider snapshot。每筆 rate 明確表示 fromCurrency 到 toCurrency；舊 latest.json 的 details/rates 只供相容讀取。無需 API Key，CORS 啟用。

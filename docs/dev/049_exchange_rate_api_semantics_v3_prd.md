@@ -2,18 +2,18 @@
 
 > **建立時間**: 2026-08-26T14:00:00+08:00
 > **版本**: v11.8
-> **狀態**: ✅ 欄位語意定案；✅ PR 1 已合併（#1051）；🟡 PR 2+3 合併實作於 #1104（公開開關 `FX_V3_PUBLIC` 預設 `false`；`RATEWISE_FX_V3_ENABLED` 為 data 發佈 gate，預設關閉）；⚠️ 正式切換阻塞項未解（§0）；✅ API 標示與 SEO 策略定案及 S3 實作完成（§21）
+> **狀態**: ✅ 欄位語意定案；✅ PR 1 已合併（#1051）；✅ FX API v3 公開切換於 S4d（`FX_V3_PUBLIC=true`）；✅ data 發佈 gate `RATEWISE_FX_V3_ENABLED=true` 已啟用；⚠️ 上游再散布權利仍未知，依 §17 #6／§21 F8 保留為獨立人工發佈 gate；✅ API 標示與 SEO 策略定案及 S3 實作完成（§21）
 > **作者**: Claude Code（研究與盤點）+ Codex（獨立第二意見）
 > **上位文件**: `CLAUDE.md`、`AGENTS.md`
 > **相關**: PR #472（v2 導入）、PR #1039（MoneyBox 中斷處理）
 
 ---
 
-## 0. 實作現況（2026-09-28）
+## 0. 實作現況（2026-09-29）
 
 - **PR 1 已完成**：MoneyBox ingest 安全切換已合併至 main（#1051，`e06af11b4`）。
-- **PR 2 + PR 3 合併為單一 PR #1104**（`codex/ratewise-api-v3`，尚未合併）：含 v3 model、歷史轉換與 OpenAPI／OpenData 同步；契約 SSOT 為 `apps/shared/fx/schema.json`（PR #1104），建置時由 `generate-api-json.mjs` 發佈副本至 `apps/ratewise/public/api/v3/contract.schema.json`。
-- **與 §5 的偏離**：原規劃 3 個 PR，實作併為 2 個；公開開關為 `apps/shared/fx/public.ts` 的 `FX_V3_PUBLIC`（預設 `false`，控制 App 讀取與站台宣告 v3）；`RATEWISE_FX_V3_ENABLED` 只是 data 發佈 gate（控制 data branch 是否產出 v3 release），兩者皆預設關閉，維持「合併 ≠ 對外切換」邊界。
+- **PR 2 + PR 3 合併為單一 PR #1104**：含 v3 model、歷史轉換與 OpenAPI／OpenData 同步；契約 SSOT 為 `apps/shared/fx/schema.json`，建置時由 `generate-api-json.mjs` 發佈副本至 `apps/ratewise/public/api/v3/contract.schema.json`。
+- **S4d 公開切換**：`apps/shared/fx/public.ts` 的 `FX_V3_PUBLIC=true` 控制 App 讀取與站台宣告 v3；data branch `RATEWISE_FX_V3_ENABLED=true` 已產出並驗證 current pointer／provider／歷史資料。公開切換與 data 發佈仍是兩個獨立 gate，回滾只需關閉 public switch。
 - **v2 資料 additive 變動**：台銀 `latest.json` 的 `details` 新增 ZAR／SEK 等只有即期報價的幣別（`cash` 兩側為 `null`，`rates` 不含，因主匯率為現金賣出），另新增 `sourceQuotes`（來源原文）、`fetchedAt`、`sourcePublishedAt`；既有欄位與數值不變。
 - **正式切換阻塞項未變**：§17 #1／#6 與 §19.8 #8／#11（再散布授權、中間價來源授權、CDN 原子發布）。
 - **S4 啟用檢查清單**：R5 裁決延後至 S4 的項目（v3 `manifest.history` 接線、多幣每鍵效能、rollback 後 localStorage 清理、首爾日期檢查、per-currency denominator、再散布條款 human gate、MoneyBox 9 位有效數字倒數評估等）集中記錄於 `docs/dev/049_exchange_rate_api_v3_implementation.md`「S4 啟用檢查清單」。
@@ -926,14 +926,15 @@ cf-cache-status: HIT / age: 21
 
 實例：`(42.15 + 42.3) / 2` 在 JS 得到 **`42.224999999999994`**。
 
-| 項目           | 規格                                                                                     |
-| -------------- | ---------------------------------------------------------------------------------------- |
-| 公開 JSON 表示 | **decimal string**（`"42.3"` 而非 `42.3`）                                               |
-| 算術           | 十進位算術（decimal.js 等），**禁止** binary float 進入公開產物                          |
-| 中點／spread   | 依輸入位數規則捨入，`ROUND_HALF_EVEN`                                                    |
-| canonical 倒數 | 保留 **12 位小數**，`ROUND_HALF_EVEN`；來源直接值（per-1 或 per-10ⁿ 可整除）保留原始位數 |
-| EXACT_OUT      | `from = ceil_minor(to × unitAmount ÷ providerPrice)`，**禁止**除以捨入後的 rate          |
-| 金額           | 依幣別 **minor-unit** 捨入                                                               |
+| 項目           | 規格                                                                                                                                      |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| 公開 JSON 表示 | **decimal string**（`"42.3"` 而非 `42.3`）                                                                                                |
+| 算術           | 十進位算術（decimal.js 等），**禁止** binary float 進入公開產物                                                                           |
+| 中點／spread   | 依輸入位數規則捨入，`ROUND_HALF_EVEN`                                                                                                     |
+| canonical 倒數 | 保留 **12 位小數**，`ROUND_HALF_EVEN`；來源直接值（per-1 或 per-10ⁿ 可整除）保留原始位數                                                  |
+| EXACT_OUT      | `from = ceil_minor(to × unitAmount ÷ providerPrice)`，**禁止**除以捨入後的 rate；回傳最小足額來源金額，不會少收                           |
+| EXACT_IN       | 以來源原值計算，結果捨入至目標幣別最近 minor unit，半位採 `ROUND_HALF_EVEN`；往返換算可能因捨入相差小於一個目標 minor unit 對應的來源金額 |
+| 金額           | EXACT_OUT 來源金額向上取整至來源 minor unit；其餘金額依幣別 **minor-unit** `ROUND_HALF_EVEN` 捨入                                         |
 
 守門測試須斷言：
 

@@ -259,3 +259,24 @@ it('discloses a failed provider check for a still-fresh explicitly selected two-
   expect(result.current.selectedProviderStatus).toBe('failed');
   expect(result.current.rankedProviderQuotes).toEqual([]);
 });
+
+it('keeps stale provider freshness evidence available when ranking excludes the quote', () => {
+  const staleAt = normalizeQuote({
+    ...quotes[0]!.sourceQuote,
+    sourcePublishedAt: '2020-01-01T00:00:00Z',
+  });
+  useConverterStore.setState({ providerPreference: { mode: 'best' } });
+  const { result } = renderHook(() =>
+    useCurrencyConverter({ fxQuotes: staleAt, rateType: 'cash' }),
+  );
+  expect(result.current.rankedProviderQuotes).toEqual([]);
+  expect(result.current.providerQuotes).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        provider: expect.objectContaining({ providerId: 'second-bank' }),
+        freshness: 'stale',
+        sourcePublishedAt: '2020-01-01T00:00:00Z',
+      }),
+    ]),
+  );
+});

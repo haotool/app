@@ -63,6 +63,7 @@ const seoMetadataSrc = resolveFxV3Ternaries(
 );
 const constantsSrc = readFileSync(resolve(ROOT, 'src/features/ratewise/constants.ts'), 'utf-8');
 const SUPPORTED_CURRENCY_COUNT = [...constantsSrc.matchAll(/^\s+([A-Z]{3}):\s*\{/gm)].length;
+const SUPPORTED_FOREIGN_CURRENCY_COUNT = SUPPORTED_CURRENCY_COUNT - 1;
 
 /**
  * 擷取 seo-metadata.ts 內 `export const <name> = [...] as const` 陣列中的 question/answer 對。
@@ -89,6 +90,7 @@ const KNOWN_SUBSTITUTIONS = {
     Object.entries(RATES_API).map(([key, value]) => [`RATES_API.${key}`, String(value)]),
   ),
   SUPPORTED_CURRENCY_COUNT: String(SUPPORTED_CURRENCY_COUNT),
+  SUPPORTED_FOREIGN_CURRENCY_COUNT: String(SUPPORTED_FOREIGN_CURRENCY_COUNT),
 };
 
 function substituteTemplate(raw) {
@@ -279,7 +281,7 @@ ${APP_INFO.shortName} 是以臺灣銀行牌告匯率為基礎的換匯工具，�
 
 ## 資料方法與範圍
 
-- 資料來源為臺灣銀行官方牌告匯率，涵蓋 ${SUPPORTED_CURRENCY_COUNT} 種貨幣。
+- 資料來源為臺灣銀行官方牌告匯率，涵蓋 ${SUPPORTED_FOREIGN_CURRENCY_COUNT} 種外幣與 TWD 基準幣（共 ${SUPPORTED_CURRENCY_COUNT} 種）。
 - 約每 5 分鐘檢查更新最新報價，涵蓋現金買入、現金賣出、即期買入、即期賣出四種。
 ${
   FX_V3_PUBLIC
@@ -382,7 +384,7 @@ function buildGuideMd() {
 
 ## 進階功能
 
-- **多幣別同時比較**：一個基準貨幣同時查看 ${SUPPORTED_CURRENCY_COUNT} 種貨幣換算。
+- **多幣別同時比較**：一個基準貨幣同時查看 ${SUPPORTED_FOREIGN_CURRENCY_COUNT} 種外幣換算。
 - **歷史趨勢圖**：7 到 30 天匯率波動視覺化，判斷換匯時機。
 - **換算歷史紀錄**：自動記錄每次換算，可單擊複製或雙擊重新載入。
 - **7 種主題風格**：Zen、Violet、Nitro、Racing、Kawaii、Classic、Forest。
@@ -456,7 +458,7 @@ ${
 `
     : `- **免 API Key**、**公開讀取**、**CORS 已啟用**；資料使用與再散布依各 provider 條款。
 - 更新頻率：約每 5 分鐘檢查更新臺灣銀行牌告。
-- 涵蓋 ${SUPPORTED_CURRENCY_COUNT} 種貨幣的現金買/賣、即期買/賣四種報價。
+- 涵蓋 ${SUPPORTED_FOREIGN_CURRENCY_COUNT} 種外幣與 TWD 基準幣（共 ${SUPPORTED_CURRENCY_COUNT} 種）的現金買/賣、即期買/賣四種報價。
 `
 }
 ## 呼叫範例

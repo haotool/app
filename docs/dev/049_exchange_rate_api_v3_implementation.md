@@ -1,6 +1,6 @@
 # 匯率 API v3 實作基準
 
-狀態：Implemented in `codex/ratewise-api-v3`，待 PR review、data branch migration 與正式環境 gate。
+狀態：S4d 公開切換已實作於 `feat/ratewise-fx-v3-public`（基線 `422cf277`）；data branch migration 驗證完成（data release `83d52e74…`）；程式與產物驗證見本文件「Public switch」。上游再散布權利仍是獨立人工 gate。
 
 ## 目的
 
@@ -25,7 +25,7 @@
 
 provider `failed`／`carried_forward` 快照只可供明確手動選擇，不能進入 best 自動排名。
 
-**公開切換 SSOT（expand–contract）**：`apps/shared/fx/public.ts` 的 `FX_V3_PUBLIC`（RateWise 經 `api-endpoints.ts` 重新匯出，split-meow 直接匯入）（預設 `false`）同時控制 App 是否讀取 v3，以及站台生成器（`api/latest.json`、`api/pairs/*`、`openapi.json`、`open-data`、`llms*.txt`、`about`／`index` 鏡像）是否宣告 v3。`false` 時 App 使用凍結的 `useLegacyCurrencyConverter`（與 main 等價：MoneyBox 手動換算、legacy 趨勢圖、不顯示 best 與 v3 新鮮度提示、不輪詢 v3 current），公開資料面維持 schemaVersion 2.0 與 openapi 2.1.0；`/ratewise/api/v3/contract.schema.json` 可預先存在但不被宣告為主要入口。S4 切換順序：先開 data workflow 的 `RATEWISE_FX_V3_ENABLED` 產出並驗證，再以一行 PR 將 `FX_V3_PUBLIC` 改為 `true`；回滾即翻回。守門：`fx-v3-inert.test.tsx`、`fx-v3-public-surface.test.ts`、split-meow `exchangeRate.test.ts`（false 時只請求 v2 MoneyBox CDN、不顯示參考值提示，未來時間不判過期）。
+**公開切換 SSOT（expand–contract）**：`apps/shared/fx/public.ts` 的 `FX_V3_PUBLIC`（RateWise 經 `api-endpoints.ts` 重新匯出，split-meow 直接匯入）同時控制 App 是否讀取 v3，以及站台生成器是否宣告 v3。S4d 已設為 `true`；`false` 是單一行 rollback，恢復 `useLegacyCurrencyConverter`、legacy 趨勢與 schemaVersion 2.0／OpenAPI 2.1.0。`RATEWISE_FX_V3_ENABLED` 是獨立 data 發佈 gate，rollback 不需關閉 data plane。公開面守門改為 `fx-v3-public-surface.test.ts` 與 split-meow `exchangeRate.v3.test.ts`；`fx-v3-inert.test.tsx` 和 flag-false 測試已移除／改寫。
 
 **建置期閘門與 bundle 惰性**：App 程式碼一律以 `isFxV3Public()`（`apps/shared/fx/public.ts`，`typeof __FX_V3_PUBLIC_BUILD__` 守護，無 define 的 vitest／Node 環境回落可 mock 的 `FX_V3_PUBLIC`）判斷。rolldown 不內聯函式也不跨模組折疊常數，因此共用的 `apps/shared/fx/vite-plugin.mjs`（RateWise 與 split-meow 皆載入）負責：define `__FX_V3_PUBLIC_BUILD__`、將 App 原始碼中的 `isFxV3Public()` 呼叫改寫為字面值、以 `treeshake.moduleSideEffects` 宣告 `shared/fx` 無副作用；RateWise 另將 `decimal.js` 拆為 `vendor-decimal` chunk。實測 gzip（`gzip -9`，gen2 round 3 @3005479b4）：RateWise 首頁 initial JS main 331,192／head 333,023（+1,831 B；reviewer 以其量法測得 +1,893 B）；split-meow 全部 app JS main 161,644／head 161,677。守門：`prerender.test.ts`（`dist/index.html` 不預載 `fx`／`release`／`vendor-decimal`）、`public.test.ts`（plugin 改寫與 define）。Service worker 的歷史快取策略與清理清單在 flag off 時與 main 相同。
 
@@ -63,16 +63,17 @@ pnpm build:ratewise
 
 ## S4 啟用檢查清單
 
-R5 裁決延後至 S4（`FX_V3_PUBLIC` 改為 `true` 的切換 PR）處理，切換前逐項確認：
+S4d 切換已完成，先前延後項目裁決與證據如下：
 
 - [x] v3 `manifest.history` 接線：publisher 每輪從 data branch 全量重算日快照遷移結果，再引用 30 日內成功轉換的 content-addressed objects；發佈前驗證 SHA-256 與 snapshot schema（`scripts/publish-fx-release.mjs`, `scripts/migrate-fx-history.mjs`, `apps/shared/fx/history.mjs`）。MoneyBox 檔名日期以 `extractSeoulSnapshotDate` 對帳，沿用 v2 `updateTime` 首爾日曆日；超出保留視窗的日期不符項目可帶 evidence 隔離。
 - [x] v3 多幣模式估算移除重複 schema 驗證、快取每 quote 衍生值並 memo per-render 輸出；100 次 × 16 幣別微基準為 58.89 → 5.19 ms（Node 24 wall time；before 模擬原選擇／估算路徑的 3 次 quote schema 驗證，S4b；公開旗標仍為 false）。
 - [x] rollback（`FX_V3_PUBLIC` 翻回 `false`）時停止 v3 請求、清理 localStorage `ratewise.fx.v3.*` 與失效 service worker history caches；history cache 保留上限為 4（S4b）。
-- manifest per-currency denominator（`unitAmount`）揭露評估。
-- provider 再散布條款 human gate（PRD §17 #6、§21 F8）；S3 條款頁已上線至程式與靜態產物，仍須確認正式站部署，且不解除上游再散布 gate。
-- MoneyBox 9 位有效數字倒數（如 KRW→GBP）是否需提高倒數精度（PRD §18.4）。
-- 刪除 `S4-DELETE` 標記項目：`exportLegacyRates`、`apps/ratewise/src/config/api-semantics-v2.ts`、`useLegacyCurrencyConverter.ts`，以及 `isFxV3Public()` 建置期 plugin 改寫與 legacy SW 歷史路由。
-- v3 的 minor changeset 於 S4 切換 PR 提出（本 PR 僅 patch）。
+- [x] manifest per-currency denominator：每筆 `SourceQuote.unitAmount` 已揭露來源報價分母（`apps/shared/fx/schema.json`、`index.ts`）。
+- [x] MoneyBox 9 位有效數字倒數：保留 PRD §18.4 的 12 位小數 `ROUND_HALF_EVEN` 契約；canonical rate 是展示／EXACT_IN 輸入，EXACT_OUT 仍以來源原值向上取整，不提高精度（`core.test.ts`）。
+- [x] 公開切換與生成器依賴 v3 合約，並完成 S4d 驗證（見下節）。
+- [ ] 上游再散布條款 human gate（PRD §17 #6、§21 F8）：程式條款頁與靜態產物已提供，但未取得上游再散布權利證據，不得將此項視為已解除。
+- [ ] S5（v3 穩定 7 日後）：刪除 `S4-DELETE` 遺留項目——`exportLegacyRates`、`apps/ratewise/src/config/api-semantics-v2.ts`、`useLegacyCurrencyConverter.ts`、`isFxV3Public()` 建置期 plugin 改寫與 legacy SW 歷史路由；另行檢視 v2 sunset gate。
+- v3 minor changeset 由 PM 在發布 PR 建立；S4d implementation seat 依任務範圍不產生 changeset。
 - [x] v2 保留既有 job-level `data-branch-push` 鎖與 cadence；所有 v2 push 改為 fast-forward、rebase 失敗不再吞錯，v3 維持獨立鎖。競態時 v2 push 會安全失敗或 rebase 保留 v3 commit（`.github/workflows/update-latest-rates.yml`, `update-moneybox-rates.yml`, `update-historical-rates.yml`, `publish-fx-v3.yml`）。
 - [x] data checkout 關閉持久憑證，push 時才注入 token；各資料 job 均有 timeout。
 - [x] `update-historical-rates.yml` 以 Actions jobs API 計算 `update-latest` v2 job 的成功結論；publish-v3 失敗不會影響 v2 liveness。三個資料 workflow 與 reusable publisher job 均設 timeout。
@@ -85,6 +86,14 @@ R5 裁決延後至 S4（`FX_V3_PUBLIC` 改為 `true` 的切換 PR）處理，切
 ## ACTIVATION RUNBOOK
 
 以下步驟只啟用 data plane；`FX_V3_PUBLIC` 保持 `false`，App 與公開站台切換另走 S4 PR。
+
+### Public switch (S4d)
+
+- 使用者現在經 App、Open Data、JSON API、OpenAPI、Markdown mirrors 與 `llms*.txt` 使用 FX API v3；預設匯率情境為現鈔／臨櫃，報價帶來源時間、適用條件與可用性，Best 僅排名新鮮且可用的報價。EXACT_OUT 回傳最小足額付款金額；EXACT_IN 依目標幣別 minor unit 半偶捨入。
+- data plane 已先啟用並驗證：`RATEWISE_FX_V3_ENABLED=true`；current pointer 為 `https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/v3/current.json`。
+- 驗證：`pnpm generate:fx --check`、`pnpm test:root`、`pnpm test:fx`、RateWise／split-meow Vitest、兩 app 與 scripts typecheck、lint、format、`pnpm build:ratewise`；由 dist 檢查 `api/latest.json` schemaVersion、OpenAPI version、v3 links、modulepreload 與頁面文字差異。
+- Rollback：獨立一行 PR 將 `apps/shared/fx/public.ts` 的 `FX_V3_PUBLIC` 設回 `false`；data gate 保持開啟，避免停掉資料產出。發版後清除 `ratewise.fx.v3.*` localStorage 與失效 SW history cache（rollback cleanup 已由 `useFxQuotes.rollback` 覆蓋）。
+- 驗證與本機產物結果由 S4d 執行紀錄附於 PR；本文件不把建置證據宣稱為正式站 deployment receipt。
 
 1. 啟用 v3 data publisher：
 

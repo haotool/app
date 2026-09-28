@@ -62,7 +62,7 @@ export const STORAGE_KEYS = {
   /** 目標貨幣選擇 - 用戶最後選擇的目標貨幣 */
   TO_CURRENCY: 'toCurrency',
 
-  /** 匯率類型選擇 (spot/cash) - 用戶偏好的匯率類型，預設為 spot */
+  /** 匯率類型選擇 (spot/cash) - 目前 v3 預設為 cash，rollback v2 預設為 spot */
   RATE_TYPE: 'rateType',
 
   /** 匯率來源選擇 (bank/exchange-shop) - 用戶偏好的匯率資料來源，預設為 bank */

@@ -36,7 +36,8 @@ const validatedQuotes = new WeakSet<QuoteSnapshot>();
 function deepFreeze<T>(value: T): T {
   if (value !== null && typeof value === 'object') {
     if (!Object.isFrozen(value)) Object.freeze(value);
-    for (const child of Object.values(value)) deepFreeze(child);
+    for (const key of Reflect.ownKeys(value))
+      deepFreeze((value as Record<PropertyKey, unknown>)[key]);
   }
   return value;
 }

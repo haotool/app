@@ -24,11 +24,21 @@ describe('directional quotes', () => {
       ['TWD', 'KRW', '40'],
     ]);
   });
+
+  it('deep-freezes nested non-enumerable properties on validated quotes', () => {
+    const quote = normalizeQuote(row)[0]!;
+    const hidden = { nested: {} };
+    Object.defineProperty(quote, 'hidden', { value: hidden });
+    expect(validateQuoteSnapshot(quote)).toBe(true);
+    expect(Object.isFrozen(hidden)).toBe(true);
+    expect(Object.isFrozen(hidden.nested)).toBe(true);
+  });
 });
 
 import {
   estimate,
   rankQuotes,
+  minorUnit,
   normalizeMoneyboxSnapshot,
   isValidAmount,
   boardMidpoint,
@@ -37,6 +47,10 @@ import {
   freshness,
   isQuoteApplicable,
 } from './index';
+it('uses ISO 4217 two-decimal minor units for AED and RUB', () => {
+  expect(minorUnit('AED')).toBe(2);
+  expect(minorUnit('RUB')).toBe(2);
+});
 it('rejects unavailable quotes and keeps zero distinct', () => {
   const quotes = normalizeQuote({ ...row, providerBuyPrice: null });
   expect(

@@ -27,13 +27,14 @@ const VERSION_TOKEN = pkg.version;
 const constantsPath = resolve(ROOT, 'src/features/ratewise/constants.ts');
 const constantsContent = readFileSync(constantsPath, 'utf-8');
 const currencyCount = [...constantsContent.matchAll(/^\s+([A-Z]{3}):\s*\{/gm)].length;
+const foreignCurrencyCount = currencyCount - 1;
 
 const versioned = (path) => `${path}?v=${VERSION_TOKEN}`;
 
 const manifest = {
   name: APP_INFO.name,
   short_name: APP_MANIFEST.shortName,
-  description: `${APP_INFO.name}顯示臺灣銀行牌告實際買賣價（非中間價），支援 ${currencyCount} 種貨幣換算，每 5 分鐘同步，離線可用的 PWA 匯率工具。`,
+  description: `${APP_INFO.name}顯示臺灣銀行牌告實際買賣價（非中間價），支援 ${foreignCurrencyCount} 種外幣與 TWD 基準幣換算，每 5 分鐘同步，離線可用的 PWA 匯率工具。`,
   theme_color: rgbTripletToHex(zenColors.primary),
   background_color: rgbTripletToHex(zenColors.background),
   display: 'standalone',

@@ -1,4 +1,7 @@
-import { SUPPORTED_CURRENCY_COUNT } from '../../features/ratewise/constants';
+import {
+  SUPPORTED_CURRENCY_COUNT,
+  SUPPORTED_FOREIGN_CURRENCY_COUNT,
+} from '../../features/ratewise/constants';
 import { APP_INFO, AUTHOR_PERSON, SEO_SOCIAL_LINKS } from '../app-info';
 import { DEFAULT_TITLE, GUIDE_PAGE_TITLE } from '../seo-static';
 import {
@@ -151,7 +154,7 @@ const ASSET_VERSION = `v=${BUILD_TIME.replace(/[-T:Z.]/g, '').slice(0, 8) || 'de
 export const DEFAULT_LOCALE = 'zh-TW' as const;
 export const SEO_INDEXABLE_LOCALES = [DEFAULT_LOCALE] as const;
 export const OG_IMAGE_ALT = `${APP_INFO.name} 匯率轉換器分享圖片` as const;
-export const DEFAULT_DESCRIPTION = `${APP_INFO.shortName} 是台灣最精準的匯率換算工具，顯示臺灣銀行牌告的實際買入賣出價（非中間價），讓你換匯前清楚知道要付多少台幣。支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣即時換算、現金/即期匯率切換、7-30 天歷史趨勢圖、PWA 離線使用，約每 5 分鐘檢查更新，免費無廣告無註冊。`;
+export const DEFAULT_DESCRIPTION = `${APP_INFO.shortName} 是台灣最精準的匯率換算工具，顯示臺灣銀行牌告的實際買入賣出價（非中間價），讓你換匯前清楚知道要付多少台幣。支援 ${SUPPORTED_FOREIGN_CURRENCY_COUNT} 種外幣與 TWD 基準幣（共 ${SUPPORTED_CURRENCY_COUNT} 種）即時換算、現金/即期匯率切換、7-30 天歷史趨勢圖、PWA 離線使用，約每 5 分鐘檢查更新，免費無廣告無註冊。`;
 export const DEFAULT_KEYWORDS = [
   APP_INFO.subtitle,
   APP_INFO.shortName,
@@ -214,7 +217,7 @@ export const SITE_SEO = {
       '4 語言支援（繁中／英／日／韓）',
       '下拉更新即時同步',
       '離線使用（PWA）',
-      `${SUPPORTED_CURRENCY_COUNT} 種貨幣支援`,
+      `${SUPPORTED_FOREIGN_CURRENCY_COUNT} 種外幣支援（另含 TWD 基準幣）`,
     ],
   },
 } as const;
@@ -488,7 +491,7 @@ export function buildCurrencyConversionServiceJsonLd(): JsonLdBlock {
     '@id': `${SITE_BASE_URL}#currencyconversionservice`,
     name: APP_INFO.name,
     alternateName: APP_INFO.subtitle,
-    description: `顯示臺灣銀行牌告實際買入賣出價（非中間價）的即時匯率換算工具，支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣、現金與即期匯率切換、PWA 離線使用。`,
+    description: `顯示臺灣銀行牌告實際買入賣出價（非中間價）的即時匯率換算工具，支援 ${SUPPORTED_FOREIGN_CURRENCY_COUNT} 種外幣與 TWD 基準幣（共 ${SUPPORTED_CURRENCY_COUNT} 種）、現金與即期匯率切換、PWA 離線使用。`,
     provider: { '@id': orgId },
     url: SITE_BASE_URL,
     areaServed: 'TW',
@@ -497,7 +500,7 @@ export function buildCurrencyConversionServiceJsonLd(): JsonLdBlock {
     serviceType: 'Currency Exchange Rate Information',
     featureList: [
       '台灣銀行牌告匯率（現金/即期四種報價）',
-      `${SUPPORTED_CURRENCY_COUNT} 種貨幣即時換算`,
+      `${SUPPORTED_FOREIGN_CURRENCY_COUNT} 種外幣即時換算`,
       '約每 5 分鐘檢查更新',
       'PWA 離線使用',
       '匯率歷史趨勢圖（7-30 天）',
@@ -559,8 +562,8 @@ export function buildOpenDataDatasetJsonLd(): JsonLdBlock {
     '@type': 'Dataset',
     name: `${APP_INFO.shortName} 匯率開放資料`,
     description: FX_V3_PUBLIC
-      ? `${APP_INFO.shortName} 提供臺灣銀行牌告匯率與 MoneyBox 換錢所（KRW/TWD）的 v3 方向化開放 JSON 資料集，包含 ${SUPPORTED_CURRENCY_COUNT} 種台銀外幣的現金與即期報價、來源時間與不可變快照；並提供 v3 contract、最新 release、歷史匯率與 OpenAPI 規格。程式碼採 GPL 授權，來源資料的使用與再散布仍以各 provider 條款為準。`
-      : `${APP_INFO.shortName} 提供臺灣銀行牌告匯率與 MoneyBox 換錢所（KRW/TWD）的開放 JSON 資料集，包含 ${SUPPORTED_CURRENCY_COUNT} 種台銀外幣的現金與即期四種報價，以及 v2 語意欄位（customerBuyForeignRate、quoteUnit）對照；並提供最新匯率、歷史匯率與 OpenAPI 規格。程式碼採 GPL 授權，來源資料的使用與再散布仍以各 provider 條款為準。`,
+      ? `${APP_INFO.shortName} 提供臺灣銀行牌告匯率與 MoneyBox 換錢所（KRW/TWD）的 v3 方向化開放 JSON 資料集，包含 ${SUPPORTED_FOREIGN_CURRENCY_COUNT} 種台銀外幣的現金與即期報價、來源時間與不可變快照；並提供 v3 contract、最新 release、歷史匯率與 OpenAPI 規格。程式碼採 GPL 授權，來源資料的使用與再散布仍以各 provider 條款為準。`
+      : `${APP_INFO.shortName} 提供臺灣銀行牌告匯率與 MoneyBox 換錢所（KRW/TWD）的開放 JSON 資料集，包含 ${SUPPORTED_FOREIGN_CURRENCY_COUNT} 種台銀外幣的現金與即期四種報價，以及 v2 語意欄位（customerBuyForeignRate、quoteUnit）對照；並提供最新匯率、歷史匯率與 OpenAPI 規格。程式碼採 GPL 授權，來源資料的使用與再散布仍以各 provider 條款為準。`,
     url: buildCanonicalUrl('/open-data/'),
     identifier: `${SITE_BASE_URL}open-data/#bank-of-taiwan-exchange-rate-dataset`,
     isAccessibleForFree: true,
@@ -836,7 +839,7 @@ export const HOMEPAGE_FAQ_CONTENT = [
   },
   {
     question: '支援哪些貨幣？',
-    answer: `支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣，包括 TWD、USD、JPY、EUR、GBP、HKD、CNY、KRW、AUD、CAD、SGD 等，可收藏常用貨幣並以拖曳排序自訂順序。`,
+    answer: `支援 ${SUPPORTED_FOREIGN_CURRENCY_COUNT} 種外幣與 TWD 基準幣（共 ${SUPPORTED_CURRENCY_COUNT} 種），包括 USD、JPY、EUR、GBP、HKD、CNY、KRW、AUD、CAD、SGD 等，可收藏常用貨幣並以拖曳排序自訂順序。`,
   },
   {
     question: '可以離線使用嗎？',
@@ -875,7 +878,7 @@ export const HOMEPAGE_HOW_TO: HowToData = {
     {
       position: 1,
       name: '選擇貨幣',
-      text: `從下拉選單選擇來源貨幣與目標貨幣，支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣，可收藏常用幣別以便快速存取。`,
+      text: `從下拉選單選擇來源貨幣與目標貨幣，支援 ${SUPPORTED_FOREIGN_CURRENCY_COUNT} 種外幣與 TWD 基準幣，可收藏常用幣別以便快速存取。`,
     },
     {
       position: 2,
@@ -929,10 +932,10 @@ export const HOMEPAGE_SEO = {
   content: {
     eyebrow: '臺灣銀行牌告匯率 · 約每 5 分鐘檢查更新 · 顯示實際買賣價',
     heading: `${APP_INFO.name} 即時匯率換算`,
-    intro: `顯示臺灣銀行牌告的實際買入賣出價（不是中間價），讓你換匯前就知道真正要付多少台幣。支援台幣、美元、日圓、韓元、歐元等 ${SUPPORTED_CURRENCY_COUNT} 種貨幣，約每 5 分鐘檢查更新，適合出國旅遊、海外付款與跨境報價前快速比價。`,
+    intro: `顯示臺灣銀行牌告的實際買入賣出價（不是中間價），讓你換匯前就知道真正要付多少台幣。支援 ${SUPPORTED_FOREIGN_CURRENCY_COUNT} 種外幣與 TWD 基準幣，約每 5 分鐘檢查更新，適合出國旅遊、海外付款與跨境報價前快速比價。`,
     highlights: [
       '顯示實際買賣價：臺灣銀行牌告匯率的現金與即期買入賣出四種報價，不是中間價——換匯金額更精準。',
-      `支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣，提供計算機快速輸入、收藏管理、拖曳排序與換算歷史。`,
+      `支援 ${SUPPORTED_FOREIGN_CURRENCY_COUNT} 種外幣與 TWD，提供計算機快速輸入、收藏管理、拖曳排序與換算歷史。`,
       '7 種主題風格、4 語言介面（繁中／英／日／韓），PWA 可離線使用，重新連線自動同步。',
     ],
     quickLinks: [
@@ -966,7 +969,7 @@ const GUIDE_PUBLISH_DATES = {
 export const FAQ_PAGE_ENTRIES = [
   {
     question: `什麼是 ${APP_INFO.name}？`,
-    answer: `${APP_INFO.shortName} 是基於臺灣銀行牌告匯率的即時匯率 PWA 應用，支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣換算，提供單幣別與多幣別模式、計算機鍵盤快速輸入、收藏管理、拖曳排序、換算歷史紀錄與 7~30 天匯率趨勢圖。`,
+    answer: `${APP_INFO.shortName} 是基於臺灣銀行牌告匯率的即時匯率 PWA 應用，支援 ${SUPPORTED_FOREIGN_CURRENCY_COUNT} 種外幣與 TWD 基準幣換算（共 ${SUPPORTED_CURRENCY_COUNT} 種），提供單幣別與多幣別模式、計算機鍵盤快速輸入、收藏管理、拖曳排序、換算歷史紀錄與 7~30 天匯率趨勢圖。`,
   },
   {
     question: '匯率數據來源是什麼？',
@@ -1222,7 +1225,7 @@ export const OPEN_DATA_PAGE_FAQ = [
     question: '如何取得最新匯率資料？',
     answer: FX_V3_PUBLIC
       ? `新整合請先 GET v3 current pointer（${RATES_API.v3CurrentCdn}），再依 manifest 的 SHA-256 references 讀取 provider snapshot；每筆 quote 以 fromCurrency、toCurrency、rate（每 1 來源幣可取得的目標幣 decimal string）表達。${RATES_API.latestCdn} 仍保留作 legacy adapter，不能取代 v3 hash chain。`
-      : `直接 GET \`${RATES_API.latestCdn}\`，無需 API Key。回傳 JSON 包含 ${SUPPORTED_CURRENCY_COUNT} 種貨幣的現金買入、現金賣出、即期買入、即期賣出四種報價。建議 client 端自行快取 5 分鐘，與資料更新頻率一致，避免無意義重複請求。`,
+      : `直接 GET \`${RATES_API.latestCdn}\`，無需 API Key。回傳 JSON 包含 ${SUPPORTED_FOREIGN_CURRENCY_COUNT} 種外幣與 TWD 基準幣（共 ${SUPPORTED_CURRENCY_COUNT} 種）的現金買入、現金賣出、即期買入、即期賣出四種報價。建議 client 端自行快取 5 分鐘，與資料更新頻率一致，避免無意義重複請求。`,
   },
   {
     question: 'jsDelivr CDN 和 GitHub Raw 端點有何差異？',
@@ -1236,7 +1239,7 @@ export const OPEN_DATA_PAGE_FAQ = [
   },
   {
     question: '如何查詢歷史匯率？',
-    answer: `將日期代入路徑：\`${RATES_API.historyCdnExample}\`，支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣歷史資料。若該日無資料（如假日），伺服器回傳 404。`,
+    answer: `將日期代入路徑：\`${RATES_API.historyCdnExample}\`，支援 ${SUPPORTED_FOREIGN_CURRENCY_COUNT} 種外幣與 TWD 基準幣（共 ${SUPPORTED_CURRENCY_COUNT} 種）歷史資料。若該日無資料（如假日），伺服器回傳 404。`,
   },
 ] as const satisfies readonly FAQEntry[];
 
@@ -1322,8 +1325,8 @@ export const OPEN_DATA_PAGE_SEO = {
           'fetch',
         ],
         articleBody: FX_V3_PUBLIC
-          ? `${APP_INFO.shortName} 提供台灣銀行牌告匯率的開放 JSON 資料，無需 API Key。主要端點是 v3 current pointer，透過 manifest 與 SHA-256 objects 追溯 provider snapshot；GitHub Raw 是備援。legacy latest/history 端點只作相容投影。資料使用與再散布依 provider 條款，涵蓋 ${SUPPORTED_CURRENCY_COUNT} 種貨幣的現金與即期四種報價。`
-          : `${APP_INFO.shortName} 提供台灣銀行牌告匯率的開放 JSON 資料，無需 API Key，免費使用。主要端點透過 jsDelivr CDN 加速，備援端點透過 GitHub Raw。支援最新匯率（約每 5 分鐘檢查更新）與歷史匯率查詢，涵蓋 ${SUPPORTED_CURRENCY_COUNT} 種貨幣的現金與即期四種報價。`,
+          ? `${APP_INFO.shortName} 提供台灣銀行牌告匯率的開放 JSON 資料，無需 API Key。主要端點是 v3 current pointer，透過 manifest 與 SHA-256 objects 追溯 provider snapshot；GitHub Raw 是備援。legacy latest/history 端點只作相容投影。資料使用與再散布依 provider 條款，涵蓋 ${SUPPORTED_FOREIGN_CURRENCY_COUNT} 種外幣與 TWD 基準幣的現金與即期四種報價。`
+          : `${APP_INFO.shortName} 提供台灣銀行牌告匯率的開放 JSON 資料，無需 API Key，免費使用。主要端點透過 jsDelivr CDN 加速，備援端點透過 GitHub Raw。支援最新匯率（約每 5 分鐘檢查更新）與歷史匯率查詢，涵蓋 ${SUPPORTED_FOREIGN_CURRENCY_COUNT} 種外幣與 TWD 基準幣的現金與即期四種報價。`,
         speakableCssSelectors: ['h1', 'h3'],
         proficiencyLevel: 'Beginner',
         dependencies: ['HTTP', 'JSON', 'curl 或 fetch'],
@@ -1361,7 +1364,7 @@ export const ABOUT_PAGE_FAQ = [
 
 export const ABOUT_PAGE_SEO = {
   title: `關於 ${APP_INFO.name} - 資料來源、技術架構與 SEO 透明度`,
-  description: `了解 ${APP_INFO.shortName} 的資料來源、更新機制、技術架構與 SEO 透明度。站點以台銀牌告實際買賣價為核心，支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣、PWA 離線使用、SSG 預渲染、JSON-LD 結構化資料與 AI 可讀文件輸出，所有公開資訊皆可追溯。`,
+  description: `了解 ${APP_INFO.shortName} 的資料來源、更新機制、技術架構與 SEO 透明度。站點以台銀牌告實際買賣價為核心，支援 ${SUPPORTED_FOREIGN_CURRENCY_COUNT} 種外幣與 TWD 基準幣（共 ${SUPPORTED_CURRENCY_COUNT} 種）、PWA 離線使用、SSG 預渲染、JSON-LD 結構化資料與 AI 可讀文件輸出，所有公開資訊皆可追溯。`,
   pathname: '/about/',
   breadcrumb: [
     { name: `${APP_INFO.shortName} 首頁`, item: '/' },
@@ -1381,7 +1384,7 @@ export const ABOUT_PAGE_SEO = {
   jsonLd: [
     buildArticleJsonLd(
       `關於 ${APP_INFO.name} - 資料來源、技術架構與 SEO 透明度`,
-      `${APP_INFO.name}是專為台灣用戶設計的即時匯率 PWA 工具，資料來源為臺灣銀行官方牌告匯率，支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣換算與離線使用。採用 SSG 靜態預渲染、schema.org JSON-LD 結構化資料與每日自動更新匯差數據。`,
+      `${APP_INFO.name}是專為台灣用戶設計的即時匯率 PWA 工具，資料來源為臺灣銀行官方牌告匯率，支援 ${SUPPORTED_FOREIGN_CURRENCY_COUNT} 種外幣與 TWD 基準幣換算，並可離線使用。採用 SSG 靜態預渲染、schema.org JSON-LD 結構化資料與每日自動更新匯差數據。`,
       '/about/',
       GUIDE_PUBLISH_DATES.about,
       {
@@ -1401,7 +1404,7 @@ export const ABOUT_PAGE_SEO = {
           '匯差計算',
           'LLM 引用',
         ],
-        articleBody: `${APP_INFO.name}是專為台灣用戶設計的即時匯率 PWA 工具，資料來源為臺灣銀行官方牌告匯率，支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣換算與離線使用。完全免費、無廣告，資料約每 5 分鐘檢查更新，涵蓋現金買入、現金賣出、即期買入、即期賣出四種報價。各頁面部署 schema.org JSON-LD 結構化標記，採用 SSG 靜態預渲染確保爬蟲可讀性，匯差數據每日自動雙重驗證更新。`,
+        articleBody: `${APP_INFO.name}是專為台灣用戶設計的即時匯率 PWA 工具，資料來源為臺灣銀行官方牌告匯率，支援 ${SUPPORTED_FOREIGN_CURRENCY_COUNT} 種外幣與 TWD 基準幣換算，並可離線使用。完全免費、無廣告，資料約每 5 分鐘檢查更新，涵蓋現金買入、現金賣出、即期買入、即期賣出四種報價。各頁面部署 schema.org JSON-LD 結構化標記，採用 SSG 靜態預渲染確保爬蟲可讀性，匯差數據每日自動雙重驗證更新。`,
         speakableCssSelectors: ['h1', 'h3'],
       },
     ),
@@ -1767,7 +1770,7 @@ export const PRIVACY_PAGE_SEO = {
 
 export const APP_ONLY_PAGE_SEO = {
   multi: {
-    title: `多幣別同時換算 - 一次比較 ${SUPPORTED_CURRENCY_COUNT} 種即時匯率`,
+    title: `多幣別同時換算 - 一次比較 ${SUPPORTED_FOREIGN_CURRENCY_COUNT} 種外幣匯率`,
     description: `${APP_INFO.shortName} 多幣別同時換算功能，一次查看所有支援貨幣的即時匯率換算結果，適合旅遊換匯比價與跨境貿易報價。`,
     pathname: '/multi',
     robots: 'noindex, follow',

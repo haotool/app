@@ -63,7 +63,7 @@ describe('OpenData Page', () => {
     it('renders an answer capsule that explains the primary endpoint and crawlable landing-page pattern', () => {
       renderOpenData();
       expect(screen.getByRole('heading', { level: 2, name: /快速答案/i })).toBeInTheDocument();
-      expect(screen.getByText(/最新台銀牌告匯率建議直接讀取 latest\.json/i)).toBeInTheDocument();
+      expect(screen.getByText(/新整合應讀取 v3 current pointer/i)).toBeInTheDocument();
       expect(screen.getByText(/可索引金額落地頁採用 \/usd-twd\/1000\//i)).toBeInTheDocument();
     });
   });
@@ -182,9 +182,9 @@ describe('OpenData Page', () => {
 
     it('currency count heading reflects CURRENCY_DEFINITIONS length', () => {
       renderOpenData();
-      // Heading: "支援幣別（18 種，基準幣 TWD）"
+      // Heading count derives foreign currencies from CURRENCY_DEFINITIONS, plus TWD base.
       const heading = screen.getByRole('heading', { level: 3, name: /支援幣別/ });
-      expect(heading.textContent).toMatch(/\d+ 種/);
+      expect(heading.textContent).toMatch(/\d+ 種外幣 \+ TWD 基準幣/);
     });
   });
 

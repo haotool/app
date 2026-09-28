@@ -1,6 +1,6 @@
 # 關於 HaoRate 匯率好工具
 
-> 了解 HaoRate 的資料來源、更新機制、技術架構與 SEO 透明度。站點以台銀牌告實際買賣價為核心，支援 18 種貨幣、PWA 離線使用、SSG 預渲染、JSON-LD 結構化資料與 AI 可讀文件輸出，所有公開資訊皆可追溯。
+> 了解 HaoRate 的資料來源、更新機制、技術架構與 SEO 透明度。站點以台銀牌告實際買賣價為核心，支援 17 種外幣與 TWD 基準幣（共 18 種）、PWA 離線使用、SSG 預渲染、JSON-LD 結構化資料與 AI 可讀文件輸出，所有公開資訊皆可追溯。
 
 - Canonical: https://app.haotool.org/ratewise/about/
 - Version: v2.28.8
@@ -11,9 +11,9 @@ HaoRate 是以臺灣銀行牌告匯率為基礎的換匯工具，重點是幫台
 
 ## 資料方法與範圍
 
-- 資料來源為臺灣銀行官方牌告匯率，涵蓋 18 種貨幣。
+- 資料來源為臺灣銀行官方牌告匯率，涵蓋 17 種外幣與 TWD 基準幣（共 18 種）。
 - 約每 5 分鐘檢查更新最新報價，涵蓋現金買入、現金賣出、即期買入、即期賣出四種。
-- 資料管線：GitHub Actions 每日抓取 + 雙重驗證（台銀牌告 vs open.er-api.com 中間價，誤差 ≤ 2%）+ Pull Request 自動審核後合併至 data branch。
+- 資料管線：GitHub Actions 抓取 provider 牌告，v3 snapshot 保留來源/擷取時間與 SHA-256 provenance，經 Pull Request 驗證後合併至 data branch。
 - 匯差範例數字透過 SSG（vite-react-ssg）於 build 期嵌入靜態 HTML，搜尋引擎無需執行 JavaScript 即可讀取。
 
 ## 技術與資料面能力

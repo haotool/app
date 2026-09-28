@@ -141,6 +141,23 @@ describe('v3 publication', () => {
     }
   });
 
+  it('rejects a MoneyBox snapshot when every quote is unavailable', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'fx-release-unavailable-moneybox-'));
+    const time = '2026-09-21T01:00:00.000Z';
+    try {
+      await expect(
+        publishRelease(
+          dir,
+          { moneybox: { timestamp: time, rates: { TWD: { buy: null, sell: null } } } },
+          time,
+        ),
+      ).rejects.toThrow('Provider snapshot has no available quotes');
+      expect(() => readFileSync(join(dir, 'current.json'))).toThrow();
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it('does not write a new release when content and provider status are unchanged', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'fx-release-churn-'));
     const time = '2026-09-21T01:00:00Z';
