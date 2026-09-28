@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+391
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+392
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-09-28
+- ID：reward-ratewise-sellback-faq
+- 原因：幣別頁未服務「持外幣現鈔換回台幣」搜尋意圖，也未輸出台銀現金買入價。
+- 解法：美金、日圓頁新增買入價 FAQ 與試算，產生器輸出 cashBuy，缺值時省略。
 
 - 日期：2026-09-28
 - ID：reward-ratewise-api-attribution

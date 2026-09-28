@@ -2,6 +2,7 @@ import { CURRENCY_DEFINITIONS } from '../../features/ratewise/constants';
 import { APP_INFO } from '../app-info';
 import {
   SEO_RATE_EXAMPLES,
+  SEO_RATE_EXAMPLES_BOARD_DATE,
   SEO_RATE_EXAMPLES_DATE,
   type RateExample,
 } from '../generated/seo-rate-examples';
@@ -30,6 +31,16 @@ function buildUnitRateSentence(code: string): string {
     return `以台銀現金賣出價換算，1 台幣約可換 ${Math.round(1 / ex.cashSell).toLocaleString('zh-TW')} ${code}（${SEO_RATE_EXAMPLES_DATE} 更新，數字每日自動更新）。`;
   }
   return `以台銀現金賣出價換算，1 ${code} 約等於 ${ex.cashSell} 台幣（${SEO_RATE_EXAMPLES_DATE} 更新，數字每日自動更新）。`;
+}
+
+export function buildCashBuyRateSentence(
+  code: string,
+  amount: number,
+  rateExample: Pick<RateExample, 'cashBuy'> | undefined = SEO_RATE_EXAMPLES[code],
+): string {
+  const cashBuy = rateExample?.cashBuy;
+  if (typeof cashBuy !== 'number' || !Number.isFinite(cashBuy) || cashBuy <= 0) return '';
+  return `牌告試算：${amount.toLocaleString('zh-TW')} ${code} × ${cashBuy} = 預估 ${Math.round(amount * cashBuy).toLocaleString('zh-TW')} 元台幣（${SEO_RATE_EXAMPLES_BOARD_DATE ? `${SEO_RATE_EXAMPLES_BOARD_DATE} ` : ''}牌告試算，未含手續費，以台銀當日牌告為準）。`;
 }
 
 const RELATED_GUIDES_TO_TWD: RelatedGuideLink[] = [
@@ -223,6 +234,10 @@ const CURRENCY_SPECIFIC_FAQ: Record<string, FAQEntry[]> = {
       answer:
         '美國消費以刷卡為主，建議準備 200-500 美元現金用於小費、停車費、小型商家等場合。多數餐廳、商店、加油站皆接受信用卡，選擇海外回饋 ≥1.5% 的信用卡可抵消手續費。',
     },
+    {
+      question: '手上有美元現鈔，換回台幣要看哪個匯率？',
+      answer: `現鈔換回台幣看臺灣銀行「現金買入價」，外幣帳戶換回則看「即期買入價」。${buildCashBuyRateSentence('USD', 1000)}臺灣銀行通常僅收購外幣紙鈔，硬幣一般不收兌。`,
+    },
   ],
   JPY: [
     {
@@ -239,6 +254,10 @@ const CURRENCY_SPECIFIC_FAQ: Record<string, FAQEntry[]> = {
       question: '在日本可以用台灣的電子支付嗎？',
       answer:
         '全支付、街口支付、玉山 Wallet 等台灣電子支付已串接日本 PayPay，免收 1.5% 海外交易手續費，適合小額消費（便利商店、藥妝店）。但多有回饋上限，大額消費仍建議用高回饋信用卡。',
+    },
+    {
+      question: '手上有日圓現鈔，換回台幣要看哪個匯率？',
+      answer: `現鈔換回台幣看臺灣銀行「現金買入價」，外幣帳戶換回則看「即期買入價」。${buildCashBuyRateSentence('JPY', 100000)}臺灣銀行通常僅收購外幣紙鈔，硬幣一般不收兌。`,
     },
   ],
   KRW: [

@@ -20,7 +20,7 @@
  *   - 輸出：apps/ratewise/src/config/generated/seo-rate-examples.ts
  */
 
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { mkdirSync, realpathSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { RATES_API } from '../src/config/api-endpoints.ts';
@@ -48,6 +48,17 @@ const EXAMPLE_TWD = 30000;
  * 正常情況下兩者應在 0.5% 以內，超過代表資料異常。
  */
 const DUAL_VERIFY_WARN_PCT = 2.0;
+
+export function getValidCashBuy(cashBuy, cashSell) {
+  return typeof cashBuy === 'number' &&
+    Number.isFinite(cashBuy) &&
+    cashBuy > 0 &&
+    typeof cashSell === 'number' &&
+    Number.isFinite(cashSell) &&
+    cashBuy < cashSell
+    ? cashBuy
+    : undefined;
+}
 
 /**
  * 明洞換匯所（MoneyBox）TWD↔KRW 匯率靜態後備值。
@@ -108,6 +119,50 @@ function formatDateInTaipei(date = new Date()) {
     month: '2-digit',
     day: '2-digit',
   }).format(date);
+}
+
+// 產出與其他常數一致的單引號字面值；缺值輸出 null。
+const formatBoardDateLiteral = (date) => (date ? `'${date}'` : 'null');
+
+// 回退用的 updateTime 為抓取時間而非牌告時間；缺 sourcePublishedAt 時週末可能標成抓取當日（已知限制）。
+export function getBoardDate(sourcePublishedAt, updateTime) {
+  const publishedAt =
+    typeof sourcePublishedAt === 'string' &&
+    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.exec(
+      sourcePublishedAt,
+    );
+  if (publishedAt) {
+    const timestamp = Date.parse(sourcePublishedAt);
+    const [, year, month, day, hour, minute, second] = publishedAt.map(Number);
+    const date = new Date(Date.UTC(year, month - 1, day, hour, minute, second));
+    if (
+      Number.isFinite(timestamp) &&
+      date.getUTCFullYear() === year &&
+      date.getUTCMonth() === month - 1 &&
+      date.getUTCDate() === day &&
+      hour < 24 &&
+      minute < 60 &&
+      second < 60
+    ) {
+      return formatDateInTaipei(new Date(timestamp));
+    }
+  }
+
+  const match =
+    typeof updateTime === 'string' &&
+    /^(\d{4})\/(\d{2})\/(\d{2}) (\d{2}):(\d{2}):(\d{2})$/.exec(updateTime);
+  if (!match) return null;
+
+  const [, year, month, day, hour, minute, second] = match.map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day, hour, minute, second));
+  return date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day &&
+    hour < 24 &&
+    minute < 60 &&
+    second < 60
+    ? `${match[1]}-${match[2]}-${match[3]}`
+    : null;
 }
 
 /**
@@ -210,6 +265,7 @@ async function main() {
 
     const cashSell = d.cash?.sell;
     const cashBuy = d.cash?.buy;
+    const validCashBuy = getValidCashBuy(cashBuy, cashSell);
 
     if (!cashSell) {
       errors.push(`${code}: 缺少 cash.sell`);
@@ -268,6 +324,7 @@ async function main() {
       diffTWD,
       diffPct,
       cashSell,
+      ...(validCashBuy === undefined ? {} : { cashBuy: validCashBuy }),
       marketMid: +marketMid.toFixed(6),
       bankMid: bankMid ? +bankMid.toFixed(6) : null,
       spotAvailable: !!d.spot?.sell,
@@ -346,6 +403,8 @@ async function main() {
     `  diffPct: number;`,
     `  /** 台灣銀行現金賣出匯率（每 1 單位外幣 = N 台幣） */`,
     `  cashSell: number;`,
+    `  /** 台灣銀行現金買入匯率（未提供時省略） */`,
+    `  cashBuy?: number;`,
     `  /** 市場中間匯率（open.er-api.com，每 1 單位外幣 = N 台幣） */`,
     `  marketMid: number;`,
     `  /** 台銀自身現金中間價（(買入+賣出)/2，雙重驗證用，null 代表無現金買入資料） */`,
@@ -370,6 +429,10 @@ async function main() {
     lines.push(`    diffTWD: ${ex.diffTWD},`);
     lines.push(`    diffPct: ${ex.diffPct},`);
     lines.push(`    cashSell: ${ex.cashSell},`);
+    const cashBuy = getValidCashBuy(ex.cashBuy, ex.cashSell);
+    if (cashBuy !== undefined) {
+      lines.push(`    cashBuy: ${cashBuy},`);
+    }
     lines.push(`    marketMid: ${ex.marketMid},`);
     lines.push(`    bankMid: ${ex.bankMid ?? 'null'},`);
     lines.push(`    spotAvailable: ${ex.spotAvailable},`);
@@ -398,6 +461,10 @@ async function main() {
   lines.push(`/** 資料更新時間（台灣銀行） */`);
   lines.push(`export const SEO_RATE_EXAMPLES_UPDATE_TIME = '${updateTime}';`);
   lines.push(``);
+  lines.push(
+    `export const SEO_RATE_EXAMPLES_BOARD_DATE: string | null = ${formatBoardDateLiteral(getBoardDate(twData.sourcePublishedAt, updateTime))};`,
+  );
+  lines.push(``);
   lines.push(`/** 生成日期 */`);
   lines.push(`export const SEO_RATE_EXAMPLES_DATE = '${today}';`);
   lines.push(``);
@@ -407,4 +474,9 @@ async function main() {
   console.log(`[完成] 已生成：src/config/generated/seo-rate-examples.ts（${today}）`);
 }
 
-main();
+if (
+  process.argv[1] &&
+  realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url))
+) {
+  main();
+}
