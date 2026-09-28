@@ -1,7 +1,11 @@
-import { createHash } from 'node:crypto';
-import { mkdirSync, readFileSync, writeFileSync, existsSync, renameSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
+import { readFileSync, writeFileSync, existsSync, renameSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { execFileSync } from 'node:child_process';
+import { HISTORY_WINDOW_DAYS } from '../apps/shared/fx/history.mjs';
+import { bytesHash, writeObject } from './lib/fx-release-objects.mjs';
+export { bytesHash, writeObject } from './lib/fx-release-objects.mjs';
+import { guardPublishedAt } from './fetch-moneybox-rates.js';
 import {
   normalizeBankSnapshot,
   normalizeMoneyboxSnapshot,
@@ -23,18 +27,6 @@ export const sunsetAt = (activatedAt) =>
     : new Date(
         Math.max(Date.parse('2026-12-31T00:00:00Z'), Date.parse(activatedAt) + 30 * 86400000),
       ).toISOString();
-export const bytesHash = (bytes) => createHash('sha256').update(bytes).digest('hex');
-export function writeObject(root, data, prefix = 'objects') {
-  const text = JSON.stringify(data) + '\n';
-  const sha256 = bytesHash(text);
-  const path = `${prefix}/${sha256}.json`;
-  const destination = resolve(root, path);
-  mkdirSync(dirname(destination), { recursive: true });
-  if (existsSync(destination)) {
-    if (readFileSync(destination, 'utf8') !== text) throw new Error('Immutable object conflict');
-  } else writeFileSync(destination, text, { flag: 'wx' });
-  return { path, sha256 };
-}
 function readPrevious(root) {
   if (!existsSync(resolve(root, 'current.json'))) return null;
   const current = JSON.parse(readFileSync(resolve(root, 'current.json'), 'utf8'));
@@ -47,6 +39,12 @@ function readPrevious(root) {
   const manifest = readVerifiedObject(root, current.manifest);
   if (!validManifest(manifest)) throw new Error('Invalid previous manifest');
   validateManifestReferences(root, manifest);
+  return manifest;
+}
+
+export function verifyRelease(root) {
+  const manifest = readPrevious(resolve(root));
+  if (!manifest) throw new Error('Missing v3/current.json');
   return manifest;
 }
 
@@ -121,13 +119,35 @@ function validateManifestReferences(root, manifest) {
     if (
       declaredDates.size === 0 ||
       !sourceDate ||
-      dateNumber(entry.date) < dateNumber(sourceDate) ||
+      (dateNumber(entry.date) < dateNumber(sourceDate) &&
+        (snapshot.providerId !== 'moneybox' ||
+          (dateNumber(sourceDate) - dateNumber(entry.date)) / 86400000 > 1)) ||
       (dateNumber(entry.date) - dateNumber(sourceDate)) / 86400000 > maxCarryForwardDays ||
       entry.date > generatedDate
     ) {
       throw new Error(`History date mismatch: ${entry.providerId}/${entry.date}`);
     }
   }
+}
+
+export function retainedHistory(dataRoot, now = new Date()) {
+  const indexPath = resolve(dataRoot, 'v3/history-index.json');
+  if (!existsSync(indexPath)) return [];
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Taipei' }).format(now);
+  const earliest = new Date(`${today}T00:00:00Z`);
+  earliest.setUTCDate(earliest.getUTCDate() - HISTORY_WINDOW_DAYS);
+  const minDate = earliest.toISOString().slice(0, 10);
+  const entries = JSON.parse(readFileSync(indexPath, 'utf8'));
+  const bank = entries.filter(
+    (entry) => entry.providerId === 'bot' && entry.date >= minDate && entry.date < today,
+  );
+  const moneybox = entries
+    .filter((entry) => entry.providerId === 'moneybox' && entry.date <= today)
+    .sort((a, b) => (a.date > b.date ? -1 : a.date < b.date ? 1 : 0))
+    .slice(0, HISTORY_WINDOW_DAYS);
+  return [...bank, ...moneybox].sort((a, b) =>
+    a.date < b.date ? -1 : a.date > b.date ? 1 : a.providerId.localeCompare(b.providerId),
+  );
 }
 export async function publishRelease(root, inputs, now = new Date().toISOString(), history) {
   const previous = readPrevious(root);
@@ -150,14 +170,39 @@ export async function publishRelease(root, inputs, now = new Date().toISOString(
       providerId
     ];
     if (!normalizer) throw new Error(`Unknown provider adapter: ${providerId}`);
-    const quotes = normalizer(input);
+    const prior = providers.get(providerId);
+    let normalizedInput = input;
+    if (providerId === 'moneybox') {
+      const previousSnapshot = prior ? readVerifiedObject(root, prior.snapshot) : null;
+      const priorHistoryEntry = history
+        ?.filter((entry) => entry.providerId === 'moneybox')
+        .sort((a, b) => (a.date > b.date ? -1 : a.date < b.date ? 1 : 0))[0];
+      const historicalSnapshot = priorHistoryEntry
+        ? readVerifiedObject(root, priorHistoryEntry.snapshot)
+        : null;
+      const previousPublishedAt =
+        previousSnapshot?.quotes
+          .map((quote) => quote.sourceQuote.sourcePublishedAt)
+          .find(Boolean) ??
+        historicalSnapshot?.quotes
+          .map((quote) => quote.sourceQuote.sourcePublishedAt)
+          .find(Boolean);
+      normalizedInput = {
+        ...input,
+        sourcePublishedAt: guardPublishedAt(
+          input.sourcePublishedAt,
+          input.fetchedAt ?? input.timestamp,
+          previousPublishedAt ?? null,
+        ).value,
+      };
+    }
+    const quotes = normalizer(normalizedInput);
     if (!quotes.length) throw new Error('Empty or invalid provider snapshot');
     const data = buildProviderSnapshot(providerId, quotes);
     // producer 嚴格模式：未知或拼錯欄位不得進入公開物件（consumer 則為 tolerant reader）。
     if (!validateProducerProviderSnapshot(data) || !validateProviderSnapshot(data))
       throw new Error('Empty or invalid provider snapshot');
     const snapshot = writeObject(root, data);
-    const prior = providers.get(providerId);
     // 內容與狀態皆未變時沿用既有條目，避免每輪產生新 release 造成 commit／purge churn。
     if (prior?.checkStatus === 'ok' && prior.snapshot.sha256 === snapshot.sha256) {
       snapshots.set(providerId, data);
@@ -175,10 +220,11 @@ export async function publishRelease(root, inputs, now = new Date().toISOString(
   const nextProviders = [...providers.values()].sort((a, b) =>
     a.providerId < b.providerId ? -1 : a.providerId > b.providerId ? 1 : 0,
   );
+  const nextHistory = history ?? previous?.history ?? [];
   if (
     previous &&
-    history === undefined &&
-    JSON.stringify(nextProviders) === JSON.stringify(previous.providers.map(status))
+    JSON.stringify(nextProviders) === JSON.stringify(previous.providers.map(status)) &&
+    JSON.stringify(nextHistory) === JSON.stringify(previous.history)
   ) {
     const current = JSON.parse(readFileSync(resolve(root, 'current.json'), 'utf8'));
     return { current, manifest: previous, snapshots, unchanged: true };
@@ -187,7 +233,7 @@ export async function publishRelease(root, inputs, now = new Date().toISOString(
   const manifest = buildReleaseManifest({
     generatedAt: now,
     providers: nextProviders,
-    history: history ?? previous?.history ?? [],
+    history: nextHistory,
     deprecation: {
       activatedAt,
       sunsetAt: sunsetAt(activatedAt),
@@ -263,7 +309,15 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     provider === 'bot' ? 'latest.json' : 'providers/moneybox/latest.json',
   );
   const input = process.env.FX_FETCH_FAILED === '1' ? null : JSON.parse(readFileSync(path, 'utf8'));
+  const { migrateHistory } = await import('./migrate-fx-history.mjs');
+  const revision = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+  migrateHistory(revision, resolve(dataRoot, 'v3'), dataRoot);
   // v3 發布不得改寫 v2 latest.json（expand–contract：v2 棄用標記待 S4 公開切換時處理）。
-  const result = await publishRelease(resolve(dataRoot, 'v3'), { [provider]: input });
+  const result = await publishRelease(
+    resolve(dataRoot, 'v3'),
+    { [provider]: input },
+    new Date().toISOString(),
+    retainedHistory(dataRoot),
+  );
   console.log(result.unchanged ? 'v3 release unchanged' : `v3 release ${result.current.releaseId}`);
 }

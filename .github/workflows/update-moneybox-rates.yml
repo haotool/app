@@ -24,8 +24,7 @@ jobs:
   # 讓 v3 發布或依賴安裝失敗永遠不會阻斷既有公開資料更新。
   update-moneybox:
     runs-on: ubuntu-latest
-    # 並發控制：確保同一時間只有一個 v2 job 推送至 data 分支（與其他 rate workflow 共用 group）。
-    # 置於 job 層級：v3 publish job 使用獨立 group，其執行時間不延長 v2 鎖、不致 v2 排隊被取代。
+    timeout-minutes: 10
     concurrency:
       group: data-branch-push
       cancel-in-progress: false
@@ -55,13 +54,22 @@ jobs:
         with:
           ref: data
           fetch-depth: 0
+          persist-credentials: false
         continue-on-error: true
 
       - name: Create data branch if not exists
         if: failure()
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
+          git_push() {
+            local auth
+            auth=$(printf 'x-access-token:%s' "$GITHUB_TOKEN" | base64 | tr -d '\n')
+            echo "::add-mask::${auth}"
+            git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic ${auth}" push "$@"
+          }
           git checkout -b data main
-          git push -u origin data
+          git_push -u origin data
           git checkout data
 
       - name: Checkout fetch scripts at the triggering code SHA
@@ -190,10 +198,17 @@ jobs:
           RATE_DATA_ROOT=. FX_PROVIDER=moneybox node _fx-code/apps/ratewise/scripts/generate-history-aggregate.mjs
 
       - name: Commit and push changes
-        if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true'
         env:
+          GITHUB_TOKEN: ${{ github.token }}
           TODAY_HISTORY_FILE: ${{ steps.save-history.outputs.history_file }}
+        if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true'
         run: |
+          git_push() {
+            local auth
+            auth=$(printf 'x-access-token:%s' "$GITHUB_TOKEN" | base64 | tr -d '\n')
+            echo "::add-mask::${auth}"
+            git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic ${auth}" push "$@"
+          }
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           # 只 add 當日 history 檔與 aggregate，避免 git checkout origin/main -- public/rates/
@@ -218,8 +233,8 @@ jobs:
               -m "🤖 Auto-updated every 5 minutes" \
               -m "Source: https://cems.moneybox.or.kr/"
 
-            git pull --rebase origin data || true
-            git push --force-with-lease origin data
+            git pull --rebase origin data
+            git_push origin data
           else
             echo "📝 Creating new commit on data branch..."
             git commit -m "chore(rates): update moneybox rates - ${UPDATE_TIME}" \
@@ -229,19 +244,19 @@ jobs:
               -m "Source: https://cems.moneybox.or.kr/"
 
             echo "🔄 Pulling latest changes before push..."
-            git pull --rebase origin data || true
+            git pull --rebase origin data
 
             # 重試機制：最多重試 3 次
             for i in 1 2 3; do
               echo "📤 Attempting to push (try $i/3)..."
-              if git push origin data; then
+              if git_push origin data; then
                 echo "✅ Push successful"
                 break
               else
                 if [ $i -lt 3 ]; then
                   echo "⚠️ Push failed, retrying in 5 seconds..."
                   sleep 5
-                  git pull --rebase origin data || true
+                  git pull --rebase origin data
                 else
                   echo "❌ Push failed after 3 attempts"
                   exit 1

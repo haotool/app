@@ -1,8 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { legacyPayload, publishRelease, sunsetAt } from '../publish-fx-release.mjs';
+import {
+  legacyPayload,
+  publishRelease,
+  retainedHistory,
+  sunsetAt,
+} from '../publish-fx-release.mjs';
 import { FX_PUBLISHER } from '../../apps/shared/fx/publisher-metadata.mjs';
 
 describe('v3 publication', () => {
@@ -89,6 +94,27 @@ describe('v3 publication', () => {
     }
   });
 
+  it('stores response-generation publishedAt as unknown on the v3 current snapshot', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'fx-release-published-at-'));
+    const time = '2026-09-21T01:00:00.000Z';
+    const input = {
+      timestamp: time,
+      fetchedAt: time,
+      sourcePublishedAt: time,
+      rates: { TWD: { buy: '46', sell: '45' } },
+    };
+    try {
+      const result = await publishRelease(dir, { moneybox: input }, time);
+      expect(input.sourcePublishedAt).toBe(time);
+      const snapshot = result.snapshots.get('moneybox') as {
+        quotes: { sourceQuote: { sourcePublishedAt: string | null } }[];
+      };
+      expect(snapshot.quotes[0]?.sourceQuote.sourcePublishedAt).toBeNull();
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it('does not write a new release when content and provider status are unchanged', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'fx-release-churn-'));
     const time = '2026-09-21T01:00:00Z';
@@ -108,6 +134,32 @@ describe('v3 publication', () => {
       expect(failed.unchanged).toBeUndefined();
       const stillFailed = await publishRelease(dir, { bot: null }, '2026-09-21T01:15:00Z');
       expect(stillFailed.unchanged).toBe(true);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('does not churn manifests when supplied history references are unchanged', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'fx-release-history-stable-'));
+    const time = '2026-09-21T01:00:00Z';
+    const bot = {
+      timestamp: time,
+      sourcePublishedAt: time,
+      details: { USD: { cash: { buy: '31', sell: '32' } } },
+    };
+    try {
+      const initial = await publishRelease(dir, { bot }, time);
+      const history = [
+        {
+          providerId: 'bot',
+          date: '2026-09-21',
+          snapshot: initial.manifest.providers[0]!.snapshot,
+        },
+      ];
+      const first = await publishRelease(dir, { bot }, time, history);
+      const next = await publishRelease(dir, { bot }, '2026-09-21T01:05:00Z', history);
+      expect(next.unchanged).toBe(true);
+      expect(next.current.releaseId).toBe(first.current.releaseId);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -477,6 +529,80 @@ it('converts a legacy MoneyBox snapshot when only one side is declared', () => {
     });
   } finally {
     historicalFiles.clear();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+it('migrates real-shaped 30-day bank histories with gaps and the MoneyBox Seoul filename day', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'fx-migration-window-'));
+  historicalFiles.clear();
+  for (let day = 1; day <= 30; day++) {
+    if (day === 7) continue;
+    const date = `2026-05-${String(day).padStart(2, '0')}`;
+    historicalFiles.set(
+      `public/rates/history/${date}.json`,
+      JSON.stringify({
+        timestamp: `${date}T00:05:00.000Z`,
+        updateTime: `${date.replaceAll('-', '/')} 08:05:00`,
+        base: 'TWD',
+        source: 'Taiwan Bank',
+        details: { USD: { cash: { buy: 31, sell: 32 } } },
+        rates: { USD: 32 },
+      }),
+    );
+  }
+  historicalFiles.set(
+    'public/rates/providers/moneybox/history/2026-05-12.json',
+    JSON.stringify({
+      timestamp: '2026-05-12T15:01:00.000Z', // 2026-05-13 00:01 KST
+      updateTime: '2026/05/12 23:59:58',
+      base: 'KRW',
+      source: 'MoneyBox',
+      rates: { TWD: { buy: 43, sell: 42, spbuy: null, spsell: null } },
+    }),
+  );
+  try {
+    const result = migrateHistory('c'.repeat(40), dir);
+    expect(result).toMatchObject({ total: 30, converted: 30, quarantined: 0 });
+    const history = JSON.parse(readFileSync(join(dir, 'history-index.json'), 'utf8'));
+    expect(history).toContainEqual(
+      expect.objectContaining({ providerId: 'moneybox', date: '2026-05-12' }),
+    );
+    expect(history).not.toContainEqual(
+      expect.objectContaining({ providerId: 'moneybox', date: '2026-05-13' }),
+    );
+  } finally {
+    historicalFiles.clear();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+it('retains a 30-day bank calendar window and the latest 30 MoneyBox snapshots', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'fx-retained-window-'));
+  const v3 = join(dir, 'v3');
+  const dataRoot = dir;
+  const dates = (start: string, count: number) =>
+    Array.from({ length: count }, (_, index) => {
+      const date = new Date(`${start}T00:00:00Z`);
+      date.setUTCDate(date.getUTCDate() + index);
+      return date.toISOString().slice(0, 10);
+    });
+  try {
+    const entries = [
+      ...dates('2026-08-30', 32).map((date) => ({ providerId: 'bot', date })),
+      ...dates('2026-08-30', 32).map((date) => ({ providerId: 'moneybox', date })),
+    ];
+    mkdirSync(v3, { recursive: true });
+    writeFileSync(join(v3, 'history-index.json'), JSON.stringify(entries));
+    const retained = retainedHistory(dataRoot, new Date('2026-09-30T00:00:00Z'));
+    expect(retained.filter((entry) => entry.providerId === 'bot')).toHaveLength(30);
+    expect(retained.find((entry) => entry.providerId === 'bot')?.date).toBe('2026-08-31');
+    expect(retained.filter((entry) => entry.providerId === 'bot').at(-1)?.date).toBe('2026-09-29');
+    expect(retained.filter((entry) => entry.providerId === 'moneybox')).toHaveLength(30);
+    expect(retained.filter((entry) => entry.providerId === 'moneybox').at(-1)?.date).toBe(
+      '2026-09-30',
+    );
+  } finally {
     rmSync(dir, { recursive: true, force: true });
   }
 });

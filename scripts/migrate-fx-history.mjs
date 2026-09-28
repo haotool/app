@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync, mkdirSync, readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import {
@@ -9,27 +9,43 @@ import {
   validateProviderSnapshot,
   buildProviderSnapshot,
 } from '../apps/shared/fx/index.ts';
-import { bytesHash, writeObject } from './publish-fx-release.mjs';
+import { bytesHash, writeObject } from './lib/fx-release-objects.mjs';
+import { extractSeoulSnapshotDate, guardPublishedAt } from './fetch-moneybox-rates.js';
 
 const SUPPORTED_SOURCE_VERSIONS = new Set([undefined, null, 'legacy', '2.0']);
 
-/** Fixed git commit is the only input: no network, no guessed timestamps, no silent omissions. */
-export function migrateHistory(revision, output) {
-  if (!/^[a-f0-9]{40}$/.test(revision)) throw new Error('A full data commit SHA is required');
-  const paths = execFileSync('git', ['ls-tree', '-r', '--name-only', revision], {
-    encoding: 'utf8',
-  })
-    .trim()
-    .split('\n')
-    .filter((path) =>
-      /^public\/rates\/(?:providers\/moneybox\/)?history\/\d{4}-\d{2}-\d{2}\.json$/.test(path),
-    );
+/** 以固定 commit 或指定資料目錄遷移；不連網、不猜時間。 */
+export function migrateHistory(revision, output, dataRoot = null) {
+  const paths = dataRoot
+    ? ['history', 'providers/moneybox/history'].flatMap((folder) => {
+        const directory = resolve(dataRoot, folder);
+        try {
+          return readdirSync(directory)
+            .filter((name) => /^\d{4}-\d{2}-\d{2}\.json$/.test(name))
+            .map((name) => `public/rates/${folder}/${name}`);
+        } catch {
+          return [];
+        }
+      })
+    : execFileSync('git', ['ls-tree', '-r', '--name-only', revision], {
+        encoding: 'utf8',
+      })
+        .trim()
+        .split('\n')
+        .filter((path) =>
+          /^public\/rates\/(?:providers\/moneybox\/)?history\/\d{4}-\d{2}-\d{2}\.json$/.test(path),
+        )
+        .sort();
+  paths.sort();
   if (!paths.length) throw new Error('No daily histories at revision');
   const entries = [],
     history = [];
+  let previousMoneyboxPublishedAt = null;
   mkdirSync(output, { recursive: true });
   for (const path of paths) {
-    const raw = execFileSync('git', ['show', `${revision}:${path}`]);
+    const raw = dataRoot
+      ? readFileSync(resolve(dataRoot, path.replace(/^public\/rates\//, '')))
+      : execFileSync('git', ['show', `${revision}:${path}`]);
     const sourceHash = bytesHash(raw),
       providerId = path.includes('moneybox') ? 'moneybox' : 'bot',
       date = path.slice(-15, -5);
@@ -76,6 +92,17 @@ export function migrateHistory(revision, output) {
       const quoteInput = { ...data, sourcePublishedAt: data.sourcePublishedAt ?? null };
       if (!quoteInput.timestamp && !quoteInput.fetchedAt)
         throw new Error('Missing evidenced fetch timestamp');
+      if (providerId === 'moneybox') {
+        if (extractSeoulSnapshotDate(data) !== date)
+          throw new Error('MoneyBox history date differs from legacy Seoul snapshot date');
+        const publishedAt = guardPublishedAt(
+          data.sourcePublishedAt,
+          data.fetchedAt ?? data.timestamp,
+          previousMoneyboxPublishedAt,
+        );
+        quoteInput.sourcePublishedAt = publishedAt.value;
+        if (publishedAt.status === 'known') previousMoneyboxPublishedAt = publishedAt.value;
+      }
       const quotes = (providerId === 'bot' ? normalizeBankSnapshot : normalizeMoneyboxSnapshot)(
         quoteInput,
       );
@@ -131,10 +158,22 @@ export function migrateHistory(revision, output) {
   return result;
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const result = migrateHistory(
-    process.argv[2],
-    resolve(process.argv[3] ?? 'screenshots/fx-migration'),
+  const dataRootIndex = process.argv.indexOf('--data-root');
+  const dataRoot = dataRootIndex < 0 ? null : resolve(process.argv[dataRootIndex + 1]);
+  if (dataRootIndex >= 0 && !process.argv[dataRootIndex + 1])
+    throw new Error('--data-root requires a path');
+  const revision = dataRoot
+    ? execFileSync('git', ['-C', dataRoot, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim()
+    : process.argv[2];
+  const outputIndex = process.argv.indexOf('--output');
+  const output = resolve(
+    outputIndex < 0
+      ? dataRoot
+        ? resolve(dataRoot, 'v3')
+        : 'screenshots/fx-migration'
+      : process.argv[outputIndex + 1],
   );
+  const result = migrateHistory(revision, output, dataRoot);
   console.log(
     JSON.stringify({
       revision: result.revision,

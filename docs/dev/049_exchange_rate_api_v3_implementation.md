@@ -63,7 +63,7 @@ pnpm build:ratewise
 
 R5 裁決延後至 S4（`FX_V3_PUBLIC` 改為 `true` 的切換 PR）處理，切換前逐項確認：
 
-- v3 `manifest.history` 尚未填入：趨勢圖需接線 v3 歷史發佈並做首爾日期（MoneyBox 當地日曆日）檢查。
+- [x] v3 `manifest.history` 接線：publisher 每次由 data branch 日快照增量遷移並引用 30 日內成功轉換的 content-addressed objects；發佈前驗證 SHA-256 與 snapshot schema（`scripts/publish-fx-release.mjs`, `scripts/migrate-fx-history.mjs`, `apps/shared/fx/history.mjs`）。MoneyBox 檔名日期以 `extractSeoulSnapshotDate` 對帳，沿用 v2 `updateTime` 首爾日曆日。
 - v3 多幣模式每鍵 16–31ms：驗證前移與 memo，回到 INP 預算內。
 - rollback（`FX_V3_PUBLIC` 翻回 `false`）後清理 localStorage `ratewise.fx.v3.active` 與 `ratewise.fx.v3.history:*`。
 - manifest per-currency denominator（`unitAmount`）揭露評估。
@@ -71,9 +71,59 @@ R5 裁決延後至 S4（`FX_V3_PUBLIC` 改為 `true` 的切換 PR）處理，切
 - MoneyBox 9 位有效數字倒數（如 KRW→GBP）是否需提高倒數精度（PRD §18.4）。
 - 刪除 `S4-DELETE` 標記項目：`exportLegacyRates`、`apps/ratewise/src/config/api-semantics-v2.ts`、`useLegacyCurrencyConverter.ts`，以及 `isFxV3Public()` 建置期 plugin 改寫與 legacy SW 歷史路由。
 - v3 的 minor changeset 於 S4 切換 PR 提出（本 PR 僅 patch）。
-- v2 amend `--force-with-lease` 與 v3 push 競態：`update-latest-rates.yml` commit 步驟的 `git pull --rebase ... || true` 會吞掉 rebase 衝突；若恰與 v3 push 交錯可能覆蓋 v3 commit（`current.json` 回到前一版仍自洽），啟用 `RATEWISE_FX_V3_ENABLED` 前改用共用 concurrency group 或 v2 不 force push。
-- `update-historical-rates.yml` 上游存活守門改看 v2 job 結論，而非 run 層結論（v3 job 失敗不應影響快照判斷）。
+- [x] v2 保留既有 job-level `data-branch-push` 鎖與 cadence；所有 v2 push 改為 fast-forward、rebase 失敗不再吞錯，v3 維持獨立鎖。競態時 v2 push 會安全失敗或 rebase 保留 v3 commit（`.github/workflows/update-latest-rates.yml`, `update-moneybox-rates.yml`, `update-historical-rates.yml`, `publish-fx-v3.yml`）。
+- [x] data checkout 關閉持久憑證，push 時才注入 token；各資料 job 均有 timeout。
+- [x] `update-historical-rates.yml` 以 Actions jobs API 計算 `update-latest` v2 job 的成功結論；publish-v3 失敗不會影響 v2 liveness。三個資料 workflow 與 reusable publisher job 均設 timeout。
 - `fxSnapshotService` 的 localStorage LRU 與 `ratewise.fx.v3.*` 前綴清理。
-- MoneyBox `publishedAt` 語意以第二個樣本確認，並加單調性檢查。
+- [x] MoneyBox `publishedAt` 加入未來時間、回退與 response-time 判定；response-time／不合理時間在 v3 provider snapshot 設為 `null`（unknown），v2 latest/history 保留原值（`scripts/fetch-moneybox-rates.js`, `scripts/publish-fx-release.mjs`, `scripts/__tests__/fetch-moneybox-rates.test.ts`）。現有 repo fixture 僅記錄單筆有效時間，未提供重複樣本或 data branch 歷史檔；不宣稱上游語意已由多樣本證實，判定採保守未知。
+- [x] 一次性歷史遷移指令 `node scripts/migrate-fx-history.mjs --data-root <data-checkout>/public/rates`；後續 publish job 自動增量遷移。
 - 啟用後的 runtime kill switch（data 端降級）；SW `history-validated-v2` 快取於回滾時清理。
 - split-meow v3 fallback 參考值（`isFallback`）的 UI 標示：final round 已還原 flag off 可達文案為 main，S4 需重新設計提示文案。
+
+## ACTIVATION RUNBOOK
+
+以下步驟只啟用 data plane；`FX_V3_PUBLIC` 保持 `false`，App 與公開站台切換另走 S4 PR。
+
+1. 啟用 v3 data publisher：
+
+   ```bash
+   gh variable set RATEWISE_FX_V3_ENABLED --body true
+   ```
+
+2. 在本機 checkout `data` branch，執行一次歷史遷移（來源檔不改寫）：
+
+   ```bash
+   DATA_CHECKOUT=/path/to/data-checkout
+   git -C "$DATA_CHECKOUT" switch data
+   node scripts/migrate-fx-history.mjs --data-root "$DATA_CHECKOUT/public/rates"
+   git -C "$DATA_CHECKOUT" add public/rates/v3
+   git -C "$DATA_CHECKOUT" commit -m 'chore(rates): migrate FX v3 history'
+   git -C "$DATA_CHECKOUT" push origin data
+   ```
+
+   先處理 `migration.json` 中所有 quarantined 項目。啟用後每輪 publish 會從日快照增量遷移。
+
+3. 依序 dispatch `Update Latest Exchange Rates`、`Update MoneyBox Exchange Rates`，讓兩個 provider 都有 release：
+
+   ```bash
+   gh workflow run update-latest-rates.yml --ref main
+   gh workflow run update-moneybox-rates.yml --ref main
+   ```
+
+4. checkout 最新 `data` branch，驗證 pointer、manifest、provider/history objects 的 hash 與 schema：
+
+   ```bash
+   DATA_CHECKOUT=/path/to/data-checkout
+   git -C "$DATA_CHECKOUT" pull --ff-only origin data
+   node scripts/verify-fx-v3-release.mjs --data-root "$DATA_CHECKOUT/public/rates"
+   ```
+
+   輸出需含 `providers: 2` 與非零 `history`。再確認 `current.json` 的 `releaseId` 等於 manifest SHA，history 日期在最近 30 日。公開 pointer：`https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/v3/current.json`。
+
+5. 回滾 data plane，停用後保留 v3 objects/current 作診斷，不改 v2 `latest.json`：
+
+   ```bash
+   gh variable set RATEWISE_FX_V3_ENABLED --body false
+   ```
+
+   若 `FX_V3_PUBLIC` 已在另一次 S4 PR 開啟，先以獨立 PR 翻回 `false`，再清除 `ratewise.fx.v3.active`、`ratewise.fx.v3.history:*` localStorage keys 與對應 SW history cache。

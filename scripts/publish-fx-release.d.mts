@@ -32,6 +32,8 @@ export function publishRelease(
 
 export function sunsetAt(activatedAt: string | null): string | null;
 export function bytesHash(bytes: string | Uint8Array): string;
+export function retainedHistory(dataRoot: string, now?: Date): ReleaseManifest['history'];
+export function verifyRelease(root: string): ReleaseManifest;
 
 export function legacyPayload(
   snapshot: unknown,

@@ -41,9 +41,8 @@ describe('data workflow contract', () => {
     const v2Job = job(text, v2);
     expect(v2Job).not.toMatch(/pnpm install|generate:fx|publish-fx-release|RATEWISE_FX_V3_ENABLED/);
     expect(v2Job).not.toContain('public/rates/v3');
-    // v2 鎖在 job 層級：v3 發布時間不得延長 data-branch-push 鎖。
+    // v2 鎖維持 job 層級，避免 v3 發布耗時改變既有更新節奏。
     expect(v2Job).toMatch(/concurrency:\n\s+group: data-branch-push/);
-    expect(text.slice(0, text.indexOf('\njobs:'))).not.toContain('concurrency:');
     const v3Job = job(text, 'publish-v3');
     expect(v3Job).toContain(`needs: ${v2}`);
     expect(v3Job).toContain("vars.RATEWISE_FX_V3_ENABLED == 'true'");
@@ -52,6 +51,34 @@ describe('data workflow contract', () => {
     expect(v3Job).not.toContain('always()');
     // v3 失敗必須讓 job 標紅，不得以 continue-on-error 假綠。
     expect(v3Job).not.toContain('continue-on-error');
+  });
+
+  it.each(['update-latest-rates.yml', 'update-moneybox-rates.yml', 'update-historical-rates.yml'])(
+    '%s serializes the whole data workflow and cannot force-overwrite data',
+    (file) => {
+      const text = workflow(file);
+      const lock =
+        file === 'update-historical-rates.yml'
+          ? text
+          : job(text, file === 'update-latest-rates.yml' ? 'update-latest' : 'update-moneybox');
+      expect(lock).toMatch(
+        /concurrency:\n\s+group: data-branch-push\n\s+cancel-in-progress: false/,
+      );
+      expect(text).toMatch(/timeout-minutes: \d+/);
+      expect(text).not.toMatch(/git pull --rebase[^\n]*\|\| true|git push --force-with-lease/);
+      expect(text).toContain('persist-credentials: false');
+    },
+  );
+
+  it('liveness gate reads the update-latest v2 job conclusion through the jobs API', () => {
+    const text = workflow('update-historical-rates.yml');
+    const gate = text.slice(
+      text.indexOf('- name: Upstream pipeline liveness gate'),
+      text.indexOf('- name: Save historical snapshot'),
+    );
+    expect(gate).toContain('actions/runs/${RUN_ID}/jobs');
+    expect(gate).toContain('select(.name == "update-latest" and .conclusion == "success")');
+    expect(gate).not.toContain('--json conclusion');
   });
 
   it('runs the shared v3 publisher isolated from the v2 lock and without persisted credentials', () => {
