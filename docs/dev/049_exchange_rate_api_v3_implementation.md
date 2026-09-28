@@ -93,14 +93,25 @@ R5 裁決延後至 S4（`FX_V3_PUBLIC` 改為 `true` 的切換 PR）處理，切
 2. 依序 dispatch `Update Latest Exchange Rates`、`Update MoneyBox Exchange Rates`，讓兩個 provider 都有 release；publisher 會自行全量重算歷史遷移，不需手動執行 migration CLI：
 
    ```bash
+   wait_for_dispatched_run() {
+     local workflow="$1" dispatched_at="$2" run_id=""
+     for attempt in {1..12}; do
+       run_id=$(gh run list --workflow "$workflow" --event workflow_dispatch --json databaseId,createdAt --jq "[.[] | select(.createdAt >= \"$dispatched_at\")] | max_by(.createdAt).databaseId // empty")
+       if [ -n "$run_id" ]; then echo "$run_id"; return 0; fi
+       sleep 5
+     done
+     echo "Unable to find dispatched workflow run: $workflow" >&2
+     return 1
+   }
+
    LATEST_DISPATCHED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
    gh workflow run update-latest-rates.yml --ref main
-   LATEST_RUN_ID=$(gh run list --workflow update-latest-rates.yml --event workflow_dispatch --json databaseId,createdAt --jq "[.[] | select(.createdAt >= \"$LATEST_DISPATCHED_AT\")] | max_by(.createdAt).databaseId")
+   LATEST_RUN_ID=$(wait_for_dispatched_run update-latest-rates.yml "$LATEST_DISPATCHED_AT") || exit 1
    gh run watch "$LATEST_RUN_ID" --exit-status
 
    MONEYBOX_DISPATCHED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
    gh workflow run update-moneybox-rates.yml --ref main
-   MONEYBOX_RUN_ID=$(gh run list --workflow update-moneybox-rates.yml --event workflow_dispatch --json databaseId,createdAt --jq "[.[] | select(.createdAt >= \"$MONEYBOX_DISPATCHED_AT\")] | max_by(.createdAt).databaseId")
+   MONEYBOX_RUN_ID=$(wait_for_dispatched_run update-moneybox-rates.yml "$MONEYBOX_DISPATCHED_AT") || exit 1
    gh run watch "$MONEYBOX_RUN_ID" --exit-status
    ```
 

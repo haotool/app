@@ -160,6 +160,7 @@ jobs:
           for i in 1 2 3; do
             echo "🔄 Pulling latest changes before push (try $i/3)..."
             if ! git pull --rebase origin data; then
+              git rebase --abort 2>/dev/null || true
               if [ "$i" -lt 3 ]; then
                 echo "⚠️ Rebase failed, retrying in 5 seconds..."
                 sleep 5

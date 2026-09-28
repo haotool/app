@@ -229,18 +229,27 @@ jobs:
             -m "🤖 Auto-updated every 5 minutes" \
             -m "Source: https://cems.moneybox.or.kr/"
 
-          echo "🔄 Pulling latest changes before push..."
-          git pull --rebase origin data
-
           for i in 1 2 3; do
+            echo "🔄 Pulling latest changes before push (try $i/3)..."
+            if ! git pull --rebase origin data; then
+              git rebase --abort 2>/dev/null || true
+              if [ "$i" -lt 3 ]; then
+                echo "⚠️ Rebase failed, retrying in 5 seconds..."
+                sleep 5
+              else
+                echo "❌ Rebase failed after 3 attempts"
+                exit 1
+              fi
+              continue
+            fi
+
             echo "📤 Attempting to push (try $i/3)..."
             if git_push origin data; then
               echo "✅ Push successful"
               break
             elif [ "$i" -lt 3 ]; then
-              echo "⚠️ Push failed, rebasing and retrying in 5 seconds..."
+              echo "⚠️ Push failed, retrying in 5 seconds..."
               sleep 5
-              git pull --rebase origin data
             else
               echo "❌ Push failed after 3 attempts"
               exit 1

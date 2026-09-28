@@ -477,6 +477,12 @@ vi.mock('node:child_process', () => ({
 }));
 import { migrateHistory } from '../migrate-fx-history.mjs';
 
+it('requires a full 40-hex commit SHA only in Git revision mode', () => {
+  expect(() => migrateHistory('revision', '/tmp/fx-migration-output')).toThrow(
+    /full 40-character commit SHA/,
+  );
+});
+
 it('quarantines conflicting historical identities and preserves known legacy without a schema version', () => {
   const dir = mkdtempSync(join(tmpdir(), 'fx-migration-identities-'));
   const bank = {
