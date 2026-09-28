@@ -1,5 +1,13 @@
 # @app/split-meow
 
+## 0.3.3
+
+### Patch Changes
+
+- 4936883: 為匯率 v3 切換預作準備；正式公開前分帳喵的匯率來源、換算與過期提示均與現行版本相同。
+- Updated dependencies [4936883]
+  - @app/shared@0.0.2
+
 ## 0.3.2
 
 ### Patch Changes
