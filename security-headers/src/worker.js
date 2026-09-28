@@ -1,5 +1,6 @@
 /* global HTMLRewriter, performance */
 
+// apps/shared/fx/publisher-metadata.mjs is a deploy dependency of this Worker.
 import { FX_PUBLISHER } from '../../apps/shared/fx/publisher-metadata.mjs';
 
 /**

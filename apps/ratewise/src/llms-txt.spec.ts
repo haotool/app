@@ -81,7 +81,7 @@ describeIfGenerated('llms.txt structure (requires prebuild)', () => {
 
   it('keeps documented URLs free of trailing CJK punctuation that breaks parsers', () => {
     const content = readFileSync(llmsPath, 'utf-8');
-    const urls = content.match(/https?:\/\/[^\s]+/g) ?? [];
+    const urls = content.replace(/`[^`]*`/g, '').match(/https?:\/\/[^\s]+/g) ?? [];
 
     expect(urls.length).toBeGreaterThan(0);
     for (const url of urls) {

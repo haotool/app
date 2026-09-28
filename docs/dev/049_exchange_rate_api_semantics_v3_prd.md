@@ -1177,12 +1177,14 @@ v3 `publisher` 物件依 ADR B3 納入 `apps/shared/fx/schema.json` 的 `Release
 | OpenData 頁     | 提供 API 使用條款、可複製 HTML／Markdown 標示片段，明文允許使用者自行加上 `rel="nofollow"`／`"sponsored"`／`"ugc"`                                                              |
 | Dataset JSON-LD | `creator`（Organization：haotool／匯率好工具）、`usageInfo`（指向 API 條款頁）、`isBasedOn`（provider 來源 URL）、`isAccessibleForFree: true`、`citation`（建議引用格式）（F5） |
 
+消費者若直接從 jsDelivr CDN（`cdn.jsdelivr.net/gh/haotool/app@data/...`）抓取資料，不會經過 security-headers Worker；其條款由 JSON 的 `publisher.termsUrl` 與 Open Data 頁傳達，不會附在 Link header。
+
 ### 21.4 S3 驗收標準
 
 - [x] v2 latest／pair JSON 與 OpenAPI additive publisher 均來自共用 SSOT；v3 contract publisher 定義保持共用
 - [x] `/ratewise/api/*` 與 `/ratewise/openapi.json` 的 `Link: <termsUrl>; rel="terms-of-service"` 由 security-headers Worker 套用並有整合守門
 - [x] OpenData 頁、Markdown mirror 與 `llms*.txt` 提供同一標示要求及 HTML／Markdown 片段；允許 `rel="nofollow"`／`"sponsored"`／`"ugc"`
-- [x] 條款不主張匯率數值著作權，明示保留上游來源標示；regex 守門覆蓋條款與 OpenData 頁原始碼
+- [x] 條款不主張匯率數值著作權，明示保留上游來源標示；regex 守門覆蓋條款與 prerendered OpenData 頁
 - [x] Dataset JSON-LD 僅一筆，含 `creator`／`usageInfo`／provider URL `isBasedOn`／`isAccessibleForFree`／`citation`，不把服務條款當資料授權
 - [x] 守門檢查條款與生成產物不可要求 dofollow 或禁止 nofollow
 - [x] 使用者可見條款變更以 `@app/ratewise` patch changeset 記錄

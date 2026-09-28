@@ -16,6 +16,11 @@ export const FX_ATTRIBUTION_METADATA = Object.freeze({
   }),
 });
 
+export const FX_PROVIDER_OPEN_DATA_NAMES = Object.freeze({
+  bot: '臺灣銀行牌告匯率',
+  moneybox: 'MoneyBox (明洞換匯所聯盟)',
+});
+
 export const FX_PROVIDER_METADATA = Object.freeze({
   bot: Object.freeze({
     name: '臺灣銀行',

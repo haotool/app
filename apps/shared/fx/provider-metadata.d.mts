@@ -20,3 +20,7 @@ export declare const FX_PROVIDER_METADATA: Readonly<{
   bot: FxProviderMetadata<'bank'>;
   moneybox: FxProviderMetadata<'exchange_shop'>;
 }>;
+export declare const FX_PROVIDER_OPEN_DATA_NAMES: Readonly<{
+  bot: string;
+  moneybox: string;
+}>;

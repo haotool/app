@@ -1068,7 +1068,7 @@ describe('💵 Amount Page ExchangeRateSpecification Schema (P1-5)', () => {
     const schema = buildOpenDataDatasetJsonLd();
 
     expect(schema['@type']).toBe('Dataset');
-    expect(schema['sameAs']).toBe('https://rate.bot.com.tw/xrt');
+    expect(schema).not.toHaveProperty('sameAs');
     expect(schema['identifier']).toBeTruthy();
     expect(schema['creator']).toMatchObject({
       '@type': 'Organization',

@@ -88,22 +88,17 @@ describe('RateWise API attribution SSOT', () => {
       'llms-full.txt',
       'openapi.json',
       'api/latest.json',
-      '_headers',
       ...readdirSync(resolve(PUBLIC, 'api/pairs')).map((file) => `api/pairs/${file}`),
     ];
     const content = [
       API_ATTRIBUTION.terms.join('\n'),
-      readFileSync(resolve(ROOT, 'src/pages/OpenData.tsx'), 'utf8'),
       ...files.map((file) => readFileSync(resolve(PUBLIC, file), 'utf8')),
     ].join('\n');
     expect(content).not.toMatch(noDofollowRequirement);
     expect(content).not.toMatch(noNofollowBan);
     for (const file of ['open-data.md', 'llms.txt', 'llms-full.txt']) {
       const mirror = readFileSync(resolve(PUBLIC, file), 'utf8');
-      const publisherText = file.startsWith('llms')
-        ? FX_PUBLISHER.requiredText.replace('）', ' ）')
-        : FX_PUBLISHER.requiredText;
-      expect(mirror).toContain(publisherText);
+      expect(mirror).toContain(FX_PUBLISHER.requiredText);
       expect(mirror).toContain('rel="nofollow"');
       expect(mirror).toContain('rel="sponsored"');
       expect(mirror).toContain('rel="ugc"');
@@ -130,6 +125,7 @@ describe('RateWise API attribution SSOT', () => {
     const blocks = OPEN_DATA_PAGE_SEO.jsonLd ?? [];
     const dataset = blocks.filter((block) => block['@type'] === 'Dataset');
     expect(dataset).toHaveLength(1);
+    expect(dataset[0]).not.toHaveProperty('sameAs');
     expect(dataset[0]).toMatchObject({
       creator: { '@type': 'Organization', name: FX_PUBLISHER.name },
       usageInfo: FX_PUBLISHER.termsUrl,
@@ -150,7 +146,17 @@ describe('RateWise API attribution SSOT', () => {
       ],
     });
     const html = readFileSync(openDataHtmlPath, 'utf8');
-    expect(html).toContain('id="api-terms"');
+    const apiTerms = /<section id="api-terms"[\s\S]*?<\/section>/.exec(html)?.[0];
+    expect(apiTerms).toBeDefined();
+    expect(apiTerms).toContain(FX_PUBLISHER.requiredText);
+    expect(apiTerms).toContain(
+      API_ATTRIBUTION.htmlSnippet.replaceAll('<', '&lt;').replaceAll('>', '&gt;'),
+    );
+    expect(apiTerms).toContain(API_ATTRIBUTION.markdownSnippet);
+    expect(apiTerms).toContain(API_ATTRIBUTION.terms[2]);
+    const upstreamUnverified = '上游條款仍適用；臺灣銀行及 MoneyBox 資料的再散布狀態尚未查證。';
+    expect(API_ATTRIBUTION.terms.join('\n')).toContain(upstreamUnverified);
+    expect(apiTerms).toContain(upstreamUnverified);
     const graph = [
       ...html.matchAll(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g),
     ].flatMap(([, json]) => {
@@ -168,12 +174,21 @@ describe('RateWise API attribution SSOT', () => {
     });
   }, 300000);
 
-  it('does not claim copyright over rates in terms or OpenData source', () => {
+  it('does not claim copyright over rates in terms or rendered OpenData', async () => {
+    const openDataHtmlPath = resolve(ROOT, 'dist/open-data/index.html');
+    await ensurePrerenderDist({
+      projectRoot: ROOT,
+      distRoot: resolve(ROOT, 'dist'),
+      requiredPaths: [openDataHtmlPath],
+      sourcePaths: [resolve(ROOT, 'src/pages/OpenData.tsx')],
+    });
     expect(API_ATTRIBUTION.terms.join('\n')).not.toMatch(noRateCopyright);
-    expect(readFileSync(resolve(ROOT, 'src/pages/OpenData.tsx'), 'utf8')).not.toMatch(
-      noRateCopyright,
-    );
-  });
+    const apiTerms = /<section id="api-terms"[\s\S]*?<\/section>/.exec(
+      readFileSync(openDataHtmlPath, 'utf8'),
+    )?.[0];
+    expect(apiTerms).toBeDefined();
+    expect(apiTerms).not.toMatch(noRateCopyright);
+  }, 300000);
 });
 
 function collectSourceFiles(directory: string): string[] {

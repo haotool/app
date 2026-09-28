@@ -96,7 +96,7 @@ https://app.haotool.org/ratewise/?amount={AMOUNT}&from={FROM}&to={TO}
 匯率僅供參考，不保證可按該匯率完成交易；資料未包含交易費用。
 本頁條款規範本 API 服務的使用，不主張匯率數值的著作權。上游條款仍適用；臺灣銀行及 MoneyBox 資料的再散布狀態尚未查證。
 
-必須顯示：資料整理：匯率好工具 RateWise（https://app.haotool.org/ratewise/ ）
+必須顯示：`資料整理：匯率好工具 RateWise（https://app.haotool.org/ratewise/）`
 上游來源標示：資料來源：臺灣銀行牌告匯率、資料來源：MoneyBox 明洞換匯所
 條款：https://app.haotool.org/ratewise/open-data/#api-terms
 

@@ -24,20 +24,24 @@ import { buildPublicRateProviderMetadata } from '../config/rateProviderPublicMet
 import { SITE_CONFIG } from '../config/seo-paths';
 import rateModeStrategies from '../config/rate-mode-strategies.json';
 import { CURRENCY_DEFINITIONS } from '../features/ratewise/constants';
+import {
+  FX_PROVIDER_METADATA,
+  FX_PROVIDER_OPEN_DATA_NAMES,
+} from '../../../shared/fx/provider-metadata.mjs';
 
 // ─── 資料來源架構 ──────────────────────────────────────────────────────────────
 
 const DATA_SOURCES = [
   {
     label: '原始來源',
-    name: '臺灣銀行牌告匯率',
-    url: 'https://rate.bot.com.tw/xrt',
+    name: FX_PROVIDER_OPEN_DATA_NAMES.bot,
+    url: FX_PROVIDER_METADATA.bot.sourceUrl,
     note: '官方每日公布，現金買入／賣出、即期買入／賣出四種報價',
   },
   {
     label: '換錢所來源',
-    name: 'MoneyBox (明洞換匯所聯盟)',
-    url: 'https://moneybox-exchange.com/zh-CHT/exchange',
+    name: FX_PROVIDER_OPEN_DATA_NAMES.moneybox,
+    url: FX_PROVIDER_METADATA.moneybox.sourceUrl,
     note: '目前用於 KRW 換錢所現金匯率，獨立保存 provider latest 與 history 快照',
   },
   {

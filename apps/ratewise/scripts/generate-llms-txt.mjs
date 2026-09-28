@@ -24,7 +24,7 @@ const ROOT = resolve(__dirname, '..');
 const pkg = JSON.parse(readFileSync(resolve(ROOT, 'package.json'), 'utf-8'));
 const VERSION = pkg.version;
 const BASE_URL = SITE_CONFIG.url;
-const llmsPublisherText = API_ATTRIBUTION.publisher.requiredText.replace('）', ' ）');
+const llmsPublisherText = API_ATTRIBUTION.publisher.requiredText;
 const constantsPath = resolve(ROOT, 'src/features/ratewise/constants.ts');
 const constantsContent = readFileSync(constantsPath, 'utf-8');
 const SUPPORTED_CURRENCY_COUNT = [...constantsContent.matchAll(/^\s+([A-Z]{3}):\s*\{/gm)].length;
@@ -215,7 +215,7 @@ Contact: ${pkg.author?.email || 'haotool.org@gmail.com'}
 
 ${API_ATTRIBUTION.terms.join('\n')}
 
-必須顯示：${llmsPublisherText}
+必須顯示：\`${llmsPublisherText}\`
 上游來源標示：${API_ATTRIBUTION.upstreamSources.join('、')}
 條款：${API_ATTRIBUTION.publisher.termsUrl}
 
@@ -437,7 +437,7 @@ https://app.haotool.org/ratewise/?amount={AMOUNT}&from={FROM}&to={TO}
 
 ${API_ATTRIBUTION.terms.join('\n')}
 
-必須顯示：${llmsPublisherText}
+必須顯示：\`${llmsPublisherText}\`
 上游來源標示：${API_ATTRIBUTION.upstreamSources.join('、')}
 條款：${API_ATTRIBUTION.publisher.termsUrl}
 
