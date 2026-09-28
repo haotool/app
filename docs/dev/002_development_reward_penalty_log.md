@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+392
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+393
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-09-29
+- ID：reward-ratewise-fx-v3-pipeline-hardening
+- 原因：v3 資料管線存在 v2 強制推送覆蓋、存活守門看 run 層、歷史未接線等啟用阻斷。
+- 解法：v2 改一般推送、守門看 job、30 日歷史內容定址接線並新增驗證器與 runbook。
 
 - 日期：2026-09-28
 - ID：reward-ratewise-sellback-faq
