@@ -18,8 +18,6 @@ export default defineConfig(() => {
     define: {
       __APP_VERSION__: JSON.stringify(appVersion),
       __BUILD_TIME__: JSON.stringify(buildTime),
-      // 測試不注入建置期常數：v3 閘門回落至可 mock 的 FX_V3_PUBLIC（見 useCurrencyConverter）。
-      __FX_V3_PUBLIC_BUILD__: 'undefined',
       'import.meta.env.VITE_APP_VERSION': JSON.stringify(appVersion),
       'import.meta.env.VITE_BUILD_TIME': JSON.stringify(buildTime),
     },

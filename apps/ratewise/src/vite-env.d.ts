@@ -14,4 +14,3 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
-declare const __FX_V3_PUBLIC_BUILD__: boolean | undefined;

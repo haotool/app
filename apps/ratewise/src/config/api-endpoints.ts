@@ -18,7 +18,7 @@ export const CDN_DATA_BASE = `https://cdn.jsdelivr.net/gh/${GITHUB_REPO_PATH}@${
 export const RAW_DATA_BASE = `https://raw.githubusercontent.com/${GITHUB_REPO_PATH}/${DATA_BRANCH}`;
 
 /** v3 公開切換 SSOT 位於 apps/shared/fx/public.ts（RateWise 與 split-meow 共用）。 */
-export { FX_V3_PUBLIC } from '../../../shared/fx/public.ts';
+export { FX_V3_PUBLIC, isFxV3Public } from '../../../shared/fx/public.ts';
 
 /** 匯率 JSON 相對路徑 */
 const RATES_LATEST_PATH = '/public/rates/latest.json';

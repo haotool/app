@@ -1,6 +1,6 @@
 import { FxReleaseError, loadRelease, FX_BASE_URLS } from '@app/shared/fx/release';
 import { freshness, normalizeMoneyboxSnapshot } from '@app/shared/fx';
-import { FX_V3_PUBLIC } from '@app/shared/fx/public';
+import { isFxV3Public } from '@app/shared/fx/public';
 
 /** v3 未公開時沿用 main 的 v2 CDN 端點與行為（不請求 v3 current、不顯示參考值提示）。 */
 const LEGACY_RATE_URL =
@@ -48,7 +48,7 @@ async function fetchLegacyMoneyboxRate(): Promise<MoneyboxRate> {
 }
 
 export async function fetchMoneyboxRate(now = new Date().toISOString()): Promise<MoneyboxRate> {
-  if (!FX_V3_PUBLIC) return fetchLegacyMoneyboxRate();
+  if (!isFxV3Public()) return fetchLegacyMoneyboxRate();
   let release;
   try {
     release = await loadRelease();

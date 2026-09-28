@@ -1,5 +1,5 @@
 import { FxContextControls } from '../features/ratewise/components/FxContextControls';
-import { FX_V3_PUBLIC } from '../config/api-endpoints';
+import { isFxV3Public } from '../config/api-endpoints';
 /**
  * Multi-Currency Converter Page - ParkKeeper 風格
  *
@@ -170,7 +170,7 @@ export default function MultiConverter() {
               onBaseCurrencyChange={handleBaseCurrencyChange}
               onToggleFavorite={toggleFavorite}
             />
-            {FX_V3_PUBLIC && <FxContextControls quotes={fxQuotes} />}
+            {isFxV3Public() && <FxContextControls quotes={fxQuotes} />}
           </div>
         </section>
 

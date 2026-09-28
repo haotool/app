@@ -51,7 +51,7 @@ import {
 import { useMoneyBoxRates } from './useMoneyBoxRates';
 import { useMoneyBoxRatesMap } from './useMoneyBoxRatesMap';
 import { useLegacyCurrencyConverter } from './useLegacyCurrencyConverter';
-import { FX_V3_PUBLIC } from '../../../config/api-endpoints';
+import { isFxV3Public } from '../../../config/api-endpoints';
 
 export { resolveEffectiveRateSourceForConversion } from './useLegacyCurrencyConverter';
 
@@ -715,13 +715,7 @@ type CurrencyConverterResult =
   | ReturnType<typeof useFxCurrencyConverter>
   | ReturnType<typeof useLegacyWithFxShape>;
 
-/**
- * v3 公開切換 SSOT：模組載入時決定，hook 呼叫順序固定。
- * `__FX_V3_PUBLIC_BUILD__` 由 vite define 自 shared/fx/public.ts 注入字面常數：rolldown 不做跨模組常數
- * 折疊，只有字面值能讓 tree-shaking 移除 v3 hook 與其 decimal／驗證器匯入（fx chunk 不進首頁）。
- * 測試環境 define 為 undefined，沿用可 mock 的 FX_V3_PUBLIC。
- */
+/** v3 公開切換 SSOT：模組載入時決定，hook 呼叫順序固定；建置期閘門見 shared/fx/public.ts。 */
 export const useCurrencyConverter: (
   options?: UseCurrencyConverterOptions,
-) => CurrencyConverterResult =
-  (__FX_V3_PUBLIC_BUILD__ ?? FX_V3_PUBLIC) ? useFxCurrencyConverter : useLegacyWithFxShape;
+) => CurrencyConverterResult = isFxV3Public() ? useFxCurrencyConverter : useLegacyWithFxShape;

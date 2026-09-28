@@ -1,5 +1,5 @@
 import { defineConfig, loadEnv } from 'vite';
-import { FX_V3_PUBLIC } from '../shared/fx/public';
+import { fxV3PublicPlugin } from '../shared/fx/vite-plugin.mjs';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import viteCompression from 'vite-plugin-compression';
@@ -219,8 +219,6 @@ export default defineConfig(({ mode }) => {
     define: {
       __APP_VERSION__: JSON.stringify(appVersion),
       __BUILD_TIME__: JSON.stringify(buildTime),
-      // v3 公開切換的建置期字面常數（SSOT：shared/fx/public.ts），供 tree-shaking 消除未公開 v3 路徑。
-      __FX_V3_PUBLIC_BUILD__: JSON.stringify(FX_V3_PUBLIC),
       'import.meta.env.VITE_APP_VERSION': JSON.stringify(appVersion),
       'import.meta.env.VITE_BUILD_TIME': JSON.stringify(buildTime),
     },
@@ -237,6 +235,8 @@ export default defineConfig(({ mode }) => {
       },
     },
     plugins: [
+      // v3 公開閘門建置期字面化（SSOT：shared/fx/public.ts），flag off 時移除 v3 分支與匯入。
+      fxV3PublicPlugin(),
       react(),
       // 圖片優化（自動生成 avif/webp/png 多格式）
       imagetools({
@@ -368,12 +368,6 @@ export default defineConfig(({ mode }) => {
       target: 'es2020',
       sourcemap: 'hidden',
       rolldownOptions: {
-        // shared/fx 只有純函式與常數；workspace 原始碼不經 node_modules 解析，package.json sideEffects
-        // 不生效，故在此宣告無副作用：FX_V3_PUBLIC=false 時未使用的 v3 匯入（schema 驗證器、decimal、
-        // release client）整個移除，不進首頁 initial JS／modulepreload。
-        treeshake: {
-          moduleSideEffects: [{ test: /[\\/]shared[\\/]fx[\\/]/, sideEffects: false }],
-        },
         output: {
           minify: {
             compress: {

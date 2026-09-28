@@ -3,7 +3,7 @@ import { isRateStale, fetchMoneyboxRate, RATE_TTL_MS } from '../exchangeRate';
 import { buildProviderSnapshot, buildReleaseManifest } from '@app/shared/fx';
 
 // v3 路徑僅在 FX_V3_PUBLIC=true 時啟用；此檔覆蓋公開後行為。
-vi.mock('@app/shared/fx/public', () => ({ FX_V3_PUBLIC: true }));
+vi.mock('@app/shared/fx/public', () => ({ FX_V3_PUBLIC: true, isFxV3Public: () => true }));
 
 describe('isRateStale', () => {
   const NOW = Date.parse('2026-07-16T12:00:00Z');

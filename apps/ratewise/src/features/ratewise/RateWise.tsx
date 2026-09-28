@@ -37,7 +37,7 @@ import {
   getPairRateTypeAvailability,
   resolveRateTypeByAvailability,
 } from '../../utils/exchangeRateCalculation';
-import { FX_V3_PUBLIC } from '../../config/api-endpoints';
+import { isFxV3Public } from '../../config/api-endpoints';
 
 const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: boolean } = {}) => {
   const [searchParams] = useSearchParams();
@@ -138,7 +138,7 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
 
   useEffect(() => {
     // v3 未公開時維持 main 行為：匯率類型依可用性即時收斂，避免顯示不可用選項造成誤導。
-    if (FX_V3_PUBLIC) return;
+    if (isFxV3Public()) return;
     if (!rateTypeAvailability.spot && !rateTypeAvailability.cash) return;
     const resolvedRateType = resolveRateTypeByAvailability(rateType, rateTypeAvailability);
     if (resolvedRateType !== rateType) {
@@ -236,7 +236,7 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
           {/* 單幣別轉換區塊 - RWD 全頁面佈局 */}
           <section className={rateWiseLayoutTokens.section.className}>
             <div className={rateWiseLayoutTokens.card.className}>
-              {(__FX_V3_PUBLIC_BUILD__ ?? FX_V3_PUBLIC) && fxEstimate && (
+              {isFxV3Public() && fxEstimate && (
                 <>
                   <p className="px-3 text-sm" role="status">
                     {fxEstimate.status === 'unavailable'
@@ -301,7 +301,7 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
               )}
               <SingleConverter
                 fxEstimate={fxEstimate}
-                fxQuote={FX_V3_PUBLIC ? selectedQuote : undefined}
+                fxQuote={isFxV3Public() ? selectedQuote : undefined}
                 fromCurrency={fromCurrency}
                 toCurrency={toCurrency}
                 fromAmount={fromAmount}
@@ -324,7 +324,7 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
                 onRateTypeChange={handleRateTypeChange}
                 onRateSourceChange={handleRateSourceChange}
               />
-              {FX_V3_PUBLIC && <FxContextControls quotes={fxQuotes} />}
+              {isFxV3Public() && <FxContextControls quotes={fxQuotes} />}
             </div>
           </section>
 

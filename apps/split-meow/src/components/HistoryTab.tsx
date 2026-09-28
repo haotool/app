@@ -521,11 +521,7 @@ export function HistoryTab() {
                                 </p>
                                 {isRateStale(rateUpdatedAtIso) && (
                                   <p className="text-[10px] font-medium text-tertiary whitespace-nowrap">
-                                    {t(
-                                      rateUpdatedAtIso === null
-                                        ? 'settings.rate_source_unknown'
-                                        : 'settings.rate_stale',
-                                    )}
+                                    {t('settings.rate_stale')}
                                   </p>
                                 )}
                               </>

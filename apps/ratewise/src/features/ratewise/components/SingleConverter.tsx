@@ -35,7 +35,7 @@ import {
 } from '../../../services/exchangeRateHistoryService';
 import { formatExchangeRate, formatAmountDisplay } from '../../../utils/currencyFormatter';
 import { singleConverterLayoutTokens } from '../../../config/design-tokens';
-import { FX_V3_PUBLIC } from '../../../config/api-endpoints';
+import { isFxV3Public } from '../../../config/api-endpoints';
 // 直接 import 以確保離線冷啟動可用
 import { CalculatorKeyboard } from '../../calculator/components/CalculatorKeyboard';
 import { logger } from '../../../utils/logger';
@@ -214,8 +214,8 @@ export const SingleConverter = ({
       try {
         if (!isMounted) return;
         setLoadingTrend(true);
-        // 建置期閘門（見 useCurrencyConverter）：flag off 時整段（含動態匯入）於建置期消除。
-        if ((__FX_V3_PUBLIC_BUILD__ ?? FX_V3_PUBLIC) && fxQuote !== undefined) {
+        // 建置期閘門：flag off 時整段（含動態匯入）於建置期消除。
+        if (isFxV3Public() && fxQuote !== undefined) {
           if (!fxQuote) {
             setTrendData([]);
             return;

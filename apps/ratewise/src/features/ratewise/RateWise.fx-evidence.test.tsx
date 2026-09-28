@@ -10,6 +10,7 @@ import type * as ApiEndpointsModule from '../../config/api-endpoints';
 vi.mock('../../config/api-endpoints', async (importOriginal) => ({
   ...(await importOriginal<typeof ApiEndpointsModule>()),
   FX_V3_PUBLIC: true,
+  isFxV3Public: () => true,
 }));
 vi.mock('../../components/Toast', () => ({ useToast: () => ({ showToast: vi.fn() }) }));
 vi.mock('./hooks/useExchangeRates', () => ({

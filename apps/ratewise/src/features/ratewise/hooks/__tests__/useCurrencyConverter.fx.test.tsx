@@ -8,6 +8,7 @@ import { useFxCurrencyConverter as useCurrencyConverter } from '../useCurrencyCo
 vi.mock('../../../../config/api-endpoints', async (importOriginal) => ({
   ...(await importOriginal<typeof ApiEndpointsModule>()),
   FX_V3_PUBLIC: true,
+  isFxV3Public: () => true,
 }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 vi.mock('../../../../components/Toast', () => ({ useToast: () => ({ showToast: vi.fn() }) }));
