@@ -24,6 +24,10 @@ describe('v3 公開閘門', () => {
     ).toBe(true);
     const out = plugin.transform('if (isFxV3Public()) load();', '/app/src/a.tsx');
     expect(out?.code).toBe(`if (${JSON.stringify(FX_V3_PUBLIC)}) load();`);
+    expect(
+      plugin.transform('ns.isFxV3Public(); xisFxV3Public(); $isFxV3Public();', '/app/src/b.ts')
+        ?.code,
+    ).toBe('ns.isFxV3Public(); xisFxV3Public(); $isFxV3Public();');
     expect(plugin.transform('isFxV3Public()', '/app/node_modules/x/a.js')).toBeNull();
     expect(plugin.transform('return isFxV3Public()', '/app/shared/fx/public.ts')).toBeNull();
   });

@@ -28,7 +28,8 @@ export function fxV3PublicPlugin() {
       if (id.includes('/node_modules/') || !/\.[cm]?[jt]sx?$/.test(id.split('?')[0])) return null;
       if (!code.includes('isFxV3Public()') || /[\\/]shared[\\/]fx[\\/]public\.ts$/.test(id))
         return null;
-      return { code: code.replaceAll('isFxV3Public()', literal), map: null };
+      // 只改寫獨立呼叫：排除 `ns.isFxV3Public()` 與 `xisFxV3Public()` 等成員／前綴名稱。
+      return { code: code.replace(/(?<![\w$.])isFxV3Public\(\)/g, literal), map: null };
     },
   };
 }
