@@ -6,6 +6,7 @@ import { PageNavHeader } from '../components/PageNavHeader';
 import { AnswerCapsule } from '../components/AnswerCapsule';
 import { MailtoLink } from '../components/MailtoLink';
 import { OPEN_DATA_PAGE_SEO } from '../config/seo-metadata';
+import { API_ATTRIBUTION } from '../config/seo-metadata/api-attribution';
 import { APP_INFO } from '../config/app-info';
 import {
   CDN_DATA_BASE,
@@ -23,20 +24,24 @@ import { buildPublicRateProviderMetadata } from '../config/rateProviderPublicMet
 import { SITE_CONFIG } from '../config/seo-paths';
 import rateModeStrategies from '../config/rate-mode-strategies.json';
 import { CURRENCY_DEFINITIONS } from '../features/ratewise/constants';
+import {
+  FX_PROVIDER_METADATA,
+  FX_PROVIDER_OPEN_DATA_NAMES,
+} from '../../../shared/fx/provider-metadata.mjs';
 
 // ─── 資料來源架構 ──────────────────────────────────────────────────────────────
 
 const DATA_SOURCES = [
   {
     label: '原始來源',
-    name: '臺灣銀行牌告匯率',
-    url: 'https://rate.bot.com.tw/xrt',
+    name: FX_PROVIDER_OPEN_DATA_NAMES.bot,
+    url: FX_PROVIDER_METADATA.bot.sourceUrl,
     note: '官方每日公布，現金買入／賣出、即期買入／賣出四種報價',
   },
   {
     label: '換錢所來源',
-    name: 'MoneyBox (明洞換匯所聯盟)',
-    url: 'https://moneybox-exchange.com/zh-CHT/exchange',
+    name: FX_PROVIDER_OPEN_DATA_NAMES.moneybox,
+    url: FX_PROVIDER_METADATA.moneybox.sourceUrl,
     note: '目前用於 KRW 換錢所現金匯率，獨立保存 provider latest 與 history 快照',
   },
   {
@@ -888,6 +893,38 @@ const OpenData = () => {
               >
                 /ratewise/openapi.json
               </a>
+            </div>
+          </section>
+
+          <section id="api-terms" className="mb-12 scroll-mt-20">
+            <h2 className="mb-4 text-2xl font-semibold text-text">API 使用條款／標示要求</h2>
+            <div className="space-y-3 rounded-xl border border-surface-border bg-surface p-5 text-sm leading-relaxed text-text-muted">
+              {API_ATTRIBUTION.terms.map((term) => (
+                <p key={term}>{term}</p>
+              ))}
+              <p className="font-semibold text-text">{API_ATTRIBUTION.publisher.requiredText}</p>
+              <p>上游來源標示：{API_ATTRIBUTION.upstreamSources.join('、')}</p>
+              <p>
+                條款網址：
+                <a
+                  className="break-all text-primary hover:underline"
+                  href={API_ATTRIBUTION.publisher.termsUrl}
+                >
+                  {API_ATTRIBUTION.publisher.termsUrl}
+                </a>
+              </p>
+              <div>
+                <p className="mb-1 font-medium text-text">HTML</p>
+                <pre className="overflow-x-auto rounded bg-surface-elevated p-3">
+                  <code>{API_ATTRIBUTION.htmlSnippet}</code>
+                </pre>
+              </div>
+              <div>
+                <p className="mb-1 font-medium text-text">Markdown</p>
+                <pre className="overflow-x-auto rounded bg-surface-elevated p-3">
+                  <code>{API_ATTRIBUTION.markdownSnippet}</code>
+                </pre>
+              </div>
             </div>
           </section>
 

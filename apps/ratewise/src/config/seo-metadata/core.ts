@@ -8,6 +8,8 @@ import {
 } from '../generated/seo-rate-examples';
 import { RATING_SNAPSHOT } from '../generated/rating-snapshot';
 import { FX_V3_PUBLIC, RATES_API } from '../api-endpoints';
+import { FX_PUBLISHER } from '../../../../shared/fx/publisher-metadata.mjs';
+import { FX_PROVIDER_METADATA } from '../../../../shared/fx/provider-metadata.mjs';
 import {
   PRERENDER_PATHS,
   SEO_PATHS,
@@ -560,25 +562,17 @@ export function buildOpenDataDatasetJsonLd(): JsonLdBlock {
       ? `${APP_INFO.shortName} 提供臺灣銀行牌告匯率與 MoneyBox 換錢所（KRW/TWD）的 v3 方向化開放 JSON 資料集，包含 ${SUPPORTED_CURRENCY_COUNT} 種台銀外幣的現金與即期報價、來源時間與不可變快照；並提供 v3 contract、最新 release、歷史匯率與 OpenAPI 規格。程式碼採 GPL 授權，來源資料的使用與再散布仍以各 provider 條款為準。`
       : `${APP_INFO.shortName} 提供臺灣銀行牌告匯率與 MoneyBox 換錢所（KRW/TWD）的開放 JSON 資料集，包含 ${SUPPORTED_CURRENCY_COUNT} 種台銀外幣的現金與即期四種報價，以及 v2 語意欄位（customerBuyForeignRate、quoteUnit）對照；並提供最新匯率、歷史匯率與 OpenAPI 規格。程式碼採 GPL 授權，來源資料的使用與再散布仍以各 provider 條款為準。`,
     url: buildCanonicalUrl('/open-data/'),
-    sameAs: 'https://rate.bot.com.tw/xrt',
-    isBasedOn: {
-      '@type': 'Dataset',
-      name: '臺灣銀行牌告匯率',
-      url: 'https://rate.bot.com.tw/xrt',
-      publisher: {
-        '@type': 'Organization',
-        name: '臺灣銀行',
-        url: 'https://www.bot.com.tw/',
-      },
-    },
     identifier: `${SITE_BASE_URL}open-data/#bank-of-taiwan-exchange-rate-dataset`,
     isAccessibleForFree: true,
+    usageInfo: FX_PUBLISHER.termsUrl,
+    isBasedOn: [FX_PROVIDER_METADATA.bot.sourceUrl, FX_PROVIDER_METADATA.moneybox.sourceUrl],
+    citation: FX_PUBLISHER.requiredText,
     inLanguage: DEFAULT_LOCALE,
     dateModified: BUILD_TIME,
     keywords: ['匯率 API', '開放資料', '台灣銀行匯率', 'exchange rate API', 'currency dataset'],
     creator: {
       '@type': 'Organization',
-      name: APP_INFO.author,
+      name: FX_PUBLISHER.name,
       url: APP_INFO.organizationUrl,
     },
     publisher: {

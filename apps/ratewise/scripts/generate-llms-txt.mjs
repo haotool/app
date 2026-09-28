@@ -13,6 +13,7 @@ import {
 import { APP_INFO } from '../src/config/app-info.ts';
 import { FX_V3_PUBLIC } from '../src/config/api-endpoints.ts';
 import { AI_CRAWLER_TIERS, ALL_AI_CRAWLERS } from './lib/ai-crawlers.mjs';
+import { API_ATTRIBUTION } from '../src/config/seo-metadata/api-attribution.ts';
 
 const BRAND_SHORT = APP_INFO.shortName;
 const BRAND_FULL = APP_INFO.name;
@@ -23,6 +24,7 @@ const ROOT = resolve(__dirname, '..');
 const pkg = JSON.parse(readFileSync(resolve(ROOT, 'package.json'), 'utf-8'));
 const VERSION = pkg.version;
 const BASE_URL = SITE_CONFIG.url;
+const llmsPublisherText = API_ATTRIBUTION.publisher.requiredText;
 const constantsPath = resolve(ROOT, 'src/features/ratewise/constants.ts');
 const constantsContent = readFileSync(constantsPath, 'utf-8');
 const SUPPORTED_CURRENCY_COUNT = [...constantsContent.matchAll(/^\s+([A-Z]{3}):\s*\{/gm)].length;
@@ -208,6 +210,14 @@ Policy tiers:
 ${buildAiCrawlerTierSummary()}
 Attribution: Required (link back to source)
 Contact: ${pkg.author?.email || 'haotool.org@gmail.com'}
+
+## API 使用條款／標示要求
+
+${API_ATTRIBUTION.terms.join('\n')}
+
+必須顯示：\`${llmsPublisherText}\`
+上游來源標示：${API_ATTRIBUTION.upstreamSources.join('、')}
+條款：${API_ATTRIBUTION.publisher.termsUrl}
 
 ## API Endpoints
 
@@ -422,6 +432,14 @@ https://app.haotool.org/ratewise/?amount={AMOUNT}&from={FROM}&to={TO}
 注意：首頁 deep-link 被 robots.txt 封鎖（Disallow: /ratewise/?），不被 Google 索引。
 
 ---
+
+## API 使用條款／標示要求
+
+${API_ATTRIBUTION.terms.join('\n')}
+
+必須顯示：\`${llmsPublisherText}\`
+上游來源標示：${API_ATTRIBUTION.upstreamSources.join('、')}
+條款：${API_ATTRIBUTION.publisher.termsUrl}
 
 ${
   FX_V3_PUBLIC

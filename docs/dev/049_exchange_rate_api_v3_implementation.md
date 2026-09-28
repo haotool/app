@@ -41,6 +41,12 @@ provider `failed`／`carried_forward` 快照只可供明確手動選擇，不能
 
 ## 公開表面與驗證
 
+### S3 API attribution
+
+`apps/shared/fx/publisher-metadata.mjs` 是 v2／v3 共用發布者標示 SSOT。v2 `api/latest.json`、`api/pairs/*.json` 與 OpenAPI additive publisher 從此來源產生；terms URL 指向 `/ratewise/open-data/#api-terms`。OpenData 條款內容位於 RateWise SEO metadata SSOT，Markdown 與 `llms*.txt` 由生成器輸出。`security-headers/src/worker.js` 從同一 SSOT 為 `/ratewise/api/*` 與 `/ratewise/openapi.json` 回應附加 Terms Link；FAQ Markdown alternate Link 也由此 Worker 產生。Dataset JSON-LD 由 SEO metadata builder 產生，以 `usageInfo` 指向條款並以 `isBasedOn` 列出 provider metadata 的來源 URL。此工作不變更 `FX_V3_PUBLIC=false`。
+
+消費者若直接從 jsDelivr CDN（`cdn.jsdelivr.net/gh/haotool/app@data/...`）抓取資料，不會經過 security-headers Worker；其條款由 JSON 的 `publisher.termsUrl` 與 Open Data 頁傳達，不會附在 Link header。
+
 `api/latest.json`、pair JSON 與 OpenAPI 在 `FX_V3_PUBLIC=false` 時維持 schemaVersion 2.0，只新增 additive／deprecated metadata；來源發布時間為未知時不補成今天。最小驗證：
 
 ```bash
@@ -61,7 +67,7 @@ R5 裁決延後至 S4（`FX_V3_PUBLIC` 改為 `true` 的切換 PR）處理，切
 - v3 多幣模式每鍵 16–31ms：驗證前移與 memo，回到 INP 預算內。
 - rollback（`FX_V3_PUBLIC` 翻回 `false`）後清理 localStorage `ratewise.fx.v3.active` 與 `ratewise.fx.v3.history:*`。
 - manifest per-currency denominator（`unitAmount`）揭露評估。
-- provider 再散布條款 human gate（PRD §17 #6、§21 F8）；`publisher.termsUrl` 改指 S3 條款頁。
+- provider 再散布條款 human gate（PRD §17 #6、§21 F8）；S3 條款頁已上線至程式與靜態產物，仍須確認正式站部署，且不解除上游再散布 gate。
 - MoneyBox 9 位有效數字倒數（如 KRW→GBP）是否需提高倒數精度（PRD §18.4）。
 - 刪除 `S4-DELETE` 標記項目：`exportLegacyRates`、`apps/ratewise/src/config/api-semantics-v2.ts`、`useLegacyCurrencyConverter.ts`，以及 `isFxV3Public()` 建置期 plugin 改寫與 legacy SW 歷史路由。
 - v3 的 minor changeset 於 S4 切換 PR 提出（本 PR 僅 patch）。

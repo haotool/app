@@ -34,7 +34,14 @@ describeIfGenerated('llms.txt structure (requires prebuild)', () => {
 
   it('includes API Endpoints section with latest.json reference', () => {
     const content = readFileSync(llmsPath, 'utf-8');
-    expect(content).toContain('## API Endpoints');
+    const termsHeading = content.indexOf('## API 使用條款／標示要求');
+    const endpointsHeading = content.indexOf('## API Endpoints');
+    const nextHeading = content.indexOf('\n## ', endpointsHeading + 1);
+
+    expect(termsHeading).toBeGreaterThanOrEqual(0);
+    expect(endpointsHeading).toBeGreaterThan(termsHeading);
+    expect(content.slice(endpointsHeading, nextHeading)).toMatch(/### /);
+    expect(content.match(/標示連結可依使用者選擇/g)).toHaveLength(1);
     expect(content).toContain('api/latest.json');
   });
 
@@ -74,7 +81,7 @@ describeIfGenerated('llms.txt structure (requires prebuild)', () => {
 
   it('keeps documented URLs free of trailing CJK punctuation that breaks parsers', () => {
     const content = readFileSync(llmsPath, 'utf-8');
-    const urls = content.match(/https?:\/\/[^\s]+/g) ?? [];
+    const urls = content.replace(/`[^`]*`/g, '').match(/https?:\/\/[^\s]+/g) ?? [];
 
     expect(urls.length).toBeGreaterThan(0);
     for (const url of urls) {

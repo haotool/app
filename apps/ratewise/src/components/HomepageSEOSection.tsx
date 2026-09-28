@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { CURRENCY_DEFINITIONS } from '../features/ratewise/constants';
 import { HOMEPAGE_SEO } from '../config/seo-metadata';
 import { AnswerCapsule } from './AnswerCapsule';
+import { ExchangeRateApiAttribution } from './ExchangeRateApiAttribution';
 
 /** 熱門幣對：外幣換台幣（依台灣旅遊熱度排序）。 */
 const HOT_TO_TWD = ['JPY', 'KRW', 'USD', 'EUR', 'HKD', 'SGD', 'THB', 'VND', 'AUD', 'GBP'] as const;
@@ -140,6 +141,11 @@ export function HomepageSEOSection() {
                 {entry.question}
               </summary>
               <p className="px-4 pb-4 text-sm leading-6 text-text-muted">{entry.answer}</p>
+              {index === 0 && (
+                <div className="px-4 pb-4">
+                  <ExchangeRateApiAttribution />
+                </div>
+              )}
             </details>
           ))}
         </div>

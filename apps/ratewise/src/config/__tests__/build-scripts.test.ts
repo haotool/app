@@ -1006,7 +1006,10 @@ describe('ratewise build scripts', () => {
     expect(openApiGenerator).not.toContain('/public/rates/moneybox.json');
     expect(openApiGenerator).not.toContain('/public/rates/moneybox-history/{date}.json');
 
-    expect(openDataPage).toContain('MoneyBox (明洞換匯所聯盟)');
+    expect(openDataPage).toContain('FX_PROVIDER_OPEN_DATA_NAMES.moneybox');
+    expect(openDataPage).toContain('FX_PROVIDER_METADATA.moneybox.sourceUrl');
+    expect(openDataPage).toContain('FX_PROVIDER_OPEN_DATA_NAMES.bot');
+    expect(openDataPage).toContain('FX_PROVIDER_METADATA.bot.sourceUrl');
     expect(publicMetadataSource).toContain('provider.apiPaths.history');
     expect(openDataPage).toContain('sourceKind + providerId');
     expect(openDataPage).toContain('bank provider 超過一家');

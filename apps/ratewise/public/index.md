@@ -51,6 +51,8 @@
 
 現金匯率適用於臨櫃換鈔，即期匯率適用於匯款與帳戶轉帳。HaoRate 同時提供兩種匯率，您可依換匯情境一鍵切換，方便比較差異。
 
+Rates By Exchange Rate API (https://www.exchangerate-api.com)
+
 ## 對應內容入口
 
 - HaoRate 常見問題：https://app.haotool.org/ratewise/faq/

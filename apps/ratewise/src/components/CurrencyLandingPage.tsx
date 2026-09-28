@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { SEOHelmet } from './SEOHelmet';
 import { PageNavHeader } from './PageNavHeader';
 import { AnswerCapsule } from './AnswerCapsule';
+import { ExchangeRateApiAttribution } from './ExchangeRateApiAttribution';
 import { usePairAmountSEO } from '../hooks/usePairAmountSEO';
 import { SEO_RATE_EXAMPLES, SEO_RATE_EXAMPLES_DATE } from '../config/generated/seo-rate-examples';
 import type { AlternativeProvider } from '../config/generated/seo-rate-examples';
@@ -541,6 +542,7 @@ export function CurrencyLandingPage({
                     <p className="text-text-muted text-xs sm:text-sm leading-relaxed">
                       {faq.answer}
                     </p>
+                    {index === 0 && rateExample && <ExchangeRateApiAttribution />}
                   </div>
                 </details>
               ))}

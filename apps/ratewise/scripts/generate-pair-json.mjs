@@ -15,6 +15,7 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CURRENCY_SEO_PATHS, SITE_CONFIG, RAW_DATA_BASE } from '../seo-paths.config.mjs';
 import { FX_V3_PUBLIC } from '../src/config/api-endpoints.ts';
+import { FX_PUBLISHER } from '../../shared/fx/publisher-metadata.mjs';
 import {
   API_SEMANTICS_DOC,
   API_SEMANTICS_SCHEMA_VERSION,
@@ -52,6 +53,7 @@ for (const path of CURRENCY_SEO_PATHS) {
   const toCode = 'TWD';
 
   const pairJson = {
+    publisher: { ...FX_PUBLISHER },
     pair: `${fromCode}/${toCode}`,
     from: fromCode,
     to: toCode,

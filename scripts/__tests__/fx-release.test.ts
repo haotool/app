@@ -3,6 +3,7 @@ import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { legacyPayload, publishRelease, sunsetAt } from '../publish-fx-release.mjs';
+import { FX_PUBLISHER } from '../../apps/shared/fx/publisher-metadata.mjs';
 
 describe('v3 publication', () => {
   it('writes content-addressed objects before moving current and carries failed providers', async () => {
@@ -43,12 +44,7 @@ describe('v3 publication', () => {
       const schemaUrl = 'https://app.haotool.org/ratewise/api/v3/contract.schema.json';
       expect(manifest).toMatchObject({
         $schema: schemaUrl,
-        publisher: {
-          name: '匯率好工具 RateWise',
-          url: 'https://app.haotool.org/ratewise/',
-          termsUrl: expect.stringMatching(/^https:\/\//),
-          requiredText: expect.stringContaining('RateWise'),
-        },
+        publisher: FX_PUBLISHER,
         calculationRule: expect.stringContaining('toAmount = fromAmount × rate'),
         quoteAvailability: 'indicative_not_transaction_guarantee',
       });

@@ -6,6 +6,7 @@ import { APP_INFO } from '../src/config/app-info.ts';
 import { API_SEMANTICS_DOC, API_SEMANTICS_SCHEMA_VERSION } from '../src/config/api-semantics-v2.ts';
 import { FX_V3_PUBLIC, PROVIDER_RATES_PATH } from '../src/config/api-endpoints.ts';
 import { buildPublicRateProviderMetadata } from '../src/config/rateProviderPublicMetadata.ts';
+import { FX_PUBLISHER } from '../../shared/fx/publisher-metadata.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
@@ -54,6 +55,19 @@ const SUPPORTED_CURRENCIES =
 const rateModeStrategies = JSON.parse(
   readFileSync(resolve(ROOT, 'src/config/rate-mode-strategies.json'), 'utf-8'),
 );
+const publisherSchema = {
+  type: 'object',
+  description:
+    'RateWise API 發布者與使用條款；必須顯示 requiredText，連結可自行加 rel="nofollow"、rel="sponsored" 或 rel="ugc"。',
+  properties: {
+    name: { type: 'string', example: FX_PUBLISHER.name },
+    url: { type: 'string', format: 'uri', example: FX_PUBLISHER.url },
+    termsUrl: { type: 'string', format: 'uri', example: FX_PUBLISHER.termsUrl },
+    requiredText: { type: 'string', example: FX_PUBLISHER.requiredText },
+  },
+  required: ['name', 'url', 'termsUrl', 'requiredText'],
+  example: { ...FX_PUBLISHER },
+};
 
 const publicProviderMetadata = buildPublicRateProviderMetadata({
   dataBaseUrl: '/public/rates',
@@ -470,6 +484,7 @@ const pairInfoSchema = {
   type: 'object',
   description: '幣對靜態資訊（指向即時匯率 CDN 的入口）',
   properties: {
+    publisher: { $ref: '#/components/schemas/Publisher', example: { ...FX_PUBLISHER } },
     pair: { type: 'string', example: 'USD/TWD' },
     from: { type: 'string', example: 'USD' },
     to: { type: 'string', example: 'TWD' },
@@ -665,6 +680,7 @@ const openApiSpec = {
     'x-rate-providers': publicProviderMetadata,
     'x-supported-currencies': SUPPORTED_CURRENCIES,
     'x-webapp': SITE_CONFIG.url,
+    'x-publisher': { ...FX_PUBLISHER },
     'x-documentation': `${SITE_CONFIG.url}open-data/`,
     'x-app-version': APP_VERSION,
     ...(FX_V3_PUBLIC
@@ -948,6 +964,7 @@ const openApiSpec = {
   },
   components: {
     schemas: {
+      Publisher: publisherSchema,
       ...(FX_V3_PUBLIC ? FX_V3_SCHEMAS : {}),
       // B3 #10：v3 公開後 v2 legacy schema 一律標 deprecated（expand–contract；公開前維持 main 語意）。
       ...deprecateLegacy({

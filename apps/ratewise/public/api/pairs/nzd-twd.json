@@ -1,4 +1,10 @@
 {
+  "publisher": {
+    "name": "匯率好工具 RateWise",
+    "url": "https://app.haotool.org/ratewise/",
+    "termsUrl": "https://app.haotool.org/ratewise/open-data/#api-terms",
+    "requiredText": "資料整理：匯率好工具 RateWise（https://app.haotool.org/ratewise/）"
+  },
   "pair": "NZD/TWD",
   "from": "NZD",
   "to": "TWD",
