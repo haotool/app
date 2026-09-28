@@ -93,18 +93,18 @@ R5 裁決延後至 S4（`FX_V3_PUBLIC` 改為 `true` 的切換 PR）處理，切
 2. 依序 dispatch `Update Latest Exchange Rates`、`Update MoneyBox Exchange Rates`，讓兩個 provider 都有 release；publisher 會自行全量重算歷史遷移，不需手動執行 migration CLI：
 
    ```bash
+   LATEST_DISPATCHED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
    gh workflow run update-latest-rates.yml --ref main
+   LATEST_RUN_ID=$(gh run list --workflow update-latest-rates.yml --event workflow_dispatch --json databaseId,createdAt --jq "[.[] | select(.createdAt >= \"$LATEST_DISPATCHED_AT\")] | max_by(.createdAt).databaseId")
+   gh run watch "$LATEST_RUN_ID" --exit-status
+
+   MONEYBOX_DISPATCHED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
    gh workflow run update-moneybox-rates.yml --ref main
+   MONEYBOX_RUN_ID=$(gh run list --workflow update-moneybox-rates.yml --event workflow_dispatch --json databaseId,createdAt --jq "[.[] | select(.createdAt >= \"$MONEYBOX_DISPATCHED_AT\")] | max_by(.createdAt).databaseId")
+   gh run watch "$MONEYBOX_RUN_ID" --exit-status
    ```
 
-   分別查詢最新 dispatch run，並等兩個 workflow 完成且成功後才驗證：
-
-   ```bash
-   gh run list --workflow update-latest-rates.yml --limit 1 --json databaseId,status,conclusion
-   gh run watch <UPDATE_LATEST_RUN_ID> --exit-status
-   gh run list --workflow update-moneybox-rates.yml --limit 1 --json databaseId,status,conclusion
-   gh run watch <UPDATE_MONEYBOX_RUN_ID> --exit-status
-   ```
+   `publish-v3` 可能因 `fx-v3-publish` concurrency group 取消較早的 pending run；若任一 run 被取消，重新 dispatch 該 workflow。兩個 workflow 都成功後才驗證。
 
    `migration.json` 中，超出 30 日保留視窗的 MoneyBox Seoul 日期不符項目可接受 quarantine，前提是來源 evidence 與原因均存在、其餘有效歷史轉換成功，且最後 release 驗證通過。
 
@@ -116,7 +116,7 @@ R5 裁決延後至 S4（`FX_V3_PUBLIC` 改為 `true` 的切換 PR）處理，切
    node scripts/verify-fx-v3-release.mjs --data-root "$DATA_CHECKOUT/public/rates"
    ```
 
-   輸出需含 `providers: 2` 與非零 `history`。再確認 `current.json` 的 `releaseId` 等於 manifest SHA，history 日期在最近 30 日。公開 pointer：`https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/v3/current.json`。
+   輸出需列出每個 provider 的 `history`、`dateGaps`、`quarantined`，例如 `{"providers":{"bot":{"history":30},"moneybox":{"history":30}}}`；每個 provider 必須有 1 至 30 筆 history。`dateGaps` 回報不連續日期，不會單獨令驗證失敗。再確認 `current.json` 的 `releaseId` 等於 manifest SHA，history 日期在最近 30 日。公開 pointer：`https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/v3/current.json`。
 
 4. 回滾 data plane，停用後保留 v3 objects/current 作診斷，不改 v2 `latest.json`：
 

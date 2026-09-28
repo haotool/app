@@ -133,16 +133,22 @@ function validateManifestReferences(root, manifest) {
 export function retainedHistory(dataRoot, now = new Date()) {
   const indexPath = resolve(dataRoot, 'v3/history-index.json');
   if (!existsSync(indexPath)) return [];
-  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Taipei' }).format(now);
-  const earliest = new Date(`${today}T00:00:00Z`);
+  const todayByProvider = Object.fromEntries(
+    Object.entries({ bot: 'Asia/Taipei', moneybox: 'Asia/Seoul' }).map(([providerId, timeZone]) => [
+      providerId,
+      new Intl.DateTimeFormat('en-CA', { timeZone }).format(now),
+    ]),
+  );
+  const earliest = new Date(`${todayByProvider.bot}T00:00:00Z`);
   earliest.setUTCDate(earliest.getUTCDate() - HISTORY_WINDOW_DAYS);
   const minDate = earliest.toISOString().slice(0, 10);
   const entries = JSON.parse(readFileSync(indexPath, 'utf8'));
   const bank = entries.filter(
-    (entry) => entry.providerId === 'bot' && entry.date >= minDate && entry.date < today,
+    (entry) =>
+      entry.providerId === 'bot' && entry.date >= minDate && entry.date < todayByProvider.bot,
   );
   const moneybox = entries
-    .filter((entry) => entry.providerId === 'moneybox' && entry.date <= today)
+    .filter((entry) => entry.providerId === 'moneybox' && entry.date <= todayByProvider.moneybox)
     .sort((a, b) => (a.date > b.date ? -1 : a.date < b.date ? 1 : 0))
     .slice(0, HISTORY_WINDOW_DAYS);
   return [...bank, ...moneybox].sort((a, b) =>

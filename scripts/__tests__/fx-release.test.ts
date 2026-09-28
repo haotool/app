@@ -8,6 +8,7 @@ import {
   retainedHistory,
   sunsetAt,
 } from '../publish-fx-release.mjs';
+import { verifyDataRoot } from '../verify-fx-v3-release.mjs';
 import { FX_PUBLISHER } from '../../apps/shared/fx/publisher-metadata.mjs';
 
 describe('v3 publication', () => {
@@ -662,6 +663,77 @@ it('retains a 30-day bank calendar window and the latest 30 MoneyBox snapshots',
     expect(retained.filter((entry) => entry.providerId === 'moneybox').at(-1)?.date).toBe(
       '2026-09-30',
     );
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+it('uses each provider calendar when UTC crosses into the next Seoul day', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'fx-provider-calendars-'));
+  const v3 = join(dir, 'v3');
+  try {
+    mkdirSync(v3, { recursive: true });
+    writeFileSync(
+      join(v3, 'history-index.json'),
+      JSON.stringify([
+        { providerId: 'bot', date: '2026-09-27' },
+        { providerId: 'bot', date: '2026-09-28' },
+        { providerId: 'moneybox', date: '2026-09-29' },
+      ]),
+    );
+    const retained = retainedHistory(dir, new Date('2026-09-28T15:30:00Z'));
+    expect(retained).toContainEqual({ providerId: 'bot', date: '2026-09-27' });
+    expect(retained).not.toContainEqual({ providerId: 'bot', date: '2026-09-28' });
+    expect(retained).toContainEqual({ providerId: 'moneybox', date: '2026-09-29' });
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+it('reports per-provider history, date gaps and quarantines; rejects a provider with no history', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'fx-provider-coverage-'));
+  const v3 = join(dir, 'v3');
+  const time = '2026-09-20T10:00:00Z';
+  const inputs = {
+    bot: {
+      timestamp: time,
+      sourcePublishedAt: time,
+      details: { USD: { cash: { buy: '31', sell: '32' } } },
+    },
+    moneybox: { timestamp: time, rates: { TWD: { buy: '46', sell: '45' } } },
+  };
+  try {
+    const initial = await publishRelease(v3, inputs, time);
+    const history = initial.manifest.providers.flatMap(({ providerId, snapshot }) =>
+      providerId === 'bot'
+        ? [
+            { providerId, date: '2026-09-20', snapshot },
+            { providerId, date: '2026-09-22', snapshot },
+          ]
+        : [{ providerId, date: '2026-09-20', snapshot }],
+    );
+    await publishRelease(v3, inputs, '2026-09-22T10:00:00Z', history);
+    writeFileSync(
+      join(v3, 'migration.json'),
+      JSON.stringify({
+        entries: [
+          { providerId: 'bot', status: 'quarantined' },
+          { providerId: 'moneybox', status: 'converted' },
+        ],
+      }),
+    );
+    const verified = verifyDataRoot(dir);
+    expect(verified.providers).toMatchObject({
+      bot: {
+        history: 2,
+        dateGaps: [{ after: '2026-09-20', before: '2026-09-22', missingDays: 1 }],
+        quarantined: 1,
+      },
+      moneybox: { history: 1, dateGaps: [], quarantined: 0 },
+    });
+
+    await publishRelease(v3, inputs, time, []);
+    expect(() => verifyDataRoot(dir)).toThrow('No history for provider: bot');
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

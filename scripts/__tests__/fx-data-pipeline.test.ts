@@ -47,6 +47,21 @@ const configureGit = (cwd: string) => {
 };
 
 describe('data workflow contract', () => {
+  it('tracks the runs dispatched by the activation runbook and requires provider-level coverage', () => {
+    const runbook = readFileSync(
+      join(ROOT, 'docs/dev/049_exchange_rate_api_v3_implementation.md'),
+      'utf8',
+    );
+    expect(runbook).toContain(
+      'gh run list --workflow update-latest-rates.yml --event workflow_dispatch',
+    );
+    expect(runbook).toContain('createdAt >=');
+    expect(runbook).toContain('gh run watch "$LATEST_RUN_ID" --exit-status');
+    expect(runbook).toContain('gh run watch "$MONEYBOX_RUN_ID" --exit-status');
+    expect(runbook).not.toContain('--limit 1');
+    expect(runbook).toContain('"providers":{"bot":{"history":30},"moneybox":{"history":30}}');
+  });
+
   it('passes an absolute MoneyBox fetch snapshot path shared by fetch and history steps', () => {
     const text = workflow('update-moneybox-rates.yml');
     expect(text).toMatch(
@@ -72,6 +87,12 @@ describe('data workflow contract', () => {
     expect(commitStep).not.toMatch(/--amend|--force/);
     expect(commitStep).toContain('git pull --rebase origin data');
     expect(commitStep).toContain('for i in 1 2 3; do');
+    if (file === 'update-latest-rates.yml') {
+      expect(commitStep.indexOf('for i in 1 2 3; do')).toBeLessThan(
+        commitStep.indexOf('git pull --rebase origin data'),
+      );
+      expect(commitStep).toContain('Rebase failed after 3 attempts');
+    }
     // v2 鎖維持 job 層級，避免 v3 發布耗時改變既有更新節奏。
     expect(v2Job).toMatch(/concurrency:\n\s+group: data-branch-push/);
     const v3Job = job(text, 'publish-v3');
@@ -238,6 +259,57 @@ describe('data workflow contract', () => {
     const second = await runPublish('2026-09-21T01:05:00Z');
     expect(second.unchanged).toBe(true);
     expect(git(root, 'status', '--porcelain', '--', 'public/rates/v3')).toBe('');
+  });
+});
+
+describe('history directory reads', () => {
+  const botHistory = (date: string) => ({
+    timestamp: `${date}T10:00:00.000Z`,
+    base: 'TWD',
+    source: 'Taiwan Bank',
+    details: { USD: { cash: { buy: '31', sell: '32' } } },
+    rates: { USD: '32' },
+  });
+
+  it('allows an absent MoneyBox history directory when no prior MoneyBox history exists', () => {
+    const root = tempDir();
+    const dataRoot = join(root, 'public/rates');
+    mkdirSync(join(dataRoot, 'history'), { recursive: true });
+    writeFileSync(
+      join(dataRoot, 'history/2026-09-20.json'),
+      JSON.stringify(botHistory('2026-09-20')),
+    );
+    expect(() => migrateHistory('revision', join(dataRoot, 'v3'), dataRoot)).not.toThrow();
+  });
+
+  it('fails closed when prior MoneyBox history exists but its directory is missing', () => {
+    const root = tempDir();
+    const dataRoot = join(root, 'public/rates');
+    const output = join(dataRoot, 'v3');
+    mkdirSync(join(dataRoot, 'history'), { recursive: true });
+    mkdirSync(output, { recursive: true });
+    writeFileSync(
+      join(dataRoot, 'history/2026-09-20.json'),
+      JSON.stringify(botHistory('2026-09-20')),
+    );
+    writeFileSync(
+      join(output, 'history-index.json'),
+      JSON.stringify([{ providerId: 'moneybox', date: '2026-09-20' }]),
+    );
+    expect(() => migrateHistory('revision', output, dataRoot)).toThrow(/ENOENT/);
+  });
+
+  it('fails closed on non-ENOENT history directory read errors', () => {
+    const root = tempDir();
+    const dataRoot = join(root, 'public/rates');
+    mkdirSync(join(dataRoot, 'history'), { recursive: true });
+    mkdirSync(join(dataRoot, 'providers'), { recursive: true });
+    writeFileSync(
+      join(dataRoot, 'history/2026-09-20.json'),
+      JSON.stringify(botHistory('2026-09-20')),
+    );
+    writeFileSync(join(dataRoot, 'providers/moneybox'), 'not a directory');
+    expect(() => migrateHistory('revision', join(dataRoot, 'v3'), dataRoot)).toThrow(/ENOTDIR/);
   });
 });
 

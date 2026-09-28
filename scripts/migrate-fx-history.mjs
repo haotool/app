@@ -14,8 +14,36 @@ import { extractSeoulSnapshotDate, guardPublishedAt } from './fetch-moneybox-rat
 
 const SUPPORTED_SOURCE_VERSIONS = new Set([undefined, null, 'legacy', '2.0']);
 
+function priorHistoryProviders(output) {
+  const providers = new Set();
+  const readJson = (path) => {
+    try {
+      return JSON.parse(readFileSync(path, 'utf8'));
+    } catch (error) {
+      if (error.code === 'ENOENT') return null;
+      throw error;
+    }
+  };
+  const index = readJson(resolve(output, 'history-index.json'));
+  if (index !== null) {
+    if (!Array.isArray(index)) throw new Error('Invalid previous history index');
+    for (const entry of index) providers.add(entry.providerId);
+  }
+  const current = readJson(resolve(output, 'current.json'));
+  if (current !== null) {
+    const path = current.manifest?.path;
+    if (!/^releases\/[a-f0-9]{64}\.json$/.test(path ?? ''))
+      throw new Error('Invalid previous release manifest reference');
+    const manifest = readJson(resolve(output, path));
+    if (!Array.isArray(manifest?.history)) throw new Error('Invalid previous release manifest');
+    for (const entry of manifest.history) providers.add(entry.providerId);
+  }
+  return providers;
+}
+
 /** 以固定 commit 或指定資料目錄遷移；不連網、不猜時間。 */
 export function migrateHistory(revision, output, dataRoot = null) {
+  const previousProviders = dataRoot ? priorHistoryProviders(output) : new Set();
   const paths = dataRoot
     ? ['history', 'providers/moneybox/history'].flatMap((folder) => {
         const directory = resolve(dataRoot, folder);
@@ -23,8 +51,10 @@ export function migrateHistory(revision, output, dataRoot = null) {
           return readdirSync(directory)
             .filter((name) => /^\d{4}-\d{2}-\d{2}\.json$/.test(name))
             .map((name) => `public/rates/${folder}/${name}`);
-        } catch {
-          return [];
+        } catch (error) {
+          const providerId = folder.startsWith('providers/') ? 'moneybox' : 'bot';
+          if (error.code === 'ENOENT' && !previousProviders.has(providerId)) return [];
+          throw error;
         }
       })
     : execFileSync('git', ['ls-tree', '-r', '--name-only', revision], {
