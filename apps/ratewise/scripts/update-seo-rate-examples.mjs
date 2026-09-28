@@ -124,6 +124,7 @@ function formatDateInTaipei(date = new Date()) {
 // 產出與其他常數一致的單引號字面值；缺值輸出 null。
 const formatBoardDateLiteral = (date) => (date ? `'${date}'` : 'null');
 
+// 回退用的 updateTime 為抓取時間而非牌告時間；缺 sourcePublishedAt 時週末可能標成抓取當日（已知限制）。
 export function getBoardDate(sourcePublishedAt, updateTime) {
   const publishedAt =
     typeof sourcePublishedAt === 'string' &&
@@ -461,7 +462,7 @@ async function main() {
   lines.push(`export const SEO_RATE_EXAMPLES_UPDATE_TIME = '${updateTime}';`);
   lines.push(``);
   lines.push(
-    `export const SEO_RATE_EXAMPLES_BOARD_DATE = ${formatBoardDateLiteral(getBoardDate(twData.sourcePublishedAt, updateTime))};`,
+    `export const SEO_RATE_EXAMPLES_BOARD_DATE: string | null = ${formatBoardDateLiteral(getBoardDate(twData.sourcePublishedAt, updateTime))};`,
   );
   lines.push(``);
   lines.push(`/** 生成日期 */`);

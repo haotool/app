@@ -321,7 +321,7 @@ export const SEO_RATE_EXAMPLES: Record<string, RateExample> = {
 /** 資料更新時間（台灣銀行） */
 export const SEO_RATE_EXAMPLES_UPDATE_TIME = '2026/09/28 16:58:28';
 
-export const SEO_RATE_EXAMPLES_BOARD_DATE = '2026-09-28';
+export const SEO_RATE_EXAMPLES_BOARD_DATE: string | null = '2026-09-28';
 
 /** 生成日期 */
 export const SEO_RATE_EXAMPLES_DATE = '2026-09-28';
