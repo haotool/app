@@ -151,13 +151,18 @@ describe('data workflow contract', () => {
     for (const step of checkouts) expect(step).toMatch(/persist-credentials: false/);
     // token 只注入 push 步驟。
     expect(text.match(/github\.token/g)).toHaveLength(1);
-    expect(job(text, 'publish').split('GIT_PUSH_TOKEN')[0]).toContain('Commit, push and purge');
     const commit = text.indexOf('- name: Commit, push and purge v3 pointer');
     const verify = text.indexOf('- name: Verify published v3 release');
-    expect(verify).toBeGreaterThan(commit);
+    expect(verify).toBeGreaterThan(text.indexOf('- name: Publish verified v3 release'));
+    expect(commit).toBeGreaterThan(verify);
+    expect(text.slice(commit, text.indexOf('\n      - name:', commit)).trim()).toContain(
+      'if: success()',
+    );
+    expect(text.slice(verify, commit)).toContain('--require-providers "$FX_REQUIRED_PROVIDERS"');
     expect(text.slice(verify)).toContain('verify-fx-v3-release.mjs');
-    expect(text.slice(verify)).toContain('--require-providers "$providers"');
-    expect(text.slice(verify)).toContain('manifest.providers.map(({ providerId }) => providerId)');
+    expect(text).toContain('Capture previously published providers');
+    expect(text).toContain('manifest?.providers ?? []');
+    expect(text).toContain('process.env.FX_PROVIDER');
   });
 
   it.each(['update-latest-rates.yml', 'update-moneybox-rates.yml', 'update-historical-rates.yml'])(
@@ -376,6 +381,35 @@ describe('history directory reads', () => {
     );
     expect(JSON.parse(readFileSync(join(output, 'history-index.json'), 'utf8'))).toEqual(previous);
   });
+
+  it.each(['bot', 'moneybox'])(
+    'aborts a shared-history migration when a published in-window %s source is missing',
+    (providerId) => {
+      const root = tempDir();
+      const dataRoot = join(root, 'public/rates');
+      const output = join(dataRoot, 'v3');
+      mkdirSync(join(dataRoot, 'history'), { recursive: true });
+      mkdirSync(join(dataRoot, 'providers/moneybox/history'), { recursive: true });
+      mkdirSync(output, { recursive: true });
+      const missing = dateAt(-3);
+      if (providerId === 'bot')
+        writeFileSync(
+          join(dataRoot, `providers/moneybox/history/${missing}.json`),
+          JSON.stringify({}),
+        );
+      else writeFileSync(join(dataRoot, `history/${missing}.json`), JSON.stringify({}));
+      writeFileSync(
+        join(output, 'history-index.json'),
+        JSON.stringify([
+          { providerId: 'bot', date: missing },
+          { providerId: 'moneybox', date: missing },
+        ]),
+      );
+      expect(() => migrateHistory('revision', output, dataRoot)).toThrow(
+        new RegExp(`Missing previously published ${providerId} history source file for ${missing}`),
+      );
+    },
+  );
 
   it('allows a normal daily roll when only the oldest bank date leaves retention', () => {
     const root = tempDir();

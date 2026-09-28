@@ -261,31 +261,6 @@ export function migrateHistory(revision, output, dataRoot = null, now = new Date
     }
     entries.push(entry);
   }
-  for (const [key, previous] of previousByDate) {
-    const [providerId, date] = key.split(':');
-    if (
-      retainedDatesByProvider.get(providerId)?.has(date) &&
-      !entries.some((entry) => entry.providerId === providerId && entry.date === date) &&
-      !history.some((entry) => entry.providerId === providerId && entry.date === date)
-    ) {
-      const reference = retainedReference(output, previous, providerId, date);
-      history.push({ providerId, date, snapshot: reference });
-      entries.push({
-        path: `public/rates/${providerId === 'moneybox' ? 'providers/moneybox/' : ''}history/${date}.json`,
-        date,
-        providerId,
-        sourceHash: null,
-        sourceVersion: null,
-        methodVersion: '1',
-        status: 'quarantined',
-        reason: 'Historical source file is missing; retained the previously published snapshot',
-        snapshot: reference,
-      });
-      console.warn(
-        `Retaining previously published ${providerId} history for ${date}: source file missing`,
-      );
-    }
-  }
   const result = {
     revision,
     total: entries.length,

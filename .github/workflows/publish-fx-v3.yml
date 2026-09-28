@@ -63,6 +63,30 @@ jobs:
           corepack pnpm install --frozen-lockfile --ignore-scripts
           corepack pnpm generate:fx --check
 
+      - name: Capture previously published providers
+        id: previous-providers
+        env:
+          FX_PROVIDER: ${{ inputs.provider }}
+        run: |
+          providers="$(node -e '
+            const fs = require("node:fs");
+            const path = require("node:path");
+            const root = path.join(process.env.GITHUB_WORKSPACE, "public/rates/v3");
+            const currentPath = path.join(root, "current.json");
+            const previous = fs.existsSync(currentPath)
+              ? JSON.parse(fs.readFileSync(currentPath, "utf8"))
+              : null;
+            const manifest = previous
+              ? JSON.parse(fs.readFileSync(path.join(root, previous.manifest.path), "utf8"))
+              : null;
+            const providers = new Set([
+              ...(manifest?.providers ?? []).map(({ providerId }) => providerId),
+              process.env.FX_PROVIDER,
+            ]);
+            process.stdout.write([...providers].join(","));
+          ')"
+          echo "FX_REQUIRED_PROVIDERS=$providers" >> "$GITHUB_ENV"
+
       - name: Publish verified v3 release
         env:
           FX_PROVIDER: ${{ inputs.provider }}
@@ -70,22 +94,15 @@ jobs:
           FX_FETCH_FAILED: ${{ inputs.fetch-failed && '1' || '0' }}
         run: node _fx-code/scripts/publish-fx-release.mjs
 
+      - name: Verify published v3 release
+        run: |
+          node _fx-code/scripts/verify-fx-v3-release.mjs \
+            --data-root "$GITHUB_WORKSPACE/public/rates" \
+            --require-providers "$FX_REQUIRED_PROVIDERS"
+
       - name: Commit, push and purge v3 pointer
+        if: success()
         env:
           COMMIT_MESSAGE: 'chore(rates): publish ${{ inputs.provider }} v3 release'
           GIT_PUSH_TOKEN: ${{ github.token }}
         run: bash _fx-code/scripts/commit-fx-v3-release.sh "$COMMIT_MESSAGE"
-
-      - name: Verify published v3 release
-        run: |
-          providers="$(node -e '
-            const fs = require("node:fs");
-            const path = require("node:path");
-            const root = path.join(process.env.GITHUB_WORKSPACE, "public/rates/v3");
-            const current = JSON.parse(fs.readFileSync(path.join(root, "current.json"), "utf8"));
-            const manifest = JSON.parse(fs.readFileSync(path.join(root, current.manifest.path), "utf8"));
-            process.stdout.write(manifest.providers.map(({ providerId }) => providerId).join(","));
-          ')"
-          node _fx-code/scripts/verify-fx-v3-release.mjs \
-            --data-root "$GITHUB_WORKSPACE/public/rates" \
-            --require-providers "$providers"

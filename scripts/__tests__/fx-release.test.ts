@@ -803,6 +803,52 @@ it('requires bot and MoneyBox providers in the verified release', async () => {
   }
 });
 
+it('rejects a release that drops a provider from the previous published manifest', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'fx-dropped-provider-'));
+  const previousDir = join(dir, 'previous');
+  const nextDir = join(dir, 'next');
+  const nextV3 = join(nextDir, 'v3');
+  const time = '2026-09-20T10:00:00Z';
+  try {
+    const previous = await publishRelease(
+      previousDir,
+      {
+        bot: {
+          timestamp: time,
+          sourcePublishedAt: time,
+          details: { USD: { cash: { buy: '31', sell: '32' } } },
+        },
+        moneybox: { timestamp: time, rates: { TWD: { buy: '46', sell: '45' } } },
+      },
+      time,
+      [],
+    );
+    const next = await publishRelease(
+      nextV3,
+      {
+        bot: {
+          timestamp: time,
+          sourcePublishedAt: time,
+          details: { USD: { cash: { buy: '31', sell: '32' } } },
+        },
+      },
+      time,
+      [],
+    );
+    writeFileSync(join(nextV3, 'migration.json'), JSON.stringify({ entries: [] }));
+    expect(previous.manifest.providers.map(({ providerId }) => providerId)).toEqual([
+      'bot',
+      'moneybox',
+    ]);
+    expect(next.manifest.providers.map(({ providerId }) => providerId)).toEqual(['bot']);
+    expect(() => verifyDataRoot(nextDir, ['bot', 'moneybox'])).toThrow(
+      'Missing required provider: moneybox',
+    );
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 it('parses an optional comma-separated required-provider list while defaulting to both', () => {
   expect(parseRequiredProviders(['--data-root', 'rates'])).toEqual(['bot', 'moneybox']);
   expect(parseRequiredProviders(['--require-providers', 'bot'])).toEqual(['bot']);
