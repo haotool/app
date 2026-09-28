@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const gate = vi.hoisted(() => ({ enabled: true }));
@@ -16,6 +17,8 @@ const keys = () =>
   Array.from({ length: localStorage.length }, (_, index) => localStorage.key(index)).filter(
     (key): key is string => key !== null,
   );
+const saveHistory = (key: string, savedAt: number) =>
+  localStorage.setItem(key, JSON.stringify({ savedAt, rows: [] }));
 
 beforeEach(() => {
   localStorage.clear();
@@ -26,11 +29,8 @@ afterEach(() => vi.restoreAllMocks());
 
 describe('FX v3 storage retention', () => {
   it('keeps the newest four history keys and evicts older entries', async () => {
-    for (const key of [
-      'ratewise.fx.v3.history:old:series',
-      ...Array.from({ length: 6 }, (_, i) => `ratewise.fx.v3.history:current:series-${i}`),
-    ])
-      localStorage.setItem(key, '[]');
+    saveHistory('ratewise.fx.v3.history:old:series', 0);
+    for (let i = 0; i < 6; i++) saveHistory(`ratewise.fx.v3.history:current:series-${i}`, i + 1);
 
     await refreshActiveRelease();
 
@@ -43,18 +43,28 @@ describe('FX v3 storage retention', () => {
   });
 
   it('retains recent history keys across releases within the fixed bound', async () => {
-    for (const key of [
-      'ratewise.fx.v3.history:old:series',
-      'ratewise.fx.v3.history:current:series-1',
-      'ratewise.fx.v3.history:current:series-2',
-      'ratewise.fx.v3.history:current:series-3',
-    ])
-      localStorage.setItem(key, '[]');
+    saveHistory('ratewise.fx.v3.history:old:series', 0);
+    for (let i = 1; i <= 3; i++) saveHistory(`ratewise.fx.v3.history:current:series-${i}`, i);
 
     await refreshActiveRelease();
 
     expect(keys().filter((key) => key.startsWith('ratewise.fx.v3.history:'))).toHaveLength(4);
     expect(keys()).toContain('ratewise.fx.v3.history:old:series');
+  });
+
+  it('evicts oldest history by saved time even when storage enumerates keys out of order', async () => {
+    const names = ['a', 'b', 'c', 'd', 'e', 'f'];
+    names.forEach((name, index) => saveHistory(`ratewise.fx.v3.history:${name}:series`, index + 1));
+    const shuffled = [...names].reverse().map((name) => `ratewise.fx.v3.history:${name}:series`);
+    vi.spyOn(localStorage, 'key').mockImplementation((index) => shuffled[index] ?? null);
+
+    await refreshActiveRelease();
+
+    expect(localStorage.getItem('ratewise.fx.v3.history:a:series')).toBeNull();
+    expect(localStorage.getItem('ratewise.fx.v3.history:b:series')).toBeNull();
+    expect(localStorage.getItem('ratewise.fx.v3.history:c:series')).not.toBeNull();
+    expect(localStorage.getItem('ratewise.fx.v3.history:d:series')).not.toBeNull();
+    expect(localStorage.getItem('ratewise.fx.v3.history:f:series')).not.toBeNull();
   });
 
   it('drops only FX cache keys when storage quota is exceeded', async () => {

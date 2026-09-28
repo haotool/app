@@ -56,6 +56,7 @@ import { isFxV3Public } from '../../../config/api-endpoints';
 export { resolveEffectiveRateSourceForConversion } from './useLegacyCurrencyConverter';
 
 const CURRENCY_CODES = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
+const QUOTE_CONTEXT_REFRESH_MS = 60_000;
 
 const createInitialMultiAmounts = (
   baseCurrency: CurrencyCode,
@@ -576,6 +577,14 @@ export const useFxCurrencyConverter = (options: UseCurrencyConverterOptions = {}
   }, [favorites]);
 
   const activeAmountForPair = lastEdited === 'from' ? fromAmount : toAmount;
+  const [quoteContextTick, setQuoteContextTick] = useState(0);
+  useEffect(() => {
+    const timer = window.setInterval(
+      () => setQuoteContextTick((tick) => tick + 1),
+      QUOTE_CONTEXT_REFRESH_MS,
+    );
+    return () => window.clearInterval(timer);
+  }, []);
   const activeModeForPair = lastEdited === 'from' ? 'EXACT_IN' : 'EXACT_OUT';
   const fxEstimate = useMemo(
     () => estimatePair(activeAmountForPair, fromCurrency, toCurrency, activeModeForPair),
@@ -594,9 +603,12 @@ export const useFxCurrencyConverter = (options: UseCurrencyConverterOptions = {}
           : [],
     [fxEstimate, fxQuotes, selectedQuote],
   );
-  // 輸入變更時取同一個 freshness 時間，供多幣別估算共用。
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- amount change intentionally refreshes this render snapshot.
-  const activeContext = useMemo(() => getQuoteContext(), [getQuoteContext, activeAmountForPair]);
+  // Keep one freshness time across the render; quote/release changes and a coarse clock tick refresh it.
+  const activeContext = useMemo(
+    () => getQuoteContext(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- these intentionally invalidate the time snapshot.
+    [getQuoteContext, fxQuotes, fx.releaseId, quoteContextTick],
+  );
   const estimateFreshness = useMemo(() => {
     const states = selectedQuoteEvidence.map((quote) => freshness(quote, activeContext.now));
     return states.includes('stale')

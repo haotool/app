@@ -32,6 +32,11 @@ import { minorUnit } from './minor-units.mjs';
 import { FX_PROVIDER_METADATA } from './provider-metadata.mjs';
 export { MINOR_UNITS, minorUnit } from './minor-units.mjs';
 const D = Decimal.clone({ precision: 80, rounding: Decimal.ROUND_HALF_EVEN });
+const validatedQuotes = new WeakSet<QuoteSnapshot>();
+const validatedQuoteSignatures = new WeakMap<QuoteSnapshot, string>();
+function quoteSignature(quote: QuoteSnapshot): string {
+  return JSON.stringify(quote);
+}
 export function isValidAmount(value: string): boolean {
   return (
     value.length <= 25 &&
@@ -173,7 +178,7 @@ export function normalizeQuote(row: SourceQuote): QuoteSnapshot[] {
     ] as const
   ).map(([fromCurrency, toCurrency, price, reason], index) => {
     const quoteSeriesId = quoteSeriesIdOf(row, fromCurrency, toCurrency);
-    return {
+    const quote: QuoteSnapshot = {
       quoteId: `${quoteSeriesId}@${observedAt}`,
       quoteSeriesId,
       providerId: row.providerId,
@@ -190,6 +195,9 @@ export function normalizeQuote(row: SourceQuote): QuoteSnapshot[] {
       sourceQuote: structuredClone(row),
       methodVersion: '1',
     };
+    validatedQuotes.add(quote);
+    validatedQuoteSignatures.set(quote, quoteSignature(quote));
+    return quote;
   });
 }
 /** EXACT_OUT 所需的「每 1 toCurrency 需支付的 fromCurrency」，直接由來源原值計算。 */
@@ -229,7 +237,7 @@ function unavailable(reason: string, quoteId: string | null = null): EstimateRes
     feeStatus: 'unknown',
   };
 }
-// 載入快照時已完整驗證 schema；估算熱路徑只檢查算術必要欄位。
+// External objects receive one deep semantic validation; verified objects use the weak membership cache.
 function hasUsableQuote(quote: QuoteSnapshot | null): quote is QuoteSnapshot {
   if (!quote || typeof quote !== 'object') return false;
   const source = quote.sourceQuote;
@@ -265,7 +273,8 @@ export function estimate(quote: QuoteSnapshot | null, request: EstimateRequest):
       feeStatus: 'no_additional_fee',
     };
   const quoteId = quote?.quoteId ?? null;
-  if (!hasUsableQuote(quote)) return unavailable('not_quoted', quoteId);
+  if (!hasUsableQuote(quote) || !validateQuoteSnapshot(quote))
+    return unavailable('not_quoted', quoteId);
   const rate = quote.rate;
   if (rate === null) return unavailable('not_quoted', quoteId);
   if (quote.fromCurrency !== request.fromCurrency || quote.toCurrency !== request.toCurrency)
@@ -570,12 +579,22 @@ export function normalizeMoneyboxSnapshot(value: unknown): QuoteSnapshot[] {
 
 /** Structural validation and reconstruction of the economic meaning are both required. */
 export function validateQuoteSnapshot(value: unknown): value is QuoteSnapshot {
+  if (value !== null && typeof value === 'object' && validatedQuotes.has(value as QuoteSnapshot)) {
+    try {
+      return (
+        validatedQuoteSignatures.get(value as QuoteSnapshot) ===
+        quoteSignature(value as QuoteSnapshot)
+      );
+    } catch {
+      return false;
+    }
+  }
   if (!validateQuoteShape(value)) return false;
   try {
     const expected = normalizeQuote(value.sourceQuote).find(
       (q) => q.fromCurrency === value.fromCurrency && q.toCurrency === value.toCurrency,
     );
-    return (
+    const valid =
       expected !== undefined &&
       [
         'quoteId',
@@ -587,8 +606,12 @@ export function validateQuoteSnapshot(value: unknown): value is QuoteSnapshot {
         'rate',
         'unavailableReason',
         'methodVersion',
-      ].every((key) => expected[key as keyof QuoteSnapshot] === value[key as keyof QuoteSnapshot])
-    );
+      ].every((key) => expected[key as keyof QuoteSnapshot] === value[key as keyof QuoteSnapshot]);
+    if (valid) {
+      validatedQuotes.add(value);
+      validatedQuoteSignatures.set(value, quoteSignature(value));
+    }
+    return valid;
   } catch {
     return false;
   }
