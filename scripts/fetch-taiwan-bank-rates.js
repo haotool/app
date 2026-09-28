@@ -107,17 +107,20 @@ function parseTaiwanBankCSV(csvText) {
     if (!CURRENCY_MAP[currencyCode]) continue;
 
     // 解析匯率
-    let raw;
-    try {
-      raw = {
-        cash: { buy: parseSourceRate(columns[2]), sell: parseSourceRate(columns[12]) },
-        spot: { buy: parseSourceRate(columns[3]), sell: parseSourceRate(columns[13]) },
-      };
-    } catch (error) {
-      // 單列壞值只跳過該幣別並警示，不中止整份 v2 latest（其餘幣別照常更新）。
-      console.warn(`⚠️ Skipping Taiwan Bank row ${currencyCode}: ${error.message}`);
-      continue;
-    }
+    // 逐欄容錯（與 main 的 parseFloat→NaN→null 一致）：壞欄位記為 null 並警示，幣別照常保留；
+    // 不把 `31x` 這類壞值截斷成有效價格。
+    const field = (index, label) => {
+      try {
+        return parseSourceRate(columns[index]);
+      } catch (error) {
+        console.warn(`⚠️ Taiwan Bank ${currencyCode} ${label} ignored: ${error.message}`);
+        return null;
+      }
+    };
+    const raw = {
+      cash: { buy: field(2, 'cash.buy'), sell: field(12, 'cash.sell') },
+      spot: { buy: field(3, 'spot.buy'), sell: field(13, 'spot.sell') },
+    };
     const cashBuy = raw.cash.buy === null ? null : Number(raw.cash.buy);
     const spotBuy = raw.spot.buy === null ? null : Number(raw.spot.buy);
     const cashSell = raw.cash.sell === null ? null : Number(raw.cash.sell);
@@ -198,9 +201,10 @@ function parseBoardPublishedAt(contentDisposition, now = new Date()) {
   // 拒絕溢位日期（如 2 月 30 日）與明顯晚於擷取時間的值。
   const taipei = new Date(published.getTime() + 8 * 3600_000).toISOString();
   if (taipei.slice(0, 16) !== `${year}-${month}-${day}T${hour}:${minute}`) return null;
-  // 合理視窗：不晚於擷取後 10 分鐘、不早於擷取前 7 天（超出視為檔名異常，不採信）。
+  // 合理視窗：不晚於擷取後 10 分鐘、不早於擷取前 30 天。長假（如春節）舊牌告是過期訊號而非壞值，
+  // 須保留讓新鮮度判為 stale；超過 30 天才視為檔名異常。
   if (published.getTime() > now.getTime() + 10 * 60_000) return null;
-  if (published.getTime() < now.getTime() - 7 * 86_400_000) return null;
+  if (published.getTime() < now.getTime() - 30 * 86_400_000) return null;
   return published.toISOString();
 }
 
@@ -401,17 +405,9 @@ function hasRateChanges(newData, previousData = undefined) {
     const oldData = previousData ?? JSON.parse(readFileSync(OUTPUT_FILE, 'utf8'));
 
     // 比較匯率資料
-    // 牌告重新掛牌（掛牌時間變更）即使價格相同也要落盤，否則新鮮度會誤判為過期。
-    const oldRatesStr = JSON.stringify([
-      oldData.rates,
-      oldData.details,
-      oldData.sourcePublishedAt ?? null,
-    ]);
-    const newRatesStr = JSON.stringify([
-      newData.rates,
-      newData.details,
-      newData.sourcePublishedAt ?? null,
-    ]);
+    // 與 main 相同只比較牌價數值（rates／details）；掛牌時間變動不觸發改寫、commit 與 purge。
+    const oldRatesStr = JSON.stringify([oldData.rates, oldData.details]);
+    const newRatesStr = JSON.stringify([newData.rates, newData.details]);
 
     const hasChanges = oldRatesStr !== newRatesStr;
 

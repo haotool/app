@@ -28,12 +28,24 @@ describe('台銀完整牌告契約', () => {
     expect(result.details['ZAR']!.cash).toEqual({ buy: null, sell: null });
   });
 
-  it.each(['-3', '31x', 'Infinity', 'NaN'])('不合法價格 %s 只跳過該幣別，不中止整批', (invalid) => {
-    const text = `${csv('USD', invalid, '31', '32', '31.5')}\n${csv('JPY', '0.2', '0.21', '0.22', '0.215').split('\n')[1]}`;
-    const result = parseTaiwanBankCSV(text);
-    expect(result.rates['USD']).toBeUndefined();
-    expect(result.sourceQuotes['USD']).toBeUndefined();
-    expect(result.rates['JPY']).toBe(0.22);
+  it.each(['-3', '31x', 'Infinity', 'NaN', 'N/A'])(
+    '單一欄位不合法 %s 只把該欄記為 null，幣別保留（同 main）',
+    (invalid) => {
+      const result = parseTaiwanBankCSV(csv('USD', '31.38', invalid, '32.05', '31.855'));
+      expect(result.rates['USD']).toBe(32.05);
+      expect(result.details['USD']).toEqual({
+        name: '美金',
+        spot: { buy: null, sell: 31.855 },
+        cash: { buy: 31.38, sell: 32.05 },
+      });
+      expect(result.sourceQuotes['USD']!.spot.buy).toBeNull();
+    },
+  );
+
+  it('全部欄位不合法時不產生任何幣別（上層 No valid rates 中止）', () => {
+    const result = parseTaiwanBankCSV(csv('USD', 'x', 'y', 'z', 'w'));
+    expect(result.rates).toEqual({});
+    expect(result.details).toEqual({});
   });
 
   it.each(['cash.buy', 'spot.buy', 'spot.sell'])('單獨改變 %s 仍發布', (path) => {
@@ -72,21 +84,25 @@ describe('台銀完整牌告契約', () => {
     expect(parseBoardPublishedAt('attachment; filename="rates.csv"', now)).toBeNull();
     expect(parseBoardPublishedAt('filename="ExchangeRate@202602301600.csv"', now)).toBeNull();
     expect(parseBoardPublishedAt('filename="ExchangeRate@202609281600.csv"', now)).toBeNull();
-    // 早於擷取前 7 天視為檔名異常。
-    expect(parseBoardPublishedAt('filename="ExchangeRate@202609200831.csv"', now)).toBeNull();
-    expect(parseBoardPublishedAt('filename="ExchangeRate@202609220831.csv"', now)).toBe(
-      '2026-09-22T00:31:00.000Z',
+    // 長假舊牌告（7 天整、10 天）仍採信；早於擷取前 30 天才視為檔名異常。
+    expect(parseBoardPublishedAt('filename="ExchangeRate@202609210840.csv"', now)).toBe(
+      '2026-09-21T00:40:00.000Z',
     );
+    expect(parseBoardPublishedAt('filename="ExchangeRate@202609180831.csv"', now)).toBe(
+      '2026-09-18T00:31:00.000Z',
+    );
+    expect(parseBoardPublishedAt('filename="ExchangeRate@202608270831.csv"', now)).toBeNull();
   });
 
-  it('掛牌時間變更即使價格相同也視為有變化', () => {
+  it('價格相同時掛牌時間變更或缺值不觸發改寫（同 main 只比牌價）', () => {
     const before = {
       ...parseTaiwanBankCSV(csv('USD', '30', '31', '32', '31.5')),
       sourcePublishedAt: '2026-09-28T00:31:00.000Z',
     };
     expect(
       hasRateChanges({ ...before, sourcePublishedAt: '2026-09-28T01:02:00.000Z' }, before),
-    ).toBe(true);
+    ).toBe(false);
+    expect(hasRateChanges({ ...before, sourcePublishedAt: null }, before)).toBe(false);
   });
 
   it('首次快照也拒絕負值與非有限價格', () => {
