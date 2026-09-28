@@ -1,7 +1,11 @@
-import { createHash } from 'node:crypto';
-import { mkdirSync, readFileSync, writeFileSync, existsSync, renameSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
+import { readFileSync, writeFileSync, existsSync, renameSync, mkdirSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { execFileSync } from 'node:child_process';
+import { HISTORY_WINDOW_DAYS } from '../apps/shared/fx/history.mjs';
+import { bytesHash, writeObject } from './lib/fx-release-objects.mjs';
+export { bytesHash, writeObject } from './lib/fx-release-objects.mjs';
+import { guardPublishedAt } from './fetch-moneybox-rates.js';
 import {
   normalizeBankSnapshot,
   normalizeMoneyboxSnapshot,
@@ -17,24 +21,18 @@ import {
   validateProducerReleaseManifest,
 } from '../apps/shared/fx/producer-validators.js';
 
+const PROVIDER_NORMALIZERS = {
+  bot: normalizeBankSnapshot,
+  moneybox: normalizeMoneyboxSnapshot,
+};
+export const FX_PROVIDERS = Object.freeze(Object.keys(PROVIDER_NORMALIZERS));
+
 export const sunsetAt = (activatedAt) =>
   activatedAt === null
     ? null
     : new Date(
         Math.max(Date.parse('2026-12-31T00:00:00Z'), Date.parse(activatedAt) + 30 * 86400000),
       ).toISOString();
-export const bytesHash = (bytes) => createHash('sha256').update(bytes).digest('hex');
-export function writeObject(root, data, prefix = 'objects') {
-  const text = JSON.stringify(data) + '\n';
-  const sha256 = bytesHash(text);
-  const path = `${prefix}/${sha256}.json`;
-  const destination = resolve(root, path);
-  mkdirSync(dirname(destination), { recursive: true });
-  if (existsSync(destination)) {
-    if (readFileSync(destination, 'utf8') !== text) throw new Error('Immutable object conflict');
-  } else writeFileSync(destination, text, { flag: 'wx' });
-  return { path, sha256 };
-}
 function readPrevious(root) {
   if (!existsSync(resolve(root, 'current.json'))) return null;
   const current = JSON.parse(readFileSync(resolve(root, 'current.json'), 'utf8'));
@@ -47,6 +45,12 @@ function readPrevious(root) {
   const manifest = readVerifiedObject(root, current.manifest);
   if (!validManifest(manifest)) throw new Error('Invalid previous manifest');
   validateManifestReferences(root, manifest);
+  return manifest;
+}
+
+export function verifyRelease(root) {
+  const manifest = readPrevious(resolve(root));
+  if (!manifest) throw new Error('Missing v3/current.json');
   return manifest;
 }
 
@@ -121,7 +125,9 @@ function validateManifestReferences(root, manifest) {
     if (
       declaredDates.size === 0 ||
       !sourceDate ||
-      dateNumber(entry.date) < dateNumber(sourceDate) ||
+      (dateNumber(entry.date) < dateNumber(sourceDate) &&
+        (snapshot.providerId !== 'moneybox' ||
+          (dateNumber(sourceDate) - dateNumber(entry.date)) / 86400000 > 1)) ||
       (dateNumber(entry.date) - dateNumber(sourceDate)) / 86400000 > maxCarryForwardDays ||
       entry.date > generatedDate
     ) {
@@ -129,8 +135,46 @@ function validateManifestReferences(root, manifest) {
     }
   }
 }
+
+export function retainedHistory(dataRoot, now = new Date()) {
+  const indexPath = resolve(dataRoot, 'v3/history-index.json');
+  if (!existsSync(indexPath)) return [];
+  const todayByProvider = Object.fromEntries(
+    Object.entries({ bot: 'Asia/Taipei', moneybox: 'Asia/Seoul' }).map(([providerId, timeZone]) => [
+      providerId,
+      new Intl.DateTimeFormat('en-CA', { timeZone }).format(now),
+    ]),
+  );
+  const earliest = new Date(`${todayByProvider.bot}T00:00:00Z`);
+  earliest.setUTCDate(earliest.getUTCDate() - HISTORY_WINDOW_DAYS);
+  const minDate = earliest.toISOString().slice(0, 10);
+  const entries = JSON.parse(readFileSync(indexPath, 'utf8'));
+  const bank = entries.filter(
+    (entry) =>
+      entry.providerId === 'bot' && entry.date >= minDate && entry.date < todayByProvider.bot,
+  );
+  const moneybox = entries
+    .filter((entry) => entry.providerId === 'moneybox' && entry.date <= todayByProvider.moneybox)
+    .sort((a, b) => (a.date > b.date ? -1 : a.date < b.date ? 1 : 0))
+    .slice(0, HISTORY_WINDOW_DAYS);
+  return [...bank, ...moneybox].sort((a, b) =>
+    a.date < b.date ? -1 : a.date > b.date ? 1 : a.providerId.localeCompare(b.providerId),
+  );
+}
 export async function publishRelease(root, inputs, now = new Date().toISOString(), history) {
   const previous = readPrevious(root);
+  const watermarkPath = resolve(root, 'state/moneybox-watermark.json');
+  let moneyboxWatermark = null;
+  if (Object.hasOwn(inputs, 'moneybox') && existsSync(watermarkPath)) {
+    try {
+      moneyboxWatermark = JSON.parse(readFileSync(watermarkPath, 'utf8')).publishedAt;
+    } catch (error) {
+      throw new Error('Invalid MoneyBox publishedAt watermark', { cause: error });
+    }
+    if (typeof moneyboxWatermark !== 'string' || !Number.isFinite(Date.parse(moneyboxWatermark)))
+      throw new Error('Invalid MoneyBox publishedAt watermark');
+  }
+  let acceptedMoneyboxPublishedAt = null;
   // 每個 provider 保留自身最後一次檢查結果；本輪未執行的 provider 不改寫狀態。
   const status = ({ providerId, snapshot, checkStatus, lastSuccessfulCheckAt }) => ({
     providerId,
@@ -146,18 +190,49 @@ export async function publishRelease(root, inputs, now = new Date().toISOString(
       if (prior) providers.set(providerId, { ...prior, checkStatus: 'failed' });
       continue;
     }
-    const normalizer = { bot: normalizeBankSnapshot, moneybox: normalizeMoneyboxSnapshot }[
-      providerId
-    ];
+    const normalizer = PROVIDER_NORMALIZERS[providerId];
     if (!normalizer) throw new Error(`Unknown provider adapter: ${providerId}`);
-    const quotes = normalizer(input);
+    const prior = providers.get(providerId);
+    let normalizedInput = input;
+    if (providerId === 'moneybox') {
+      const previousSnapshot = prior ? readVerifiedObject(root, prior.snapshot) : null;
+      const priorHistoryEntry = history
+        ?.filter((entry) => entry.providerId === 'moneybox')
+        .sort((a, b) => (a.date > b.date ? -1 : a.date < b.date ? 1 : 0))[0];
+      const historicalSnapshot = priorHistoryEntry
+        ? readVerifiedObject(root, priorHistoryEntry.snapshot)
+        : null;
+      const previousPublishedAt = [
+        moneyboxWatermark,
+        ...(previousSnapshot?.quotes ?? []).map((quote) => quote.sourceQuote.sourcePublishedAt),
+        ...(historicalSnapshot?.quotes ?? []).map((quote) => quote.sourceQuote.sourcePublishedAt),
+      ]
+        .filter(Boolean)
+        .sort()
+        .at(-1);
+      const checkedPublishedAt = guardPublishedAt(
+        input.sourcePublishedAt,
+        input.fetchedAt ?? input.timestamp,
+        previousPublishedAt ?? null,
+      );
+      normalizedInput = {
+        ...input,
+        sourcePublishedAt:
+          checkedPublishedAt.value &&
+          previousPublishedAt &&
+          Date.parse(checkedPublishedAt.value) < Date.parse(previousPublishedAt)
+            ? null
+            : checkedPublishedAt.value,
+      };
+      acceptedMoneyboxPublishedAt = normalizedInput.sourcePublishedAt;
+    }
+    const quotes = normalizer(normalizedInput);
     if (!quotes.length) throw new Error('Empty or invalid provider snapshot');
     const data = buildProviderSnapshot(providerId, quotes);
     // producer 嚴格模式：未知或拼錯欄位不得進入公開物件（consumer 則為 tolerant reader）。
     if (!validateProducerProviderSnapshot(data) || !validateProviderSnapshot(data))
       throw new Error('Empty or invalid provider snapshot');
     const snapshot = writeObject(root, data);
-    const prior = providers.get(providerId);
     // 內容與狀態皆未變時沿用既有條目，避免每輪產生新 release 造成 commit／purge churn。
     if (prior?.checkStatus === 'ok' && prior.snapshot.sha256 === snapshot.sha256) {
       snapshots.set(providerId, data);
@@ -175,19 +250,21 @@ export async function publishRelease(root, inputs, now = new Date().toISOString(
   const nextProviders = [...providers.values()].sort((a, b) =>
     a.providerId < b.providerId ? -1 : a.providerId > b.providerId ? 1 : 0,
   );
+  const nextHistory = history ?? previous?.history ?? [];
   if (
     previous &&
-    history === undefined &&
-    JSON.stringify(nextProviders) === JSON.stringify(previous.providers.map(status))
+    JSON.stringify(nextProviders) === JSON.stringify(previous.providers.map(status)) &&
+    JSON.stringify(nextHistory) === JSON.stringify(previous.history)
   ) {
     const current = JSON.parse(readFileSync(resolve(root, 'current.json'), 'utf8'));
+    persistMoneyboxWatermark();
     return { current, manifest: previous, snapshots, unchanged: true };
   }
   const activatedAt = previous?.deprecation.activatedAt ?? null;
   const manifest = buildReleaseManifest({
     generatedAt: now,
     providers: nextProviders,
-    history: history ?? previous?.history ?? [],
+    history: nextHistory,
     deprecation: {
       activatedAt,
       sunsetAt: sunsetAt(activatedAt),
@@ -202,7 +279,16 @@ export async function publishRelease(root, inputs, now = new Date().toISOString(
   // Only this mutable pointer is replaced; failures above leave last-known-good intact.
   writeFileSync(resolve(root, 'current.json.tmp'), JSON.stringify(current) + '\n');
   renameSync(resolve(root, 'current.json.tmp'), resolve(root, 'current.json'));
+  persistMoneyboxWatermark();
   return { current, manifest, snapshots };
+
+  function persistMoneyboxWatermark() {
+    if (!acceptedMoneyboxPublishedAt) return;
+    const state = JSON.stringify({ publishedAt: acceptedMoneyboxPublishedAt }) + '\n';
+    mkdirSync(resolve(root, 'state'), { recursive: true });
+    if (!existsSync(watermarkPath) || readFileSync(watermarkPath, 'utf8') !== state)
+      writeFileSync(watermarkPath, state);
+  }
 }
 /** v2 prices are projected from original source fields, never a reciprocal of rounded v3 rates. */
 export function legacyPayload(snapshot, original) {
@@ -256,14 +342,22 @@ export function legacyPayload(snapshot, original) {
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const dataRoot = resolve(process.env.FX_DATA_ROOT ?? 'public/rates');
   const provider = process.env.FX_PROVIDER;
-  if (!['bot', 'moneybox'].includes(provider))
-    throw new Error('FX_PROVIDER must be bot or moneybox');
+  if (!FX_PROVIDERS.includes(provider)) throw new Error('FX_PROVIDER must be bot or moneybox');
   const path = resolve(
     dataRoot,
     provider === 'bot' ? 'latest.json' : 'providers/moneybox/latest.json',
   );
   const input = process.env.FX_FETCH_FAILED === '1' ? null : JSON.parse(readFileSync(path, 'utf8'));
+  const { migrateHistory } = await import('./migrate-fx-history.mjs');
+  const revision = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+  const now = new Date();
+  migrateHistory(revision, resolve(dataRoot, 'v3'), dataRoot, now);
   // v3 發布不得改寫 v2 latest.json（expand–contract：v2 棄用標記待 S4 公開切換時處理）。
-  const result = await publishRelease(resolve(dataRoot, 'v3'), { [provider]: input });
+  const result = await publishRelease(
+    resolve(dataRoot, 'v3'),
+    { [provider]: input },
+    now.toISOString(),
+    retainedHistory(dataRoot, now),
+  );
   console.log(result.unchanged ? 'v3 release unchanged' : `v3 release ${result.current.releaseId}`);
 }

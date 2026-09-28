@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   assertMoneyBoxRatesIntegrity,
+  guardPublishedAt,
   deriveMidpoint,
   mapUpstreamRow,
   shouldRefreshLatestSnapshot,
@@ -25,7 +26,28 @@ it('保留來源發布時間與原始 per-1 十進位文字', async () => {
   const result = await fetchMoneyBoxRates();
   expect(result.sourcePublishedAt).toBe('2026-09-21T10:00:00.000Z');
   expect(result.fetchedAt).not.toBe(result.sourcePublishedAt);
+  expect(Object.keys(result)).not.toContain('v3SourcePublishedAt');
   expect(result.sourceQuotes['TWD']!.buy).toBe('42.15000000000000001');
+});
+
+it('MoneyBox board time rejects future, backward, and response-generation timestamps for v3', () => {
+  const fetchedAt = '2026-09-29T10:00:00.000Z';
+  expect(guardPublishedAt('2026-09-29T10:00:03Z', fetchedAt)).toEqual({
+    value: null,
+    status: 'unknown',
+  });
+  expect(guardPublishedAt('2026-09-29T10:03:00Z', fetchedAt)).toEqual({
+    value: null,
+    status: 'unknown',
+  });
+  expect(guardPublishedAt('2026-09-29T09:00:00Z', fetchedAt, '2026-09-29T09:05:00Z')).toEqual({
+    value: null,
+    status: 'unknown',
+  });
+  expect(guardPublishedAt('2026-09-29T09:59:00Z', fetchedAt, '2026-09-29T09:59:30Z')).toEqual({
+    value: '2026-09-29T09:59:00.000Z',
+    status: 'known',
+  });
 });
 
 it.each(['1junk', '-1', 'Infinity', 'N/A'])(
