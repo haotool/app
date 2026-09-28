@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { SEO_RATE_EXAMPLES } from '../generated/seo-rate-examples';
+import { SEO_RATE_EXAMPLES, SEO_RATE_EXAMPLES_DATE } from '../generated/seo-rate-examples';
 import {
   buildCashBuyRateSentence,
   getCurrencyLandingPageContent,
   getReverseCurrencyLandingPageContent,
   type CurrencyLandingCode,
+  type ReverseCurrencyLandingCode,
 } from '../seo-metadata';
+import { INDEXABLE_FORWARD_AMOUNTS, INDEXABLE_REVERSE_TWD_AMOUNTS } from '../seo-paths';
 
 describe('美元與日圓現鈔賣回 FAQ', () => {
   it.each([
@@ -26,6 +28,8 @@ describe('美元與日圓現鈔賣回 FAQ', () => {
     );
     expect(faq?.answer).toContain('未含手續費');
     expect(faq?.answer).toContain('以台銀當日牌告為準');
+    expect(faq?.answer).toContain(SEO_RATE_EXAMPLES_DATE);
+    expect(faq?.answer).toContain('臺灣銀行通常僅收購外幣紙鈔，硬幣一般不收兌');
   });
 
   it('cashBuy 缺漏或無效時省略數字試算句', () => {
@@ -34,17 +38,45 @@ describe('美元與日圓現鈔賣回 FAQ', () => {
     expect(buildCashBuyRateSentence('USD', 1000, { cashBuy: Number.NaN })).toBe('');
   });
 
-  it('其他幣別與反向頁不加入賣回 FAQ', () => {
-    const reverseFaq = getReverseCurrencyLandingPageContent('USD').faqEntries;
-    const otherCurrencies = Object.keys(SEO_RATE_EXAMPLES).filter(
-      (code) => code !== 'USD' && code !== 'JPY',
-    ) as CurrencyLandingCode[];
+  it('只有美元與日圓正向頁 FAQ 使用現鈔賣回內容', () => {
+    const codes = Object.keys(SEO_RATE_EXAMPLES) as CurrencyLandingCode[];
+    const isSellbackExample = ({ question, answer }: { question: string; answer: string }) =>
+      question.includes('手上有') ||
+      (answer.includes('現金買入價') && answer.includes('換回台幣')) ||
+      answer.includes('牌告試算：');
 
-    for (const code of otherCurrencies) {
-      const faq = getCurrencyLandingPageContent(code).faqEntries;
-      expect(faq.some(({ question }) => /手上有(?:美元|日圓)現鈔/.test(question))).toBe(false);
+    for (const code of codes) {
+      const forwardFaq = getCurrencyLandingPageContent(code).faqEntries;
+      const reverseFaq = getReverseCurrencyLandingPageContent(
+        code as ReverseCurrencyLandingCode,
+      ).faqEntries;
+      const expectedSellbackFaq = code === 'USD' || code === 'JPY';
+
+      for (const faq of [forwardFaq, reverseFaq]) {
+        if (expectedSellbackFaq && faq === forwardFaq) {
+          expect(faq.filter(isSellbackExample)).toHaveLength(1);
+        } else {
+          expect(faq.filter(isSellbackExample)).toEqual([]);
+        }
+      }
     }
-    expect(reverseFaq.some(({ question }) => question.includes('手上有'))).toBe(false);
+
+    for (const [code, amounts] of Object.entries(INDEXABLE_FORWARD_AMOUNTS)) {
+      if (code === 'usd' || code === 'jpy') continue;
+      const faq = getCurrencyLandingPageContent(
+        code.toUpperCase() as CurrencyLandingCode,
+      ).faqEntries;
+      expect(amounts.length).toBeGreaterThan(0);
+      expect(faq.filter(isSellbackExample)).toEqual([]);
+    }
+
+    for (const [code, amounts] of Object.entries(INDEXABLE_REVERSE_TWD_AMOUNTS)) {
+      const faq = getReverseCurrencyLandingPageContent(
+        code.toUpperCase() as ReverseCurrencyLandingCode,
+      ).faqEntries;
+      expect(amounts.length).toBeGreaterThan(0);
+      expect(faq.filter(isSellbackExample)).toEqual([]);
+    }
   });
 
   it('保留原標題、描述與每頁 FAQPage schema 數量', () => {

@@ -49,6 +49,17 @@ const EXAMPLE_TWD = 30000;
  */
 const DUAL_VERIFY_WARN_PCT = 2.0;
 
+export function getValidCashBuy(cashBuy, cashSell) {
+  return typeof cashBuy === 'number' &&
+    Number.isFinite(cashBuy) &&
+    cashBuy > 0 &&
+    typeof cashSell === 'number' &&
+    Number.isFinite(cashSell) &&
+    cashBuy < cashSell
+    ? cashBuy
+    : undefined;
+}
+
 /**
  * 明洞換匯所（MoneyBox）TWD↔KRW 匯率靜態後備值。
  * 每日 CI 嘗試從 MoneyBox 取得最新匯率，失敗時用此值。
@@ -210,6 +221,7 @@ async function main() {
 
     const cashSell = d.cash?.sell;
     const cashBuy = d.cash?.buy;
+    const validCashBuy = getValidCashBuy(cashBuy, cashSell);
 
     if (!cashSell) {
       errors.push(`${code}: 缺少 cash.sell`);
@@ -268,9 +280,7 @@ async function main() {
       diffTWD,
       diffPct,
       cashSell,
-      ...(typeof cashBuy === 'number' && Number.isFinite(cashBuy) && cashBuy > 0
-        ? { cashBuy }
-        : {}),
+      ...(validCashBuy === undefined ? {} : { cashBuy: validCashBuy }),
       marketMid: +marketMid.toFixed(6),
       bankMid: bankMid ? +bankMid.toFixed(6) : null,
       spotAvailable: !!d.spot?.sell,
@@ -375,8 +385,9 @@ async function main() {
     lines.push(`    diffTWD: ${ex.diffTWD},`);
     lines.push(`    diffPct: ${ex.diffPct},`);
     lines.push(`    cashSell: ${ex.cashSell},`);
-    if (typeof ex.cashBuy === 'number' && Number.isFinite(ex.cashBuy) && ex.cashBuy > 0) {
-      lines.push(`    cashBuy: ${ex.cashBuy},`);
+    const cashBuy = getValidCashBuy(ex.cashBuy, ex.cashSell);
+    if (cashBuy !== undefined) {
+      lines.push(`    cashBuy: ${cashBuy},`);
     }
     lines.push(`    marketMid: ${ex.marketMid},`);
     lines.push(`    bankMid: ${ex.bankMid ?? 'null'},`);
@@ -415,4 +426,4 @@ async function main() {
   console.log(`[完成] 已生成：src/config/generated/seo-rate-examples.ts（${today}）`);
 }
 
-main();
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main();

@@ -39,7 +39,7 @@ export function buildCashBuyRateSentence(
 ): string {
   const cashBuy = rateExample?.cashBuy;
   if (typeof cashBuy !== 'number' || !Number.isFinite(cashBuy) || cashBuy <= 0) return '';
-  return `牌告試算：${amount.toLocaleString('zh-TW')} ${code} × ${cashBuy} = 預估 ${Math.round(amount * cashBuy).toLocaleString('zh-TW')} 元台幣（未含手續費，以台銀當日牌告為準）。`;
+  return `牌告試算：${amount.toLocaleString('zh-TW')} ${code} × ${cashBuy} = 預估 ${Math.round(amount * cashBuy).toLocaleString('zh-TW')} 元台幣（${SEO_RATE_EXAMPLES_DATE} 牌告試算，未含手續費，以台銀當日牌告為準）。`;
 }
 
 const RELATED_GUIDES_TO_TWD: RelatedGuideLink[] = [
@@ -235,7 +235,7 @@ const CURRENCY_SPECIFIC_FAQ: Record<string, FAQEntry[]> = {
     },
     {
       question: '手上有美元現鈔，換回台幣要看哪個匯率？',
-      answer: `現鈔換回台幣看臺灣銀行「現金買入價」，外幣帳戶換回則看「即期買入價」。${buildCashBuyRateSentence('USD', 1000)}`,
+      answer: `現鈔換回台幣看臺灣銀行「現金買入價」，外幣帳戶換回則看「即期買入價」。${buildCashBuyRateSentence('USD', 1000)}臺灣銀行通常僅收購外幣紙鈔，硬幣一般不收兌。`,
     },
   ],
   JPY: [
@@ -256,7 +256,7 @@ const CURRENCY_SPECIFIC_FAQ: Record<string, FAQEntry[]> = {
     },
     {
       question: '手上有日圓現鈔，換回台幣要看哪個匯率？',
-      answer: `現鈔換回台幣看臺灣銀行「現金買入價」，外幣帳戶換回則看「即期買入價」。${buildCashBuyRateSentence('JPY', 100000)}`,
+      answer: `現鈔換回台幣看臺灣銀行「現金買入價」，外幣帳戶換回則看「即期買入價」。${buildCashBuyRateSentence('JPY', 100000)}臺灣銀行通常僅收購外幣紙鈔，硬幣一般不收兌。`,
     },
   ],
   KRW: [
