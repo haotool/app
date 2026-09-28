@@ -18,6 +18,10 @@ vi.mock('@app/shared/fx/public', () => ({ isFxV3Public: () => gate.enabled }));
 
 const STALE_ISO = new Date(Date.now() - RATE_TTL_MS - 60_000).toISOString();
 const FRESH_ISO = new Date().toISOString();
+const LEGACY_HISTORY_OUTPUTS = {
+  twd: '≈ ₩12,600',
+  krw: '≈ NT$ 200',
+};
 
 // 全域幣別 KRW＋TWD 快照費用 → ≈ 參考使用當前匯率（R10 生命週期適用對象）。
 const EXPENSE_TWD = {
@@ -101,13 +105,40 @@ describe('R10：≈ 換算參考的 stale 標注', () => {
     expect(screen.queryByText(i18n.t('settings.rate_stale'))).not.toBeInTheDocument();
   });
 
-  it('flag 關閉時，沒有匯率快照的舊支出沿用全域匯率且不顯示來源標記', () => {
-    useStore.setState({ currency: 'KRW', expenses: [EXPENSE_TWD], rateUpdatedAtIso: FRESH_ISO });
-    renderWith(<HistoryTab />);
+  it.each([
+    ['TWD snapshot, fresh global rate', 'TWD', LEGACY_HISTORY_OUTPUTS.twd, false, FRESH_ISO],
+    ['TWD snapshot, stale global rate', 'TWD', LEGACY_HISTORY_OUTPUTS.twd, true, STALE_ISO],
+    ['KRW snapshot, fresh global rate', 'KRW', LEGACY_HISTORY_OUTPUTS.krw, false, FRESH_ISO],
+    ['KRW snapshot, stale global rate', 'KRW', LEGACY_HISTORY_OUTPUTS.krw, true, STALE_ISO],
+  ] as const)(
+    'flag OFF matches origin/main: %s',
+    (_label, from, expectedApproximation, isStale, updatedAtIso) => {
+      const expense =
+        from === 'TWD'
+          ? { ...EXPENSE_TWD, exchangeRateKrwPerTwd: 43.5 }
+          : {
+              ...EXPENSE_TWD,
+              totalAmount: 9000,
+              currency: 'KRW' as const,
+              exchangeRateKrwPerTwd: 45,
+            };
+      useStore.setState({
+        currency: from === 'TWD' ? 'KRW' : 'TWD',
+        expenses: [expense],
+        rateUpdatedAtIso: updatedAtIso,
+      });
+      renderWith(<HistoryTab />);
 
-    expect(screen.getByText(/≈ ₩12,600/)).toBeInTheDocument();
-    expect(screen.queryByText(i18n.t('settings.rate_fallback'))).not.toBeInTheDocument();
-  });
+      const card = screen.getByTestId('expense-card');
+      const staleLabel = i18n.t('settings.rate_stale');
+      const renderedOutput = Array.from(card.querySelectorAll('p'))
+        .map((paragraph) => paragraph.textContent)
+        .filter((text) => text === expectedApproximation || text === staleLabel)
+        .join('');
+      expect(renderedOutput).toBe(`${expectedApproximation}${isStale ? staleLabel : ''}`);
+      expect(screen.queryByText(i18n.t('settings.rate_fallback'))).not.toBeInTheDocument();
+    },
+  );
 });
 
 describe('v3 MoneyBox legacy fallback label', () => {

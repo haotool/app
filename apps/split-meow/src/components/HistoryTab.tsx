@@ -108,6 +108,7 @@ export function HistoryTab() {
       settledPayments: s.settledPayments,
     })),
   );
+  const fxV3Public = isFxV3Public();
   const deleteExpense = useStore((s) => s.deleteExpense);
   const updateExpenseNote = useStore((s) => s.updateExpenseNote);
   const updateExpense = useStore((s) => s.updateExpense);
@@ -507,17 +508,13 @@ export function HistoryTab() {
                             {formatAmount(exp.totalAmount, expenseCurrency(exp))}
                           </p>
                           {(() => {
-                            // 有記帳匯率快照時，金額與 fallback 標記都使用該筆匯率；舊資料才回退到全域匯率。
+                            // KRW 沿用 main 的記帳快照；TWD 僅在 v3 開啟時使用快照。
                             const from = expenseCurrency(exp);
                             if (from === currency) return null;
                             const to = from === 'KRW' ? ('TWD' as const) : ('KRW' as const);
                             const hasSavedRate = exp.exchangeRateKrwPerTwd != null;
-                            const rate =
-                              from === 'KRW'
-                                ? exp.exchangeRateKrwPerTwd
-                                : hasSavedRate
-                                  ? exp.exchangeRateKrwPerTwd
-                                  : krwPerTwd;
+                            const useSavedRate = from === 'KRW' || (fxV3Public && hasSavedRate);
+                            const rate = useSavedRate ? exp.exchangeRateKrwPerTwd : krwPerTwd;
                             const approx = convertAmount(exp.totalAmount, from, to, rate);
                             if (approx === null) return null;
                             return (
@@ -525,15 +522,16 @@ export function HistoryTab() {
                                 <p className="text-[10px] font-medium text-on-surface-variant/70 whitespace-nowrap">
                                   ≈ {formatAmount(approx, to)}
                                 </p>
-                                {!hasSavedRate && isRateStale(rateUpdatedAtIso) && (
-                                  <p className="text-[10px] font-medium text-tertiary whitespace-nowrap">
-                                    {t('settings.rate_stale')}
-                                  </p>
-                                )}
+                                {(!fxV3Public || !hasSavedRate) &&
+                                  isRateStale(rateUpdatedAtIso) && (
+                                    <p className="text-[10px] font-medium text-tertiary whitespace-nowrap">
+                                      {t('settings.rate_stale')}
+                                    </p>
+                                  )}
                               </>
                             );
                           })()}
-                          {isFxV3Public() &&
+                          {fxV3Public &&
                             exp.exchangeRateKrwPerTwd != null &&
                             exp.rateIsFallback && (
                               <p className="text-[10px] font-medium text-tertiary whitespace-nowrap">

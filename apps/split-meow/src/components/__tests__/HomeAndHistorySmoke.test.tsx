@@ -3,7 +3,7 @@
  * 確保元件在正常 props 下渲染而不崩潰
  */
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { I18nextProvider } from 'react-i18next';
 import { type ReactNode } from 'react';
 import { act } from 'react';
@@ -11,6 +11,9 @@ import i18n from '../../i18n';
 import { useStore } from '../../store/useStore';
 import { HomeTab } from '../HomeTab';
 import { HistoryTab } from '../HistoryTab';
+
+const gate = vi.hoisted(() => ({ enabled: false }));
+vi.mock('@app/shared/fx/public', () => ({ isFxV3Public: () => gate.enabled }));
 
 function Wrapper({ children }: { children: ReactNode }) {
   return <I18nextProvider i18n={i18n}>{children}</I18nextProvider>;
@@ -49,6 +52,7 @@ const BASE_STATE = {
 };
 
 beforeEach(() => {
+  gate.enabled = false;
   useStore.setState(BASE_STATE);
 });
 
@@ -237,6 +241,7 @@ describe('HistoryTab', () => {
   });
 
   it('TWD 支出有記帳匯率快照時，用快照匯率顯示 ≈ 金額', () => {
+    gate.enabled = true;
     useStore.setState({
       expenses: [{ ...EXPENSE_1, currency: 'TWD', exchangeRateKrwPerTwd: 43.5 }],
       currency: 'KRW',
