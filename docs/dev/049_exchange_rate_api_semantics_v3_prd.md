@@ -1,8 +1,8 @@
 # 匯率 API 語意 v3 正名與 MoneyBox 上游遷移 PRD
 
 > **建立時間**: 2026-08-26T14:00:00+08:00
-> **版本**: v11.6
-> **狀態**: ✅ 欄位語意定案；✅ PR 1 已合併（#1051）；🟡 PR 2+3 合併實作於 #1104（`RATEWISE_FX_V3_ENABLED` 預設關閉）；⚠️ 正式切換阻塞項未解（§0）；✅ API 標示與 SEO 策略定案（§21，S3 實作）
+> **版本**: v11.7
+> **狀態**: ✅ 欄位語意定案；✅ PR 1 已合併（#1051）；🟡 PR 2+3 合併實作於 #1104（公開開關 `FX_V3_PUBLIC` 預設 `false`；`RATEWISE_FX_V3_ENABLED` 為 data 發佈 gate，預設關閉）；⚠️ 正式切換阻塞項未解（§0）；✅ API 標示與 SEO 策略定案（§21，S3 實作）
 > **作者**: Claude Code（研究與盤點）+ Codex（獨立第二意見）
 > **上位文件**: `CLAUDE.md`、`AGENTS.md`
 > **相關**: PR #472（v2 導入）、PR #1039（MoneyBox 中斷處理）
@@ -13,7 +13,8 @@
 
 - **PR 1 已完成**：MoneyBox ingest 安全切換已合併至 main（#1051，`e06af11b4`）。
 - **PR 2 + PR 3 合併為單一 PR #1104**（`codex/ratewise-api-v3`，尚未合併）：含 v3 model、歷史轉換與 OpenAPI／OpenData 同步；契約 SSOT 為 `apps/shared/fx/schema.json`（PR #1104），建置時由 `generate-api-json.mjs` 發佈副本至 `apps/ratewise/public/api/v3/contract.schema.json`。
-- **與 §5 的偏離**：原規劃 3 個 PR，實作併為 2 個；以 `RATEWISE_FX_V3_ENABLED`（預設關閉）作為正式切換開關，維持「合併 ≠ 對外切換」邊界。
+- **與 §5 的偏離**：原規劃 3 個 PR，實作併為 2 個；公開開關為 `apps/shared/fx/public.ts` 的 `FX_V3_PUBLIC`（預設 `false`，控制 App 讀取與站台宣告 v3）；`RATEWISE_FX_V3_ENABLED` 只是 data 發佈 gate（控制 data branch 是否產出 v3 release），兩者皆預設關閉，維持「合併 ≠ 對外切換」邊界。
+- **v2 資料 additive 變動**：台銀 `latest.json` 的 `details` 新增 ZAR／SEK 等只有即期報價的幣別（`cash` 兩側為 `null`，`rates` 不含，因主匯率為現金賣出），另新增 `sourceQuotes`（來源原文）、`fetchedAt`、`sourcePublishedAt`；既有欄位與數值不變。
 - **正式切換阻塞項未變**：§17 #1／#6 與 §19.8 #8／#11（再散布授權、中間價來源授權、CDN 原子發布）。
 - **S4 啟用檢查清單**：R5 裁決延後至 S4 的項目（v3 `manifest.history` 接線、多幣每鍵效能、rollback 後 localStorage 清理、首爾日期檢查、per-currency denominator、再散布條款 human gate、MoneyBox 9 位有效數字倒數評估等）集中記錄於 `docs/dev/049_exchange_rate_api_v3_implementation.md`「S4 啟用檢查清單」。
 
@@ -348,7 +349,7 @@ ECB 官方碼表（實測 `data-api.ecb.europa.eu/service/codelist/ECB/CL_OBS_ST
 | **2** | v3 canonical model + 全歷史轉換（419 檔 + manifest） | **尚不**切換公開入口                        |
 | **3** | v3 硬切公開產物與文件                                | **唯一對外 breaking release，需原子化發布** |
 
-> **實作偏離（2026-09-28）**：PR 2 與 PR 3 合併於 #1104 實作，正式切換由 `RATEWISE_FX_V3_ENABLED`（預設關閉）控管；「合併 ≠ 對外切換」邊界不變，詳見 §0。
+> **實作偏離（2026-09-28）**：PR 2 與 PR 3 合併於 #1104 實作，公開切換由 `FX_V3_PUBLIC`（預設 `false`）控管，`RATEWISE_FX_V3_ENABLED` 僅為 data 發佈 gate；「合併 ≠ 對外切換」邊界不變，詳見 §0。
 
 > **PR 3 的前置條件（Codex 特別提醒）**：app 目前仍讀 MoneyBox legacy `getSellRate`。硬切前**必須**先改讀 v3 `customerBuy` 並驗證換算結果等價，否則硬切當下前端會取不到值。
 
@@ -992,14 +993,14 @@ v3 上線後此段**立刻過期**，而 AI 爬蟲讀到的就是它，且不會
 
 衍生鏈（v11.6 依實作改正）：
 
-| 產物                      | 現況關係                                                                                                          |
-| ------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| TS 型別                   | `generate:fx` 由 contract 生成（`types.ts`），CI `generate:fx --check` 守門                                       |
-| payload runtime validator | `generate:fx` 由 contract 生成 consumer（tolerant）與 producer（嚴格）兩組 validator                              |
-| `openapi.json`            | 生成器讀取 contract `$defs` **內嵌**為 components schemas（非外部 `$ref`）；v3 摘要只在 `FX_V3_PUBLIC` 開啟時宣告 |
-| `llms.txt`                | **人工撰寫**散文並以 `FX_V3_PUBLIC` 切換；以連結指向 contract，非由 contract 生成（§19.4）                        |
-| OpenData 欄位表           | **人工撰寫**並以 `FX_V3_PUBLIC` 切換；尚未由 contract 生成（§19.8 未達成項）                                      |
-| JSON-LD                   | 由建置期 SEO 快照（`seo-rate-examples.ts` 的 `quotes`）投影；改為**已驗證的 v3 payload** 投影屬 S4 範圍           |
+| 產物                      | 現況關係                                                                                                                |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| TS 型別                   | `generate:fx` 由 contract 生成（`types.ts`），CI `generate:fx --check` 守門                                             |
+| payload runtime validator | `generate:fx` 由 contract 生成 consumer（tolerant）與 producer（嚴格）兩組 validator                                    |
+| `openapi.json`            | 生成器讀取 contract `$defs` **內嵌**為 components schemas（非外部 `$ref`）；v3 摘要只在 `FX_V3_PUBLIC` 開啟時宣告       |
+| `llms.txt`                | **人工撰寫**散文並以 `FX_V3_PUBLIC` 切換；以連結指向 contract，非由 contract 生成（§19.4）                              |
+| OpenData 欄位表           | **人工撰寫**並以 `FX_V3_PUBLIC` 切換；尚未由 contract 生成（§19.8 未達成項）                                            |
+| JSON-LD                   | `FX_V3_PUBLIC=false` 時沿用 main 的 `seo-rate-examples.ts` 生成器與文案；改為**已驗證的 v3 payload** 投影屬 S3／S4 範圍 |
 
 ### 19.3 `semanticFieldMapping` 於 v3 移除
 
@@ -1204,6 +1205,7 @@ v11.6 改寫：`publisher` 物件已於 PR #1104 依 ADR B3 納入契約（`apps
 
 | 日期       | 版本  | 變更                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | ---------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-28 | v11.7 | 依最終修正輪：header／§0／§5 改稱 `RATEWISE_FX_V3_ENABLED` 為 data 發佈 gate、公開開關為 `FX_V3_PUBLIC`；§0 記錄 v2 details 新增 ZAR／SEK spot-only 等 additive 欄位；§19.2 JSON-LD 列改為 flag off 沿用 main 生成器（幣別頁雙向搜尋意圖改寫移至 S3 SEO PR）                                                                                                                                                                                |
 | 2026-09-28 | v11.6 | 依 R5 裁決：§4.5（兩節）／§5／§10／§16.3–16.5 標註 superseded by §16.7；§4.3 補列 `originalBuyField`／`originalSellField`／`mappingVersion`／`originalUnitAmount` 並改正來源分母公開敘述；§4.3.1 `nextSourceCheckAt` 改選填不輸出、URL 欄位限 `https`；§18.4 記錄 12 位小數倒數半單位邊界 1 minor unit 差異與極小倒數有效位數；§19.2 衍生鏈依實作改正；§21.3 改寫（publisher 已入契約、termsUrl 暫指 /open-data/）；§0 指向 S4 啟用檢查清單 |
 | 2026-09-28 | v11.5 | 依 ADR B3 修訂公開契約：§4.3 改為 `quotes[]`／`SourceQuote` 欄位表（`providerBuyPrice`／`providerSellPrice`、移除 `providerSide`、`quoteId`／`quoteSeriesId` 格式 ≤256、`unavailableReason` 完整 enum、`dataKind` 必填）；§4.3.1 改為 manifest 層 `$schema`／`publisher`／`providers[]`／`calculationRule`／`quoteAvailability`；新增 §16.7 定案與不採用的 A 設計附註；§18.4 補 EXACT_OUT 與倒數規則；§18.5 改為不輸出恆 null 欄位          |
 | 2026-09-28 | v11.4 | 修正獨立 spec-evidence 審查：F4／F8 補可追溯來源；§0／§19.2／§21.3 統一契約 SSOT 為 `apps/shared/fx/schema.json`（發佈副本 `public/api/v3/contract.schema.json`）；§4.3.1、§17 #6 對齊 PR 1104 `providers[].redistributionStatus`；§21 payload 物件改名 `publisher` 並移除 `sources[]`；新增著作權宣稱守門；裁決 2 改引 F8                                                                                                                  |
