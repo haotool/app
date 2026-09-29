@@ -13,8 +13,12 @@ import {
   type DerivedEstimateResult,
   type SelectionContext,
 } from '@app/shared/fx';
-import { resolveEffectiveFxContext } from '../fxEffectiveContext';
-import { estimateCrossPair, getCrossLegRequests } from '../fxCrossEstimate';
+import {
+  getEffectiveHistoryContext,
+  getEstimateContextSubstitutions,
+  resolveEffectiveFxContext,
+} from '../fxEffectiveContext';
+import { estimateCrossPair } from '../fxCrossEstimate';
 import { useFxQuotes } from './useFxQuotes';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -307,7 +311,6 @@ export const useFxCurrencyConverter = (options: UseCurrencyConverterOptions = {}
   }, [history]);
   const [lastEdited, setLastEdited] = useState<AmountField>('from');
 
-  // Conversion calculations using convertCurrencyAmountWithMode
   const recalcMultiAmounts = useCallback(
     (
       sourceCode: CurrencyCode,
@@ -386,7 +389,6 @@ export const useFxCurrencyConverter = (options: UseCurrencyConverterOptions = {}
     [mode, multiExchangeShopCurrencies, exchangeShopCurrency],
   );
 
-  // Handlers
   const handleFromAmountChange = useCallback((value: string) => {
     setFromAmount(value);
     setLastEdited('from');
@@ -471,7 +473,6 @@ export const useFxCurrencyConverter = (options: UseCurrencyConverterOptions = {}
   const reorderFavorites = useCallback(
     (newOrder: CurrencyCode[]) => {
       storeReorderFavorites(newOrder);
-      // Zustand persist middleware 自動處理 localStorage 同步，無需手動 writeJSON
     },
     [storeReorderFavorites],
   );
@@ -484,7 +485,12 @@ export const useFxCurrencyConverter = (options: UseCurrencyConverterOptions = {}
       lastEdited === 'from' ? 'EXACT_IN' : 'EXACT_OUT',
     );
     if (current.status !== 'available') return;
-    const snapshot = fxQuotes.find((q) => q.quoteId === current.quoteId);
+    const historyContext = getEffectiveHistoryContext({
+      result: current,
+      quotes: fxQuotes,
+      fallback: { rateType, country: serviceCountry, branchId },
+    });
+    const snapshot = historyContext.quoteSnapshot;
     const timestamp = Date.now();
     const entry: ConversionHistoryEntry = {
       from: fromCurrency,
@@ -493,7 +499,7 @@ export const useFxCurrencyConverter = (options: UseCurrencyConverterOptions = {}
       result: current.toAmount ?? toAmount,
       time: getRelativeTimeString(timestamp),
       timestamp,
-      rateType,
+      rateType: historyContext.rateType,
       sourceKind:
         getRateProvider(snapshot?.providerId ?? '')?.sourceKind ??
         providerPreference.manualProvider?.sourceKind ??
@@ -503,14 +509,11 @@ export const useFxCurrencyConverter = (options: UseCurrencyConverterOptions = {}
       rateMode: 'auto',
       schemaVersion: 3,
       quoteSnapshot: snapshot,
-      derivedLegs:
-        'legs' in current
-          ? fxQuotes.filter((q) => current.legs.some((id) => id === q.quoteId))
-          : undefined,
+      derivedLegs: historyContext.derivedLegs,
       releaseId: fx.releaseId,
       estimateMode: lastEdited === 'from' ? 'EXACT_IN' : 'EXACT_OUT',
-      serviceCountry,
-      branchId,
+      serviceCountry: historyContext.serviceCountry,
+      branchId: historyContext.branchId,
     };
 
     storeAddToHistory(entry);
@@ -533,12 +536,10 @@ export const useFxCurrencyConverter = (options: UseCurrencyConverterOptions = {}
     t,
   ]);
 
-  /** 清除全部歷史記錄 */
   const clearAllHistory = useCallback(() => {
     storeClearHistory();
   }, [storeClearHistory]);
 
-  /** 從歷史記錄重新載入轉換參數 */
   const reconvertFromHistory = useCallback(
     (entry: ConversionHistoryEntry) => {
       setFromCurrency(entry.from);
@@ -652,17 +653,27 @@ export const useFxCurrencyConverter = (options: UseCurrencyConverterOptions = {}
         request.toCurrency as CurrencyCode,
         request.mode,
       );
-      const requests = getCrossLegRequests(request, result, fxQuotes);
-      return requests.flatMap((pairRequest) =>
-        resolvePairContext(pairRequest).substitutions.map((substitution) => ({
-          ...substitution,
-          fromCurrency: pairRequest.fromCurrency,
-          toCurrency: pairRequest.toCurrency,
-        })),
-      );
+      return getEstimateContextSubstitutions({
+        request,
+        result,
+        context: activeContext,
+        providerId:
+          providerPreference.mode === 'manual'
+            ? providerPreference.manualProvider?.providerId
+            : undefined,
+        quotes: fxQuotes,
+      });
     });
-  }, [mode, baseCurrency, multiAmounts, activeRequest, resolvePairContext, estimatePair, fxQuotes]);
-  // Numeric compatibility fields are presentation-only; monetary ranking stays decimal.
+  }, [
+    mode,
+    baseCurrency,
+    multiAmounts,
+    activeRequest,
+    estimatePair,
+    fxQuotes,
+    activeContext,
+    providerPreference,
+  ]);
   const presentQuote = useCallback(
     (quote: QuoteSnapshot, result: EstimateResult): ProviderQuote => {
       const sourceKind = getRateProvider(quote.providerId)?.sourceKind ?? 'bank';
@@ -698,7 +709,6 @@ export const useFxCurrencyConverter = (options: UseCurrencyConverterOptions = {}
     [fxQuotes, activeRequest, activeContext, providerStatuses, presentQuote],
   );
   return {
-    // State
     fxQuotes,
     fxError: options.fxQuotes === undefined ? fx.error : null,
     fxFallbackActive:
@@ -738,12 +748,10 @@ export const useFxCurrencyConverter = (options: UseCurrencyConverterOptions = {}
     isExchangeShopAvailableInContext,
     multiExchangeShopCurrencies,
 
-    // Setters
     setFromCurrency,
     setToCurrency,
     setBaseCurrency,
 
-    // Handlers
     handleFromAmountChange,
     handleToAmountChange,
     handleMultiAmountChange,

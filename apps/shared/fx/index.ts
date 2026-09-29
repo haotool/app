@@ -703,14 +703,57 @@ export function estimateDerived(
   request: EstimateRequest,
 ): DerivedEstimateResult {
   const route = deriveCrossQuote(first, second);
-  const result =
+  let result: EstimateResult;
+  if (
     !route ||
     !validateEstimateRequest(request) ||
     !isValidAmount(request.amount) ||
     route.fromCurrency !== request.fromCurrency ||
     route.toCurrency !== request.toCurrency
-      ? unavailable('invalid_derived_route')
-      : estimateAmounts(route.rate, request, null, 'unknown');
+  ) {
+    result = unavailable('invalid_derived_route');
+  } else if (request.mode === 'EXACT_IN') {
+    const intermediate = estimate(first, {
+      fromCurrency: first.fromCurrency,
+      toCurrency: first.toCurrency,
+      amount: request.amount,
+      mode: 'EXACT_IN',
+    });
+    result =
+      intermediate.toAmount === null
+        ? intermediate
+        : estimate(second, {
+            fromCurrency: second.fromCurrency,
+            toCurrency: second.toCurrency,
+            amount: intermediate.toAmount,
+            mode: 'EXACT_IN',
+          });
+  } else {
+    const intermediate = estimate(second, {
+      fromCurrency: second.fromCurrency,
+      toCurrency: second.toCurrency,
+      amount: request.amount,
+      mode: 'EXACT_OUT',
+    });
+    result =
+      intermediate.fromAmount === null
+        ? intermediate
+        : estimate(first, {
+            fromCurrency: first.fromCurrency,
+            toCurrency: first.toCurrency,
+            amount: intermediate.fromAmount,
+            mode: 'EXACT_OUT',
+          });
+  }
+  if (result.status === 'available')
+    result = {
+      ...result,
+      fromAmount: request.mode === 'EXACT_IN' ? request.amount : result.fromAmount,
+      toAmount: request.mode === 'EXACT_OUT' ? request.amount : result.toAmount,
+      quoteId: null,
+      rate: route?.rate ?? result.rate,
+      feeStatus: 'unknown',
+    };
   return { ...result, kind: 'derived_cross', legs: route?.legs ?? [], recommendable: false };
 }
 

@@ -20,11 +20,14 @@ import {
   type ExchangeShopRatesByCurrency,
 } from '../../../services/moneyboxRateService';
 import { CalculatorKeyboard } from '../../calculator/components/CalculatorKeyboard';
+import type { FxContextSubstitution } from '../fxEffectiveContext';
+import { formatFxSubstitution } from '../fxSubstitutionText';
 
 type UnifiedRateOption = 'spot' | 'cash' | 'exchange-shop';
 
 interface MultiConverterProps {
   estimatePair?: (amount: string, from: CurrencyCode, to: CurrencyCode) => EstimateResult;
+  contextSubstitutions?: FxContextSubstitution[];
   sortedCurrencies: CurrencyCode[];
   multiAmounts: MultiAmountsState;
   baseCurrency: CurrencyCode;
@@ -44,6 +47,7 @@ interface MultiConverterProps {
 
 export const MultiConverter = ({
   estimatePair,
+  contextSubstitutions = [],
   sortedCurrencies,
   multiAmounts,
   baseCurrency,
@@ -192,6 +196,15 @@ export const MultiConverter = ({
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
+      {contextSubstitutions.length > 0 && (
+        <div className="px-3 text-sm" role="status">
+          {contextSubstitutions.map((substitution, index) => (
+            <p key={`${substitution.toCurrency}:${substitution.kind}:${index}`}>
+              {formatFxSubstitution(substitution)}
+            </p>
+          ))}
+        </div>
+      )}
       <div className="flex gap-2 mb-4 min-w-0 overflow-x-auto scrollbar-hide [overflow-y:hidden] [-webkit-overflow-scrolling:touch]">
         {(CURRENCY_QUICK_AMOUNTS[baseCurrency] || CURRENCY_QUICK_AMOUNTS.TWD).map(
           (amount: number) => (

@@ -926,15 +926,15 @@ cf-cache-status: HIT / age: 21
 
 實例：`(42.15 + 42.3) / 2` 在 JS 得到 **`42.224999999999994`**。
 
-| 項目           | 規格                                                                                                                                      |
-| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| 公開 JSON 表示 | **decimal string**（`"42.3"` 而非 `42.3`）                                                                                                |
-| 算術           | 十進位算術（decimal.js 等），**禁止** binary float 進入公開產物                                                                           |
-| 中點／spread   | 依輸入位數規則捨入，`ROUND_HALF_EVEN`                                                                                                     |
-| canonical 倒數 | 保留 **12 位小數**，`ROUND_HALF_EVEN`；來源直接值（per-1 或 per-10ⁿ 可整除）保留原始位數                                                  |
-| EXACT_OUT      | `from = ceil_minor(to × unitAmount ÷ providerPrice)`，**禁止**除以捨入後的 rate；回傳最小足額來源金額，不會少收                           |
-| EXACT_IN       | 以來源原值計算，結果捨入至目標幣別最近 minor unit，半位採 `ROUND_HALF_EVEN`；往返換算可能因捨入相差小於一個目標 minor unit 對應的來源金額 |
-| 金額           | EXACT_OUT 來源金額向上取整至來源 minor unit；其餘金額依幣別 **minor-unit** `ROUND_HALF_EVEN` 捨入                                         |
+| 項目           | 規格                                                                                                                                                                                |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 公開 JSON 表示 | **decimal string**（`"42.3"` 而非 `42.3`）                                                                                                                                          |
+| 算術           | 十進位算術（decimal.js 等），**禁止** binary float 進入公開產物                                                                                                                     |
+| 中點／spread   | 依輸入位數規則捨入，`ROUND_HALF_EVEN`                                                                                                                                               |
+| canonical 倒數 | 保留 **12 位小數**，`ROUND_HALF_EVEN`；來源直接值（per-1 或 per-10ⁿ 可整除）保留原始位數                                                                                            |
+| EXACT_OUT      | 直接牌告以 `from = ceil_minor(to × unitAmount ÷ providerPrice)`，**禁止**除以捨入後的 rate；衍生路由由末腿向前逐腿 EXACT_OUT，逐次向上捨入每個中介幣別 minor unit，回傳足額來源金額 |
+| EXACT_IN       | 直接牌告以來源原值計算，結果捨入至目標幣別最近 minor unit，半位採 `ROUND_HALF_EVEN`；衍生路由由首腿向後逐腿 EXACT_IN，每腿結果按該腿目標幣別 minor unit 捨入                        |
+| 金額           | EXACT_OUT 來源金額向上取整至來源 minor unit；其餘金額依幣別 **minor-unit** `ROUND_HALF_EVEN` 捨入                                                                                   |
 
 守門測試須斷言：
 

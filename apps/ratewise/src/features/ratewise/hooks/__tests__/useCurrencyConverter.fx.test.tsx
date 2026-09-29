@@ -2,6 +2,9 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { normalizeQuote, type QuoteSnapshot } from '@app/shared/fx';
+import { getEstimateContextSubstitutions } from '../../fxEffectiveContext';
+import { estimateCrossPair } from '../../fxCrossEstimate';
+import { formatFxSubstitution } from '../../fxSubstitutionText';
 import { useConverterStore } from '../../../../stores/converterStore';
 import type * as ApiEndpointsModule from '../../../../config/api-endpoints';
 import { useFxCurrencyConverter as useCurrencyConverter } from '../useCurrencyConverter';
@@ -76,6 +79,20 @@ describe('v3 direction quotes', () => {
     act(() => result.current.handleFromAmountChange('-320'));
     await waitFor(() => expect(result.current.toAmount).toBe('-10'));
   });
+});
+
+it('names the non-TWD currency in reverse-pair delivery disclosures', async () => {
+  const krwCash = normalizeQuote({ ...quotes[0]!.sourceQuote, subjectCurrency: 'KRW' });
+  useConverterStore.setState({ fromCurrency: 'KRW', toCurrency: 'TWD', rateType: 'spot' });
+  const { result } = renderHook(() =>
+    useCurrencyConverter({ fxQuotes: krwCash, rateType: 'spot' }),
+  );
+  act(() => result.current.handleFromAmountChange('100'));
+  await waitFor(() => expect(result.current.toAmount).not.toBe(''));
+  const [substitution] = result.current.contextSubstitutions;
+  expect(substitution).toBeDefined();
+  if (substitution)
+    expect(formatFxSubstitution(substitution)).toBe('KRW無即期報價，改以現鈔計算。');
 });
 
 it('refreshes quote freshness when a newer release arrives and while idle', async () => {
@@ -177,6 +194,157 @@ it('keeps an explicitly selected two-leg reference out of best recommendations',
   expect(result.current.fxEstimate).toMatchObject({ kind: 'derived_cross', recommendable: false });
   await act(() => useConverterStore.setState({ providerPreference: { mode: 'best' } }));
   await waitFor(() => expect(result.current.toAmount).toBe('1200'));
+});
+
+it('uses one requested-or-fallback delivery method for both cross legs and discloses it once', async () => {
+  const usdSpot = normalizeQuote({
+    ...quotes[0]!.sourceQuote,
+    subjectCurrency: 'USD',
+    deliveryMethod: 'account',
+    channel: 'online',
+    providerBuyPrice: '30',
+    providerSellPrice: '32',
+  });
+  const krwCash = normalizeQuote({
+    ...quotes[0]!.sourceQuote,
+    subjectCurrency: 'KRW',
+    providerBuyPrice: '0.023',
+    providerSellPrice: '0.025',
+  });
+  useConverterStore.setState({
+    fromCurrency: 'USD',
+    toCurrency: 'KRW',
+    rateType: 'spot',
+    providerPreference: {
+      mode: 'manual',
+      manualProvider: { providerId: 'second-bank', sourceKind: 'bank' },
+    },
+  });
+  const { result } = renderHook(() =>
+    useCurrencyConverter({ fxQuotes: [...quotes, ...usdSpot, ...krwCash], rateType: 'spot' }),
+  );
+  act(() => result.current.handleFromAmountChange('100'));
+  await waitFor(() => expect(result.current.toAmount).not.toBe(''));
+  expect(result.current.fxEstimate).toMatchObject({ kind: 'derived_cross', status: 'available' });
+  expect(result.current.contextSubstitutions).toEqual([
+    expect.objectContaining({
+      kind: 'deliveryMethod',
+      from: 'account',
+      to: 'cash',
+      toCurrency: 'KRW',
+    }),
+  ]);
+});
+
+it('fills the USD multi table cross rows with one route-level method disclosure', () => {
+  const foreign = ['KRW', 'VND', 'PHP', 'MYR', 'IDR'].flatMap((currency, index) =>
+    normalizeQuote({
+      ...quotes[0]!.sourceQuote,
+      subjectCurrency: currency,
+      providerBuyPrice: String(0.02 + index / 1000),
+      providerSellPrice: String(0.03 + index / 1000),
+    }),
+  );
+  const allQuotes = [...quotes, ...foreign];
+  const context = {
+    now: new Date().toISOString(),
+    country: 'TW',
+    deliveryMethod: 'account' as const,
+    channel: 'online' as const,
+  };
+  for (const currency of ['KRW', 'VND', 'PHP', 'MYR', 'IDR']) {
+    const request = {
+      fromCurrency: 'USD',
+      toCurrency: currency,
+      amount: '100',
+      mode: 'EXACT_IN' as const,
+    };
+    const estimate = estimateCrossPair({
+      request,
+      context,
+      quotes: allQuotes,
+      providerId: 'second-bank',
+      best: false,
+    });
+    expect(estimate?.toAmount).toBeTruthy();
+    expect(
+      getEstimateContextSubstitutions({
+        request,
+        result: estimate!,
+        context,
+        providerId: 'second-bank',
+        quotes: allQuotes,
+      }),
+    ).toEqual([
+      expect.objectContaining({ kind: 'deliveryMethod', to: 'cash', toCurrency: currency }),
+    ]);
+  }
+});
+
+it('keeps best-mode quotes at the requested location and history records effective cross context', async () => {
+  const seoul = normalizeQuote({
+    ...quotes[0]!.sourceQuote,
+    subjectCurrency: 'KRW',
+    serviceCountry: 'KR',
+    branchId: 'seoul',
+    providerBuyPrice: '0.023',
+    providerSellPrice: '0.025',
+    sourcePublishedAt: new Date().toISOString(),
+  });
+  useConverterStore.setState({
+    fromCurrency: 'TWD',
+    toCurrency: 'KRW',
+    rateType: 'spot',
+    serviceCountry: 'TW',
+    providerPreference: { mode: 'best' },
+  });
+  const noRelocation = renderHook(() =>
+    useCurrencyConverter({ fxQuotes: seoul, rateType: 'spot' }),
+  );
+  act(() => noRelocation.result.current.handleFromAmountChange('100'));
+  await waitFor(() => expect(noRelocation.result.current.fxEstimate.status).toBe('unavailable'));
+  expect(noRelocation.result.current.contextSubstitutions).toEqual([]);
+  noRelocation.unmount();
+
+  const crossCash = normalizeQuote({
+    ...quotes[0]!.sourceQuote,
+    subjectCurrency: 'KRW',
+    providerBuyPrice: '0.023',
+    providerSellPrice: '0.025',
+  });
+  const manualUsd = normalizeQuote({
+    ...quotes[0]!.sourceQuote,
+    subjectCurrency: 'USD',
+    providerBuyPrice: '30',
+    providerSellPrice: '32',
+  });
+  useConverterStore.setState({
+    fromCurrency: 'USD',
+    toCurrency: 'KRW',
+    rateType: 'spot',
+    serviceCountry: 'TW',
+    branchId: null,
+    providerPreference: {
+      mode: 'manual',
+      manualProvider: { providerId: 'second-bank', sourceKind: 'bank' },
+    },
+  });
+  const { result } = renderHook(() =>
+    useCurrencyConverter({ fxQuotes: [...quotes, ...manualUsd, ...crossCash], rateType: 'spot' }),
+  );
+  act(() => result.current.handleFromAmountChange('100'));
+  await waitFor(() => expect(result.current.toAmount).not.toBe(''));
+  act(() => result.current.addToHistory());
+  expect(result.current.history[0]).toMatchObject({
+    rateType: 'cash',
+    serviceCountry: 'TW',
+    branchId: null,
+  });
+  const history = result.current.history[0]!;
+  expect(history.derivedLegs).toHaveLength(2);
+  act(() => result.current.reconvertFromHistory(history));
+  expect(result.current.fromAmount).toBe(history.amount);
+  expect(result.current.toAmount).toBe(history.result);
 });
 it('keeps explicit country and method when selecting another provider', () => {
   useConverterStore.getState().setRateType('spot');
@@ -502,20 +670,14 @@ it('routes best mode through TWD legs for a cross pair', async () => {
   const { result } = renderHook(() => useCurrencyConverter({ fxQuotes: legs, rateType: 'spot' }));
   act(() => result.current.handleFromAmountChange('10'));
   await waitFor(() => expect(result.current.toAmount).not.toBe(''));
-  expect(result.current.contextSubstitutions).toEqual(
-    expect.arrayContaining([
-      expect.objectContaining({ fromCurrency: 'USD', toCurrency: 'TWD', kind: 'deliveryMethod' }),
-      expect.objectContaining({ fromCurrency: 'TWD', toCurrency: 'JPY', kind: 'deliveryMethod' }),
-    ]),
-  );
+  expect(result.current.contextSubstitutions).toEqual([
+    expect.objectContaining({ fromCurrency: 'USD', toCurrency: 'JPY', kind: 'deliveryMethod' }),
+  ]);
   act(() => result.current.handleFromAmountChange('-10'));
   await waitFor(() => expect(result.current.toAmount).not.toBe(''));
-  expect(result.current.contextSubstitutions).toEqual(
-    expect.arrayContaining([
-      expect.objectContaining({ fromCurrency: 'USD', toCurrency: 'TWD', kind: 'deliveryMethod' }),
-      expect.objectContaining({ fromCurrency: 'TWD', toCurrency: 'JPY', kind: 'deliveryMethod' }),
-    ]),
-  );
+  expect(result.current.contextSubstitutions).toEqual([
+    expect.objectContaining({ fromCurrency: 'USD', toCurrency: 'JPY', kind: 'deliveryMethod' }),
+  ]);
 });
 
 it('uses only fresh, successful provider legs for a best-mode cross pair', async () => {

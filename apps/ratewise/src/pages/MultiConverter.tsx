@@ -1,5 +1,4 @@
 import { FxContextControls } from '../features/ratewise/components/FxContextControls';
-import { getRateProvider } from '../config/rateProviders';
 import { isFxV3Public } from '../config/api-endpoints';
 /**
  * Multi-Currency Converter Page - ParkKeeper 風格
@@ -156,6 +155,7 @@ export default function MultiConverter() {
           <div className={multiConverterLayoutTokens.card.className}>
             <MultiConverterComponent
               estimatePair={estimatePair}
+              contextSubstitutions={contextSubstitutions}
               sortedCurrencies={sortedCurrencies}
               multiAmounts={multiAmounts}
               baseCurrency={baseCurrency}
@@ -172,25 +172,6 @@ export default function MultiConverter() {
               onBaseCurrencyChange={handleBaseCurrencyChange}
               onToggleFavorite={toggleFavorite}
             />
-            {contextSubstitutions.map((substitution, index) => {
-              const label = substitution.providerIds
-                ?.map((id) => getRateProvider(id)?.label ?? id)
-                .join('、');
-              const region = substitution.country
-                ? new Intl.DisplayNames(['zh-TW'], { type: 'region' }).of(substitution.country)
-                : null;
-              return (
-                <p
-                  className="px-3 text-sm"
-                  role="status"
-                  key={`${substitution.toCurrency}:${substitution.kind}:${index}`}
-                >
-                  {substitution.kind === 'deliveryMethod'
-                    ? `${substitution.toCurrency}無${substitution.from === 'account' ? '即期' : '現鈔'}報價，改以${substitution.to === 'cash' ? '現鈔' : '即期'}計算。`
-                    : `${substitution.toCurrency}：${label}僅提供${region ?? '該地點'}據點報價，已以該地點計算。`}
-                </p>
-              );
-            })}
             {isFxV3Public() && <FxContextControls quotes={fxQuotes} />}
           </div>
         </section>

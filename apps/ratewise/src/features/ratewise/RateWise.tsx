@@ -38,6 +38,7 @@ import {
   resolveRateTypeByAvailability,
 } from '../../utils/exchangeRateCalculation';
 import { isFxV3Public } from '../../config/api-endpoints';
+import { formatFxSubstitution } from './fxSubstitutionText';
 
 const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: boolean } = {}) => {
   const [searchParams] = useSearchParams();
@@ -260,35 +261,13 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
                         : '依牌告試算，未含未知費用；不保證成交或可交付面額。'}
                   </p>
                   {contextSubstitutions.map((substitution, index) => {
-                    if (substitution.kind === 'deliveryMethod') {
-                      return (
-                        <p
-                          className="px-3 text-sm"
-                          role="status"
-                          key={`${substitution.kind}:${index}`}
-                        >
-                          {substitution.toCurrency}無
-                          {substitution.from === 'account' ? '即期' : '現鈔'}報價，改以
-                          {substitution.to === 'cash' ? '現鈔' : '即期'}計算。
-                        </p>
-                      );
-                    }
-                    const label = substitution.providerIds
-                      ?.map((id) => getRateProvider(id)?.label ?? id)
-                      .join('、');
-                    const region = substitution.country
-                      ? new Intl.DisplayNames(['zh-TW'], { type: 'region' }).of(
-                          substitution.country,
-                        )
-                      : null;
-                    const location = region ?? '該地點';
                     return (
                       <p
                         className="px-3 text-sm"
                         role="status"
                         key={`${substitution.kind}:${index}`}
                       >
-                        {substitution.toCurrency}：{label}僅提供{location}據點報價，已以該地點計算。
+                        {formatFxSubstitution(substitution)}
                       </p>
                     );
                   })}
