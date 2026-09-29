@@ -115,6 +115,7 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
     selectedQuote,
     selectedProviderStatus,
     selectedQuoteEvidence,
+    contextSubstitutions,
     estimateFreshness,
     providerQuotes,
   } = useCurrencyConverter({ exchangeRates, details, rateType, rateSource, mode: 'single' });
@@ -258,6 +259,39 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
                         ? '經中介幣別的兩腿推算，非業者直接牌告；不納入推薦。'
                         : '依牌告試算，未含未知費用；不保證成交或可交付面額。'}
                   </p>
+                  {contextSubstitutions.map((substitution, index) => {
+                    if (substitution.kind === 'deliveryMethod') {
+                      return (
+                        <p
+                          className="px-3 text-sm"
+                          role="status"
+                          key={`${substitution.kind}:${index}`}
+                        >
+                          {substitution.toCurrency}無
+                          {substitution.from === 'account' ? '即期' : '現鈔'}報價，改以
+                          {substitution.to === 'cash' ? '現鈔' : '即期'}計算。
+                        </p>
+                      );
+                    }
+                    const label = substitution.providerIds
+                      ?.map((id) => getRateProvider(id)?.label ?? id)
+                      .join('、');
+                    const region = substitution.country
+                      ? new Intl.DisplayNames(['zh-TW'], { type: 'region' }).of(
+                          substitution.country,
+                        )
+                      : null;
+                    const location = region ?? '該地點';
+                    return (
+                      <p
+                        className="px-3 text-sm"
+                        role="status"
+                        key={`${substitution.kind}:${index}`}
+                      >
+                        {substitution.toCurrency}：{label}僅提供{location}據點報價，已以該地點計算。
+                      </p>
+                    );
+                  })}
                   {selectedQuoteEvidence.length > 0 && estimateFreshness === 'unknown' && (
                     <p className="px-3 text-sm" role="status">
                       來源未提供發布時間，無法判斷新鮮度，僅供參考。
@@ -276,14 +310,13 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
                           quote.provider.providerId !== selectedQuote?.providerId,
                       )
                       .map((quote) => (
-                        <p
-                          key={`${quote.provider.providerId}:${quote.quoteId ?? quote.sourcePublishedAt ?? 'unknown'}`}
-                        >
+                        <p key={quote.quoteId}>
                           {getRateProvider(quote.provider.providerId)?.label ??
                             quote.provider.providerId}
                           ：來源發布時間{' '}
                           {quote.sourcePublishedAt
-                            ? formatIsoTimestamp(quote.sourcePublishedAt)
+                            ? formatIsoTimestamp(quote.sourcePublishedAt, { includeYear: true }) ||
+                              '未知'
                             : '未知'}
                           ，已超過更新門檻，未列入最佳推薦。
                         </p>
@@ -298,9 +331,9 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
                     selectedQuoteEvidence.map((quote) => (
                       <p className="px-3 text-sm" key={quote.quoteId}>
                         {quote.fromCurrency} → {quote.toCurrency}：來源發布時間{' '}
-                        {quote.sourceQuote.sourcePublishedAt
-                          ? formatIsoTimestamp(quote.sourceQuote.sourcePublishedAt)
-                          : '未知'}
+                        {formatIsoTimestamp(quote.sourceQuote.sourcePublishedAt, {
+                          includeYear: true,
+                        }) || '未知'}
                         。
                       </p>
                     ))}
@@ -314,9 +347,9 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
                           ? '買入'
                           : '賣出'}{' '}
                         {selectedQuote.sourceQuote.subjectCurrency}。來源發布時間：
-                        {selectedQuote.sourceQuote.sourcePublishedAt
-                          ? formatIsoTimestamp(selectedQuote.sourceQuote.sourcePublishedAt)
-                          : '未知'}
+                        {formatIsoTimestamp(selectedQuote.sourceQuote.sourcePublishedAt, {
+                          includeYear: true,
+                        }) || '未知'}
                         。
                       </p>
                       <details>

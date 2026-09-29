@@ -55,6 +55,7 @@ function buildV3Descriptor() {
     contract: FX_V3_SCHEMA_URL,
     availability: FX_V3_AVAILABILITY,
     current: `${DATA_BASE_URL}/v3/current.json`,
+    currentDescription: 'current pointer；解析後指向 v3 release manifest，不是匯率資料本體。',
     cdnCurrent: `${CDN_BASE_URL}/v3/current.json`,
     releaseObjectTemplate: `${DATA_BASE_URL}/v3/objects/{sha256}.json`,
     releaseManifestTemplate: `${DATA_BASE_URL}/v3/releases/{releaseId}.json`,
@@ -91,14 +92,12 @@ const latestJson = {
   supportedCurrencies: currencyKeys,
   endpoints: {
     latest: `${DATA_BASE_URL}/latest.json`,
-    ...(FX_V3_PUBLIC ? { legacyLatest: `${DATA_BASE_URL}/latest.json` } : {}),
     history: `${DATA_BASE_URL}/history/{YYYY-MM-DD}.json`,
     moneybox: exchangeShopProvider?.currentEndpoint,
     moneyboxHistory: exchangeShopProvider?.historyEndpoint,
   },
   cdnEndpoints: {
     latest: `${CDN_BASE_URL}/latest.json`,
-    ...(FX_V3_PUBLIC ? { legacyLatest: `${CDN_BASE_URL}/latest.json` } : {}),
     history: `${CDN_BASE_URL}/history/{YYYY-MM-DD}.json`,
     moneybox: exchangeShopProvider?.cdnCurrentEndpoint,
     moneyboxHistory: exchangeShopProvider?.cdnHistoryEndpoint,

@@ -44,6 +44,7 @@ it('does not request v3 when the flag is already off', async () => {
   vi.stubGlobal('fetch', fetchMock);
   const { useFxQuotes } = await import('../useFxQuotes');
   const { result } = renderHook(() => useFxQuotes());
+  await waitFor(() => expect(result.current.isLoading).toBe(false));
   expect(result.current.quotes).toEqual([]);
   expect(fetchMock).not.toHaveBeenCalled();
 });

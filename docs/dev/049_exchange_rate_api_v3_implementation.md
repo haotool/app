@@ -31,7 +31,7 @@ provider `failed`／`carried_forward` 快照只可供明確手動選擇，不能
 
 **SEO 頁惰性**：rollback 時 `FX_V3_PUBLIC=false`，幣別頁（title／meta／FAQ／JSON-LD 含 price 與 validFrom）、首頁、about 鏡像與幣別頁 CTA 沿用 main 的 `update-seo-rate-examples.mjs` 生成器與文案；v3 方向化 SEO 文案（雙向搜尋意圖改寫）移至 S3 SEO PR。以 main 與本分支 dist 逐頁比對（時間戳與資產雜湊正規化）驗證：264 頁 0 差異，僅 `open-data` 頁／鏡像與 `llms*.txt` 授權文案不同。
 
-`useLegacyCurrencyConverter.ts` 是 expand–contract 的暫存副本，於 S4 切換 PR（`FX_V3_PUBLIC` 改為 `true` 並完成 contract 階段）刪除。
+`useLegacyCurrencyConverter.ts` 是 expand–contract 的暫存副本，於 S5 contract 清理時刪除。
 
 新鮮度只看來源發布時間：台銀 36 小時、MoneyBox 24 小時（`FRESHNESS_MAX_HOURS`）；`sourcePublishedAt=null` 為 `unknown`，UI 分別顯示「來源未提供發布時間」與「已超過更新門檻」。公開 contract 固定輸出至 `/ratewise/api/v3/contract.schema.json`，current pointer 更新後由工作流 purge mutable URL。
 
@@ -90,7 +90,7 @@ S4d 切換已完成，先前延後項目裁決與證據如下：
 ### Public switch (S4d)
 
 - 使用者現在經 App、Open Data、JSON API、OpenAPI、Markdown mirrors 與 `llms*.txt` 使用 FX API v3；預設匯率情境為現鈔／臨櫃，報價帶來源時間、適用條件與可用性，Best 僅排名新鮮且可用的報價。EXACT_OUT 回傳最小足額付款金額；EXACT_IN 依目標幣別 minor unit 半偶捨入。
-- v2 使用者狀態遷移：既有 `rateType=spot` 若該幣對沒有帳戶牌告，會依 v3 quotes 切到可用現鈔；手動 provider 若 quotes 僅有一組服務地點與交付方式，會自動套用其 country、branch 與方式。
+- v2 使用者狀態相容：既有 `rateType`、地點與分店保持不變；計算時若報價唯一地點或交付方式不同，僅衍生有效情境並在畫面揭露，不回寫持久化狀態。
 - data plane 已先啟用並驗證：`RATEWISE_FX_V3_ENABLED=true`；current pointer 為 `https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/v3/current.json`。
 - 驗證：`pnpm generate:fx --check`、`pnpm test:root`、`pnpm test:fx`、RateWise／split-meow Vitest、兩 app 與 scripts typecheck、lint、format、`pnpm build:ratewise`；由 dist 檢查 `api/latest.json` schemaVersion、OpenAPI version、v3 links、modulepreload 與頁面文字差異。
 - Rollback：獨立一行 PR 將 `apps/shared/fx/public.ts` 的 `FX_V3_PUBLIC` 設回 `false`；data gate 保持開啟，避免停掉資料產出。發版後清除 `ratewise.fx.v3.*` localStorage 與失效 SW history cache（rollback cleanup 已由 `useFxQuotes.rollback` 覆蓋）。

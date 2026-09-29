@@ -78,14 +78,12 @@
   ],
   "endpoints": {
     "latest": "https://raw.githubusercontent.com/haotool/app/data/public/rates/latest.json",
-    "legacyLatest": "https://raw.githubusercontent.com/haotool/app/data/public/rates/latest.json",
     "history": "https://raw.githubusercontent.com/haotool/app/data/public/rates/history/{YYYY-MM-DD}.json",
     "moneybox": "https://raw.githubusercontent.com/haotool/app/data/public/rates/providers/moneybox/latest.json",
     "moneyboxHistory": "https://raw.githubusercontent.com/haotool/app/data/public/rates/providers/moneybox/history/{YYYY-MM-DD}.json"
   },
   "cdnEndpoints": {
     "latest": "https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json",
-    "legacyLatest": "https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json",
     "history": "https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/history/{YYYY-MM-DD}.json",
     "moneybox": "https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/providers/moneybox/latest.json",
     "moneyboxHistory": "https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/providers/moneybox/history/{YYYY-MM-DD}.json"
@@ -94,6 +92,7 @@
     "contract": "https://app.haotool.org/ratewise/api/v3/contract.schema.json",
     "availability": "v3 current 是目前啟用的 canonical API；legacy latest/history 僅供相容讀取，已棄用。",
     "current": "https://raw.githubusercontent.com/haotool/app/data/public/rates/v3/current.json",
+    "currentDescription": "current pointer；解析後指向 v3 release manifest，不是匯率資料本體。",
     "cdnCurrent": "https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/v3/current.json",
     "releaseObjectTemplate": "https://raw.githubusercontent.com/haotool/app/data/public/rates/v3/objects/{sha256}.json",
     "releaseManifestTemplate": "https://raw.githubusercontent.com/haotool/app/data/public/rates/v3/releases/{releaseId}.json",

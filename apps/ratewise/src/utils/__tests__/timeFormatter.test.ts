@@ -7,6 +7,13 @@ describe('formatIsoTimestamp', () => {
     expect(result).toBe('10/31 03:30');
   });
 
+  it('can include the year for source publication time', () => {
+    expect(formatIsoTimestamp('2025-10-31T03:30:00Z', { includeYear: true })).toMatch(
+      /^2025\/10\/31 \d{2}:\d{2}$/,
+    );
+    expect(formatIsoTimestamp(null, { includeYear: true })).toBe('');
+  });
+
   it('should handle ISO timestamp without timezone', () => {
     const result = formatIsoTimestamp('2025-10-31T03:30:00');
     expect(result).toMatch(/10\/31 \d{2}:\d{2}/); // Time may vary based on local timezone

@@ -17,6 +17,10 @@ describe.runIf(FX_V3_PUBLIC)('v3 public surface is enabled', () => {
     expect(latest['$schema']).toContain('/api/v3/contract.schema.json');
     expect(latest['legacySchemaVersion']).toBe('2.0');
     expect(JSON.stringify(latest)).toContain('/rates/v3/current.json');
+    const v3 = latest['v3'] as Record<string, unknown>;
+    expect(v3['availability']).toContain('目前啟用');
+    expect(v3['currentDescription']).toContain('release manifest');
+    expect(latest['endpoints']).not.toHaveProperty('legacyLatest');
   });
 
   it('publishes OpenAPI v3 entry points and schemas', () => {
@@ -37,6 +41,9 @@ describe.runIf(FX_V3_PUBLIC)('v3 public surface is enabled', () => {
       const pair = JSON.parse(read(`api/pairs/${file}`)) as Record<string, unknown>;
       expect(pair['schemaVersion'], file).toBe('3.0');
       expect(pair['v3CurrentUrl'], file).toContain('/rates/v3/current.json');
+      expect(pair['liveRateUrl'], file).toMatch(/\/public\/rates\/latest\.json$/);
+      expect(pair['liveRateUrl'], file).not.toContain('/v3/');
+      expect(pair['v3CurrentUrlDescription'], file).toContain('release manifest');
     }
   });
 

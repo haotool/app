@@ -29,10 +29,14 @@ vi.mock('./hooks/useExchangeRates', () => ({
 }));
 vi.mock('./hooks/useMoneyBoxRates', () => ({ useMoneyBoxRates: () => ({ rate: null }) }));
 vi.mock('./hooks/useMoneyBoxRatesMap', () => ({ useMoneyBoxRatesMap: () => ({ rates: {} }) }));
-const fxState = vi.hoisted(() => ({ error: null as string | null, fallback: false }));
+const fxState = vi.hoisted(() => ({
+  error: null as string | null,
+  fallback: false,
+  rows: null as unknown[] | null,
+}));
 vi.mock('./hooks/useFxQuotes', () => ({
   useFxQuotes: () => ({
-    quotes: fxState.fallback ? [] : rows,
+    quotes: fxState.fallback ? [] : (fxState.rows ?? rows),
     releaseId: null,
     isLoading: false,
     error: fxState.error,
@@ -69,7 +73,8 @@ const rows = [
     sourcePublishedAt: now,
   }),
 ];
-beforeEach(() =>
+beforeEach(() => {
+  fxState.rows = null;
   useConverterStore.setState({
     fromCurrency: 'USD',
     toCurrency: 'JPY',
@@ -83,8 +88,8 @@ beforeEach(() =>
       mode: 'manual',
       manualProvider: { providerId: 'bot', sourceKind: 'bank' },
     },
-  }),
-);
+  });
+});
 it('discloses stale underlying data for a manually selected cross-currency route', () => {
   render(
     <MemoryRouter>
@@ -101,7 +106,9 @@ it('discloses stale underlying data for a manually selected cross-currency route
   ).toBeInTheDocument();
   expect(
     screen.getByText(
-      new RegExp(`USD → TWD：來源發布時間 ${formatIsoTimestamp('2020-01-01T00:00:00Z')}`),
+      new RegExp(
+        `USD → TWD：來源發布時間 ${formatIsoTimestamp('2020-01-01T00:00:00Z', { includeYear: true })}`,
+      ),
     ),
   ).toBeInTheDocument();
 });
@@ -126,6 +133,39 @@ it('renders the stale provider excluded from best recommendation in the status r
     '未列入最佳推薦',
   );
   expect(screen.getByRole('status', { name: '其他來源牌告狀態' })).toHaveTextContent('01/02 08:00');
+});
+
+it('renders two stale quotes from one provider without duplicate React keys', () => {
+  const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
+  fxState.rows = [
+    ...normalizeQuote({ ...source, sourcePublishedAt: now }),
+    ...normalizeQuote({
+      ...source,
+      providerId: 'second-bank',
+      sourcePublishedAt: '2020-01-01T00:00:00Z',
+    }),
+    ...normalizeQuote({
+      ...source,
+      providerId: 'second-bank',
+      sourcePublishedAt: '2020-01-02T00:00:00Z',
+    }),
+  ];
+  useConverterStore.setState({
+    fromCurrency: 'USD',
+    toCurrency: 'TWD',
+    providerPreference: { mode: 'best' },
+  });
+  render(
+    <MemoryRouter>
+      <HelmetProvider>
+        <RateWise />
+      </HelmetProvider>
+    </MemoryRouter>,
+  );
+  const status = screen.getByRole('status', { name: '其他來源牌告狀態' });
+  expect(status.querySelectorAll('p')).toHaveLength(2);
+  expect(errors.mock.calls.flat().join(' ')).not.toMatch(/unique "key" prop/i);
+  errors.mockRestore();
 });
 
 it('shows one degraded notice when v3 fetch fails and a BoT fallback quote is available', () => {

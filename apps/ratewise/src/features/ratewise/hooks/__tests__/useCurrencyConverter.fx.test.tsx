@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { normalizeMoneyboxSnapshot, normalizeQuote, type QuoteSnapshot } from '@app/shared/fx';
+import { normalizeQuote, type QuoteSnapshot } from '@app/shared/fx';
 import { useConverterStore } from '../../../../stores/converterStore';
 import type * as ApiEndpointsModule from '../../../../config/api-endpoints';
 import { useFxCurrencyConverter as useCurrencyConverter } from '../useCurrencyConverter';
@@ -26,10 +26,6 @@ beforeEach(() => {
   fxFeed.providerStatuses.clear();
 });
 afterEach(() => vi.useRealTimers());
-const hydratePersistedV2 = async (state: Record<string, unknown>) => {
-  localStorage.setItem('ratewise-converter', JSON.stringify({ state, version: 0 }));
-  await act(async () => useConverterStore.persist.rehydrate());
-};
 const quotes = normalizeQuote({
   providerId: 'second-bank',
   subjectCurrency: 'USD',
@@ -285,14 +281,11 @@ it('keeps stale provider freshness evidence available when ranking excludes the 
   );
 });
 
-it('migrates a persisted v2 spot selection to cash when that pair only has a cash quote', async () => {
-  await hydratePersistedV2({
+it('keeps a deliberate spot choice while using cash for a cash-only pair', async () => {
+  useConverterStore.setState({
     fromCurrency: 'TWD',
     toCurrency: 'KRW',
     rateType: 'spot',
-    rateSource: 'bank',
-    serviceCountry: 'TW',
-    branchId: null,
     providerPreference: {
       mode: 'manual',
       manualProvider: { providerId: 'bot', sourceKind: 'bank' },
@@ -310,50 +303,182 @@ it('migrates a persisted v2 spot selection to cash when that pair only has a cas
     deliveryMethod: 'cash',
     channel: 'branch',
   });
-  const { result } = renderHook(() =>
-    useCurrencyConverter({
-      fxQuotes: cashOnly,
-      rateType: useConverterStore((state) => state.rateType),
-    }),
+  const spotUsd = normalizeQuote({
+    ...quotes[0]!.sourceQuote,
+    providerId: 'bot',
+    deliveryMethod: 'account',
+    channel: 'online',
+    sourcePublishedAt: new Date().toISOString(),
+  });
+  const { result, rerender } = renderHook(
+    ({ rateType }) => useCurrencyConverter({ fxQuotes: [...cashOnly, ...spotUsd], rateType }),
+    { initialProps: { rateType: 'spot' as const } },
   );
-  await waitFor(() => expect(useConverterStore.getState().rateType).toBe('cash'));
   await waitFor(() => expect(result.current.toAmount).not.toBe(''));
+  expect(useConverterStore.getState().rateType).toBe('spot');
+  expect(result.current.contextSubstitutions).toContainEqual(
+    expect.objectContaining({ kind: 'deliveryMethod', from: 'account', to: 'cash' }),
+  );
+  act(() => {
+    useConverterStore.setState({ toCurrency: 'USD' });
+  });
+  rerender({ rateType: 'spot' });
+  await waitFor(() => expect(result.current.toAmount).not.toBe(''));
+  expect(useConverterStore.getState().rateType).toBe('spot');
 });
 
-it('restores the unique provider location for persisted manual MoneyBox state', async () => {
-  await hydratePersistedV2({
+it('derives the unique MoneyBox location while preserving the manually selected Taiwan location', async () => {
+  useConverterStore.setState({
     fromCurrency: 'TWD',
-    toCurrency: 'USD',
+    toCurrency: 'KRW',
     rateType: 'spot',
-    rateSource: 'exchange-shop',
+    serviceCountry: 'TW',
+    branchId: null,
     providerPreference: {
       mode: 'manual',
       manualProvider: { providerId: 'moneybox', sourceKind: 'exchange-shop' },
     },
+  });
+  const moneybox = normalizeQuote({
+    ...quotes[0]!.sourceQuote,
+    providerId: 'moneybox',
+    subjectCurrency: 'KRW',
+    providerBuyPrice: '0.023',
+    providerSellPrice: '0.025',
+    serviceCountry: 'KR',
+    branchId: 'branch-7',
+    sourcePublishedAt: new Date().toISOString(),
+  });
+  const { result } = renderHook(() =>
+    useCurrencyConverter({ fxQuotes: moneybox, rateType: 'spot' }),
+  );
+  await waitFor(() => expect(result.current.toAmount).not.toBe(''));
+  expect(useConverterStore.getState()).toMatchObject({
     serviceCountry: 'TW',
     branchId: null,
+    rateType: 'spot',
   });
-  const moneybox = normalizeMoneyboxSnapshot({
-    timestamp: new Date().toISOString(),
-    sourceQuotes: {
-      USD: {
-        buy: '1300',
-        sell: '1400',
-        unitAmount: '1',
-        serviceCountry: 'KR',
-        deliveryMethod: 'cash',
-        channel: 'branch',
+  expect(result.current.contextSubstitutions).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        kind: 'location',
+        country: 'KR',
         branchId: 'branch-7',
-      },
+      }),
+      expect.objectContaining({ kind: 'deliveryMethod', to: 'cash' }),
+    ]),
+  );
+});
+
+it('keeps the persisted converter context unchanged through bank → MoneyBox → bank', async () => {
+  const bot = normalizeQuote({
+    ...quotes[0]!.sourceQuote,
+    providerId: 'bot',
+    subjectCurrency: 'KRW',
+    providerBuyPrice: '0.023',
+    providerSellPrice: '0.025',
+    serviceCountry: 'TW',
+    sourcePublishedAt: new Date().toISOString(),
+  });
+  const shop = normalizeQuote({
+    ...bot[0]!.sourceQuote,
+    providerId: 'moneybox',
+    serviceCountry: 'KR',
+    branchId: 'branch-7',
+  });
+  useConverterStore.setState({
+    fromCurrency: 'TWD',
+    toCurrency: 'KRW',
+    rateType: 'spot',
+    serviceCountry: 'TW',
+    branchId: null,
+    providerPreference: {
+      mode: 'manual',
+      manualProvider: { providerId: 'bot', sourceKind: 'bank' },
     },
   });
-  renderHook(() => useCurrencyConverter({ fxQuotes: moneybox, rateType: 'spot' }));
-  await waitFor(() =>
-    expect(useConverterStore.getState()).toMatchObject({
-      serviceCountry: 'KR',
-      branchId: 'branch-7',
-      rateType: 'cash',
+  const { result } = renderHook(() =>
+    useCurrencyConverter({ fxQuotes: [...bot, ...shop], rateType: 'spot' }),
+  );
+  await waitFor(() => expect(result.current.toAmount).not.toBe(''));
+  const persisted = { ...useConverterStore.getState() };
+  act(() =>
+    useConverterStore.getState().setProviderPreference({
+      mode: 'manual',
+      manualProvider: { providerId: 'moneybox', sourceKind: 'exchange-shop' },
     }),
+  );
+  await waitFor(() => expect(result.current.toAmount).not.toBe(''));
+  expect(useConverterStore.getState()).toMatchObject({
+    serviceCountry: persisted.serviceCountry,
+    branchId: persisted.branchId,
+    rateType: persisted.rateType,
+  });
+  act(() =>
+    useConverterStore.getState().setProviderPreference({
+      mode: 'manual',
+      manualProvider: { providerId: 'bot', sourceKind: 'bank' },
+    }),
+  );
+  await waitFor(() => expect(result.current.selectedQuote?.providerId).toBe('bot'));
+  expect(result.current.toAmount).not.toBe('');
+  expect(useConverterStore.getState()).toMatchObject({
+    serviceCountry: 'TW',
+    branchId: null,
+    rateType: 'spot',
+  });
+});
+
+it('uses a fresh cash quote for best-mode TWD → KRW without changing spot preference', async () => {
+  useConverterStore.setState({
+    fromCurrency: 'TWD',
+    toCurrency: 'KRW',
+    rateType: 'spot',
+    providerPreference: { mode: 'best' },
+  });
+  const cashOnly = normalizeQuote({
+    ...quotes[0]!.sourceQuote,
+    providerId: 'bot',
+    subjectCurrency: 'KRW',
+    providerBuyPrice: '0.023',
+    providerSellPrice: '0.025',
+    sourcePublishedAt: new Date().toISOString(),
+  });
+  const { result } = renderHook(() =>
+    useCurrencyConverter({ fxQuotes: cashOnly, rateType: 'spot' }),
+  );
+  act(() => result.current.handleFromAmountChange('100'));
+  await waitFor(() => expect(result.current.toAmount).not.toBe(''));
+  expect(useConverterStore.getState().rateType).toBe('spot');
+  expect(result.current.contextSubstitutions).toContainEqual(
+    expect.objectContaining({ kind: 'deliveryMethod', from: 'account', to: 'cash' }),
+  );
+});
+
+it('does not persist a derived cash context when KRW is present in multi mode', async () => {
+  useConverterStore.setState({
+    baseCurrency: 'TWD',
+    rateType: 'spot',
+    providerPreference: {
+      mode: 'manual',
+      manualProvider: { providerId: 'bot', sourceKind: 'bank' },
+    },
+  });
+  const krwCash = normalizeQuote({
+    ...quotes[0]!.sourceQuote,
+    providerId: 'bot',
+    subjectCurrency: 'KRW',
+    providerBuyPrice: '0.023',
+    providerSellPrice: '0.025',
+    sourcePublishedAt: new Date().toISOString(),
+  });
+  const { result } = renderHook(() =>
+    useCurrencyConverter({ fxQuotes: krwCash, rateType: 'spot', mode: 'multi' }),
+  );
+  await waitFor(() => expect(result.current.multiAmounts.KRW).not.toBe(''));
+  expect(useConverterStore.getState().rateType).toBe('spot');
+  expect(result.current.contextSubstitutions).toContainEqual(
+    expect.objectContaining({ toCurrency: 'KRW', kind: 'deliveryMethod', to: 'cash' }),
   );
 });
 
@@ -374,9 +499,91 @@ it('routes best mode through TWD legs for a cross pair', async () => {
       sourcePublishedAt: now,
     }),
   ];
-  const { result } = renderHook(() => useCurrencyConverter({ fxQuotes: legs, rateType: 'cash' }));
+  const { result } = renderHook(() => useCurrencyConverter({ fxQuotes: legs, rateType: 'spot' }));
   act(() => result.current.handleFromAmountChange('10'));
   await waitFor(() => expect(result.current.toAmount).not.toBe(''));
+  expect(result.current.contextSubstitutions).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ fromCurrency: 'USD', toCurrency: 'TWD', kind: 'deliveryMethod' }),
+      expect.objectContaining({ fromCurrency: 'TWD', toCurrency: 'JPY', kind: 'deliveryMethod' }),
+    ]),
+  );
+  act(() => result.current.handleFromAmountChange('-10'));
+  await waitFor(() => expect(result.current.toAmount).not.toBe(''));
+  expect(result.current.contextSubstitutions).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ fromCurrency: 'USD', toCurrency: 'TWD', kind: 'deliveryMethod' }),
+      expect.objectContaining({ fromCurrency: 'TWD', toCurrency: 'JPY', kind: 'deliveryMethod' }),
+    ]),
+  );
+});
+
+it('uses only fresh, successful provider legs for a best-mode cross pair', async () => {
+  const leg = (providerId: string, subjectCurrency: string, publishedAt: string) =>
+    normalizeQuote({
+      ...quotes[0]!.sourceQuote,
+      providerId,
+      subjectCurrency,
+      providerBuyPrice: subjectCurrency === 'JPY' ? '0.2' : '30',
+      providerSellPrice: subjectCurrency === 'JPY' ? '0.25' : '32',
+      sourcePublishedAt: publishedAt,
+    });
+  const now = new Date().toISOString();
+  fxFeed.quotes = [
+    ...leg('good-bank', 'USD', now),
+    ...leg('good-bank', 'JPY', now),
+    ...leg('stale-bank', 'USD', '2020-01-01T00:00:00Z'),
+    ...leg('stale-bank', 'JPY', now),
+    ...leg('failed-bank', 'USD', now),
+    ...leg('failed-bank', 'JPY', now),
+  ];
+  fxFeed.providerStatuses.set('good-bank', 'ok');
+  fxFeed.providerStatuses.set('stale-bank', 'ok');
+  fxFeed.providerStatuses.set('failed-bank', 'failed');
+  useConverterStore.setState({
+    fromCurrency: 'USD',
+    toCurrency: 'JPY',
+    providerPreference: { mode: 'best' },
+  });
+  const { result } = renderHook(() => useCurrencyConverter({ rateType: 'cash' }));
+  act(() => result.current.handleFromAmountChange('10'));
+  await waitFor(() => expect(result.current.toAmount).toBe('1200'));
+  const goodLegIds = fxFeed.quotes
+    .filter(
+      (quote) =>
+        quote.providerId === 'good-bank' &&
+        ((quote.fromCurrency === 'USD' && quote.toCurrency === 'TWD') ||
+          (quote.fromCurrency === 'TWD' && quote.toCurrency === 'JPY')),
+    )
+    .map((quote) => quote.quoteId);
+  expect('legs' in result.current.fxEstimate && result.current.fxEstimate.legs).toEqual(
+    expect.arrayContaining(goodLegIds),
+  );
+  expect(result.current.estimateFreshness).toBe('fresh');
+});
+
+it('falls back to applicable unknown BoT legs when best cross ranking has no eligible combination', async () => {
+  const botUnknown = (subjectCurrency: string) =>
+    normalizeQuote({
+      ...quotes[0]!.sourceQuote,
+      providerId: 'bot',
+      subjectCurrency,
+      providerBuyPrice: subjectCurrency === 'JPY' ? '0.2' : '30',
+      providerSellPrice: subjectCurrency === 'JPY' ? '0.25' : '32',
+      sourcePublishedAt: null,
+    });
+  fxFeed.quotes = [...botUnknown('USD'), ...botUnknown('JPY')];
+  fxFeed.providerStatuses.set('bot', 'failed');
+  useConverterStore.setState({
+    fromCurrency: 'USD',
+    toCurrency: 'JPY',
+    providerPreference: { mode: 'best' },
+  });
+  const { result } = renderHook(() => useCurrencyConverter({ rateType: 'cash' }));
+  act(() => result.current.handleFromAmountChange('10'));
+  await waitFor(() => expect(result.current.toAmount).toBe('1200'));
+  expect(result.current.estimateFreshness).toBe('unknown');
+  expect(result.current.selectedProviderStatus).toBe('failed');
 });
 
 it('uses applicable default BoT quote when best ranking has no fresh quote', async () => {

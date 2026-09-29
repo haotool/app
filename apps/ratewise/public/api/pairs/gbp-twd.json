@@ -14,9 +14,10 @@
   "$schema": "https://app.haotool.org/ratewise/api/v3/contract.schema.json",
   "slug": "gbp-twd",
   "pageUrl": "https://app.haotool.org/ratewise/gbp-twd/",
-  "liveRateUrl": "https://raw.githubusercontent.com/haotool/app/data/public/rates/v3/current.json",
+  "liveRateUrl": "https://raw.githubusercontent.com/haotool/app/data/public/rates/latest.json",
   "legacyRateUrl": "https://raw.githubusercontent.com/haotool/app/data/public/rates/latest.json",
   "v3CurrentUrl": "https://raw.githubusercontent.com/haotool/app/data/public/rates/v3/current.json",
+  "v3CurrentUrlDescription": "current pointer；解析後指向 v3 release manifest，不是匯率資料本體。",
   "v3ContractUrl": "https://app.haotool.org/ratewise/api/v3/contract.schema.json",
   "v3Availability": "v3 current 是目前啟用的 canonical API；legacy latest 僅供相容讀取，已棄用。",
   "canonicalFields": {
