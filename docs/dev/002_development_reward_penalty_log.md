@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+395
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+396
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-10-01
+- ID：reward-ratewise-fx-v3-corepack-install-retry
+- 原因：MoneyBox 排程的 v3 publisher 在 corepack 下載 pnpm 時遇 undici 連線中斷，單次暫時性網路錯誤使整個 workflow 紅燈。
+- 解法：publish-fx-v3 依賴安裝步驟加入最多 3 次重試，最後一次仍失敗才讓 workflow 失敗。
 
 - 日期：2026-10-01
 - ID：reward-ratewise-governance-cf-cache-status-gate
