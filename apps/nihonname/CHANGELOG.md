@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.13
+
+### Patch Changes
+
+- Updated dependencies [1bf12e8]
+- Updated dependencies [1bf12e8]
+  - @app/shared@0.1.0
+
 ## 1.0.12
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @app/quake-school
 
+## 1.0.9
+
+### Patch Changes
+
+- Updated dependencies [1bf12e8]
+- Updated dependencies [1bf12e8]
+  - @app/shared@0.1.0
+
 ## 1.0.8
 
 ### Patch Changes
