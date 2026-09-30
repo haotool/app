@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+396
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+397
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-10-01
+- ID：reward-ratewise-lighthouse-baseline-median5
+- 原因：Lighthouse baseline 自 6/26 起凍結（僅成功時才回寫），單次分數 83~99 波動使 3 次中位數長期貼著 5% 漂移門檻而連續紅燈。
+- 解法：LH_RUNS 由 3 增為 5 穩定中位數，並以 CI 5 次實測重建 baseline；90 分硬門檻不變，首頁與 FAQ 實測 94、About 96。
 
 - 日期：2026-10-01
 - ID：reward-ratewise-fx-v3-corepack-install-retry

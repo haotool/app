@@ -45,7 +45,7 @@ jobs:
         run: node scripts/lighthouse-production.mjs
         env:
           LH_PRODUCTION_URL: ${{ github.event.inputs.target_url || 'https://app.haotool.org/ratewise/' }}
-          LH_RUNS: '3'
+          LH_RUNS: '5'
           LH_OUTPUT_DIR: lighthouse-reports/production
           LH_BASELINE_PATH: scripts/lighthouse-baseline.production.json
           LH_BASELINE_DRIFT_PCT: '5'
