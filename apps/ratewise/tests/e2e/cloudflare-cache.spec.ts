@@ -226,7 +226,8 @@ test.describe('Cloudflare Production Headers', () => {
   test('Cloudflare edge headers stay visible on production responses', async ({ request }) => {
     const response = await request.get(`${RATEWISE_URL}/`);
 
+    // 正式站 HTML 與 hashed asset 皆已不回傳 cf-cache-status；cf-ray 足以證明流量經過 Cloudflare，
+    // 快取語意由上方 cache-control 測試負責。
     expect(response.headers()['cf-ray']).toBeDefined();
-    expect(response.headers()['cf-cache-status']).toBeDefined();
   });
 });

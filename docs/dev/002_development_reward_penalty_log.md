@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+394
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+395
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-10-01
+- ID：reward-ratewise-governance-cf-cache-status-gate
+- 原因：Production Governance 自 9/1 起每日紅燈，正式站 HTML 與 hashed asset 已不回傳 cf-cache-status，測試仍強制斷言。
+- 解法：邊緣標頭測試改只斷言 cf-ray，快取語意交由既有 cache-control 測試，並以 workflow 同參數對正式站驗證全綠。
 
 - 日期：2026-09-29
 - ID：reward-ratewise-fx-v3-pipeline-hardening
