@@ -1,5 +1,13 @@
 # @app/haotool
 
+## 1.1.8
+
+### Patch Changes
+
+- Updated dependencies [1bf12e8]
+- Updated dependencies [1bf12e8]
+  - @app/shared@0.1.0
+
 ## 1.1.7
 
 ### Patch Changes
