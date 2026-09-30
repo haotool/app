@@ -124,7 +124,7 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
 
   // v3 公開時徽章只反映實際採用的已驗證 quote；legacy 端點僅在回滾（旗標關閉）時使用。
   const exchangeShopBadgeRate = isFxV3Public()
-    ? buildExchangeShopBadgeFromQuote(selectedQuote, exchangeShopCurrency)
+    ? buildExchangeShopBadgeFromQuote(selectedQuoteEvidence[0])
     : moneyBoxRate?.currency === exchangeShopCurrency
       ? moneyBoxRate
       : null;

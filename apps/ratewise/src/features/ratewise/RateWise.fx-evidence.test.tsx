@@ -194,8 +194,8 @@ it('builds the exchange shop badge from the verified v3 quote instead of the leg
   fxState.rows = normalizeQuote({
     ...source,
     providerId: 'moneybox',
-    subjectCurrency: 'KRW',
-    priceCurrency: 'TWD',
+    subjectCurrency: 'TWD',
+    priceCurrency: 'KRW',
     serviceCountry: 'KR',
     branchId: 'myeongdong',
     sourcePublishedAt: published,
@@ -222,6 +222,41 @@ it('builds the exchange shop badge from the verified v3 quote instead of the leg
   expect(badge).not.toHaveTextContent('LEGACY-STAMP');
   expect(badge).not.toHaveTextContent('備援');
   fxState.legacyMoneyBoxRate = null;
+  fxState.lastUpdate = null;
+});
+
+it('shows the exchange shop badge for a direct non-TWD v3 quote such as USD to KRW', () => {
+  const published = '2026-09-30T08:00:00Z';
+  fxState.lastUpdate = published;
+  fxState.rows = normalizeQuote({
+    ...source,
+    providerId: 'moneybox',
+    subjectCurrency: 'USD',
+    priceCurrency: 'KRW',
+    serviceCountry: 'KR',
+    branchId: 'myeongdong',
+    sourcePublishedAt: published,
+  });
+  useConverterStore.setState({
+    fromCurrency: 'USD',
+    toCurrency: 'KRW',
+    serviceCountry: 'KR',
+    branchId: 'myeongdong',
+    providerPreference: {
+      mode: 'manual',
+      manualProvider: { providerId: 'moneybox', sourceKind: 'exchange-shop' },
+    },
+  });
+  render(
+    <MemoryRouter>
+      <HelmetProvider>
+        <RateWise />
+      </HelmetProvider>
+    </MemoryRouter>,
+  );
+  const badge = screen.getByTestId('ratewise-data-source');
+  expect(badge).toHaveTextContent('MoneyBox');
+  expect(badge).not.toHaveTextContent('臺灣銀行');
   fxState.lastUpdate = null;
 });
 

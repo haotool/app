@@ -16,9 +16,11 @@ export type ExchangeShopBadgeInfo = Pick<
  */
 export function buildExchangeShopBadgeFromQuote(
   quote: QuoteSnapshot | null | undefined,
-  currency: CurrencyCode | null,
 ): ExchangeShopBadgeInfo | null {
-  if (!quote || !currency || quote.providerId !== 'moneybox') return null;
+  if (!quote || quote.providerId !== 'moneybox') return null;
+  // 換錢所設定以牌告計價幣別（KRW）為鍵；標的幣別可能是 TWD、USD 等任何幣別，
+  // 所以直接牌告（例如 USD→KRW）也能取得來源資訊，不依賴 legacy 的 TWD↔KRW 判斷。
+  const currency = quote.sourceQuote.priceCurrency as CurrencyCode;
   const provider = getExchangeShopProvider(currency);
   if (!provider) return null;
   const publishedAt = quote.sourceQuote.sourcePublishedAt;

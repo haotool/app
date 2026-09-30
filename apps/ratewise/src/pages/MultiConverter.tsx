@@ -72,6 +72,13 @@ export default function MultiConverter() {
   } = useCurrencyConverter({ exchangeRates, details, rateType, rateSource, mode: 'multi' });
 
   const providerPreference = useConverterStore((state) => state.providerPreference);
+  // 與 converter 的報價時鐘同頻（每分鐘）：離線或刷新失敗時，報價跨過新鮮度門檻也要更新提示。
+  const [clockMs, setClockMs] = useState(() => Date.now());
+  useEffect(() => {
+    if (!isFxV3Public()) return;
+    const timer = setInterval(() => setClockMs(Date.now()), 60_000);
+    return () => clearInterval(timer);
+  }, []);
   const fxNotices = useMemo(
     () =>
       isFxV3Public()
@@ -79,11 +86,11 @@ export default function MultiConverter() {
             quotes: fxQuotes,
             providerStatuses,
             preference: providerPreference,
-            now: new Date().toISOString(),
+            now: new Date(clockMs).toISOString(),
             refreshFailed: Boolean(fxError),
           })
         : [],
-    [fxQuotes, providerStatuses, providerPreference, fxError],
+    [fxQuotes, providerStatuses, providerPreference, fxError, clockMs],
   );
 
   // 註：rateSource→cash 同步已收斂到 converterStore.setRateSource。

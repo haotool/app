@@ -623,7 +623,7 @@ export const useFxCurrencyConverter = (options: UseCurrencyConverterOptions = {}
         : 'fresh';
   }, [selectedQuoteEvidence, activeContext.now]);
   const effectiveSource =
-    getRateProvider(selectedQuote?.providerId ?? '')?.sourceKind ?? rateSource ?? 'bank';
+    getRateProvider(selectedQuoteEvidence[0]?.providerId ?? '')?.sourceKind ?? rateSource ?? 'bank';
   const activeAmount = activeAmountForPair;
   const activeRequest = useMemo<EstimateRequest>(
     () => ({

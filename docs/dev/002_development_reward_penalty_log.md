@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+3（reward 3、penalty 0、neutral 0）｜累計總分：+400
+> 本次分數變化：+4（reward 4、penalty 0、neutral 0）｜累計總分：+401
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-10-01
+- ID：reward-ratewise-fx-v3-badge-provider-and-clock
+- 原因：來源徽章以 legacy 的 TWD↔KRW 判斷，遇到 USD→KRW 直接牌告或交叉換算會誤顯示臺灣銀行；多幣別頁提示的時間凍結在 memo，離線跨過新鮮度門檻不會更新。
+- 解法：徽章與來源種類改由實際採用的 quote 證據決定並以計價幣別查換錢所設定，多幣別頁加入每分鐘時鐘依賴，各補紅綠測試。
 
 - 日期：2026-10-01
 - ID：reward-ratewise-fx-v3-best-cross-fallback-order

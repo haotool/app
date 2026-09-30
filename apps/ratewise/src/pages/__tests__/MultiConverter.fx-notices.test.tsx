@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
-import { beforeEach, expect, it, vi } from 'vitest';
+import { act } from 'react';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { normalizeQuote } from '@app/shared/fx';
 import { useConverterStore } from '../../stores/converterStore';
 import MultiConverter from '../MultiConverter';
@@ -94,4 +95,34 @@ it('discloses a failed refresh that keeps the cached quotes on the multi-currenc
   renderPage();
 
   expect(screen.getByTestId('multi-fx-quote-notices')).toHaveTextContent('最新報價更新失敗');
+});
+
+afterEach(() => vi.useRealTimers());
+
+it('refreshes the freshness notice as the clock crosses the stale threshold', () => {
+  vi.useFakeTimers();
+  const now = Date.now();
+  fxState.quotes = normalizeQuote({
+    providerId: 'bot',
+    subjectCurrency: 'USD',
+    priceCurrency: 'TWD',
+    unitAmount: '1',
+    providerBuyPrice: '30',
+    providerSellPrice: '32',
+    sourcePublishedAt: new Date(now - 35 * 3_600_000).toISOString(),
+    fetchedAt: new Date(now).toISOString(),
+    lastSuccessfulCheckAt: new Date(now).toISOString(),
+    serviceCountry: 'TW',
+    deliveryMethod: 'cash',
+    channel: 'branch',
+    dataKind: 'published_board',
+  });
+  renderPage();
+  expect(screen.queryByTestId('multi-fx-quote-notices')).not.toBeInTheDocument();
+
+  act(() => {
+    vi.advanceTimersByTime(2 * 3_600_000);
+  });
+
+  expect(screen.getByTestId('multi-fx-quote-notices')).toHaveTextContent('牌告已超過更新門檻');
 });
