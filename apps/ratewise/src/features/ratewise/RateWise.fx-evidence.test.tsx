@@ -37,6 +37,7 @@ const fxState = vi.hoisted(() => ({
   rows: null as unknown[] | null,
   legacyMoneyBoxRate: null as unknown,
   lastUpdate: null as string | null,
+  providerStatuses: undefined as Map<string, string> | undefined,
 }));
 vi.mock('./hooks/useFxQuotes', () => ({
   useFxQuotes: () => ({
@@ -44,6 +45,7 @@ vi.mock('./hooks/useFxQuotes', () => ({
     releaseId: null,
     isLoading: false,
     error: fxState.error,
+    providerStatuses: fxState.providerStatuses,
   }),
 }));
 const now = new Date().toISOString();
@@ -283,6 +285,33 @@ it('shows the BoT publication time from the adopted v3 quote instead of the lega
   expect(badge).toHaveTextContent(formatIsoTimestamp(published, { includeYear: true }));
   expect(badge).not.toHaveTextContent('2020');
   fxState.lastUpdate = null;
+});
+
+it('discloses a fresh provider excluded from best recommendation because its check failed', () => {
+  fxState.rows = [
+    ...normalizeQuote({ ...source, sourcePublishedAt: now }),
+    ...normalizeQuote({ ...source, providerId: 'second-bank', sourcePublishedAt: now }),
+  ];
+  fxState.providerStatuses = new Map([
+    ['bot', 'ok'],
+    ['second-bank', 'failed'],
+  ]);
+  useConverterStore.setState({
+    fromCurrency: 'USD',
+    toCurrency: 'TWD',
+    providerPreference: { mode: 'best' },
+  });
+  render(
+    <MemoryRouter>
+      <HelmetProvider>
+        <RateWise />
+      </HelmetProvider>
+    </MemoryRouter>,
+  );
+  expect(screen.getByRole('status', { name: '其他來源牌告狀態' })).toHaveTextContent(
+    '來源最近檢查未成功，未列入最佳推薦',
+  );
+  fxState.providerStatuses = undefined;
 });
 
 it('renders two stale quotes from one provider without duplicate React keys', () => {

@@ -120,7 +120,13 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
     contextSubstitutions,
     estimateFreshness,
     providerQuotes,
+    providerStatuses,
   } = useCurrencyConverter({ exchangeRates, details, rateType, rateSource, mode: 'single' });
+
+  const isProviderCheckFailed = (providerId: string) => {
+    const status = providerStatuses?.get(providerId);
+    return status !== undefined && status !== 'ok';
+  };
 
   // v3 公開時徽章只反映實際採用的已驗證 quote；legacy 端點僅在回滾（旗標關閉）時使用。
   const exchangeShopBadgeRate = isFxV3Public()
@@ -310,20 +316,24 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
                     {providerQuotes
                       .filter(
                         (quote) =>
-                          (quote.freshness === 'stale' || quote.freshness === 'unknown') &&
-                          quote.provider.providerId !== selectedQuote?.providerId,
+                          quote.provider.providerId !== selectedQuote?.providerId &&
+                          (quote.freshness === 'stale' ||
+                            quote.freshness === 'unknown' ||
+                            isProviderCheckFailed(quote.provider.providerId)),
                       )
                       .map((quote) => (
                         <p key={quote.quoteId}>
                           {getRateProvider(quote.provider.providerId)?.label ??
                             quote.provider.providerId}
-                          {quote.freshness === 'unknown'
-                            ? '：來源未提供可判斷的發布時間，未列入最佳推薦。'
-                            : `：來源發布時間 ${
-                                formatIsoTimestamp(quote.sourcePublishedAt, {
-                                  includeYear: true,
-                                }) || '未知'
-                              }，已超過更新門檻，未列入最佳推薦。`}
+                          {isProviderCheckFailed(quote.provider.providerId)
+                            ? '：來源最近檢查未成功，未列入最佳推薦。'
+                            : quote.freshness === 'unknown'
+                              ? '：來源未提供可判斷的發布時間，未列入最佳推薦。'
+                              : `：來源發布時間 ${
+                                  formatIsoTimestamp(quote.sourcePublishedAt, {
+                                    includeYear: true,
+                                  }) || '未知'
+                                }，已超過更新門檻，未列入最佳推薦。`}
                         </p>
                       ))}
                   </div>

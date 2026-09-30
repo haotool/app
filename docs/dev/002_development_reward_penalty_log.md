@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+8（reward 8、penalty 0、neutral 0）｜累計總分：+405
+> 本次分數變化：+9（reward 9、penalty 0、neutral 0）｜累計總分：+406
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-10-01
+- ID：reward-ratewise-fx-v3-best-zero-and-failed-disclosure
+- 原因：Best 模式下檢查失敗但仍新鮮的來源被排除時畫面只顯示無可用牌告；韓國地點輸入 0 時排名不推薦零金額，非臺銀來源的有效零金額被顯示為無報價。
+- 解法：抽出 selectBestQuote 統一排名、臺銀備援與零金額規則，其他來源狀態區塊補上檢查失敗原因，並補兩項測試。
 
 - 日期：2026-10-01
 - ID：reward-ratewise-fx-v3-manual-location-and-bank-badge

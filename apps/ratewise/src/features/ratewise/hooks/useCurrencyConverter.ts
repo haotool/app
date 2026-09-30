@@ -19,6 +19,7 @@ import {
   resolveEffectiveFxContext,
 } from '../fxEffectiveContext';
 import { estimateCrossPair } from '../fxCrossEstimate';
+import { selectBestQuote } from '../fxBestQuote';
 import { useFxQuotes } from './useFxQuotes';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -242,22 +243,14 @@ export const useFxCurrencyConverter = (options: UseCurrencyConverterOptions = {}
     ): EstimateResult | DerivedEstimateResult => {
       const request = { amount, fromCurrency: from, toCurrency: to, mode: inputMode };
       const context = resolvePairContext(request).context;
-      let quote =
+      const quote =
         providerPreference.mode === 'best'
-          ? (rankQuotes(fxQuotes, request, context, providerStatuses)[0]?.quote ?? null)
+          ? selectBestQuote(fxQuotes, request, context, providerStatuses)
           : (fxQuotes.find(
               (q) =>
                 q.providerId === providerPreference.manualProvider?.providerId &&
                 isQuoteApplicable(q, request, context),
             ) ?? null);
-      if (!quote && providerPreference.mode === 'best') {
-        // Unknown/stale BoT quotes remain a disclosed fallback when freshness ranking has no winner.
-        quote =
-          fxQuotes.find(
-            (candidate) =>
-              candidate.providerId === 'bot' && isQuoteApplicable(candidate, request, context),
-          ) ?? null;
-      }
       if (quote || from === to) return estimate(quote, request);
       return (
         estimateCrossPair({
