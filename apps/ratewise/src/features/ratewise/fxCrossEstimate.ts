@@ -45,7 +45,6 @@ export function estimateCrossPair(input: {
     context.deliveryMethod === 'cash' ? 'account' : 'cash',
   ];
   for (const method of methods) {
-    const routeCandidates: DerivedEstimateResult[] = [];
     const pairs = firstQuotes.flatMap((first) =>
       secondQuotes
         .filter(
@@ -79,28 +78,37 @@ export function estimateCrossPair(input: {
         (locations.size === 1 ? [...locations.values()][0] : undefined));
     if (!chosenLocation) continue;
 
-    for (const { first, second } of pairs) {
-      if (
-        first.sourceQuote.serviceCountry !== chosenLocation.country ||
-        (first.sourceQuote.branchId ?? undefined) !== chosenLocation.branchId
-      )
-        continue;
-      const derived = estimateDerived(first, second, request);
-      if (derived.status !== 'available' || derived.fromAmount === null) continue;
-      const legRequests = getCrossLegRequests(request, derived, quotes);
-      if (legRequests.length !== 2) continue;
-      const [firstRequest, secondRequest] = legRequests;
-      if (!firstRequest || !secondRequest) continue;
-      const eligible = (quote: QuoteSnapshot, legRequest: EstimateRequest) =>
-        best
-          ? rankQuotes(quotes, legRequest, chosenLocation, providerStatuses).some(
-              ({ quote: ranked }) => ranked.quoteId === quote.quoteId,
-            ) ||
-            (quote.providerId === 'bot' && isQuoteApplicable(quote, legRequest, chosenLocation))
-          : isQuoteApplicable(quote, legRequest, chosenLocation);
-      if (eligible(first, firstRequest) && eligible(second, secondRequest))
-        routeCandidates.push(derived);
-    }
+    // 台銀備援路徑只在沒有任何通過 Best 排名的路徑時才加入，避免失效資料靠較優匯率勝出。
+    const collect = (allowBotFallback: boolean) => {
+      const collected: DerivedEstimateResult[] = [];
+      for (const { first, second } of pairs) {
+        if (
+          first.sourceQuote.serviceCountry !== chosenLocation.country ||
+          (first.sourceQuote.branchId ?? undefined) !== chosenLocation.branchId
+        )
+          continue;
+        const derived = estimateDerived(first, second, request);
+        if (derived.status !== 'available' || derived.fromAmount === null) continue;
+        const legRequests = getCrossLegRequests(request, derived, quotes);
+        if (legRequests.length !== 2) continue;
+        const [firstRequest, secondRequest] = legRequests;
+        if (!firstRequest || !secondRequest) continue;
+        const eligible = (quote: QuoteSnapshot, legRequest: EstimateRequest) =>
+          best
+            ? rankQuotes(quotes, legRequest, chosenLocation, providerStatuses).some(
+                ({ quote: ranked }) => ranked.quoteId === quote.quoteId,
+              ) ||
+              (allowBotFallback &&
+                quote.providerId === 'bot' &&
+                isQuoteApplicable(quote, legRequest, chosenLocation))
+            : isQuoteApplicable(quote, legRequest, chosenLocation);
+        if (eligible(first, firstRequest) && eligible(second, secondRequest))
+          collected.push(derived);
+      }
+      return collected;
+    };
+    const strictCandidates = collect(false);
+    const routeCandidates = strictCandidates.length || !best ? strictCandidates : collect(true);
     if (routeCandidates.length)
       return (
         routeCandidates.sort((a, b) =>

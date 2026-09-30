@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+2（reward 2、penalty 0、neutral 0）｜累計總分：+399
+> 本次分數變化：+3（reward 3、penalty 0、neutral 0）｜累計總分：+400
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-10-01
+- ID：reward-ratewise-fx-v3-best-cross-fallback-order
+- 原因：Best 交叉換算把台銀備援路徑與已通過排名的路徑一起比價，失效台銀若匯率較優會勝過有效來源，違反 failed／carried-forward 不得進入 Best 的契約。
+- 解法：改為兩階段收集，只有完全沒有通過排名的路徑時才加入台銀備援，並補「有效路徑優先」與「無有效路徑仍備援」兩項測試。
 
 - 日期：2026-10-01
 - ID：reward-ratewise-fx-v3-review-round4
