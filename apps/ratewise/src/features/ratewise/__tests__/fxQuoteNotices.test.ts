@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { normalizeQuote } from '@app/shared/fx';
-import { getFxQuoteNotices } from '../fxQuoteNotices';
+import { getFxQuoteNotices as getNotices } from '../fxQuoteNotices';
 
 const NOW = '2026-09-30T00:00:00Z';
 const base = {
@@ -20,6 +20,12 @@ const base = {
 };
 const quotes = (providerId: string, sourcePublishedAt: string | null) =>
   normalizeQuote({ ...base, providerId, sourcePublishedAt });
+
+type NoticeInput = Parameters<typeof getNotices>[0];
+const getFxQuoteNotices = (
+  input: Omit<NoticeInput, 'serviceCountry' | 'fallbackActive'> &
+    Partial<Pick<NoticeInput, 'serviceCountry' | 'fallbackActive'>>,
+) => getNotices({ serviceCountry: 'TW', fallbackActive: false, ...input });
 
 describe('getFxQuoteNotices', () => {
   it('stays silent when the selected provider is fresh and healthy', () => {
@@ -83,5 +89,39 @@ describe('getFxQuoteNotices', () => {
         refreshFailed: true,
       }),
     ).toEqual([]);
+  });
+
+  it('does not call legacy fallback quotes verified; it discloses the fallback instead', () => {
+    const notices = getFxQuoteNotices({
+      quotes: quotes('bot', NOW),
+      preference: { mode: 'best' },
+      now: NOW,
+      refreshFailed: true,
+      fallbackActive: true,
+    });
+    expect(notices).toEqual(['最新報價載入失敗，暫以備援牌告顯示，換錢所報價暫不可用。']);
+  });
+
+  it('ignores providers that only quote another service country', () => {
+    const korea = normalizeQuote({
+      ...base,
+      providerId: 'moneybox',
+      serviceCountry: 'KR',
+      sourcePublishedAt: '2020-01-01T00:00:00Z',
+    });
+    const preference = { mode: 'best' as const };
+
+    expect(
+      getFxQuoteNotices({ quotes: korea, preference, now: NOW, refreshFailed: false }),
+    ).toEqual([]);
+    expect(
+      getFxQuoteNotices({
+        quotes: korea,
+        preference,
+        now: NOW,
+        refreshFailed: false,
+        serviceCountry: 'KR',
+      }),
+    ).toHaveLength(1);
   });
 });

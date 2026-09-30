@@ -285,7 +285,7 @@ ${APP_INFO.shortName} 是以臺灣銀行牌告匯率為基礎的換匯工具，�
 - 約每 5 分鐘檢查更新最新報價，涵蓋現金買入、現金賣出、即期買入、即期賣出四種。
 ${
   FX_V3_PUBLIC
-    ? `- 資料管線：GitHub Actions 抓取 provider 牌告，v3 snapshot 保留來源/擷取時間與 SHA-256 provenance，經 Pull Request 驗證後合併至 data branch。
+    ? `- 資料管線：GitHub Actions 抓取 provider 牌告，v3 snapshot 保留來源/擷取時間與 SHA-256 provenance，發布前經 workflow 驗證後直接提交至 data branch（不經 Pull Request）。
 `
     : `- 資料管線：GitHub Actions 每日抓取 + 雙重驗證（台銀牌告 vs open.er-api.com 中間價，誤差 ≤ 2%）+ Pull Request 自動審核後合併至 data branch。
 `

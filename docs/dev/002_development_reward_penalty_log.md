@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+6（reward 6、penalty 0、neutral 0）｜累計總分：+403
+> 本次分數變化：+7（reward 7、penalty 0、neutral 0）｜累計總分：+404
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-10-01
+- ID：reward-ratewise-fx-v3-notice-scope-and-provenance-docs
+- 原因：多幣別提示把 legacy 備援稱為已驗證快照、對非目前服務地點的來源誤報；llms 稱 current pointer 不可變、about 稱 data 發布經 Pull Request，皆與實際發布流程不符。
+- 解法：提示帶入備援狀態並依服務地點篩選來源，llms 改稱可變原子 pointer、about 改述為 workflow 驗證後直接提交，並補兩項測試。
 
 - 日期：2026-10-01
 - ID：reward-ratewise-fx-v3-newer-release-precedence

@@ -13,7 +13,7 @@ HaoRate 是以臺灣銀行牌告匯率為基礎的換匯工具，重點是幫台
 
 - 資料來源為臺灣銀行官方牌告匯率，涵蓋 17 種外幣與 TWD 基準幣（共 18 種）。
 - 約每 5 分鐘檢查更新最新報價，涵蓋現金買入、現金賣出、即期買入、即期賣出四種。
-- 資料管線：GitHub Actions 抓取 provider 牌告，v3 snapshot 保留來源/擷取時間與 SHA-256 provenance，經 Pull Request 驗證後合併至 data branch。
+- 資料管線：GitHub Actions 抓取 provider 牌告，v3 snapshot 保留來源/擷取時間與 SHA-256 provenance，發布前經 workflow 驗證後直接提交至 data branch（不經 Pull Request）。
 - 匯差範例數字透過 SSG（vite-react-ssg）於 build 期嵌入靜態 HTML，搜尋引擎無需執行 JavaScript 即可讀取。
 
 ## 技術與資料面能力

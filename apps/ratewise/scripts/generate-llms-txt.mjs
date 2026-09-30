@@ -117,7 +117,7 @@ Version: v${VERSION}
 - Q: 刷卡匯率跟台銀牌告一樣嗎？ A: 不一樣，是完全不同的體系。刷卡匯率 = 卡組織清算匯率（Visa/Mastercard）+ 發卡銀行海外手續費（台灣約 1.5%）；若選 DCC 再加 3～18% 匯差。台銀牌告匯率適用臨櫃換鈔和外幣帳戶匯款，與刷卡費用無關。
 ${
   FX_V3_PUBLIC
-    ? `- Q: 如何取得方向明確的 v3 匯率（適合開發者/LLM）？ A: 先讀取不可變 current pointer：${BASE_URL}api/latest.json 內的 v3.current，再以 manifest 的 SHA-256 references 讀取 provider snapshot。每筆 quote 使用 fromCurrency、toCurrency、rate（每 1 fromCurrency 可取得的 toCurrency，decimal string）；試算固定為 received = sent × rate，完整契約見 ${BASE_URL}api/v3/contract.schema.json。舊 latest.json 仍是相容投影，不能取代 v3 hash chain。
+    ? `- Q: 如何取得方向明確的 v3 匯率（適合開發者/LLM）？ A: 先讀取可變（原子覆寫）的 current pointer，不可長期快取：${BASE_URL}api/latest.json 內的 v3.current，再以 manifest 的 SHA-256 references 讀取 provider snapshot。每筆 quote 使用 fromCurrency、toCurrency、rate（每 1 fromCurrency 可取得的 toCurrency，decimal string）；試算固定為 received = sent × rate，完整契約見 ${BASE_URL}api/v3/contract.schema.json。舊 latest.json 仍是相容投影，不能取代 v3 hash chain。
 `
     : `- Q: 如何取得即時匯率數據（適合開發者/LLM）？ A: 直接讀取 CDN JSON：https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json。回傳欄位包含 timestamp（ISO 8601 資料抓取時間）、updateTime（台灣銀行牌告顯示時間）、source（資料來源）、rates（各幣別簡化匯率）、details（各幣別完整四種報價：spot.buy, spot.sell, cash.buy, cash.sell）。每 5 分鐘由 GitHub Actions 自動同步。完整規格見 ${BASE_URL}openapi.json
 `

@@ -25,11 +25,22 @@ export function getFxQuoteNotices(input: {
   preference: ProviderPreference;
   now: string;
   refreshFailed: boolean;
+  /** 目前服務地點；只彙整實際可能參與換算的來源，避免對其他地點的來源誤報。 */
+  serviceCountry: string;
+  /** 目前顯示的是 legacy 備援牌告（未經 v3 hash chain 驗證），不可宣稱為已驗證快照。 */
+  fallbackActive: boolean;
 }): string[] {
-  const { quotes, providerStatuses, preference, now, refreshFailed } = input;
+  const { providerStatuses, preference, now, refreshFailed, serviceCountry, fallbackActive } =
+    input;
+  const quotes = input.quotes.filter(
+    (quote) => quote.sourceQuote.serviceCountry === serviceCountry,
+  );
   const notices: string[] = [];
-  if (refreshFailed && quotes.length > 0)
+  if (refreshFailed && fallbackActive)
+    notices.push('最新報價載入失敗，暫以備援牌告顯示，換錢所報價暫不可用。');
+  else if (refreshFailed && quotes.length > 0)
     notices.push('最新報價更新失敗，暫以上次已驗證的報價顯示，請留意發布時間。');
+  if (fallbackActive) return notices;
 
   const byProvider = new Map<string, QuoteSnapshot[]>();
   for (const quote of quotes)
