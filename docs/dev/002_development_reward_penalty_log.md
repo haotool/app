@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+7（reward 7、penalty 0、neutral 0）｜累計總分：+404
+> 本次分數變化：+8（reward 8、penalty 0、neutral 0）｜累計總分：+405
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-10-01
+- ID：reward-ratewise-fx-v3-manual-location-and-bank-badge
+- 原因：多幣別提示以 store 地點篩選會漏掉手動來源改用唯一地點的實際報價；臺銀徽章仍讀 legacy 更新時間，v3 新版已採用時頁尾卻顯示舊發布時間。
+- 解法：手動來源優先涵蓋其實際地點的報價，臺銀徽章改由實際採用的 v3 quote 建立發布時間，僅旗標關閉或備援時讀 legacy，並補兩項紅綠測試。
 
 - 日期：2026-10-01
 - ID：reward-ratewise-fx-v3-notice-scope-and-provenance-docs

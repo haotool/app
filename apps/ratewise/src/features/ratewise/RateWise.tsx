@@ -128,6 +128,13 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
     : moneyBoxRate?.currency === exchangeShopCurrency
       ? moneyBoxRate
       : null;
+  // 臺銀徽章同樣取自實際採用的 v3 quote；僅在旗標關閉或備援時才讀 legacy 更新時間。
+  const bankQuote = selectedQuoteEvidence[0];
+  const bankBadgeTime =
+    isFxV3Public() && !fxFallbackActive && bankQuote?.providerId === 'bot'
+      ? formatIsoTimestamp(bankQuote.sourceQuote.sourcePublishedAt, { includeYear: true }) ||
+        '來源發布時間未知'
+      : formattedLastUpdate;
 
   useEffect(() => {
     const from = searchParams.get('from')?.toUpperCase();
@@ -435,7 +442,7 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
                       臺灣銀行牌告
                     </a>
                     <span>·</span>
-                    <span>{formattedLastUpdate}</span>
+                    <span>{bankBadgeTime}</span>
                   </div>
                 )}
               </AnimatePresence>

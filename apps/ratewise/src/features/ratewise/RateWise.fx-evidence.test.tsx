@@ -260,6 +260,31 @@ it('shows the exchange shop badge for a direct non-TWD v3 quote such as USD to K
   fxState.lastUpdate = null;
 });
 
+it('shows the BoT publication time from the adopted v3 quote instead of the legacy update time', () => {
+  const published = '2026-09-30T08:00:00Z';
+  fxState.lastUpdate = '2020-01-01T00:00:00Z';
+  fxState.rows = normalizeQuote({ ...source, sourcePublishedAt: published });
+  useConverterStore.setState({
+    fromCurrency: 'USD',
+    toCurrency: 'TWD',
+    providerPreference: {
+      mode: 'manual',
+      manualProvider: { providerId: 'bot', sourceKind: 'bank' },
+    },
+  });
+  render(
+    <MemoryRouter>
+      <HelmetProvider>
+        <RateWise />
+      </HelmetProvider>
+    </MemoryRouter>,
+  );
+  const badge = screen.getByTestId('ratewise-data-source');
+  expect(badge).toHaveTextContent(formatIsoTimestamp(published, { includeYear: true }));
+  expect(badge).not.toHaveTextContent('2020');
+  fxState.lastUpdate = null;
+});
+
 it('renders two stale quotes from one provider without duplicate React keys', () => {
   const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
   fxState.rows = [

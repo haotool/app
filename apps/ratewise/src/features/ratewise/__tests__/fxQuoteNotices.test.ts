@@ -124,4 +124,24 @@ describe('getFxQuoteNotices', () => {
       }),
     ).toHaveLength(1);
   });
+
+  it('covers a manual provider whose only location differs from the preferred country', () => {
+    const korea = normalizeQuote({
+      ...base,
+      providerId: 'moneybox',
+      serviceCountry: 'KR',
+      sourcePublishedAt: '2020-01-01T00:00:00Z',
+    });
+
+    const notices = getFxQuoteNotices({
+      quotes: korea,
+      preference: { mode: 'manual', manualProvider: { providerId: 'moneybox' } },
+      now: NOW,
+      refreshFailed: false,
+      serviceCountry: 'TW',
+    });
+
+    expect(notices).toHaveLength(1);
+    expect(notices[0]).toContain('已超過更新門檻');
+  });
 });
