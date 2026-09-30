@@ -2428,7 +2428,7 @@
           },
           "supportedCurrencies": {
             "type": "array",
-            "description": "該 provider 實際支援的幣別清單；各來源範圍不同（例如臺灣銀行含 TWD 基準幣與 17 種外幣），請以各 provider 的 metadata 為準。",
+            "description": "該 provider 在 App 與舊端點覆蓋的幣別清單（例如臺灣銀行含 TWD 基準幣與 17 種外幣）。v3 的實際報價能力以 provider snapshot 的 quotes（fromCurrency／toCurrency）為準，可包含非 TWD 的雙向報價，請勿僅依此清單篩選。",
             "items": {
               "type": "string"
             }

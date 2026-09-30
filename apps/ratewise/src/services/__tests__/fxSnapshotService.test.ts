@@ -15,7 +15,12 @@ vi.mock('@app/shared/fx', () => ({
 }));
 
 import { fetchVerifiedObject, loadRelease, restoreRelease } from '@app/shared/fx/release';
-import { clearFxV3Storage, fetchFxHistory, refreshActiveRelease } from '../fxSnapshotService';
+import {
+  clearFxV3Storage,
+  fetchFxHistory,
+  readActiveRelease,
+  refreshActiveRelease,
+} from '../fxSnapshotService';
 
 const release = { current: { releaseId: 'current' }, snapshots: [], manifest: { providers: [] } };
 const keys = () =>
@@ -164,6 +169,16 @@ describe('FX v3 storage retention', () => {
     await refreshActiveRelease();
 
     await expect(fetchFxHistory('series')).resolves.toMatchObject([{ rate: '42' }]);
+  });
+
+  it('keeps serving the verified release after remount when storage cannot persist it', async () => {
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('quota', 'QuotaExceededError');
+    });
+    await refreshActiveRelease();
+    vi.mocked(restoreRelease).mockResolvedValue(null as never);
+
+    await expect(readActiveRelease()).resolves.toBe(release);
   });
 
   it('clears the v3 namespace on rollback without touching user settings', () => {

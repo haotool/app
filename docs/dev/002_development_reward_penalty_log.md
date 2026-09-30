@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+4（reward 4、penalty 0、neutral 0）｜累計總分：+401
+> 本次分數變化：+5（reward 5、penalty 0、neutral 0）｜累計總分：+402
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-10-01
+- ID：reward-ratewise-fx-v3-remount-release-and-lint
+- 原因：儲存空間無法寫入時，重新掛載的 useFxQuotes 讀不到本次已驗證 release 而退回 legacy；OpenAPI 幣別清單描述與 v3 非 TWD 報價能力不符；新增徽章檔案有 prefer-optional-chain lint 錯誤而擋下 CI。
+- 解法：readActiveRelease 在 storage 無資料時回傳記憶體 release，OpenAPI 改述為 App／舊端點覆蓋範圍並指明 v3 以 snapshot quotes 為準，修正 lint 並補回歸測試。
 
 - 日期：2026-10-01
 - ID：reward-ratewise-fx-v3-badge-provider-and-clock

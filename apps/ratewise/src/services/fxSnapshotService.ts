@@ -152,9 +152,10 @@ export async function readActiveRelease(): Promise<ActiveRelease | null> {
       memoryRelease ??= release;
       pruneHistoryCache();
     }
-    return release;
+    // 儲存空間無法保存時（隱私模式、配額），重新掛載仍可沿用本次已驗證的記憶體 release。
+    return release ?? memoryRelease;
   } catch {
-    return null;
+    return memoryRelease;
   }
 }
 export async function refreshActiveRelease(): Promise<ActiveRelease> {
