@@ -181,6 +181,30 @@ describe('FX v3 storage retention', () => {
     await expect(readActiveRelease()).resolves.toBe(release);
   });
 
+  it('prefers the newer in-memory release over an older entry that storage still holds', async () => {
+    const older = { ...release, manifest: { generatedAt: '2026-09-29T00:00:00Z' } };
+    const newer = { ...release, manifest: { generatedAt: '2026-09-30T00:00:00Z' } };
+    localStorage.setItem('ratewise.fx.v3.active', JSON.stringify(older));
+    vi.mocked(loadRelease).mockResolvedValue(newer as never);
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('quota', 'QuotaExceededError');
+    });
+    await refreshActiveRelease();
+    vi.mocked(restoreRelease).mockResolvedValue(older as never);
+
+    await expect(readActiveRelease()).resolves.toBe(newer);
+  });
+
+  it('adopts a newer stored release written by another tab', async () => {
+    const older = { ...release, manifest: { generatedAt: '2026-09-29T00:00:00Z' } };
+    const newer = { ...release, manifest: { generatedAt: '2026-09-30T00:00:00Z' } };
+    vi.mocked(loadRelease).mockResolvedValue(older as never);
+    await refreshActiveRelease();
+    vi.mocked(restoreRelease).mockResolvedValue(newer as never);
+
+    await expect(readActiveRelease()).resolves.toBe(newer);
+  });
+
   it('clears the v3 namespace on rollback without touching user settings', () => {
     localStorage.setItem('ratewise.fx.v3.active', '{}');
     localStorage.setItem('ratewise.fx.v3.history:old:series', '[]');

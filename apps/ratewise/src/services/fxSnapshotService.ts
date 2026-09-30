@@ -144,16 +144,19 @@ function isCachedHistoryRows(value: unknown, dates: readonly string[]): value is
   );
 }
 
+const publishedAt = (release: ActiveRelease) => Date.parse(release.manifest.generatedAt) || 0;
+
 export async function readActiveRelease(): Promise<ActiveRelease | null> {
   try {
     const value: unknown = JSON.parse(getStorage()?.getItem(ACTIVE_RELEASE_KEY) ?? 'null');
-    const release = await restoreRelease(value);
-    if (release) {
-      memoryRelease ??= release;
+    const stored = await restoreRelease(value);
+    if (stored) {
+      // 持續 quota 時 storage 可能仍是舊版；只有 storage 版本較新（例如其他分頁寫入）才取代記憶體版本。
+      if (!memoryRelease || publishedAt(stored) > publishedAt(memoryRelease))
+        memoryRelease = stored;
       pruneHistoryCache();
     }
-    // 儲存空間無法保存時（隱私模式、配額），重新掛載仍可沿用本次已驗證的記憶體 release。
-    return release ?? memoryRelease;
+    return memoryRelease;
   } catch {
     return memoryRelease;
   }

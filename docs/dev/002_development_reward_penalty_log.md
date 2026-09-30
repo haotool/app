@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+5（reward 5、penalty 0、neutral 0）｜累計總分：+402
+> 本次分數變化：+6（reward 6、penalty 0、neutral 0）｜累計總分：+403
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-10-01
+- ID：reward-ratewise-fx-v3-newer-release-precedence
+- 原因：持續 quota 時 storage 仍留舊 release，readActiveRelease 以 storage 優先，重新掛載會退回舊報價而歷史查詢卻用新版記憶體資料。
+- 解法：以 manifest.generatedAt 比較，取記憶體與 storage 中較新的版本（保留其他分頁寫入的新版），並補兩項測試。
 
 - 日期：2026-10-01
 - ID：reward-ratewise-fx-v3-remount-release-and-lint
