@@ -14,7 +14,9 @@ describe.runIf(FX_V3_PUBLIC)('v3 public surface is enabled', () => {
   it('publishes api/latest.json on schema 3.0 with the canonical contract and current pointer', () => {
     const latest = JSON.parse(read('api/latest.json')) as Record<string, unknown>;
     expect(latest['schemaVersion']).toBe('3.0');
-    expect(latest['$schema']).toContain('/api/v3/contract.schema.json');
+    expect(latest['v3ContractUrl']).toContain('/api/v3/contract.schema.json');
+    // contract 根層只有 $defs，站台 metadata 不得宣稱 $schema 驗證關係。
+    expect(latest).not.toHaveProperty('$schema');
     expect(latest['legacySchemaVersion']).toBe('2.0');
     expect(JSON.stringify(latest)).toContain('/rates/v3/current.json');
     const v3 = latest['v3'] as Record<string, unknown>;

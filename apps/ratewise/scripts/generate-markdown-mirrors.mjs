@@ -452,7 +452,7 @@ ${API_ATTRIBUTION.markdownSnippet}
 ${
   FX_V3_PUBLIC
     ? `- **免 API Key**、**公開讀取**、**CORS 已啟用**；資料使用與再散布依各 provider 條款。
-- v3 current pointer 只有在 data branch 啟用發布 gate 後才會存在；未啟用時請使用明確標示的 legacy adapter。
+- v3 為正式 canonical 資料面；legacy adapter 僅為已棄用的相容讀取路徑，新整合請改用 v3 current pointer。
 - 更新頻率：約每 5 分鐘檢查 provider；canonical v3 release 以 manifest 與 SHA-256 objects 綁定。
 - v3 quote 使用 fromCurrency → toCurrency 與 decimal string rate；legacy latest/history 僅作相容投影。
 `

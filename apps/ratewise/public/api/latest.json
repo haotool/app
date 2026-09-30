@@ -10,7 +10,7 @@
   "schemaVersion": "3.0",
   "legacySchemaVersion": "2.0",
   "semanticsDoc": "https://app.haotool.org/ratewise/open-data/",
-  "$schema": "https://app.haotool.org/ratewise/api/v3/contract.schema.json",
+  "v3ContractUrl": "https://app.haotool.org/ratewise/api/v3/contract.schema.json",
   "description": "匯率 API v3 — 以不可變 release manifest、SHA-256 objects 與 fromCurrency→toCurrency quote 為 canonical contract；legacy latest/history 端點僅作相容投影。",
   "source": "臺灣銀行牌告匯率",
   "sourceUrl": "https://rate.bot.com.tw/xrt",

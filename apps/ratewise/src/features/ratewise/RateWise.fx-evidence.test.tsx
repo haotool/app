@@ -23,16 +23,20 @@ vi.mock('./hooks/useExchangeRates', () => ({
     isLoading: false,
     error: null,
     warning: null,
-    lastUpdate: null,
+    lastUpdate: fxState.lastUpdate,
     lastFetchedAt: null,
   }),
 }));
-vi.mock('./hooks/useMoneyBoxRates', () => ({ useMoneyBoxRates: () => ({ rate: null }) }));
+vi.mock('./hooks/useMoneyBoxRates', () => ({
+  useMoneyBoxRates: () => ({ rate: fxState.legacyMoneyBoxRate }),
+}));
 vi.mock('./hooks/useMoneyBoxRatesMap', () => ({ useMoneyBoxRatesMap: () => ({ rates: {} }) }));
 const fxState = vi.hoisted(() => ({
   error: null as string | null,
   fallback: false,
   rows: null as unknown[] | null,
+  legacyMoneyBoxRate: null as unknown,
+  lastUpdate: null as string | null,
 }));
 vi.mock('./hooks/useFxQuotes', () => ({
   useFxQuotes: () => ({
@@ -133,6 +137,92 @@ it('renders the stale provider excluded from best recommendation in the status r
     '未列入最佳推薦',
   );
   expect(screen.getByRole('status', { name: '其他來源牌告狀態' })).toHaveTextContent('01/02 08:00');
+});
+
+it('discloses a provider excluded from best recommendation because its publication time is unknown', () => {
+  fxState.rows = [
+    ...normalizeQuote({ ...source, sourcePublishedAt: now }),
+    ...normalizeQuote({ ...source, providerId: 'second-bank', sourcePublishedAt: null }),
+  ];
+  useConverterStore.setState({
+    fromCurrency: 'USD',
+    toCurrency: 'TWD',
+    providerPreference: { mode: 'best' },
+  });
+  render(
+    <MemoryRouter>
+      <HelmetProvider>
+        <RateWise />
+      </HelmetProvider>
+    </MemoryRouter>,
+  );
+  expect(screen.getByRole('status', { name: '其他來源牌告狀態' })).toHaveTextContent(
+    '來源未提供可判斷的發布時間，未列入最佳推薦',
+  );
+});
+
+it('tells the user when a refresh failed and cached verified quotes are still shown', () => {
+  fxState.error = 'network';
+  render(
+    <MemoryRouter>
+      <HelmetProvider>
+        <RateWise />
+      </HelmetProvider>
+    </MemoryRouter>,
+  );
+  expect(screen.getByTestId('fx-v3-refresh-failed-notice')).toHaveTextContent(
+    '最新報價更新失敗，暫以上次已驗證的報價顯示',
+  );
+  expect(screen.queryByTestId('fx-v3-degraded-notice')).not.toBeInTheDocument();
+  fxState.error = null;
+});
+
+it('builds the exchange shop badge from the verified v3 quote instead of the legacy endpoint', () => {
+  const published = '2026-09-30T08:00:00Z';
+  fxState.lastUpdate = published;
+  fxState.legacyMoneyBoxRate = {
+    currency: 'KRW',
+    sell: 1,
+    buy: 1,
+    updateTime: 'LEGACY-STAMP',
+    timestamp: null,
+    source: 'MoneyBox',
+    sourceUrl: 'https://example.com',
+    providerName: '明洞換匯所',
+    isFallback: true,
+  };
+  fxState.rows = normalizeQuote({
+    ...source,
+    providerId: 'moneybox',
+    subjectCurrency: 'KRW',
+    priceCurrency: 'TWD',
+    serviceCountry: 'KR',
+    branchId: 'myeongdong',
+    sourcePublishedAt: published,
+  });
+  useConverterStore.setState({
+    fromCurrency: 'TWD',
+    toCurrency: 'KRW',
+    serviceCountry: 'KR',
+    branchId: 'myeongdong',
+    providerPreference: {
+      mode: 'manual',
+      manualProvider: { providerId: 'moneybox', sourceKind: 'exchange-shop' },
+    },
+  });
+  render(
+    <MemoryRouter>
+      <HelmetProvider>
+        <RateWise />
+      </HelmetProvider>
+    </MemoryRouter>,
+  );
+  const badge = screen.getByTestId('ratewise-data-source');
+  expect(badge).toHaveTextContent(formatIsoTimestamp(published, { includeYear: true }));
+  expect(badge).not.toHaveTextContent('LEGACY-STAMP');
+  expect(badge).not.toHaveTextContent('備援');
+  fxState.legacyMoneyBoxRate = null;
+  fxState.lastUpdate = null;
 });
 
 it('renders two stale quotes from one provider without duplicate React keys', () => {

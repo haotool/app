@@ -11,7 +11,6 @@
   "schemaVersion": "3.0",
   "legacySchemaVersion": "2.0",
   "semanticsDoc": "https://app.haotool.org/ratewise/open-data/",
-  "$schema": "https://app.haotool.org/ratewise/api/v3/contract.schema.json",
   "slug": "php-twd",
   "pageUrl": "https://app.haotool.org/ratewise/php-twd/",
   "liveRateUrl": "https://raw.githubusercontent.com/haotool/app/data/public/rates/latest.json",

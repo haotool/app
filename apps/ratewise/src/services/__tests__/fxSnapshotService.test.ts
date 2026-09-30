@@ -27,6 +27,7 @@ const saveHistory = (key: string, savedAt: number) =>
 
 beforeEach(() => {
   localStorage.clear();
+  clearFxV3Storage();
   gate.enabled = true;
   vi.mocked(loadRelease).mockResolvedValue(release as never);
   vi.mocked(restoreRelease).mockImplementation((value) => Promise.resolve(value as never));
@@ -136,6 +137,33 @@ describe('FX v3 storage retention', () => {
     await expect(fetchFxHistory('series')).resolves.toMatchObject([{ rate: '42' }]);
 
     expect(localStorage.getItem(key)).toBe(previous);
+  });
+
+  it('serves history from the in-memory release when storage cannot persist it', async () => {
+    const history = {
+      current: { releaseId: 'memory' },
+      snapshots: [{ quotes: [{ quoteSeriesId: 'series', providerId: 'bot' }] }],
+      manifest: { history: [{ providerId: 'bot', date: '2026-09-01', snapshot: {} }] },
+    };
+    vi.mocked(loadRelease).mockResolvedValue(history as never);
+    vi.mocked(fetchVerifiedObject).mockResolvedValue({
+      providerId: 'bot',
+      quotes: [
+        {
+          quoteSeriesId: 'series',
+          rate: '42',
+          quoteId: 'q',
+          sourceQuote: { sourcePublishedAt: null },
+        },
+      ],
+    } as never);
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('quota', 'QuotaExceededError');
+    });
+
+    await refreshActiveRelease();
+
+    await expect(fetchFxHistory('series')).resolves.toMatchObject([{ rate: '42' }]);
   });
 
   it('clears the v3 namespace on rollback without touching user settings', () => {

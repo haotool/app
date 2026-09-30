@@ -20,6 +20,7 @@ import { useCurrencyConverter } from './hooks/useCurrencyConverter';
 import { useExchangeRates } from './hooks/useExchangeRates';
 import { SingleConverter } from './components/SingleConverter';
 import { ExchangeShopBadge } from './components/ExchangeShopBadge';
+import { buildExchangeShopBadgeFromQuote } from './fxExchangeShopBadge';
 import { FavoritesList } from './components/FavoritesList';
 import { CurrencyList } from './components/CurrencyList';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
@@ -120,6 +121,13 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
     estimateFreshness,
     providerQuotes,
   } = useCurrencyConverter({ exchangeRates, details, rateType, rateSource, mode: 'single' });
+
+  // v3 公開時徽章只反映實際採用的已驗證 quote；legacy 端點僅在回滾（旗標關閉）時使用。
+  const exchangeShopBadgeRate = isFxV3Public()
+    ? buildExchangeShopBadgeFromQuote(selectedQuote, exchangeShopCurrency)
+    : moneyBoxRate?.currency === exchangeShopCurrency
+      ? moneyBoxRate
+      : null;
 
   useEffect(() => {
     const from = searchParams.get('from')?.toUpperCase();
@@ -248,6 +256,16 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
             </p>
           )}
 
+          {fxError && !fxFallbackActive && fxQuotes.length > 0 && (
+            <p
+              role="status"
+              data-testid="fx-v3-refresh-failed-notice"
+              className="mb-3 text-xs text-warning-text"
+            >
+              最新報價更新失敗，暫以上次已驗證的報價顯示，請留意發布時間。
+            </p>
+          )}
+
           {/* 單幣別轉換區塊 - RWD 全頁面佈局 */}
           <section className={rateWiseLayoutTokens.section.className}>
             <div className={rateWiseLayoutTokens.card.className}>
@@ -285,19 +303,20 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
                     {providerQuotes
                       .filter(
                         (quote) =>
-                          quote.freshness === 'stale' &&
+                          (quote.freshness === 'stale' || quote.freshness === 'unknown') &&
                           quote.provider.providerId !== selectedQuote?.providerId,
                       )
                       .map((quote) => (
                         <p key={quote.quoteId}>
                           {getRateProvider(quote.provider.providerId)?.label ??
                             quote.provider.providerId}
-                          ：來源發布時間{' '}
-                          {quote.sourcePublishedAt
-                            ? formatIsoTimestamp(quote.sourcePublishedAt, { includeYear: true }) ||
-                              '未知'
-                            : '未知'}
-                          ，已超過更新門檻，未列入最佳推薦。
+                          {quote.freshness === 'unknown'
+                            ? '：來源未提供可判斷的發布時間，未列入最佳推薦。'
+                            : `：來源發布時間 ${
+                                formatIsoTimestamp(quote.sourcePublishedAt, {
+                                  includeYear: true,
+                                }) || '未知'
+                              }，已超過更新門檻，未列入最佳推薦。`}
                         </p>
                       ))}
                   </div>
@@ -399,9 +418,8 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
           >
             {!ratesLoading && lastUpdate ? (
               <AnimatePresence mode="wait">
-                {effectiveRateSource === 'exchange-shop' &&
-                moneyBoxRate?.currency === exchangeShopCurrency ? (
-                  <ExchangeShopBadge key="exchange-shop-badge" rate={moneyBoxRate} />
+                {effectiveRateSource === 'exchange-shop' && exchangeShopBadgeRate ? (
+                  <ExchangeShopBadge key="exchange-shop-badge" rate={exchangeShopBadgeRate} />
                 ) : (
                   <div
                     key="bank-badge"

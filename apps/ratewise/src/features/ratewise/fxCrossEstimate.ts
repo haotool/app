@@ -30,15 +30,16 @@ export function estimateCrossPair(input: {
   providerStatuses?: ReadonlyMap<string, 'ok' | 'failed' | 'carried_forward'>;
 }): DerivedEstimateResult | null {
   const { request, quotes, context, providerId, best, providerStatuses } = input;
-  const legs = (from: string, to: string) =>
-    quotes.filter(
-      (quote) =>
-        quote.fromCurrency === from &&
-        quote.toCurrency === to &&
-        (best || quote.providerId === providerId),
-    );
-  const firstQuotes = legs(request.fromCurrency, 'TWD');
-  const secondQuotes = legs('TWD', request.toCurrency);
+  const candidates = quotes.filter((quote) => best || quote.providerId === providerId);
+  // 中介幣別由兩腿報價決定（台銀為 TWD、換錢所為 KRW），不預設樞紐。
+  const firstQuotes = candidates.filter(
+    (quote) =>
+      quote.fromCurrency === request.fromCurrency && quote.toCurrency !== request.toCurrency,
+  );
+  const secondQuotes = candidates.filter(
+    (quote) =>
+      quote.toCurrency === request.toCurrency && quote.fromCurrency !== request.fromCurrency,
+  );
   const methods: SelectionContext['deliveryMethod'][] = [
     context.deliveryMethod,
     context.deliveryMethod === 'cash' ? 'account' : 'cash',
@@ -50,6 +51,7 @@ export function estimateCrossPair(input: {
         .filter(
           (second) =>
             first.providerId === second.providerId &&
+            first.toCurrency === second.fromCurrency &&
             first.sourceQuote.deliveryMethod === method &&
             second.sourceQuote.deliveryMethod === method &&
             first.sourceQuote.channel === second.sourceQuote.channel &&

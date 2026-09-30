@@ -680,6 +680,35 @@ it('routes best mode through TWD legs for a cross pair', async () => {
   ]);
 });
 
+it('records the actual provider and keeps best mode when a best cross result is saved to history', async () => {
+  useConverterStore.setState({
+    fromCurrency: 'USD',
+    toCurrency: 'JPY',
+    providerPreference: { mode: 'best' },
+  });
+  const now = new Date().toISOString();
+  const legs = [
+    ...normalizeQuote({ ...quotes[0]!.sourceQuote, sourcePublishedAt: now }),
+    ...normalizeQuote({
+      ...quotes[0]!.sourceQuote,
+      subjectCurrency: 'JPY',
+      providerBuyPrice: '0.2',
+      providerSellPrice: '0.25',
+      sourcePublishedAt: now,
+    }),
+  ];
+  const { result } = renderHook(() => useCurrencyConverter({ fxQuotes: legs, rateType: 'spot' }));
+  act(() => result.current.handleFromAmountChange('10'));
+  await waitFor(() => expect(result.current.toAmount).not.toBe(''));
+  act(() => result.current.addToHistory());
+  const saved = result.current.history[0]!;
+
+  expect(saved.providerId).toBe(quotes[0]!.providerId);
+  expect(saved.providerSelectionMode).toBe('best');
+  act(() => result.current.reconvertFromHistory(saved));
+  expect(useConverterStore.getState().providerPreference.mode).toBe('best');
+});
+
 it('uses only fresh, successful provider legs for a best-mode cross pair', async () => {
   const leg = (providerId: string, subjectCurrency: string, publishedAt: string) =>
     normalizeQuote({

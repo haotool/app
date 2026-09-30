@@ -113,7 +113,7 @@ GET https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json
 - **Auth**: 無需（公開 API）
 - **Rate limit**: 遵循 jsDelivr CDN 政策（每月數十億次請求）
 
-新整合請改讀 v3 current pointer（data branch gate 啟用後）：
+新整合請改讀 v3 current pointer：
 
 ```
 GET https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/v3/current.json

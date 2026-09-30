@@ -75,9 +75,10 @@ const latestJson = {
     ? { schemaVersion: '3.0', legacySchemaVersion: API_SEMANTICS_SCHEMA_VERSION }
     : { schemaVersion: API_SEMANTICS_SCHEMA_VERSION }),
   semanticsDoc: API_SEMANTICS_DOC.publicUrl,
-  // B3 #10：宣告 3.0 時以 $schema 取代 v2 semanticFieldMapping，不得並存。
+  // contract 根層只有 $defs，$schema 只用於 ReleaseManifest／ProviderSnapshot（PRD §19.3）；
+  // 站台 metadata 不是其中任何一種，故以 v3ContractUrl 指向，不宣稱驗證關係。
   ...(FX_V3_PUBLIC
-    ? { $schema: 'https://app.haotool.org/ratewise/api/v3/contract.schema.json' }
+    ? { v3ContractUrl: FX_V3_SCHEMA_URL }
     : { semanticFieldMapping: buildSemanticFieldMapping() }),
   description: FX_V3_PUBLIC
     ? '匯率 API v3 — 以不可變 release manifest、SHA-256 objects 與 fromCurrency→toCurrency quote 為 canonical contract；legacy latest/history 端點僅作相容投影。'

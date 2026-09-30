@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+398
+> 本次分數變化：+2（reward 2、penalty 0、neutral 0）｜累計總分：+399
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-10-01
+- ID：reward-ratewise-fx-v3-review-round4
+- 原因：Codex 對 v3 啟用 PR 提出 16 則 review，含交叉換算中介幣別寫死 TWD、來源徽章混用 legacy、多幣別頁與快取沿用未揭露狀態、歷史讀取依賴 localStorage、MoneyBox 發布時間未知即失去匯率、文件與 metadata 宣稱不實。
+- 解法：逐則驗證後修復 11 項並補紅綠測試（其餘為前輪已修或設計如此，附證據回覆），同步重新產生 llms、OpenAPI、pair 與 api metadata。
 
 - 日期：2026-10-01
 - ID：reward-ratewise-lighthouse-baseline-median5

@@ -224,15 +224,15 @@ ${API_ATTRIBUTION.terms.join('\n')}
 
 ${
   FX_V3_PUBLIC
-    ? `### 匯率資料端點（v3 data branch gate）
+    ? `### 匯率資料端點（v3 為 canonical，legacy 為相容投影）
 - v3 current pointer（CDN）: https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/v3/current.json
-  - 只有 data branch 啟用 v3 發布 gate 後才會存在；使用前沿 manifest 取得 provider snapshot，並驗證每個 immutable object 的 SHA-256
+  - v3 為正式 canonical 資料面；使用前沿 manifest 取得 provider snapshot，並驗證每個 immutable object 的 SHA-256
   - v3 quote：fromCurrency、toCurrency、providerId、quoteId、quoteSeriesId、rate（decimal string）、sourceQuote 與來源/擷取時間
 - legacy latest.json（CDN）: https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json
-  - 目前正式資料面仍是 legacy 相容投影；details/rates 的 buy/sell 只按 legacy 語意使用，不可冒充 v3 hash chain
+  - legacy 僅為相容投影（已棄用，新整合請改用 v3）；details/rates 的 buy/sell 只按 legacy 語意使用，不可冒充 v3 hash chain
   - legacy timestamp（ISO 8601 資料抓取時間）與 updateTime（台灣銀行牌告顯示時間）仍保留；未知來源發布時間不補成今天
 - MoneyBox legacy provider JSON（KRW 現金）: https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/providers/moneybox/latest.json
-  - v3 provider snapshot 只有在 gate 啟用且 current pointer 已發布後才可用；來源條款與再散布狀態另見 provider metadata
+  - v3 provider snapshot 經 current pointer 與 manifest 取得；來源條款與再散布狀態另見 provider metadata
 `
     : `### 即時匯率資料（真實數據，每 5 分鐘更新）
 - 即時匯率 JSON（CDN）: https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json
@@ -268,7 +268,7 @@ ${
 \`\`\`
 ${
   FX_V3_PUBLIC
-    ? `# 1. Fetch the v3 release pointer after the data-branch gate is enabled (no auth required, CORS enabled)
+    ? `# 1. Fetch the v3 release pointer (no auth required, CORS enabled)
 GET https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/v3/current.json
 `
     : `# 1. Fetch latest rates (no auth required, CORS enabled)
@@ -462,7 +462,7 @@ GET https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json
 
 ${
   FX_V3_PUBLIC
-    ? `新整合請改讀 v3 current pointer（data branch gate 啟用後）：
+    ? `新整合請改讀 v3 current pointer：
 
 \`\`\`
 GET https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/v3/current.json

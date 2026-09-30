@@ -2428,7 +2428,7 @@
           },
           "supportedCurrencies": {
             "type": "array",
-            "description": "支援幣別清單包含 TWD 基準幣與 17 種外幣。",
+            "description": "該 provider 實際支援的幣別清單；各來源範圍不同（例如臺灣銀行含 TWD 基準幣與 17 種外幣），請以各 provider 的 metadata 為準。",
             "items": {
               "type": "string"
             }

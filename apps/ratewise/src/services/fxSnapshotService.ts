@@ -27,7 +27,11 @@ const storageKeys = () => {
     : [];
 };
 
+// 儲存空間不可用（隱私模式、配額已滿）時，已驗證 release 仍要能供歷史載入使用。
+let memoryRelease: ActiveRelease | null = null;
+
 export function clearFxV3Storage(): void {
+  memoryRelease = null;
   try {
     for (const key of storageKeys()) {
       if (key.startsWith(FX_CACHE_PREFIX)) getStorage()?.removeItem(key);
@@ -144,7 +148,10 @@ export async function readActiveRelease(): Promise<ActiveRelease | null> {
   try {
     const value: unknown = JSON.parse(getStorage()?.getItem(ACTIVE_RELEASE_KEY) ?? 'null');
     const release = await restoreRelease(value);
-    if (release) pruneHistoryCache();
+    if (release) {
+      memoryRelease ??= release;
+      pruneHistoryCache();
+    }
     return release;
   } catch {
     return null;
@@ -152,6 +159,7 @@ export async function readActiveRelease(): Promise<ActiveRelease | null> {
 }
 export async function refreshActiveRelease(): Promise<ActiveRelease> {
   const release = await loadRelease();
+  memoryRelease = release;
   // 只有整個 latest atomic unit 通過結構、語意與 hash 驗證才持久化。
   try {
     saveCache(ACTIVE_RELEASE_KEY, JSON.stringify(release));
@@ -166,7 +174,7 @@ export async function refreshActiveRelease(): Promise<ActiveRelease> {
 export async function fetchFxHistory(quoteSeriesId: string) {
   const { fetchVerifiedObject } = await import('@app/shared/fx/release');
   const { validateProviderSnapshot, compareCodePoints } = await import('@app/shared/fx');
-  const release = await readActiveRelease();
+  const release = memoryRelease ?? (await readActiveRelease());
   if (!release) throw new Error('尚無已驗證的匯率快照');
   const selected = release.snapshots
     .flatMap((snapshot) => snapshot.quotes)

@@ -1,5 +1,6 @@
 import { FxContextControls } from '../features/ratewise/components/FxContextControls';
 import { isFxV3Public } from '../config/api-endpoints';
+import { getFxQuoteNotices } from '../features/ratewise/fxQuoteNotices';
 /**
  * Multi-Currency Converter Page - ParkKeeper 風格
  *
@@ -10,7 +11,7 @@ import { isFxV3Public } from '../config/api-endpoints';
  * @updated 2026-01-24 - 移除標題區塊，優化垂直空間
  */
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertCircle, RefreshCw, Clock } from 'lucide-react';
 import { MultiConverter as MultiConverterComponent } from '../features/ratewise/components/MultiConverter';
@@ -54,6 +55,8 @@ export default function MultiConverter() {
 
   const {
     fxQuotes,
+    fxError,
+    providerStatuses,
     contextSubstitutions,
     estimatePair,
     multiAmounts,
@@ -67,6 +70,21 @@ export default function MultiConverter() {
     favorites,
     toggleFavorite,
   } = useCurrencyConverter({ exchangeRates, details, rateType, rateSource, mode: 'multi' });
+
+  const providerPreference = useConverterStore((state) => state.providerPreference);
+  const fxNotices = useMemo(
+    () =>
+      isFxV3Public()
+        ? getFxQuoteNotices({
+            quotes: fxQuotes,
+            providerStatuses,
+            preference: providerPreference,
+            now: new Date().toISOString(),
+            refreshFailed: Boolean(fxError),
+          })
+        : [],
+    [fxQuotes, providerStatuses, providerPreference, fxError],
+  );
 
   // 註：rateSource→cash 同步已收斂到 converterStore.setRateSource。
   // 換錢所→銀行 fallback 已收斂到 useCurrencyConverter（SSOT），頁面層不再重複。
@@ -173,6 +191,18 @@ export default function MultiConverter() {
               onToggleFavorite={toggleFavorite}
             />
             {isFxV3Public() && <FxContextControls quotes={fxQuotes} />}
+            {fxNotices.length > 0 && (
+              <div
+                role="status"
+                aria-label="報價來源狀態"
+                data-testid="multi-fx-quote-notices"
+                className="px-3 pb-2 text-xs text-warning-text"
+              >
+                {fxNotices.map((notice) => (
+                  <p key={notice}>{notice}</p>
+                ))}
+              </div>
+            )}
           </div>
         </section>
 
