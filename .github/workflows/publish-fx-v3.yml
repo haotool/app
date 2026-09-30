@@ -60,7 +60,13 @@ jobs:
         working-directory: _fx-code
         run: |
           corepack enable
-          corepack pnpm install --frozen-lockfile --ignore-scripts
+          # corepack 下載 pnpm 偶發 undici 連線中斷（assert(!this.paused)），重試 3 次避免暫時性網路錯誤紅燈
+          for attempt in 1 2 3; do
+            corepack pnpm install --frozen-lockfile --ignore-scripts && break
+            if [ "$attempt" -eq 3 ]; then exit 1; fi
+            echo "::warning::pnpm install 第 ${attempt} 次失敗，10 秒後重試"
+            sleep 10
+          done
           corepack pnpm generate:fx --check
 
       - name: Capture previously published providers
