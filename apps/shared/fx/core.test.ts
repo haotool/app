@@ -24,11 +24,21 @@ describe('directional quotes', () => {
       ['TWD', 'KRW', '40'],
     ]);
   });
+
+  it('deep-freezes nested non-enumerable properties on validated quotes', () => {
+    const quote = normalizeQuote(row)[0]!;
+    const hidden = { nested: {} };
+    Object.defineProperty(quote, 'hidden', { value: hidden });
+    expect(validateQuoteSnapshot(quote)).toBe(true);
+    expect(Object.isFrozen(hidden)).toBe(true);
+    expect(Object.isFrozen(hidden.nested)).toBe(true);
+  });
 });
 
 import {
   estimate,
   rankQuotes,
+  minorUnit,
   normalizeMoneyboxSnapshot,
   isValidAmount,
   boardMidpoint,
@@ -37,6 +47,10 @@ import {
   freshness,
   isQuoteApplicable,
 } from './index';
+it('uses ISO 4217 two-decimal minor units for AED and RUB', () => {
+  expect(minorUnit('AED')).toBe(2);
+  expect(minorUnit('RUB')).toBe(2);
+});
 it('rejects unavailable quotes and keeps zero distinct', () => {
   const quotes = normalizeQuote({ ...row, providerBuyPrice: null });
   expect(
@@ -111,7 +125,7 @@ it('rejects forged normalized rates and unsupported fee claims', () => {
   expect(validateQuoteSnapshot({ ...q, rate: '999' })).toBe(false);
   expect(() => normalizeQuote({ ...row, feeStatus: 'no_additional_fee' })).toThrow();
 });
-import { deriveCrossQuote, exportLegacyRates } from './index';
+import { deriveCrossQuote, estimateDerived, exportLegacyRates } from './index';
 it('derives a same-provider cross route with both legs, never a direct recommended quote', () => {
   const usd = normalizeQuote({
     ...row,
@@ -131,6 +145,87 @@ it('derives a same-provider cross route with both legs, never a direct recommend
   expect(derived?.legs).toEqual([usd.quoteId, krw.quoteId]);
   expect(deriveCrossQuote(usd, normalizeQuote({ ...row, providerId: 'third' })[1]!)).toBeNull();
 });
+
+it('executes derived EXACT_OUT backwards and EXACT_IN forwards with leg rounding', () => {
+  const krw = normalizeQuote({
+    ...row,
+    subjectCurrency: 'KRW',
+    providerBuyPrice: '0.023',
+    providerSellPrice: '0.025',
+  })[0]!;
+  const vnd = normalizeQuote({
+    ...row,
+    subjectCurrency: 'VND',
+    providerBuyPrice: '0.0014',
+    providerSellPrice: '0.0016',
+  })[1]!;
+  for (const [from, to] of [
+    ['KRW', 'VND'],
+    ['USD', 'PHP'],
+    ['JPY', 'KRW'],
+  ] as const) {
+    const first =
+      from === 'KRW'
+        ? krw
+        : normalizeQuote({
+            ...row,
+            subjectCurrency: from,
+            providerBuyPrice: '0.21',
+            providerSellPrice: '0.24',
+          })[0]!;
+    const second =
+      to === 'VND'
+        ? vnd
+        : normalizeQuote({
+            ...row,
+            subjectCurrency: to,
+            providerBuyPrice: '0.003',
+            providerSellPrice: '0.004',
+          })[1]!;
+    for (let target = 1; target <= 400; target++) {
+      const out = estimateDerived(first, second, {
+        fromCurrency: from,
+        toCurrency: to,
+        amount: String(target),
+        mode: 'EXACT_OUT',
+      });
+      expect(out.status).toBe('available');
+      const intermediate = estimate(first, {
+        fromCurrency: from,
+        toCurrency: 'TWD',
+        amount: out.fromAmount!,
+        mode: 'EXACT_IN',
+      });
+      const executed = estimate(second, {
+        fromCurrency: 'TWD',
+        toCurrency: to,
+        amount: intermediate.toAmount!,
+        mode: 'EXACT_IN',
+      });
+      expect(Number(executed.toAmount)).toBeGreaterThanOrEqual(target);
+    }
+    const input = '123.45';
+    const result = estimateDerived(first, second, {
+      fromCurrency: from,
+      toCurrency: to,
+      amount: input,
+      mode: 'EXACT_IN',
+    });
+    const leg1 = estimate(first, {
+      fromCurrency: from,
+      toCurrency: 'TWD',
+      amount: input,
+      mode: 'EXACT_IN',
+    });
+    const leg2 = estimate(second, {
+      fromCurrency: 'TWD',
+      toCurrency: to,
+      amount: leg1.toAmount!,
+      mode: 'EXACT_IN',
+    });
+    expect([result.fromAmount, result.toAmount]).toEqual([input, leg2.toAmount]);
+  }
+});
 it('reconstructs legacy fields from source values, not reciprocal canonical rates', () => {
   const quotes = normalizeMoneyboxSnapshot({
     timestamp: row.fetchedAt,
@@ -143,6 +238,15 @@ it('reconstructs legacy fields from source values, not reciprocal canonical rate
     JPY: { sell: '900', buy: '950' },
     TWD: { sell: '42', buy: '43' },
   });
+});
+
+it('rejects a MoneyBox snapshot when every normalized quote is unavailable', () => {
+  expect(() =>
+    normalizeMoneyboxSnapshot({
+      timestamp: row.fetchedAt,
+      sourceQuotes: { USD: { buy: null, sell: null, unitAmount: '1' } },
+    }),
+  ).toThrow('Provider snapshot has no available quotes');
 });
 it('keeps condition boundaries and exact-out ordering consistent for a third shop', () => {
   const base = {
@@ -316,7 +420,6 @@ it('recomputes a 17-currency multi view 100 times within the CI budget', () => {
     `FX v3 100 × 16 multi estimates: before ${before.toFixed(2)} ms, after ${after.toFixed(2)} ms`,
   );
 });
-import { estimateDerived } from './index';
 it('computes a traceable cross estimate with canonical rate and no recommendation', () => {
   const first = normalizeQuote({
     ...row,

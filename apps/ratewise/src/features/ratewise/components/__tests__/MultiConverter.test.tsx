@@ -7,6 +7,8 @@ import { MultiConverter } from '../MultiConverter';
 import type { CurrencyCode, MultiAmountsState, RateMode, RateType } from '../../types';
 import type { RateDetails } from '../../hooks/useExchangeRates';
 import type { ExchangeShopRate } from '../../../../services/moneyboxRateService';
+import * as rateProviders from '../../../../config/rateProviders';
+import { formatFxSubstitution } from '../../fxSubstitutionText';
 
 const translations: Record<string, string> = {
   'currencies.TWD': '新台幣',
@@ -116,6 +118,56 @@ describe('MultiConverter', () => {
     onBaseCurrencyChange: vi.fn(),
     onToggleFavorite: vi.fn(),
   };
+
+  it('renders all substitution notices in one status region', () => {
+    render(
+      <MultiConverter
+        {...defaultProps}
+        contextSubstitutions={[
+          {
+            kind: 'deliveryMethod',
+            from: 'account',
+            to: 'cash',
+            fromCurrency: 'USD',
+            toCurrency: 'KRW',
+          },
+          {
+            kind: 'deliveryMethod',
+            from: 'account',
+            to: 'cash',
+            fromCurrency: 'USD',
+            toCurrency: 'VND',
+          },
+        ]}
+      />,
+    );
+    expect(screen.getAllByRole('status')).toHaveLength(1);
+    expect(screen.getByRole('status')).toHaveTextContent('KRW無即期報價');
+    expect(screen.getByRole('status')).toHaveTextContent('VND無即期報價');
+  });
+
+  it('uses branch labels from provider metadata in location notices', () => {
+    const provider = vi.spyOn(rateProviders, 'getRateProvider').mockReturnValue({
+      ...rateProviders.RATE_PROVIDERS.moneybox,
+      branchLabels: { 'branch-7': '明洞七號店' },
+    });
+    try {
+      expect(
+        formatFxSubstitution({
+          kind: 'location',
+          from: 'TW|',
+          to: 'KR|branch-7',
+          fromCurrency: 'TWD',
+          toCurrency: 'KRW',
+          country: 'KR',
+          branchId: 'branch-7',
+          providerIds: ['moneybox'],
+        }),
+      ).toContain('明洞七號店');
+    } finally {
+      provider.mockRestore();
+    }
+  });
 
   beforeEach(() => {
     vi.clearAllMocks();

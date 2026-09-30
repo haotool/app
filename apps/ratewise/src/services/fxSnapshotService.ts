@@ -27,7 +27,11 @@ const storageKeys = () => {
     : [];
 };
 
+// 儲存空間不可用（隱私模式、配額已滿）時，已驗證 release 仍要能供歷史載入使用。
+let memoryRelease: ActiveRelease | null = null;
+
 export function clearFxV3Storage(): void {
+  memoryRelease = null;
   try {
     for (const key of storageKeys()) {
       if (key.startsWith(FX_CACHE_PREFIX)) getStorage()?.removeItem(key);
@@ -140,18 +144,26 @@ function isCachedHistoryRows(value: unknown, dates: readonly string[]): value is
   );
 }
 
+const publishedAt = (release: ActiveRelease) => Date.parse(release.manifest.generatedAt) || 0;
+
 export async function readActiveRelease(): Promise<ActiveRelease | null> {
   try {
     const value: unknown = JSON.parse(getStorage()?.getItem(ACTIVE_RELEASE_KEY) ?? 'null');
-    const release = await restoreRelease(value);
-    if (release) pruneHistoryCache();
-    return release;
+    const stored = await restoreRelease(value);
+    if (stored) {
+      // 持續 quota 時 storage 可能仍是舊版；只有 storage 版本較新（例如其他分頁寫入）才取代記憶體版本。
+      if (!memoryRelease || publishedAt(stored) > publishedAt(memoryRelease))
+        memoryRelease = stored;
+      pruneHistoryCache();
+    }
+    return memoryRelease;
   } catch {
-    return null;
+    return memoryRelease;
   }
 }
 export async function refreshActiveRelease(): Promise<ActiveRelease> {
   const release = await loadRelease();
+  memoryRelease = release;
   // 只有整個 latest atomic unit 通過結構、語意與 hash 驗證才持久化。
   try {
     saveCache(ACTIVE_RELEASE_KEY, JSON.stringify(release));
@@ -166,7 +178,7 @@ export async function refreshActiveRelease(): Promise<ActiveRelease> {
 export async function fetchFxHistory(quoteSeriesId: string) {
   const { fetchVerifiedObject } = await import('@app/shared/fx/release');
   const { validateProviderSnapshot, compareCodePoints } = await import('@app/shared/fx');
-  const release = await readActiveRelease();
+  const release = memoryRelease ?? (await readActiveRelease());
   if (!release) throw new Error('尚無已驗證的匯率快照');
   const selected = release.snapshots
     .flatMap((snapshot) => snapshot.quotes)

@@ -6,11 +6,11 @@ import { singleConverterLayoutTokens } from '../../../config/design-tokens';
 import {
   getExchangeShopRateAgeHours,
   isExchangeShopRateStale,
-  type ExchangeShopRate,
 } from '../../../services/moneyboxRateService';
+import type { ExchangeShopBadgeInfo } from '../fxExchangeShopBadge';
 
 interface ExchangeShopBadgeProps {
-  rate: ExchangeShopRate;
+  rate: ExchangeShopBadgeInfo;
 }
 
 export function ExchangeShopBadge({ rate }: ExchangeShopBadgeProps) {

@@ -8,10 +8,10 @@
 
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import {
-  resolveEffectiveRateSourceForConversion,
-  useCurrencyConverter,
-} from '../useCurrencyConverter';
+import { resolveEffectiveRateSourceForConversion } from '../useCurrencyConverter';
+// This suite covers the retained legacy converter for S5 rollback cleanup;
+// active v3 behavior and fixtures live in useCurrencyConverter.fx.test.tsx.
+import { useLegacyCurrencyConverter as useCurrencyConverter } from '../useLegacyCurrencyConverter';
 import { STORAGE_KEYS } from '../../storage-keys';
 import { useConverterStore } from '../../../../stores/converterStore';
 import type { ExchangeShopRate } from '../../../../services/moneyboxRateService';

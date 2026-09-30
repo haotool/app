@@ -30,6 +30,10 @@ import {
 } from 'lucide-react';
 import { SEOHelmet } from '../components/SEOHelmet';
 import { APP_ONLY_PAGE_SEO } from '../config/seo-metadata';
+import {
+  SUPPORTED_CURRENCY_COUNT,
+  SUPPORTED_FOREIGN_CURRENCY_COUNT,
+} from '../features/ratewise/constants';
 import { SEO_SCHEMA_REGISTRY } from '../config/seo-schema-registry';
 import { SEO_BUILD_PIPELINE } from '../config/seo-build-pipeline';
 import {
@@ -252,7 +256,7 @@ const EEAT_SIGNALS = [
     title: '專業性 (Expertise)',
     items: [
       '作者身份：獨立開發者 + 金融科技專業',
-      '內容深度：18 種貨幣、現金 & 即期雙套報價',
+      `內容深度：${SUPPORTED_FOREIGN_CURRENCY_COUNT} 種外幣（共 ${SUPPORTED_CURRENCY_COUNT} 種，含 TWD）、現金 & 即期雙套報價`,
       '技術透明：完整 SEO 技術揭露（本頁）',
     ],
     icon: Search,

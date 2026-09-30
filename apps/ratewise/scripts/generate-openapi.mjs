@@ -453,6 +453,7 @@ const rateProviderSchema = {
     sourceUrl: { type: 'string', format: 'uri' },
     supportedCurrencies: {
       type: 'array',
+      description: `該 provider 在 App 與舊端點覆蓋的幣別清單（例如臺灣銀行含 TWD 基準幣與 ${SUPPORTED_CURRENCIES.filter((code) => code !== 'TWD').length} 種外幣）。v3 的實際報價能力以 provider snapshot 的 quotes（fromCurrency／toCurrency）為準，可包含非 TWD 的雙向報價，請勿僅依此清單篩選。`,
       items: { type: 'string' },
     },
     supportedRateTypes: {

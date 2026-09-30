@@ -1,6 +1,6 @@
 # HaoRate 匯率好工具
 
-> 基於臺灣銀行牌告匯率的即時匯率 PWA 應用，支援 18 種貨幣換算
+> 基於臺灣銀行牌告匯率的即時匯率 PWA 應用，支援 17 種外幣與 TWD 基準幣換算
 
 [![CI](https://github.com/haotool/app/actions/workflows/ci.yml/badge.svg)](https://github.com/haotool/app/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL%203.0-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
@@ -8,8 +8,8 @@
 ## 🌟 功能特色
 
 - **即時匯率**：每 5 分鐘同步臺灣銀行牌告匯率
-- **v3 方向 API（預設未公開）**：使用 `fromCurrency → toCurrency` 與十進位字串匯率，來源買賣側、適用條件與 release hash 可追溯；`apps/shared/fx/public.ts` 的 `FX_V3_PUBLIC`（`src/config/api-endpoints.ts` 重新匯出） 為公開切換 SSOT，未公開前 App 與公開資料面維持 v2 行為
-- **v2 API attribution**：公開 latest／pair JSON 含 `publisher` 標示；使用條款與可複製引用格式見 [/open-data/#api-terms](https://app.haotool.org/ratewise/open-data/#api-terms)
+- **FX API v3 已公開**：App 與公開 JSON／OpenAPI 使用 `fromCurrency → toCurrency`、來源買賣側、適用條件與 release hash；`apps/shared/fx/public.ts` 的 `FX_V3_PUBLIC` 是公開切換 SSOT，設回 `false` 可回滾至 v2。
+- **API attribution**：公開資料含 `publisher` 標示；使用條款與可複製引用格式見 [/open-data/#api-terms](https://app.haotool.org/ratewise/open-data/#api-terms)
 - **雙模式換算**：單幣別與多幣別同時換算
 - **收藏管理**：自訂常用貨幣快速存取
 - **趨勢圖表**：30 天歷史匯率走勢
@@ -18,7 +18,7 @@
 
 <!-- SEO_STATUS_START -->
 
-支援 18 種貨幣；249 個可索引 SEO path；257 個 SSG prerender path。
+支援 17 種外幣與 TWD；249 個可索引 SEO path；257 個 SSG prerender path。
 
 <!-- SEO_STATUS_END -->
 

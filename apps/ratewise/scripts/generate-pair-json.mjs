@@ -25,10 +25,10 @@ import {
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
 
-// GitHub raw 無快取，確保 liveRateUrl 指向真正即時資料（jsdelivr 有 12-24h 快取延遲，不適合用於 liveRateUrl）
+// liveRateUrl 保留 v2 latest 的既有語意；v3 current 是 pointer，不是匯率內容。
 const CDN_BASE_URL = `${RAW_DATA_BASE}/public/rates`;
 const FX_V3_AVAILABILITY =
-  'v3 current 只有 data branch 的 RATEWISE_FX_V3_ENABLED=true 發布 gate 開啟後才存在；尚未啟用時請使用 legacy 相容投影。';
+  'v3 current 是目前啟用的 canonical API；legacy latest 僅供相容讀取，已棄用。';
 
 const RATE_TYPE_DESCRIPTIONS = {
   cash_sell: '現金賣出：銀行以此價賣出外幣現鈔（你拿台幣換外幣現金）',
@@ -61,15 +61,17 @@ for (const path of CURRENCY_SEO_PATHS) {
       ? { schemaVersion: '3.0', legacySchemaVersion: API_SEMANTICS_SCHEMA_VERSION }
       : { schemaVersion: API_SEMANTICS_SCHEMA_VERSION }),
     semanticsDoc: API_SEMANTICS_DOC.publicUrl,
-    ...(FX_V3_PUBLIC
-      ? { $schema: 'https://app.haotool.org/ratewise/api/v3/contract.schema.json' }
-      : { semanticFieldMapping: buildSemanticFieldMapping() }),
+    // $schema 只屬於 ReleaseManifest／ProviderSnapshot；pair metadata 以 v3ContractUrl 指向 contract。
+    ...(FX_V3_PUBLIC ? {} : { semanticFieldMapping: buildSemanticFieldMapping() }),
     slug,
     pageUrl: `${SITE_CONFIG.url}${slug}/`,
     liveRateUrl: `${CDN_BASE_URL}/latest.json`,
+    ...(FX_V3_PUBLIC ? { legacyRateUrl: `${CDN_BASE_URL}/latest.json` } : {}),
     ...(FX_V3_PUBLIC
       ? {
           v3CurrentUrl: `${CDN_BASE_URL}/v3/current.json`,
+          v3CurrentUrlDescription:
+            'current pointer；解析後指向 v3 release manifest，不是匯率資料本體。',
           v3ContractUrl: 'https://app.haotool.org/ratewise/api/v3/contract.schema.json',
           v3Availability: FX_V3_AVAILABILITY,
           canonicalFields: {

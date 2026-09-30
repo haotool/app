@@ -20,11 +20,12 @@ import { useCurrencyConverter } from './hooks/useCurrencyConverter';
 import { useExchangeRates } from './hooks/useExchangeRates';
 import { SingleConverter } from './components/SingleConverter';
 import { ExchangeShopBadge } from './components/ExchangeShopBadge';
+import { buildExchangeShopBadgeFromQuote } from './fxExchangeShopBadge';
 import { FavoritesList } from './components/FavoritesList';
 import { CurrencyList } from './components/CurrencyList';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '../../components/PullToRefreshIndicator';
-import { formatDisplayTime } from '../../utils/timeFormatter';
+import { formatDisplayTime, formatIsoTimestamp } from '../../utils/timeFormatter';
 import { performFullRefresh } from '../../utils/swUtils';
 import { logger } from '../../utils/logger';
 import { SkeletonLoader } from '../../components/SkeletonLoader';
@@ -38,6 +39,7 @@ import {
   resolveRateTypeByAvailability,
 } from '../../utils/exchangeRateCalculation';
 import { isFxV3Public } from '../../config/api-endpoints';
+import { formatFxSubstitution } from './fxSubstitutionText';
 
 const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: boolean } = {}) => {
   const [searchParams] = useSearchParams();
@@ -109,12 +111,36 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
     exchangeShopCurrency,
     effectiveRateSource,
     fxEstimate,
+    fxError,
+    fxFallbackActive,
     fxQuotes,
     selectedQuote,
     selectedProviderStatus,
     selectedQuoteEvidence,
+    contextSubstitutions,
     estimateFreshness,
+    providerQuotes,
+    providerStatuses,
   } = useCurrencyConverter({ exchangeRates, details, rateType, rateSource, mode: 'single' });
+
+  const isProviderCheckFailed = (providerId: string) => {
+    const status = providerStatuses?.get(providerId);
+    return status !== undefined && status !== 'ok';
+  };
+
+  // v3 公開時徽章只反映實際採用的已驗證 quote；legacy 端點僅在回滾（旗標關閉）時使用。
+  const exchangeShopBadgeRate = isFxV3Public()
+    ? buildExchangeShopBadgeFromQuote(selectedQuoteEvidence[0])
+    : moneyBoxRate?.currency === exchangeShopCurrency
+      ? moneyBoxRate
+      : null;
+  // 臺銀徽章同樣取自實際採用的 v3 quote；僅在旗標關閉或備援時才讀 legacy 更新時間。
+  const bankQuote = selectedQuoteEvidence[0];
+  const bankBadgeTime =
+    isFxV3Public() && !fxFallbackActive && bankQuote?.providerId === 'bot'
+      ? formatIsoTimestamp(bankQuote.sourceQuote.sourcePublishedAt, { includeYear: true }) ||
+        '來源發布時間未知'
+      : formattedLastUpdate;
 
   useEffect(() => {
     const from = searchParams.get('from')?.toUpperCase();
@@ -233,6 +259,26 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
             </div>
           )}
 
+          {fxError && fxFallbackActive && (
+            <p
+              role="status"
+              data-testid="fx-v3-degraded-notice"
+              className="mb-3 text-xs text-warning-text"
+            >
+              最新報價載入失敗，暫以備援牌告顯示，換錢所報價暫不可用。
+            </p>
+          )}
+
+          {fxError && !fxFallbackActive && fxQuotes.length > 0 && (
+            <p
+              role="status"
+              data-testid="fx-v3-refresh-failed-notice"
+              className="mb-3 text-xs text-warning-text"
+            >
+              最新報價更新失敗，暫以上次已驗證的報價顯示，請留意發布時間。
+            </p>
+          )}
+
           {/* 單幣別轉換區塊 - RWD 全頁面佈局 */}
           <section className={rateWiseLayoutTokens.section.className}>
             <div className={rateWiseLayoutTokens.card.className}>
@@ -245,6 +291,17 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
                         ? '經中介幣別的兩腿推算，非業者直接牌告；不納入推薦。'
                         : '依牌告試算，未含未知費用；不保證成交或可交付面額。'}
                   </p>
+                  {contextSubstitutions.map((substitution, index) => {
+                    return (
+                      <p
+                        className="px-3 text-sm"
+                        role="status"
+                        key={`${substitution.kind}:${index}`}
+                      >
+                        {formatFxSubstitution(substitution)}
+                      </p>
+                    );
+                  })}
                   {selectedQuoteEvidence.length > 0 && estimateFreshness === 'unknown' && (
                     <p className="px-3 text-sm" role="status">
                       來源未提供發布時間，無法判斷新鮮度，僅供參考。
@@ -255,6 +312,31 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
                       牌告已超過更新門檻（台銀 36 小時、換錢所 24 小時），僅供參考。
                     </p>
                   )}
+                  <div className="px-3 text-sm" role="status" aria-label="其他來源牌告狀態">
+                    {providerQuotes
+                      .filter(
+                        (quote) =>
+                          quote.provider.providerId !== selectedQuote?.providerId &&
+                          (quote.freshness === 'stale' ||
+                            quote.freshness === 'unknown' ||
+                            isProviderCheckFailed(quote.provider.providerId)),
+                      )
+                      .map((quote) => (
+                        <p key={quote.quoteId}>
+                          {getRateProvider(quote.provider.providerId)?.label ??
+                            quote.provider.providerId}
+                          {isProviderCheckFailed(quote.provider.providerId)
+                            ? '：來源最近檢查未成功，未列入最佳推薦。'
+                            : quote.freshness === 'unknown'
+                              ? '：來源未提供可判斷的發布時間，未列入最佳推薦。'
+                              : `：來源發布時間 ${
+                                  formatIsoTimestamp(quote.sourcePublishedAt, {
+                                    includeYear: true,
+                                  }) || '未知'
+                                }，已超過更新門檻，未列入最佳推薦。`}
+                        </p>
+                      ))}
+                  </div>
                   {selectedProviderStatus && selectedProviderStatus !== 'ok' && (
                     <p className="px-3 text-sm" role="status">
                       來源最近檢查未成功，顯示上次已驗證快照，僅供參考。
@@ -264,7 +346,10 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
                     selectedQuoteEvidence.map((quote) => (
                       <p className="px-3 text-sm" key={quote.quoteId}>
                         {quote.fromCurrency} → {quote.toCurrency}：來源發布時間{' '}
-                        {quote.sourceQuote.sourcePublishedAt ?? '未知'}。
+                        {formatIsoTimestamp(quote.sourceQuote.sourcePublishedAt, {
+                          includeYear: true,
+                        }) || '未知'}
+                        。
                       </p>
                     ))}
                   {selectedQuote && (
@@ -277,7 +362,10 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
                           ? '買入'
                           : '賣出'}{' '}
                         {selectedQuote.sourceQuote.subjectCurrency}。來源發布時間：
-                        {selectedQuote.sourceQuote.sourcePublishedAt ?? '未知'}。
+                        {formatIsoTimestamp(selectedQuote.sourceQuote.sourcePublishedAt, {
+                          includeYear: true,
+                        }) || '未知'}
+                        。
                       </p>
                       <details>
                         <summary>進階：原始牌告與牌告中點</summary>
@@ -347,9 +435,8 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
           >
             {!ratesLoading && lastUpdate ? (
               <AnimatePresence mode="wait">
-                {effectiveRateSource === 'exchange-shop' &&
-                moneyBoxRate?.currency === exchangeShopCurrency ? (
-                  <ExchangeShopBadge key="exchange-shop-badge" rate={moneyBoxRate} />
+                {effectiveRateSource === 'exchange-shop' && exchangeShopBadgeRate ? (
+                  <ExchangeShopBadge key="exchange-shop-badge" rate={exchangeShopBadgeRate} />
                 ) : (
                   <div
                     key="bank-badge"
@@ -365,7 +452,7 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
                       臺灣銀行牌告
                     </a>
                     <span>·</span>
-                    <span>{formattedLastUpdate}</span>
+                    <span>{bankBadgeTime}</span>
                   </div>
                 )}
               </AnimatePresence>

@@ -36,7 +36,8 @@ const validatedQuotes = new WeakSet<QuoteSnapshot>();
 function deepFreeze<T>(value: T): T {
   if (value !== null && typeof value === 'object') {
     if (!Object.isFrozen(value)) Object.freeze(value);
-    for (const child of Object.values(value)) deepFreeze(child);
+    for (const key of Reflect.ownKeys(value))
+      deepFreeze((value as Record<PropertyKey, unknown>)[key]);
   }
   return value;
 }
@@ -547,7 +548,7 @@ export function normalizeMoneyboxSnapshot(value: unknown): QuoteSnapshot[] {
     canonicalRows = payload['sourceQuotes'] !== undefined,
     rows = record(payload['sourceQuotes'] ?? payload['rates']),
     time = times(payload);
-  return Object.entries(rows).flatMap(([currency, value]) =>
+  const quotes = Object.entries(rows).flatMap(([currency, value]) =>
     validRows(() => {
       if (currency === 'KRW') return [];
       const prices = record(value);
@@ -568,10 +569,17 @@ export function normalizeMoneyboxSnapshot(value: unknown): QuoteSnapshot[] {
           prices[canonicalRows ? 'sell' : 'buy'],
         ),
         ...time,
-        serviceCountry: 'KR',
-        deliveryMethod: 'cash',
-        channel: 'branch',
-        branchId: 'myeongdong',
+        serviceCountry:
+          canonicalRows && typeof prices['serviceCountry'] === 'string'
+            ? prices['serviceCountry']
+            : 'KR',
+        deliveryMethod: prices['deliveryMethod'] === 'account' ? 'account' : 'cash',
+        channel: ['branch', 'online', 'atm', 'unknown'].includes(String(prices['channel']))
+          ? (prices['channel'] as SourceQuote['channel'])
+          : 'branch',
+        ...(typeof prices['branchId'] === 'string'
+          ? { branchId: prices['branchId'] }
+          : { branchId: 'myeongdong' }),
         feeStatus: 'unknown',
         originalBuyField: canonicalRows ? 'buyRate' : 'sell',
         originalSellField: canonicalRows ? 'sellRate' : 'buy',
@@ -580,6 +588,10 @@ export function normalizeMoneyboxSnapshot(value: unknown): QuoteSnapshot[] {
       });
     }),
   );
+  if (quotes.length > 0 && quotes.every((quote) => quote.status !== 'available')) {
+    throw new Error('Provider snapshot has no available quotes');
+  }
+  return quotes;
 }
 
 /** Structural validation and reconstruction of the economic meaning are both required. */
@@ -691,14 +703,57 @@ export function estimateDerived(
   request: EstimateRequest,
 ): DerivedEstimateResult {
   const route = deriveCrossQuote(first, second);
-  const result =
+  let result: EstimateResult;
+  if (
     !route ||
     !validateEstimateRequest(request) ||
     !isValidAmount(request.amount) ||
     route.fromCurrency !== request.fromCurrency ||
     route.toCurrency !== request.toCurrency
-      ? unavailable('invalid_derived_route')
-      : estimateAmounts(route.rate, request, null, 'unknown');
+  ) {
+    result = unavailable('invalid_derived_route');
+  } else if (request.mode === 'EXACT_IN') {
+    const intermediate = estimate(first, {
+      fromCurrency: first.fromCurrency,
+      toCurrency: first.toCurrency,
+      amount: request.amount,
+      mode: 'EXACT_IN',
+    });
+    result =
+      intermediate.toAmount === null
+        ? intermediate
+        : estimate(second, {
+            fromCurrency: second.fromCurrency,
+            toCurrency: second.toCurrency,
+            amount: intermediate.toAmount,
+            mode: 'EXACT_IN',
+          });
+  } else {
+    const intermediate = estimate(second, {
+      fromCurrency: second.fromCurrency,
+      toCurrency: second.toCurrency,
+      amount: request.amount,
+      mode: 'EXACT_OUT',
+    });
+    result =
+      intermediate.fromAmount === null
+        ? intermediate
+        : estimate(first, {
+            fromCurrency: first.fromCurrency,
+            toCurrency: first.toCurrency,
+            amount: intermediate.fromAmount,
+            mode: 'EXACT_OUT',
+          });
+  }
+  if (result.status === 'available')
+    result = {
+      ...result,
+      fromAmount: request.mode === 'EXACT_IN' ? request.amount : result.fromAmount,
+      toAmount: request.mode === 'EXACT_OUT' ? request.amount : result.toAmount,
+      quoteId: null,
+      rate: route?.rate ?? result.rate,
+      feeStatus: 'unknown',
+    };
   return { ...result, kind: 'derived_cross', legs: route?.legs ?? [], recommendable: false };
 }
 

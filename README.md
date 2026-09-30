@@ -29,7 +29,7 @@ haotool Apps 是一個專業的 pnpm Monorepo，包含多個高品質的 React 1
 
 | 應用                                                | 描述                                           | 狀態 | 連結                                                                  |
 | --------------------------------------------------- | ---------------------------------------------- | ---- | --------------------------------------------------------------------- |
-| **[RateWise](./apps/ratewise/)**                    | 台銀即時匯率換算 PWA，支援 18 種貨幣           | Live | [app.haotool.org/ratewise](https://app.haotool.org/ratewise/)         |
+| **[RateWise](./apps/ratewise/)**                    | 台銀即時匯率換算 PWA，支援 17 種外幣與 TWD     | Live | [app.haotool.org/ratewise](https://app.haotool.org/ratewise/)         |
 | **[NihonName](./apps/nihonname/)**                  | 日本名字產生器，探索皇民化歷史                 | Live | [app.haotool.org/nihonname](https://app.haotool.org/nihonname/)       |
 | **[Quake-School](./apps/quake-school/)**            | 互動式地震科學教育平台                         | Live | [app.haotool.org/quake-school](https://app.haotool.org/quake-school/) |
 | **[Park Keeper](./apps/park-keeper/)**              | 停車場導航工具，GPS 指引 + 多語言（i18n）      | Live | [app.haotool.org/park-keeper](https://app.haotool.org/park-keeper/)   |
@@ -46,9 +46,9 @@ haotool Apps 是一個專業的 pnpm Monorepo，包含多個高品質的 React 1
 基於臺灣銀行牌告匯率的即時匯率 PWA 應用，顯示實際買賣價（非中間價）
 
 - 台銀實際賣出價：顯示真正換匯成本，非市場中間價
-- 18 種貨幣、4 種匯率類型（現金/即期買入賣出）
+- 17 種外幣與 TWD、4 種匯率類型（現金/即期買入賣出）
 - 即時匯率：每 5 分鐘同步臺灣銀行牌告匯率
-- 匯率 API v3（預設未公開，`FX_V3_PUBLIC=false`）：以支付幣別 → 取得幣別表達方向，保留來源買賣側、條件與 SHA-256 release manifest；公開切換前 `/open-data/` 與 App 維持 v2 行為。v2 JSON 提供 publisher attribution，使用條款見 RateWise 開放資料頁
+- 匯率 API v3 已公開（`FX_V3_PUBLIC=true`）：以支付幣別 → 取得幣別表達方向，保留來源買賣側、條件與 SHA-256 release manifest；Open Data 與 App 均使用 v3。回滾只需以一行 PR 關閉此開關，data 發佈 gate 獨立運作
 - 趨勢圖表：30 天歷史匯率走勢視覺化
 - PWA 支援：可安裝至手機，支援離線使用
 - 收藏管理：自訂常用貨幣快速存取
@@ -281,7 +281,7 @@ haotool Apps is a professional pnpm Monorepo containing multiple high-quality Re
 
 | App                                                 | Description                                                 | Status | Link                                                                  |
 | --------------------------------------------------- | ----------------------------------------------------------- | ------ | --------------------------------------------------------------------- |
-| **[RateWise](./apps/ratewise/)**                    | Taiwan Bank exchange rate PWA, 18 currencies                | Live   | [app.haotool.org/ratewise](https://app.haotool.org/ratewise/)         |
+| **[RateWise](./apps/ratewise/)**                    | Taiwan Bank exchange rate PWA, 17 foreign currencies + TWD  | Live   | [app.haotool.org/ratewise](https://app.haotool.org/ratewise/)         |
 | **[NihonName](./apps/nihonname/)**                  | Japanese name generator, historical exploration             | Live   | [app.haotool.org/nihonname](https://app.haotool.org/nihonname/)       |
 | **[Quake-School](./apps/quake-school/)**            | Interactive earthquake science education                    | Live   | [app.haotool.org/quake-school](https://app.haotool.org/quake-school/) |
 | **[Park Keeper](./apps/park-keeper/)**              | Parking lot navigator with GPS compass + i18n               | Live   | [app.haotool.org/park-keeper](https://app.haotool.org/park-keeper/)   |

@@ -15,7 +15,7 @@ export interface MoneyboxRate {
   updatedAt: string;
   /** 已驗證 v3 的來源發布時間；legacy 擷取時間不冒充發布時間。 */
   updatedAtIso: string | null;
-  /** 未經 v3 hash chain 驗證的暫時參考值，必須保持失敗／未知提示。 */
+  /** 來源發布時間未知或未經 v3 hash chain 驗證的參考值，必須保持失敗／未知提示。 */
   isFallback?: boolean;
 }
 
@@ -100,15 +100,20 @@ export async function fetchMoneyboxRate(now = new Date().toISOString()): Promise
         quote.sourceQuote.deliveryMethod === 'cash' &&
         quote.sourceQuote.branchId === 'myeongdong',
     );
+  const publishedAt = quote?.sourceQuote.sourcePublishedAt ?? null;
+  const quoteFreshness = quote?.rate ? freshness(quote, now) : null;
+  // 合約允許來源不提供發布時間（null）：仍是已驗證報價，但以明示參考值降級，不冒充新鮮度；
+  // 發布時間不可解析或晚於現在（裝置時鐘偏差）仍視為不可用。
+  const unknownPublication = quoteFreshness === 'unknown' && publishedAt === null;
   if (
     provider?.checkStatus !== 'ok' ||
     !quote?.rate ||
     quote.status !== 'available' ||
-    freshness(quote, now) !== 'fresh'
+    (quoteFreshness !== 'fresh' && !unknownPublication)
   )
     throw new Error('TWD to KRW quote unavailable or stale');
-  const publishedAt = quote.sourceQuote.sourcePublishedAt;
-  if (!publishedAt) throw new Error('Source publication time unknown');
+  if (publishedAt === null)
+    return { krwPerTwd: Number(quote.rate), updatedAt: '', updatedAtIso: null, isFallback: true };
   // Existing expenses retain their captured numeric rate; only future defaults change.
   return { krwPerTwd: Number(quote.rate), updatedAt: publishedAt, updatedAtIso: publishedAt };
 }

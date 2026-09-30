@@ -141,6 +141,65 @@ describe('fetchMoneyboxRate v3', () => {
       await expect(fetchMoneyboxRate(now)).rejects.toThrow(/unavailable|stale/i);
     },
   );
+  it('degrades to a flagged reference rate when the source publication time is unknown', async () => {
+    const now = '2026-07-15T15:00:00Z';
+    const { normalizeMoneyboxSnapshot } = await import('@app/shared/fx');
+    const { hashBytes } = await import('@app/shared/fx/release');
+    const snapshot = buildProviderSnapshot(
+      'moneybox',
+      normalizeMoneyboxSnapshot({
+        timestamp: now,
+        sourcePublishedAt: null,
+        lastSuccessfulCheckAt: now,
+        rates: { TWD: { buy: '46', sell: '45' } },
+      }),
+    );
+    const snapshotText = JSON.stringify(snapshot);
+    const snapshotHash = await hashBytes(snapshotText);
+    const manifest = buildReleaseManifest({
+      generatedAt: now,
+      providers: [
+        {
+          providerId: 'moneybox',
+          snapshot: { path: `objects/${snapshotHash}.json`, sha256: snapshotHash },
+          checkStatus: 'ok',
+          lastSuccessfulCheckAt: now,
+        },
+      ],
+      history: [],
+      deprecation: { activatedAt: null, sunsetAt: null, replacement: 'https://example.com/v3' },
+    });
+    const manifestText = JSON.stringify(manifest);
+    const manifestHash = await hashBytes(manifestText);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((input) => {
+        const path =
+          input instanceof URL ? input.href : typeof input === 'string' ? input : input.url;
+        return Promise.resolve(
+          new Response(
+            path.endsWith('current.json')
+              ? JSON.stringify({
+                  schemaVersion: '3.0',
+                  releaseId: manifestHash,
+                  manifest: { path: `releases/${manifestHash}.json`, sha256: manifestHash },
+                })
+              : path.includes('releases/')
+                ? manifestText
+                : snapshotText,
+          ),
+        );
+      }),
+    );
+
+    await expect(fetchMoneyboxRate(now)).resolves.toEqual({
+      krwPerTwd: 45,
+      updatedAt: '',
+      updatedAtIso: null,
+      isFallback: true,
+    });
+  });
+
   it('does not accept unversioned legacy data as a new snapshot', async () => {
     vi.stubGlobal(
       'fetch',

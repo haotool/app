@@ -1,5 +1,6 @@
 import { FxContextControls } from '../features/ratewise/components/FxContextControls';
 import { isFxV3Public } from '../config/api-endpoints';
+import { getFxQuoteNotices } from '../features/ratewise/fxQuoteNotices';
 /**
  * Multi-Currency Converter Page - ParkKeeper 風格
  *
@@ -10,7 +11,7 @@ import { isFxV3Public } from '../config/api-endpoints';
  * @updated 2026-01-24 - 移除標題區塊，優化垂直空間
  */
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertCircle, RefreshCw, Clock } from 'lucide-react';
 import { MultiConverter as MultiConverterComponent } from '../features/ratewise/components/MultiConverter';
@@ -54,6 +55,10 @@ export default function MultiConverter() {
 
   const {
     fxQuotes,
+    fxError,
+    fxFallbackActive,
+    providerStatuses,
+    contextSubstitutions,
     estimatePair,
     multiAmounts,
     sortedCurrencies,
@@ -66,6 +71,39 @@ export default function MultiConverter() {
     favorites,
     toggleFavorite,
   } = useCurrencyConverter({ exchangeRates, details, rateType, rateSource, mode: 'multi' });
+
+  const providerPreference = useConverterStore((state) => state.providerPreference);
+  const serviceCountry = useConverterStore((state) => state.serviceCountry);
+  // 與 converter 的報價時鐘同頻（每分鐘）：離線或刷新失敗時，報價跨過新鮮度門檻也要更新提示。
+  const [clockMs, setClockMs] = useState(() => Date.now());
+  useEffect(() => {
+    if (!isFxV3Public()) return;
+    const timer = setInterval(() => setClockMs(Date.now()), 60_000);
+    return () => clearInterval(timer);
+  }, []);
+  const fxNotices = useMemo(
+    () =>
+      isFxV3Public()
+        ? getFxQuoteNotices({
+            quotes: fxQuotes,
+            providerStatuses,
+            preference: providerPreference,
+            now: new Date(clockMs).toISOString(),
+            refreshFailed: Boolean(fxError),
+            serviceCountry,
+            fallbackActive: fxFallbackActive,
+          })
+        : [],
+    [
+      fxQuotes,
+      providerStatuses,
+      providerPreference,
+      fxError,
+      fxFallbackActive,
+      serviceCountry,
+      clockMs,
+    ],
+  );
 
   // 註：rateSource→cash 同步已收斂到 converterStore.setRateSource。
   // 換錢所→銀行 fallback 已收斂到 useCurrencyConverter（SSOT），頁面層不再重複。
@@ -154,6 +192,7 @@ export default function MultiConverter() {
           <div className={multiConverterLayoutTokens.card.className}>
             <MultiConverterComponent
               estimatePair={estimatePair}
+              contextSubstitutions={contextSubstitutions}
               sortedCurrencies={sortedCurrencies}
               multiAmounts={multiAmounts}
               baseCurrency={baseCurrency}
@@ -171,6 +210,18 @@ export default function MultiConverter() {
               onToggleFavorite={toggleFavorite}
             />
             {isFxV3Public() && <FxContextControls quotes={fxQuotes} />}
+            {fxNotices.length > 0 && (
+              <div
+                role="status"
+                aria-label="報價來源狀態"
+                data-testid="multi-fx-quote-notices"
+                className="px-3 pb-2 text-xs text-warning-text"
+              >
+                {fxNotices.map((notice) => (
+                  <p key={notice}>{notice}</p>
+                ))}
+              </div>
+            )}
           </div>
         </section>
 

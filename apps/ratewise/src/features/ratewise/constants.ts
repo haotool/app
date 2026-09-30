@@ -46,6 +46,8 @@ export const CURRENCY_DEFINITIONS = {
 
 /** 支援幣別總數（含 TWD） */
 export const SUPPORTED_CURRENCY_COUNT = Object.keys(CURRENCY_DEFINITIONS).length;
+/** 外幣數量（不含 TWD 基準幣） */
+export const SUPPORTED_FOREIGN_CURRENCY_COUNT = SUPPORTED_CURRENCY_COUNT - 1;
 
 export const CONVERTER_MODES = ['single', 'multi'] as const;
 export const RATE_MODES = ['auto', 'sell', 'mid'] as const;

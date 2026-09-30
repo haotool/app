@@ -15,7 +15,12 @@ vi.mock('@app/shared/fx', () => ({
 }));
 
 import { fetchVerifiedObject, loadRelease, restoreRelease } from '@app/shared/fx/release';
-import { clearFxV3Storage, fetchFxHistory, refreshActiveRelease } from '../fxSnapshotService';
+import {
+  clearFxV3Storage,
+  fetchFxHistory,
+  readActiveRelease,
+  refreshActiveRelease,
+} from '../fxSnapshotService';
 
 const release = { current: { releaseId: 'current' }, snapshots: [], manifest: { providers: [] } };
 const keys = () =>
@@ -27,6 +32,7 @@ const saveHistory = (key: string, savedAt: number) =>
 
 beforeEach(() => {
   localStorage.clear();
+  clearFxV3Storage();
   gate.enabled = true;
   vi.mocked(loadRelease).mockResolvedValue(release as never);
   vi.mocked(restoreRelease).mockImplementation((value) => Promise.resolve(value as never));
@@ -136,6 +142,67 @@ describe('FX v3 storage retention', () => {
     await expect(fetchFxHistory('series')).resolves.toMatchObject([{ rate: '42' }]);
 
     expect(localStorage.getItem(key)).toBe(previous);
+  });
+
+  it('serves history from the in-memory release when storage cannot persist it', async () => {
+    const history = {
+      current: { releaseId: 'memory' },
+      snapshots: [{ quotes: [{ quoteSeriesId: 'series', providerId: 'bot' }] }],
+      manifest: { history: [{ providerId: 'bot', date: '2026-09-01', snapshot: {} }] },
+    };
+    vi.mocked(loadRelease).mockResolvedValue(history as never);
+    vi.mocked(fetchVerifiedObject).mockResolvedValue({
+      providerId: 'bot',
+      quotes: [
+        {
+          quoteSeriesId: 'series',
+          rate: '42',
+          quoteId: 'q',
+          sourceQuote: { sourcePublishedAt: null },
+        },
+      ],
+    } as never);
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('quota', 'QuotaExceededError');
+    });
+
+    await refreshActiveRelease();
+
+    await expect(fetchFxHistory('series')).resolves.toMatchObject([{ rate: '42' }]);
+  });
+
+  it('keeps serving the verified release after remount when storage cannot persist it', async () => {
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('quota', 'QuotaExceededError');
+    });
+    await refreshActiveRelease();
+    vi.mocked(restoreRelease).mockResolvedValue(null as never);
+
+    await expect(readActiveRelease()).resolves.toBe(release);
+  });
+
+  it('prefers the newer in-memory release over an older entry that storage still holds', async () => {
+    const older = { ...release, manifest: { generatedAt: '2026-09-29T00:00:00Z' } };
+    const newer = { ...release, manifest: { generatedAt: '2026-09-30T00:00:00Z' } };
+    localStorage.setItem('ratewise.fx.v3.active', JSON.stringify(older));
+    vi.mocked(loadRelease).mockResolvedValue(newer as never);
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('quota', 'QuotaExceededError');
+    });
+    await refreshActiveRelease();
+    vi.mocked(restoreRelease).mockResolvedValue(older as never);
+
+    await expect(readActiveRelease()).resolves.toBe(newer);
+  });
+
+  it('adopts a newer stored release written by another tab', async () => {
+    const older = { ...release, manifest: { generatedAt: '2026-09-29T00:00:00Z' } };
+    const newer = { ...release, manifest: { generatedAt: '2026-09-30T00:00:00Z' } };
+    vi.mocked(loadRelease).mockResolvedValue(older as never);
+    await refreshActiveRelease();
+    vi.mocked(restoreRelease).mockResolvedValue(newer as never);
+
+    await expect(readActiveRelease()).resolves.toBe(newer);
   });
 
   it('clears the v3 namespace on rollback without touching user settings', () => {

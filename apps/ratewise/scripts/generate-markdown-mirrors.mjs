@@ -63,6 +63,7 @@ const seoMetadataSrc = resolveFxV3Ternaries(
 );
 const constantsSrc = readFileSync(resolve(ROOT, 'src/features/ratewise/constants.ts'), 'utf-8');
 const SUPPORTED_CURRENCY_COUNT = [...constantsSrc.matchAll(/^\s+([A-Z]{3}):\s*\{/gm)].length;
+const SUPPORTED_FOREIGN_CURRENCY_COUNT = SUPPORTED_CURRENCY_COUNT - 1;
 
 /**
  * 擷取 seo-metadata.ts 內 `export const <name> = [...] as const` 陣列中的 question/answer 對。
@@ -89,6 +90,7 @@ const KNOWN_SUBSTITUTIONS = {
     Object.entries(RATES_API).map(([key, value]) => [`RATES_API.${key}`, String(value)]),
   ),
   SUPPORTED_CURRENCY_COUNT: String(SUPPORTED_CURRENCY_COUNT),
+  SUPPORTED_FOREIGN_CURRENCY_COUNT: String(SUPPORTED_FOREIGN_CURRENCY_COUNT),
 };
 
 function substituteTemplate(raw) {
@@ -279,11 +281,11 @@ ${APP_INFO.shortName} 是以臺灣銀行牌告匯率為基礎的換匯工具，�
 
 ## 資料方法與範圍
 
-- 資料來源為臺灣銀行官方牌告匯率，涵蓋 ${SUPPORTED_CURRENCY_COUNT} 種貨幣。
+- 資料來源為臺灣銀行官方牌告匯率，涵蓋 ${SUPPORTED_FOREIGN_CURRENCY_COUNT} 種外幣與 TWD 基準幣（共 ${SUPPORTED_CURRENCY_COUNT} 種）。
 - 約每 5 分鐘檢查更新最新報價，涵蓋現金買入、現金賣出、即期買入、即期賣出四種。
 ${
   FX_V3_PUBLIC
-    ? `- 資料管線：GitHub Actions 抓取 provider 牌告，v3 snapshot 保留來源/擷取時間與 SHA-256 provenance，經 Pull Request 驗證後合併至 data branch。
+    ? `- 資料管線：GitHub Actions 抓取 provider 牌告，v3 snapshot 保留來源/擷取時間與 SHA-256 provenance，發布前經 workflow 驗證後直接提交至 data branch（不經 Pull Request）。
 `
     : `- 資料管線：GitHub Actions 每日抓取 + 雙重驗證（台銀牌告 vs open.er-api.com 中間價，誤差 ≤ 2%）+ Pull Request 自動審核後合併至 data branch。
 `
@@ -382,7 +384,7 @@ function buildGuideMd() {
 
 ## 進階功能
 
-- **多幣別同時比較**：一個基準貨幣同時查看 ${SUPPORTED_CURRENCY_COUNT} 種貨幣換算。
+- **多幣別同時比較**：一個基準貨幣同時查看 ${SUPPORTED_FOREIGN_CURRENCY_COUNT} 種外幣換算。
 - **歷史趨勢圖**：7 到 30 天匯率波動視覺化，判斷換匯時機。
 - **換算歷史紀錄**：自動記錄每次換算，可單擊複製或雙擊重新載入。
 - **7 種主題風格**：Zen、Violet、Nitro、Racing、Kawaii、Classic、Forest。
@@ -450,13 +452,13 @@ ${API_ATTRIBUTION.markdownSnippet}
 ${
   FX_V3_PUBLIC
     ? `- **免 API Key**、**公開讀取**、**CORS 已啟用**；資料使用與再散布依各 provider 條款。
-- v3 current pointer 只有在 data branch 啟用發布 gate 後才會存在；未啟用時請使用明確標示的 legacy adapter。
+- v3 為正式 canonical 資料面；legacy adapter 僅為已棄用的相容讀取路徑，新整合請改用 v3 current pointer。
 - 更新頻率：約每 5 分鐘檢查 provider；canonical v3 release 以 manifest 與 SHA-256 objects 綁定。
 - v3 quote 使用 fromCurrency → toCurrency 與 decimal string rate；legacy latest/history 僅作相容投影。
 `
     : `- **免 API Key**、**公開讀取**、**CORS 已啟用**；資料使用與再散布依各 provider 條款。
 - 更新頻率：約每 5 分鐘檢查更新臺灣銀行牌告。
-- 涵蓋 ${SUPPORTED_CURRENCY_COUNT} 種貨幣的現金買/賣、即期買/賣四種報價。
+- 涵蓋 ${SUPPORTED_FOREIGN_CURRENCY_COUNT} 種外幣與 TWD 基準幣（共 ${SUPPORTED_CURRENCY_COUNT} 種）的現金買/賣、即期買/賣四種報價。
 `
 }
 ## 呼叫範例

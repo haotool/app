@@ -28,6 +28,7 @@ const llmsPublisherText = API_ATTRIBUTION.publisher.requiredText;
 const constantsPath = resolve(ROOT, 'src/features/ratewise/constants.ts');
 const constantsContent = readFileSync(constantsPath, 'utf-8');
 const SUPPORTED_CURRENCY_COUNT = [...constantsContent.matchAll(/^\s+([A-Z]{3}):\s*\{/gm)].length;
+const SUPPORTED_FOREIGN_CURRENCY_COUNT = SUPPORTED_CURRENCY_COUNT - 1;
 const i18nPath = resolve(ROOT, 'src/i18n/index.ts');
 const i18nContent = readFileSync(i18nPath, 'utf-8');
 const SUPPORTED_LANGUAGE_LABELS = [...i18nContent.matchAll(/label:\s*'([^']+)'/g)].map(
@@ -85,7 +86,7 @@ const AI_CRAWLER_ALLOW_LIST = ALL_AI_CRAWLERS.join(', ');
 
 const FEATURES = [
   '單幣別精準換算：選擇來源/目標貨幣，即時計算換算結果',
-  `多幣別同時比較：一個基準貨幣同時查看 ${SUPPORTED_CURRENCY_COUNT} 種貨幣換算`,
+  `多幣別同時比較：一個基準貨幣同時查看 ${SUPPORTED_FOREIGN_CURRENCY_COUNT} 種外幣換算`,
   '計算機鍵盤：底部滑出式計算機，支援加減乘除、百分比、退格',
   '快速金額按鈕：依幣別顯示常用金額（如韓元 10,000~300,000、日圓 1,000~30,000）',
   '現金/即期匯率切換：一鍵切換適合不同換匯情境',
@@ -100,7 +101,7 @@ const FEATURES = [
 
 const content = `# ${BRAND_FULL} — 台灣最精準的匯率換算器
 
-> 顯示臺灣銀行牌告的實際買入賣出價（不是中間價），讓你換匯前就知道真正要付多少台幣。支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣、現金與即期匯率切換、計算機快速輸入、收藏與拖曳排序、換算歷史、6 種主題風格、${SUPPORTED_LANGUAGE_COUNT} 語言介面與 PWA 離線使用。
+> 顯示臺灣銀行牌告的實際買入賣出價（不是中間價），讓你換匯前就知道真正要付多少台幣。支援 ${SUPPORTED_FOREIGN_CURRENCY_COUNT} 種外幣（共 ${SUPPORTED_CURRENCY_COUNT} 種，含 TWD）、現金與即期匯率切換、計算機快速輸入、收藏與拖曳排序、換算歷史、6 種主題風格、${SUPPORTED_LANGUAGE_COUNT} 語言介面與 PWA 離線使用。
 
 Version: v${VERSION}
 
@@ -116,7 +117,7 @@ Version: v${VERSION}
 - Q: 刷卡匯率跟台銀牌告一樣嗎？ A: 不一樣，是完全不同的體系。刷卡匯率 = 卡組織清算匯率（Visa/Mastercard）+ 發卡銀行海外手續費（台灣約 1.5%）；若選 DCC 再加 3～18% 匯差。台銀牌告匯率適用臨櫃換鈔和外幣帳戶匯款，與刷卡費用無關。
 ${
   FX_V3_PUBLIC
-    ? `- Q: 如何取得方向明確的 v3 匯率（適合開發者/LLM）？ A: 先讀取不可變 current pointer：${BASE_URL}api/latest.json 內的 v3.current，再以 manifest 的 SHA-256 references 讀取 provider snapshot。每筆 quote 使用 fromCurrency、toCurrency、rate（每 1 fromCurrency 可取得的 toCurrency，decimal string）；試算固定為 received = sent × rate，完整契約見 ${BASE_URL}api/v3/contract.schema.json。舊 latest.json 仍是相容投影，不能取代 v3 hash chain。
+    ? `- Q: 如何取得方向明確的 v3 匯率（適合開發者/LLM）？ A: 先讀取可變（原子覆寫）的 current pointer，不可長期快取：${BASE_URL}api/latest.json 內的 v3.current，再以 manifest 的 SHA-256 references 讀取 provider snapshot。每筆 quote 使用 fromCurrency、toCurrency、rate（每 1 fromCurrency 可取得的 toCurrency，decimal string）；試算固定為 received = sent × rate，完整契約見 ${BASE_URL}api/v3/contract.schema.json。舊 latest.json 仍是相容投影，不能取代 v3 hash chain。
 `
     : `- Q: 如何取得即時匯率數據（適合開發者/LLM）？ A: 直接讀取 CDN JSON：https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json。回傳欄位包含 timestamp（ISO 8601 資料抓取時間）、updateTime（台灣銀行牌告顯示時間）、source（資料來源）、rates（各幣別簡化匯率）、details（各幣別完整四種報價：spot.buy, spot.sell, cash.buy, cash.sell）。每 5 分鐘由 GitHub Actions 自動同步。完整規格見 ${BASE_URL}openapi.json
 `
@@ -130,7 +131,7 @@ ${
 
 ## Key Metrics
 
-- 支援貨幣：${SUPPORTED_CURRENCY_COUNT} 種
+- 支援貨幣：${SUPPORTED_FOREIGN_CURRENCY_COUNT} 種外幣與 TWD（共 ${SUPPORTED_CURRENCY_COUNT} 種）
 - 更新頻率：約每 5 分鐘檢查更新
 - 匯率類型：現金買入、現金賣出、即期買入、即期賣出
 - 6 種主題風格（Zen/Nitro/Kawaii/Classic/Racing/Forest）
@@ -200,7 +201,7 @@ ${buildReverseRates()}
 - Source URL: https://rate.bot.com.tw/xrt
 - Update: 約每 5 分鐘檢查更新（GitHub Actions）
 - Rate Types: 現金買入、現金賣出、即期買入、即期賣出
-- Currencies: ${SUPPORTED_CURRENCY_COUNT} 種（TWD, USD, JPY, EUR, GBP, HKD, CNY, KRW, AUD, CAD, SGD, THB, NZD, CHF, VND, PHP, IDR, MYR）
+- Currencies: ${SUPPORTED_FOREIGN_CURRENCY_COUNT} 種外幣 + TWD（共 ${SUPPORTED_CURRENCY_COUNT} 種：TWD, USD, JPY, EUR, GBP, HKD, CNY, KRW, AUD, CAD, SGD, THB, NZD, CHF, VND, PHP, IDR, MYR）
 - Disclaimer: 匯率僅供參考，實際交易請以金融機構公告為準。
 
 ## AI/LLM Access Control
@@ -223,15 +224,15 @@ ${API_ATTRIBUTION.terms.join('\n')}
 
 ${
   FX_V3_PUBLIC
-    ? `### 匯率資料端點（v3 data branch gate）
+    ? `### 匯率資料端點（v3 為 canonical，legacy 為相容投影）
 - v3 current pointer（CDN）: https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/v3/current.json
-  - 只有 data branch 啟用 v3 發布 gate 後才會存在；使用前沿 manifest 取得 provider snapshot，並驗證每個 immutable object 的 SHA-256
+  - v3 為正式 canonical 資料面；使用前沿 manifest 取得 provider snapshot，並驗證每個 immutable object 的 SHA-256
   - v3 quote：fromCurrency、toCurrency、providerId、quoteId、quoteSeriesId、rate（decimal string）、sourceQuote 與來源/擷取時間
 - legacy latest.json（CDN）: https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json
-  - 目前正式資料面仍是 legacy 相容投影；details/rates 的 buy/sell 只按 legacy 語意使用，不可冒充 v3 hash chain
+  - legacy 僅為相容投影（已棄用，新整合請改用 v3）；details/rates 的 buy/sell 只按 legacy 語意使用，不可冒充 v3 hash chain
   - legacy timestamp（ISO 8601 資料抓取時間）與 updateTime（台灣銀行牌告顯示時間）仍保留；未知來源發布時間不補成今天
 - MoneyBox legacy provider JSON（KRW 現金）: https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/providers/moneybox/latest.json
-  - v3 provider snapshot 只有在 gate 啟用且 current pointer 已發布後才可用；來源條款與再散布狀態另見 provider metadata
+  - v3 provider snapshot 經 current pointer 與 manifest 取得；來源條款與再散布狀態另見 provider metadata
 `
     : `### 即時匯率資料（真實數據，每 5 分鐘更新）
 - 即時匯率 JSON（CDN）: https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json
@@ -267,7 +268,7 @@ ${
 \`\`\`
 ${
   FX_V3_PUBLIC
-    ? `# 1. Fetch the v3 release pointer after the data-branch gate is enabled (no auth required, CORS enabled)
+    ? `# 1. Fetch the v3 release pointer (no auth required, CORS enabled)
 GET https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/v3/current.json
 `
     : `# 1. Fetch latest rates (no auth required, CORS enabled)
@@ -461,7 +462,7 @@ GET https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json
 
 ${
   FX_V3_PUBLIC
-    ? `新整合請改讀 v3 current pointer（data branch gate 啟用後）：
+    ? `新整合請改讀 v3 current pointer：
 
 \`\`\`
 GET https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/v3/current.json
@@ -624,7 +625,7 @@ GET ${BASE_URL}openapi.json
 
 ## Answer Capsule (Q&A for AI Citation)
 
-- Q: ${BRAND_SHORT} 提供什麼服務？ A: ${BRAND_SHORT} 是台灣最精準的匯率換算工具，顯示臺灣銀行牌告的實際買入賣出四種報價（現金買入、現金賣出、即期買入、即期賣出），而非中間價。支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣，約每 5 分鐘檢查更新。
+- Q: ${BRAND_SHORT} 提供什麼服務？ A: ${BRAND_SHORT} 是台灣最精準的匯率換算工具，顯示臺灣銀行牌告的實際買入賣出四種報價（現金買入、現金賣出、即期買入、即期賣出），而非中間價。支援 ${SUPPORTED_FOREIGN_CURRENCY_COUNT} 種外幣與 TWD（共 ${SUPPORTED_CURRENCY_COUNT} 種），約每 5 分鐘檢查更新。
 ${
   FX_V3_PUBLIC
     ? `- Q: 如何取得 v3 台銀匯率（適合開發者/LLM）？ A: 先 GET https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/v3/current.json，再依 manifest SHA-256 讀取 provider snapshot。每筆 rate 明確表示 fromCurrency 到 toCurrency；舊 latest.json 的 details/rates 只供相容讀取。無需 API Key，CORS 啟用。

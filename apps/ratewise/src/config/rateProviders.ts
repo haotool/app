@@ -13,6 +13,7 @@ export interface RateProviderConfig {
   sourceKind: RateSourceKind;
   label: string;
   shortLabel: string;
+  branchLabels?: Readonly<Record<string, string>>;
   supportedRateTypes: readonly RateType[];
   supportedCurrencies: 'all' | readonly CurrencyCode[];
   apiPaths: {

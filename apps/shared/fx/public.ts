@@ -3,7 +3,7 @@
  * false 時各 App 不讀取 v3 current、站台生成器不宣告 v3。data workflow 的
  * RATEWISE_FX_V3_ENABLED 只控制 data branch 產出；S4 先開 data gate 驗證，再以一行 PR 改為 true。
  */
-export const FX_V3_PUBLIC = false;
+export const FX_V3_PUBLIC = true;
 
 /**
  * vite define 注入的建置期字面常數（值取自 FX_V3_PUBLIC；型別宣告只在此處）。

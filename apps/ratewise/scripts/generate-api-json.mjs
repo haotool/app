@@ -30,7 +30,7 @@ const DATA_BASE_URL = `${RAW_DATA_BASE}/public/rates`;
 const CDN_BASE_URL = `${CDN_DATA_BASE}/public/rates`;
 const FX_V3_SCHEMA_URL = 'https://app.haotool.org/ratewise/api/v3/contract.schema.json';
 const FX_V3_AVAILABILITY =
-  'v3 current 只有 data branch 的 RATEWISE_FX_V3_ENABLED=true 發布 gate 開啟後才存在；尚未啟用時請使用 legacy 相容投影。';
+  'v3 current 是目前啟用的 canonical API；legacy latest/history 僅供相容讀取，已棄用。';
 
 const constantsPath = resolve(ROOT, 'src/features/ratewise/constants.ts');
 const constantsContent = readFileSync(constantsPath, 'utf-8');
@@ -55,6 +55,7 @@ function buildV3Descriptor() {
     contract: FX_V3_SCHEMA_URL,
     availability: FX_V3_AVAILABILITY,
     current: `${DATA_BASE_URL}/v3/current.json`,
+    currentDescription: 'current pointer；解析後指向 v3 release manifest，不是匯率資料本體。',
     cdnCurrent: `${CDN_BASE_URL}/v3/current.json`,
     releaseObjectTemplate: `${DATA_BASE_URL}/v3/objects/{sha256}.json`,
     releaseManifestTemplate: `${DATA_BASE_URL}/v3/releases/{releaseId}.json`,
@@ -74,9 +75,10 @@ const latestJson = {
     ? { schemaVersion: '3.0', legacySchemaVersion: API_SEMANTICS_SCHEMA_VERSION }
     : { schemaVersion: API_SEMANTICS_SCHEMA_VERSION }),
   semanticsDoc: API_SEMANTICS_DOC.publicUrl,
-  // B3 #10：宣告 3.0 時以 $schema 取代 v2 semanticFieldMapping，不得並存。
+  // contract 根層只有 $defs，$schema 只用於 ReleaseManifest／ProviderSnapshot（PRD §19.3）；
+  // 站台 metadata 不是其中任何一種，故以 v3ContractUrl 指向，不宣稱驗證關係。
   ...(FX_V3_PUBLIC
-    ? { $schema: 'https://app.haotool.org/ratewise/api/v3/contract.schema.json' }
+    ? { v3ContractUrl: FX_V3_SCHEMA_URL }
     : { semanticFieldMapping: buildSemanticFieldMapping() }),
   description: FX_V3_PUBLIC
     ? '匯率 API v3 — 以不可變 release manifest、SHA-256 objects 與 fromCurrency→toCurrency quote 為 canonical contract；legacy latest/history 端點僅作相容投影。'

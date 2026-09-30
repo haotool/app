@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+397
+> 本次分數變化：+9（reward 9、penalty 0、neutral 0）｜累計總分：+406
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,46 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-10-01
+- ID：reward-ratewise-fx-v3-best-zero-and-failed-disclosure
+- 原因：Best 模式下檢查失敗但仍新鮮的來源被排除時畫面只顯示無可用牌告；韓國地點輸入 0 時排名不推薦零金額，非臺銀來源的有效零金額被顯示為無報價。
+- 解法：抽出 selectBestQuote 統一排名、臺銀備援與零金額規則，其他來源狀態區塊補上檢查失敗原因，並補兩項測試。
+
+- 日期：2026-10-01
+- ID：reward-ratewise-fx-v3-manual-location-and-bank-badge
+- 原因：多幣別提示以 store 地點篩選會漏掉手動來源改用唯一地點的實際報價；臺銀徽章仍讀 legacy 更新時間，v3 新版已採用時頁尾卻顯示舊發布時間。
+- 解法：手動來源優先涵蓋其實際地點的報價，臺銀徽章改由實際採用的 v3 quote 建立發布時間，僅旗標關閉或備援時讀 legacy，並補兩項紅綠測試。
+
+- 日期：2026-10-01
+- ID：reward-ratewise-fx-v3-notice-scope-and-provenance-docs
+- 原因：多幣別提示把 legacy 備援稱為已驗證快照、對非目前服務地點的來源誤報；llms 稱 current pointer 不可變、about 稱 data 發布經 Pull Request，皆與實際發布流程不符。
+- 解法：提示帶入備援狀態並依服務地點篩選來源，llms 改稱可變原子 pointer、about 改述為 workflow 驗證後直接提交，並補兩項測試。
+
+- 日期：2026-10-01
+- ID：reward-ratewise-fx-v3-newer-release-precedence
+- 原因：持續 quota 時 storage 仍留舊 release，readActiveRelease 以 storage 優先，重新掛載會退回舊報價而歷史查詢卻用新版記憶體資料。
+- 解法：以 manifest.generatedAt 比較，取記憶體與 storage 中較新的版本（保留其他分頁寫入的新版），並補兩項測試。
+
+- 日期：2026-10-01
+- ID：reward-ratewise-fx-v3-remount-release-and-lint
+- 原因：儲存空間無法寫入時，重新掛載的 useFxQuotes 讀不到本次已驗證 release 而退回 legacy；OpenAPI 幣別清單描述與 v3 非 TWD 報價能力不符；新增徽章檔案有 prefer-optional-chain lint 錯誤而擋下 CI。
+- 解法：readActiveRelease 在 storage 無資料時回傳記憶體 release，OpenAPI 改述為 App／舊端點覆蓋範圍並指明 v3 以 snapshot quotes 為準，修正 lint 並補回歸測試。
+
+- 日期：2026-10-01
+- ID：reward-ratewise-fx-v3-badge-provider-and-clock
+- 原因：來源徽章以 legacy 的 TWD↔KRW 判斷，遇到 USD→KRW 直接牌告或交叉換算會誤顯示臺灣銀行；多幣別頁提示的時間凍結在 memo，離線跨過新鮮度門檻不會更新。
+- 解法：徽章與來源種類改由實際採用的 quote 證據決定並以計價幣別查換錢所設定，多幣別頁加入每分鐘時鐘依賴，各補紅綠測試。
+
+- 日期：2026-10-01
+- ID：reward-ratewise-fx-v3-best-cross-fallback-order
+- 原因：Best 交叉換算把台銀備援路徑與已通過排名的路徑一起比價，失效台銀若匯率較優會勝過有效來源，違反 failed／carried-forward 不得進入 Best 的契約。
+- 解法：改為兩階段收集，只有完全沒有通過排名的路徑時才加入台銀備援，並補「有效路徑優先」與「無有效路徑仍備援」兩項測試。
+
+- 日期：2026-10-01
+- ID：reward-ratewise-fx-v3-review-round4
+- 原因：Codex 對 v3 啟用 PR 提出 16 則 review，含交叉換算中介幣別寫死 TWD、來源徽章混用 legacy、多幣別頁與快取沿用未揭露狀態、歷史讀取依賴 localStorage、MoneyBox 發布時間未知即失去匯率、文件與 metadata 宣稱不實。
+- 解法：逐則驗證後修復 11 項並補紅綠測試（其餘為前輪已修或設計如此，附證據回覆），同步重新產生 llms、OpenAPI、pair 與 api metadata。
 
 - 日期：2026-10-01
 - ID：reward-ratewise-lighthouse-baseline-median5
@@ -27,6 +67,11 @@
 - ID：reward-ratewise-governance-cf-cache-status-gate
 - 原因：Production Governance 自 9/1 起每日紅燈，正式站 HTML 與 hashed asset 已不回傳 cf-cache-status，測試仍強制斷言。
 - 解法：邊緣標頭測試改只斷言 cf-ray，快取語意交由既有 cache-control 測試，並以 workflow 同參數對正式站驗證全綠。
+
+- 日期：2026-09-29
+- ID：reward-ratewise-fx-v3-public-switch
+- 原因：v3 資料已上線但 App 仍走 legacy，且過期來源證據、全不可用快照與 AED/RUB 小數位仍有缺口。
+- 解法：翻轉 FX_V3_PUBLIC 單一旗標，補齊四項語意修正並以測試改驗 v3 行為，保留一行回滾路徑。
 
 - 日期：2026-09-29
 - ID：reward-ratewise-fx-v3-pipeline-hardening

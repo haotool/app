@@ -15,6 +15,7 @@ import {
 
 export interface ProviderQuote {
   provider: RateProviderRef;
+  quoteId?: string;
   rateType: RateType;
   sourceKind: RateSourceKind;
   unitRate: number;
@@ -22,6 +23,9 @@ export interface ProviderQuote {
   resultAmount: number;
   inputMode?: 'EXACT_IN' | 'EXACT_OUT';
   isAvailable: boolean;
+  /** v3 evidence remains visible even when freshness excludes this quote from ranking. */
+  freshness?: 'fresh' | 'stale' | 'unknown';
+  sourcePublishedAt?: string | null;
 }
 
 export interface RankInput {

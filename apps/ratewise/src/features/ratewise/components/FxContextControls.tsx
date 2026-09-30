@@ -73,7 +73,9 @@ export function FxContextControls({ quotes }: { quotes: readonly QuoteSnapshot[]
         >
           <option value="best">比較未含費用牌告</option>
           {manual && !providers.includes(manual) && (
-            <option value={manual}>{manual}（此地點無報價）</option>
+            <option value={manual}>
+              {getRateProvider(manual)?.label ?? manual}（此地點無報價）
+            </option>
           )}
           {providers.map((provider) => (
             <option key={provider} value={provider}>

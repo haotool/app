@@ -19,7 +19,11 @@
  * 參考最佳實踐: MDN toLocaleString with timeZone option
  * https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Date/toLocaleString
  */
-export function formatIsoTimestamp(iso: string): string {
+export function formatIsoTimestamp(
+  iso: string | null | undefined,
+  options: { includeYear?: boolean } = {},
+): string {
+  if (!iso) return '';
   const date = new Date(iso);
 
   // 驗證日期有效性
@@ -31,6 +35,7 @@ export function formatIsoTimestamp(iso: string): string {
   // 在 CI (UTC) 環境會導致測試失敗
   const formatter = new Intl.DateTimeFormat('zh-TW', {
     timeZone: 'Asia/Taipei',
+    ...(options.includeYear ? { year: 'numeric' as const } : {}),
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
@@ -40,11 +45,12 @@ export function formatIsoTimestamp(iso: string): string {
 
   const parts = formatter.formatToParts(date);
   const month = parts.find((p) => p.type === 'month')?.value ?? '';
+  const year = parts.find((p) => p.type === 'year')?.value ?? '';
   const day = parts.find((p) => p.type === 'day')?.value ?? '';
   const hour = parts.find((p) => p.type === 'hour')?.value ?? '';
   const minute = parts.find((p) => p.type === 'minute')?.value ?? '';
 
-  return `${month}/${day} ${hour}:${minute}`;
+  return `${options.includeYear ? `${year}/` : ''}${month}/${day} ${hour}:${minute}`;
 }
 
 /**

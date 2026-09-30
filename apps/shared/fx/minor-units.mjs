@@ -27,6 +27,8 @@ export const MINOR_UNITS = Object.freeze({
   BHD: 3,
   OMR: 3,
   TND: 3,
+  AED: 2,
+  RUB: 2,
 });
 export function minorUnit(currency) {
   const result = MINOR_UNITS[currency];

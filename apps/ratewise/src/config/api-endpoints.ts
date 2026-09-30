@@ -26,7 +26,7 @@ const RATES_HISTORY_PATH = (date: string) => `/public/rates/history/${date}.json
 const FX_V3_CURRENT_PATH = '/public/rates/v3/current.json';
 const FX_V3_CONTRACT_URL = 'https://app.haotool.org/ratewise/api/v3/contract.schema.json';
 export const FX_V3_AVAILABILITY_NOTE =
-  'v3 current 只有 data branch 的 RATEWISE_FX_V3_ENABLED=true 發布 gate 開啟後才存在；尚未啟用時請使用 legacy 相容投影。';
+  'v3 current 是目前啟用的 canonical API；legacy latest/history 僅供相容讀取，已棄用。';
 export const PROVIDER_RATES_PATH = {
   latest: (providerId: string) => `/public/rates/providers/${providerId}/latest.json`,
   history: (providerId: string, date: string) =>
