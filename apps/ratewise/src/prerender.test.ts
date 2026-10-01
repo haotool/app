@@ -597,3 +597,13 @@ describe.skipIf(FX_V3_PUBLIC)('FX_V3_PUBLIC=false 首頁 initial JS 與 main 等
     expect(html).not.toMatch(/assets\/(?:fx|release|vendor-decimal)-[\w-]+\.js/);
   });
 });
+
+// 字型定義不得被 critical CSS 處理移除或重複預載。
+describe('品牌字型 SSG 產物', () => {
+  it('保留可用字型定義與單一 preload', () => {
+    const html = readFileSync(resolve(distPath, 'index.html'), 'utf-8');
+    expect(/@font-face\s*\{[^}]*Nunito Wordmark/.test(html)).toBe(true);
+    const preloads = html.match(/<link\b[^>]*rel="preload"[^>]*nunito-wordmark-900\.woff2[^>]*>/g);
+    expect(preloads).toHaveLength(1);
+  });
+});

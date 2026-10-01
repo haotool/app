@@ -64,11 +64,13 @@ export function getFullVersion(): string {
 export function getFormattedBuildTime(): string {
   const buildDate = new Date(BUILD_TIME);
   const date = buildDate.toLocaleDateString('zh-TW', {
+    timeZone: 'Asia/Taipei',
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
   });
   const time = buildDate.toLocaleTimeString('zh-TW', {
+    timeZone: 'Asia/Taipei',
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,

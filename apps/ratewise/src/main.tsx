@@ -13,7 +13,7 @@ import './suppress-hydration-warning';
 import './trusted-types-bootstrap';
 
 // Initialize i18n (must be before any React rendering)
-import './i18n';
+import { getResolvedLanguage, normalizeLanguage } from './i18n';
 
 import { ViteReactSSG } from 'vite-react-ssg';
 import { routes } from './routes';
@@ -115,6 +115,15 @@ const resolveColdStartPrimeResult = async (
     };
   }
 };
+
+// 已儲存的語系與 SSG 快照不同時，使用 SSG 原生 client render，保留使用者語系。
+if (
+  !import.meta.env.SSR &&
+  typeof document !== 'undefined' &&
+  getResolvedLanguage() !== normalizeLanguage(document.documentElement.lang)
+) {
+  document.querySelector('[data-server-rendered="true"]')?.removeAttribute('data-server-rendered');
+}
 
 // Vite React SSG Configuration
 export const createRoot = ViteReactSSG(

@@ -190,7 +190,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
   // 自動生成版本號（語義化版本 + git metadata）
   const appVersion = generateVersion();
-  const buildTime = new Date().toISOString();
+  const buildTime = (process.env['RATEWISE_BUILD_TIME'] ??= new Date().toISOString());
   const pwaRecoveryBootstrap = readFileSync(
     resolve(__dirname, 'src/bootstrap/pwa-recovery-bootstrap.js'),
     'utf-8',
@@ -509,6 +509,8 @@ export default defineConfig(({ mode }) => {
       script: 'async',
       formatting: 'beautify',
       dirStyle: 'nested',
+      // 保留 inline @font-face；字型 preload 由 index.html 單一管理。
+      beastiesOptions: { reduceInlineStyles: false, preloadFonts: false },
       // vite-react-ssg + Beasties may read freshly rendered nested amount pages during
       // writeout. Serial rendering avoids intermittent ENOENT on CI/pre-push.
       concurrency: 1,

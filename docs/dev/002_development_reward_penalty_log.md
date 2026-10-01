@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+9（reward 9、penalty 0、neutral 0）｜累計總分：+406
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+407
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-10-02
+- ID：reward-ratewise-restore-ui-v3-runtime
+- 原因：V3 公開後重複控制與常駐報價細節改變熟悉排版，字型、hydration、歷史排序與 SW 錯誤回應造成執行期回歸。
+- 解法：恢復現金／即期及多幣別逐列切換、收合進階細節並保留異常提示，修復字型與語系一致性、歷史日期及舊離線快取相容、SW 回退，對抗審查補實際金額與 EXACT*OUT 可用性守門，隔離測試繼承的 GIT*\* 避免 hook 改動父 repo。
 
 - 日期：2026-10-01
 - ID：reward-ratewise-fx-v3-best-zero-and-failed-disclosure

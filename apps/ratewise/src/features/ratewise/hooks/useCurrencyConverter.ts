@@ -20,6 +20,7 @@ import {
 } from '../fxEffectiveContext';
 import { estimateCrossPair } from '../fxCrossEstimate';
 import { selectBestQuote } from '../fxBestQuote';
+import { getFxRateAvailability, getFxRateOption } from '../fxRateAvailability';
 import { useFxQuotes } from './useFxQuotes';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -373,14 +374,40 @@ export const useFxCurrencyConverter = (options: UseCurrencyConverterOptions = {}
     setMultiAmounts((prev) => recalcMultiAmounts(baseCurrency, prev[baseCurrency] ?? '0', prev));
   }, [mode, baseCurrency, recalcMultiAmounts]);
 
-  // 換錢所可用性 SSOT：當前情境是否有任何幣別走換錢所匯率。
-  // 單幣別：pair 必須是 TWD ↔ 換錢所支援幣（目前僅 KRW）。
-  // 多幣別：基準幣為 TWD（顯示所有支援幣）或基準幣本身有 provider。
-  const isExchangeShopAvailableInContext = useMemo<boolean>(
-    () =>
-      mode === 'multi' ? multiExchangeShopCurrencies.length > 0 : exchangeShopCurrency !== null,
-    [mode, multiExchangeShopCurrencies, exchangeShopCurrency],
+  const getRateAvailability = useCallback(
+    (from: CurrencyCode, to: CurrencyCode, amount?: string) => {
+      const inputMode =
+        amount === undefined && mode === 'single' && lastEdited === 'to' ? 'EXACT_OUT' : 'EXACT_IN';
+      const input =
+        amount ??
+        (mode === 'single'
+          ? lastEdited === 'to'
+            ? toAmount
+            : fromAmount
+          : (multiAmounts[baseCurrency] ?? '0'));
+      const normalized = normalizeAmountInput(input, inputMode === 'EXACT_IN' ? from : to);
+      const value = normalized?.amount ?? input;
+      return {
+        ...getFxRateAvailability(from, to, fxQuotes, activeContext, value, inputMode),
+        current: getFxRateOption(estimatePair(value, from, to, inputMode), fxQuotes) ?? undefined,
+      };
+    },
+    [
+      fxQuotes,
+      activeContext,
+      estimatePair,
+      mode,
+      lastEdited,
+      fromAmount,
+      toAmount,
+      multiAmounts,
+      baseCurrency,
+    ],
   );
+  const isExchangeShopAvailableInContext =
+    mode === 'multi'
+      ? CURRENCY_CODES.some((currency) => getRateAvailability(baseCurrency, currency).exchangeShop)
+      : getRateAvailability(fromCurrency, toCurrency).exchangeShop;
 
   const handleFromAmountChange = useCallback((value: string) => {
     setFromAmount(value);
@@ -607,7 +634,7 @@ export const useFxCurrencyConverter = (options: UseCurrencyConverterOptions = {}
           : [],
     [fxEstimate, fxQuotes, selectedQuote],
   );
-  const estimateFreshness = useMemo(() => {
+  const estimateFreshness = useMemo<ReturnType<typeof freshness>>(() => {
     const states = selectedQuoteEvidence.map((quote) => freshness(quote, activeContext.now));
     return states.includes('stale')
       ? 'stale'
@@ -702,6 +729,7 @@ export const useFxCurrencyConverter = (options: UseCurrencyConverterOptions = {}
     [fxQuotes, activeRequest, activeContext, providerStatuses, presentQuote],
   );
   return {
+    getRateAvailability,
     fxQuotes,
     fxError: options.fxQuotes === undefined ? fx.error : null,
     fxFallbackActive:
@@ -768,6 +796,7 @@ function useLegacyWithFxShape(options: UseCurrencyConverterOptions = {}) {
   const legacy = useLegacyCurrencyConverter(options);
   return {
     ...legacy,
+    getRateAvailability: undefined,
     fxQuotes: EMPTY_QUOTES,
     fxError: null,
     fxFallbackActive: false,

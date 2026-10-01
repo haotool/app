@@ -6,6 +6,17 @@ import { APP_INFO, getCopyrightYears } from '../../config/app-info';
 
 const zhTW = {
   // Common
+  fxUi: {
+    quoteDetails: '報價詳情',
+    conditions: '換匯條件',
+    advancedConditions: '進階換匯條件',
+    location: '地點',
+    provider: '來源',
+    compareBoardRates: '比較未含費用牌告',
+    unavailableInLocation: '此地點無報價',
+    branch: '分店',
+    chooseBranch: '請選擇分店',
+  },
   common: {
     loading: '載入中...',
     error: '發生錯誤',

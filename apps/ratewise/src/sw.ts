@@ -320,6 +320,20 @@ setCatchHandler(async ({ event, request }): Promise<Response> => {
   }
 
   if (req.destination !== 'document') {
+    // 背景預熱以 fetch 讀取 shell，destination 為空；失敗保留 HTTP 錯誤，避免偽裝成功或觸發 FetchEvent network error。
+    const url = new URL(req.url);
+    const scope = new URL(self.registration.scope);
+    if (
+      req.destination === '' &&
+      req.method === 'GET' &&
+      url.origin === scope.origin &&
+      (url.pathname === scope.pathname || url.pathname === `${scope.pathname}index.html`)
+    ) {
+      return new Response('頁面快取暫時不可用', {
+        status: 503,
+        headers: { 'Cache-Control': 'no-store' },
+      });
+    }
     return Response.error();
   }
 
@@ -349,7 +363,7 @@ function resolveNavigationFallback(): Promise<Response> {
 
 async function fetchAndCacheNavigation(request: Request, cache: Cache): Promise<Response> {
   const response = await fetch(new Request(request, { cache: 'no-cache' }));
-  if (response.status === 0 || response.status === 200) {
+  if (response.ok) {
     try {
       await cache.put(request, response.clone());
     } catch {
@@ -392,8 +406,8 @@ async function handleNavigationRequest({
       }),
     ]);
     // 4xx/5xx（如 Cloudflare stale edge 404）不可直接服給用戶：回退 shell 由 client render。
-    // status 0（opaque）視同可用，與 fetchAndCacheNavigation 的可快取判斷一致。
-    if (networkResponse.status === 0 || networkResponse.ok) {
+    // 同源導覽只接受成功回應；status 0 也可能是 Response.error()。
+    if (networkResponse.ok) {
       return networkResponse;
     }
     return resolveNavigationFallback();

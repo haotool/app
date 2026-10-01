@@ -6,6 +6,17 @@ import { APP_INFO, getCopyrightYears } from '../../config/app-info';
 
 const en = {
   // Common
+  fxUi: {
+    quoteDetails: 'Quote details',
+    conditions: 'Exchange conditions',
+    advancedConditions: 'Advanced exchange conditions',
+    location: 'Location',
+    provider: 'Provider',
+    compareBoardRates: 'Compare rates before fees',
+    unavailableInLocation: 'No quote at this location',
+    branch: 'Branch',
+    chooseBranch: 'Select a branch',
+  },
   common: {
     loading: 'Loading...',
     error: 'An error occurred',

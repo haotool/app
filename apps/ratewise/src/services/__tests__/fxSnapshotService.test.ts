@@ -217,3 +217,42 @@ describe('FX v3 storage retention', () => {
     expect(localStorage.getItem('converter-settings')).toBe('{}');
   });
 });
+
+it('returns the latest 30 historical dates in ascending chart order, including offline cache', async () => {
+  const history = {
+    current: { releaseId: 'ordered' },
+    snapshots: [{ quotes: [{ quoteSeriesId: 'series', providerId: 'bot' }] }],
+    manifest: {
+      history: Array.from({ length: 31 }, (_, index) => ({
+        providerId: 'bot',
+        date: `2026-08-${String(index + 1).padStart(2, '0')}`,
+        snapshot: {},
+      })),
+    },
+  };
+  vi.mocked(loadRelease).mockResolvedValue(history as never);
+  vi.mocked(fetchVerifiedObject).mockResolvedValue({
+    providerId: 'bot',
+    quotes: [
+      {
+        quoteSeriesId: 'series',
+        rate: '42',
+        quoteId: 'q',
+        sourceQuote: { sourcePublishedAt: null },
+      },
+    ],
+  } as never);
+  await refreshActiveRelease();
+  const rows = await fetchFxHistory('series');
+  expect(rows).toHaveLength(30);
+  expect(rows[0]?.date).toBe('2026-08-02');
+  expect(rows.at(-1)?.date).toBe('2026-08-31');
+  expect(rows.map((row) => row.date)).toEqual(rows.map((row) => row.date).sort());
+  vi.mocked(fetchVerifiedObject).mockRejectedValue(new Error('offline'));
+  await expect(fetchFxHistory('series')).resolves.toEqual(rows);
+  localStorage.setItem(
+    'ratewise.fx.v3.history:ordered:series',
+    JSON.stringify({ savedAt: Date.now(), rows: [...rows].reverse() }),
+  );
+  await expect(fetchFxHistory('series')).resolves.toEqual(rows);
+});

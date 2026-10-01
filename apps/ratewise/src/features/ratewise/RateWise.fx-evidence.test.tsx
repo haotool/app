@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { beforeEach, expect, it, vi } from 'vitest';
@@ -81,6 +81,11 @@ const rows = [
 ];
 beforeEach(() => {
   fxState.rows = null;
+  fxState.error = null;
+  fxState.fallback = false;
+  fxState.providerStatuses = undefined;
+  fxState.legacyMoneyBoxRate = null;
+  fxState.lastUpdate = null;
   useConverterStore.setState({
     fromCurrency: 'USD',
     toCurrency: 'JPY',
@@ -135,10 +140,8 @@ it('renders the stale provider excluded from best recommendation in the status r
       </HelmetProvider>
     </MemoryRouter>,
   );
-  expect(screen.getByRole('status', { name: '其他來源牌告狀態' })).toHaveTextContent(
-    '未列入最佳推薦',
-  );
-  expect(screen.getByRole('status', { name: '其他來源牌告狀態' })).toHaveTextContent('01/02 08:00');
+  expect(screen.getByRole('status', { name: '報價來源狀態' })).toHaveTextContent('未列入最佳推薦');
+  expect(screen.getByRole('status', { name: '報價來源狀態' })).toHaveTextContent('01/02 08:00');
 });
 
 it('discloses a provider excluded from best recommendation because its publication time is unknown', () => {
@@ -158,7 +161,7 @@ it('discloses a provider excluded from best recommendation because its publicati
       </HelmetProvider>
     </MemoryRouter>,
   );
-  expect(screen.getByRole('status', { name: '其他來源牌告狀態' })).toHaveTextContent(
+  expect(screen.getByRole('status', { name: '報價來源狀態' })).toHaveTextContent(
     '來源未提供可判斷的發布時間，未列入最佳推薦',
   );
 });
@@ -172,10 +175,12 @@ it('tells the user when a refresh failed and cached verified quotes are still sh
       </HelmetProvider>
     </MemoryRouter>,
   );
-  expect(screen.getByTestId('fx-v3-refresh-failed-notice')).toHaveTextContent(
+  expect(screen.getByRole('status', { name: '報價來源狀態' })).toHaveTextContent(
     '最新報價更新失敗，暫以上次已驗證的報價顯示',
   );
-  expect(screen.queryByTestId('fx-v3-degraded-notice')).not.toBeInTheDocument();
+  expect(
+    screen.queryByText('最新報價載入失敗，暫以備援牌告顯示，換錢所報價暫不可用。'),
+  ).not.toBeInTheDocument();
   fxState.error = null;
 });
 
@@ -308,7 +313,7 @@ it('discloses a fresh provider excluded from best recommendation because its che
       </HelmetProvider>
     </MemoryRouter>,
   );
-  expect(screen.getByRole('status', { name: '其他來源牌告狀態' })).toHaveTextContent(
+  expect(screen.getByRole('status', { name: '報價來源狀態' })).toHaveTextContent(
     '來源最近檢查未成功，未列入最佳推薦',
   );
   fxState.providerStatuses = undefined;
@@ -341,7 +346,7 @@ it('renders two stale quotes from one provider without duplicate React keys', ()
       </HelmetProvider>
     </MemoryRouter>,
   );
-  const status = screen.getByRole('status', { name: '其他來源牌告狀態' });
+  const status = screen.getByRole('status', { name: '報價來源狀態' });
   expect(status.querySelectorAll('p')).toHaveLength(2);
   expect(errors.mock.calls.flat().join(' ')).not.toMatch(/unique "key" prop/i);
   errors.mockRestore();
@@ -357,9 +362,79 @@ it('shows one degraded notice when v3 fetch fails and a BoT fallback quote is av
       </HelmetProvider>
     </MemoryRouter>,
   );
-  expect(screen.getByTestId('fx-v3-degraded-notice')).toHaveTextContent(
+  expect(screen.getByRole('status', { name: '報價來源狀態' })).toHaveTextContent(
     '最新報價載入失敗，暫以備援牌告顯示，換錢所報價暫不可用',
   );
   fxState.error = null;
   fxState.fallback = false;
+});
+
+it('restores the original rate switch and keeps normal v3 details outside the conversion card', () => {
+  useConverterStore.setState({ fromCurrency: 'TWD', toCurrency: 'JPY' });
+  render(
+    <MemoryRouter>
+      <HelmetProvider>
+        <RateWise />
+      </HelmetProvider>
+    </MemoryRouter>,
+  );
+  expect(screen.getByRole('button', { name: /切換到現金/ })).toBeVisible();
+  expect(screen.getByText('依牌告試算，未含未知費用；不保證成交或可交付面額。')).not.toBeVisible();
+  expect(screen.getByText('報價詳情')).toBeVisible();
+  expect(screen.getByLabelText('換匯地點')).not.toBeVisible();
+  expect(screen.queryByLabelText('換匯方式')).not.toBeInTheDocument();
+});
+
+it('the restored cash/account switch changes the v3 estimate without overwriting location', async () => {
+  fxState.rows = [
+    ...normalizeQuote({ ...source, sourcePublishedAt: now }),
+    ...normalizeQuote({
+      ...source,
+      sourcePublishedAt: now,
+      deliveryMethod: 'account',
+      channel: 'online',
+      providerSellPrice: '31',
+    }),
+  ];
+  useConverterStore.setState({ fromCurrency: 'TWD', toCurrency: 'USD', serviceCountry: 'KR' });
+  render(
+    <MemoryRouter>
+      <HelmetProvider>
+        <RateWise />
+      </HelmetProvider>
+    </MemoryRouter>,
+  );
+  await waitFor(() =>
+    expect(screen.getByRole('button', { name: /轉換結果/ })).toHaveTextContent('31.25'),
+  );
+  fireEvent.click(screen.getByRole('button', { name: /切換到即期/ }));
+  await waitFor(() =>
+    expect(screen.getByRole('button', { name: /轉換結果/ })).toHaveTextContent('32.26'),
+  );
+  expect(useConverterStore.getState().rateType).toBe('spot');
+  expect(useConverterStore.getState().serviceCountry).toBe('KR');
+  expect(useConverterStore.getState().providerPreference.manualProvider?.providerId).toBe('bot');
+});
+
+it('cash substitution is shown as cash while the requested account preference is preserved', () => {
+  useConverterStore.setState({ fromCurrency: 'TWD', toCurrency: 'JPY', rateType: 'spot' });
+  render(
+    <MemoryRouter>
+      <HelmetProvider>
+        <RateWise />
+      </HelmetProvider>
+    </MemoryRouter>,
+  );
+  expect(screen.getByRole('button', { name: /切換到現金/ })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  expect(screen.getByRole('button', { name: /切換到即期/ })).toHaveAttribute(
+    'aria-disabled',
+    'true',
+  );
+  expect(useConverterStore.getState().rateType).toBe('spot');
+  expect(screen.getByRole('status', { name: '報價來源狀態' })).toHaveTextContent(
+    'JPY無即期報價，改以現鈔計算',
+  );
 });
