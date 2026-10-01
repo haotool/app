@@ -39,14 +39,34 @@ afterEach(() => {
   }
 });
 
+// 比照 verify-002-log.test.ts：hook 的 GIT_* 不得把暫存 repo 指向父 repo。
+const GIT_ENV = {
+  ...Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('GIT_'))),
+  GIT_CONFIG_GLOBAL: '/dev/null',
+  GIT_CONFIG_SYSTEM: '/dev/null',
+};
 const git = (cwd: string, ...args: string[]) =>
-  execFileSync('git', args, { cwd, encoding: 'utf8', stdio: 'pipe' }).trim();
+  execFileSync('git', args, { cwd, env: GIT_ENV, encoding: 'utf8', stdio: 'pipe' }).trim();
 const configureGit = (cwd: string) => {
   git(cwd, 'config', 'user.name', 'FX pipeline test');
   git(cwd, 'config', 'user.email', 'fx-pipeline-test@example.invalid');
 };
 
 describe('data workflow contract', () => {
+  it('ignores Git repository variables inherited from hooks', () => {
+    const workspace = tempDir();
+    const foreign = tempDir();
+    git(workspace, 'init');
+    git(foreign, 'init');
+    vi.stubEnv('GIT_DIR', join(foreign, '.git'));
+    vi.stubEnv('GIT_WORK_TREE', foreign);
+    vi.stubEnv('GIT_INDEX_FILE', join(foreign, '.git/index'));
+    try {
+      expect(git(workspace, 'rev-parse', '--absolute-git-dir')).toBe(join(workspace, '.git'));
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
   it('tracks the runs dispatched by the activation runbook and requires provider-level coverage', () => {
     const runbook = readFileSync(
       join(ROOT, 'docs/dev/049_exchange_rate_api_v3_implementation.md'),
@@ -565,7 +585,7 @@ describe('fetch scripts', () => {
         moneyboxPreload('41.5'),
         join(ROOT, 'scripts/fetch-moneybox-rates.js'),
       ],
-      { cwd, env: { ...process.env, FX_DATA_ROOT: dataRoot, MONEYBOX_FETCH_OUTPUT_FILE: output } },
+      { cwd, env: { ...GIT_ENV, FX_DATA_ROOT: dataRoot, MONEYBOX_FETCH_OUTPUT_FILE: output } },
     );
 
   it('writes the MoneyBox fetch snapshot to the absolute path under the data root', () => {
@@ -608,7 +628,7 @@ describe('fetch scripts', () => {
         ['--no-warnings', join(ROOT, 'scripts/fetch-taiwan-bank-rates.js')],
         {
           cwd: workspace,
-          env: { ...process.env, FX_DATA_ROOT: workspace, CSV_INPUT_FILE: csv },
+          env: { ...GIT_ENV, FX_DATA_ROOT: workspace, CSV_INPUT_FILE: csv },
         },
       );
     run();

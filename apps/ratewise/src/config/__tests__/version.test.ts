@@ -63,6 +63,13 @@ describe('version', () => {
     });
   });
 
+  it('建置時間固定以臺北顯示，不受伺服器或瀏覽器時區影響', () => {
+    const taipeiIso = new Date(Date.parse(BUILD_TIME) + 8 * 60 * 60 * 1000).toISOString();
+    expect(getFormattedBuildTime()).toBe(
+      `${taipeiIso.slice(0, 10).replaceAll('-', '/')} ${taipeiIso.slice(11, 16)}`,
+    );
+  });
+
   describe('getVersionInfo', () => {
     it('should return complete version info object', () => {
       const info = getVersionInfo();

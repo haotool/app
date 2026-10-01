@@ -187,7 +187,8 @@ export async function fetchFxHistory(quoteSeriesId: string) {
   const refs = release.manifest.history
     .filter((entry) => entry.providerId === selected.providerId)
     .sort((a, b) => compareCodePoints(b.date, a.date))
-    .slice(0, 30);
+    .slice(0, 30)
+    .reverse(); // 圖表需要日期遞增；先取最近 30 日，再反轉。
   if (!refs.length) throw new Error('尚無此來源的已驗證歷史');
   const key = historyCacheKey(release.current.releaseId, quoteSeriesId);
   try {
@@ -220,13 +221,10 @@ export async function fetchFxHistory(quoteSeriesId: string) {
       : saved !== null && typeof saved === 'object'
         ? (saved as { rows?: unknown }).rows
         : null;
-    if (
-      isCachedHistoryRows(
-        cachedRows,
-        refs.map((entry) => entry.date),
-      )
-    )
-      return cachedRows;
+    const dates = refs.map((entry) => entry.date);
+    if (isCachedHistoryRows(cachedRows, dates)) return cachedRows;
+    // 舊版快取為遞減日期；保留完整窗口驗證，再轉為圖表所需的遞增順序。
+    if (isCachedHistoryRows(cachedRows, [...dates].reverse())) return [...cachedRows].reverse();
     throw error;
   }
 }

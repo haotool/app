@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup, within } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { MultiConverter } from '../MultiConverter';
+import { estimate } from '@app/shared/fx';
 import type { CurrencyCode, MultiAmountsState, RateMode, RateType } from '../../types';
 import type { RateDetails } from '../../hooks/useExchangeRates';
 import type { ExchangeShopRate } from '../../../../services/moneyboxRateService';
@@ -118,6 +119,28 @@ describe('MultiConverter', () => {
     onBaseCurrencyChange: vi.fn(),
     onToggleFavorite: vi.fn(),
   };
+
+  it('uses v3 availability instead of stale legacy bank details', () => {
+    const getRateAvailability = vi.fn(() => ({ spot: false, cash: true, exchangeShop: false }));
+    render(<MultiConverter {...defaultProps} getRateAvailability={getRateAvailability} />);
+    expect(getRateAvailability).toHaveBeenCalledWith('TWD', 'USD', '1000');
+    expect(screen.getAllByText('現金', { exact: true })).toHaveLength(4);
+    expect(screen.queryAllByText('即期', { exact: true })).toHaveLength(0);
+  });
+
+  it('keeps the original per-row switch available with v3 estimation', () => {
+    render(
+      <MultiConverter
+        {...defaultProps}
+        getRateAvailability={() => ({ spot: true, cash: true, exchangeShop: false })}
+        estimatePair={(amount, fromCurrency, toCurrency) =>
+          estimate(null, { amount, fromCurrency, toCurrency, mode: 'EXACT_IN' })
+        }
+      />,
+    );
+    fireEvent.click(screen.getAllByRole('button', { name: '切換到現金' })[0]!);
+    expect(defaultProps.onRateTypeChange).toHaveBeenCalledWith('cash');
+  });
 
   it('renders all substitution notices in one status region', () => {
     render(

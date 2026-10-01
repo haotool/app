@@ -136,6 +136,8 @@ void i18n
   .use(initReactI18next)
   .init({
     resources,
+    // SSG 快照與 HTML lang 一致；建置機 navigator 可能為英文。
+    ...(import.meta.env.SSR ? { lng: 'zh-TW' } : {}),
     // 明確列出所有支援的語系代碼（包含 zh-Hant 因為 index.html lang="zh-Hant"）
     supportedLngs: ['zh-TW', 'zh-Hant', 'en', 'ja', 'ko'],
     // 語系 fallback 配置：zh-Hant → zh-TW

@@ -60,6 +60,7 @@ export default function MultiConverter() {
     providerStatuses,
     contextSubstitutions,
     estimatePair,
+    getRateAvailability,
     multiAmounts,
     sortedCurrencies,
     rateMode,
@@ -192,6 +193,7 @@ export default function MultiConverter() {
           <div className={multiConverterLayoutTokens.card.className}>
             <MultiConverterComponent
               estimatePair={estimatePair}
+              getRateAvailability={getRateAvailability}
               contextSubstitutions={contextSubstitutions}
               sortedCurrencies={sortedCurrencies}
               multiAmounts={multiAmounts}
@@ -209,7 +211,6 @@ export default function MultiConverter() {
               onBaseCurrencyChange={handleBaseCurrencyChange}
               onToggleFavorite={toggleFavorite}
             />
-            {isFxV3Public() && <FxContextControls quotes={fxQuotes} />}
             {fxNotices.length > 0 && (
               <div
                 role="status"
@@ -224,6 +225,8 @@ export default function MultiConverter() {
             )}
           </div>
         </section>
+
+        {isFxV3Public() && <FxContextControls quotes={fxQuotes} />}
 
         {/* 更新時間區塊 - 固定在底部 */}
         {!ratesLoading && lastUpdate && (

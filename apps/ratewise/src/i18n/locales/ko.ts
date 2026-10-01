@@ -6,6 +6,17 @@ import { APP_INFO, getCopyrightYears } from '../../config/app-info';
 
 const ko = {
   // Common
+  fxUi: {
+    quoteDetails: '환율 상세',
+    conditions: '환전 조건',
+    advancedConditions: '고급 환전 조건',
+    location: '지역',
+    provider: '제공처',
+    compareBoardRates: '수수료 제외 환율 비교',
+    unavailableInLocation: '해당 지역 시세 없음',
+    branch: '지점',
+    chooseBranch: '지점 선택',
+  },
   common: {
     loading: '로딩 중...',
     error: '오류가 발생했습니다',

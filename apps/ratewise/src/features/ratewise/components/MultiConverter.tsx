@@ -22,12 +22,16 @@ import {
 import { CalculatorKeyboard } from '../../calculator/components/CalculatorKeyboard';
 import type { FxContextSubstitution } from '../fxEffectiveContext';
 import { formatFxSubstitution } from '../fxSubstitutionText';
-
-type UnifiedRateOption = 'spot' | 'cash' | 'exchange-shop';
+import type { FxRateAvailability, FxRateOption } from '../fxRateAvailability';
 
 interface MultiConverterProps {
   estimatePair?: (amount: string, from: CurrencyCode, to: CurrencyCode) => EstimateResult;
   contextSubstitutions?: FxContextSubstitution[];
+  getRateAvailability?: (
+    from: CurrencyCode,
+    to: CurrencyCode,
+    amount?: string,
+  ) => FxRateAvailability;
   sortedCurrencies: CurrencyCode[];
   multiAmounts: MultiAmountsState;
   baseCurrency: CurrencyCode;
@@ -47,6 +51,7 @@ interface MultiConverterProps {
 
 export const MultiConverter = ({
   estimatePair,
+  getRateAvailability,
   contextSubstitutions = [],
   sortedCurrencies,
   multiAmounts,
@@ -84,20 +89,24 @@ export const MultiConverter = ({
     spot: boolean;
     cash: boolean;
     exchangeShop: boolean;
-    current: UnifiedRateOption;
+    current: FxRateOption;
     availableCount: number;
   } => {
-    const bankAvailability = getPairRateTypeAvailability(baseCurrency, currency, details);
+    const availability = getRateAvailability?.(
+      baseCurrency,
+      currency,
+      multiAmounts[baseCurrency] || '0',
+    );
+    const bankAvailability =
+      availability ?? getPairRateTypeAvailability(baseCurrency, currency, details);
     const hasExchangeShop =
+      availability?.exchangeShop ??
       getExchangeShopRateForPair(baseCurrency, currency, exchangeShopRatesByCurrency) !== null;
     const resolvedRateType = resolveRateTypeByAvailability(rateType, bankAvailability);
 
-    const current: UnifiedRateOption =
-      rateSource === 'exchange-shop' && hasExchangeShop
-        ? 'exchange-shop'
-        : resolvedRateType === 'spot'
-          ? 'spot'
-          : 'cash';
+    let current: FxRateOption = resolvedRateType;
+    if (rateSource === 'exchange-shop' && hasExchangeShop) current = 'exchange-shop';
+    if (availability?.current) current = availability.current;
 
     const availableCount =
       (bankAvailability.spot ? 1 : 0) + (bankAvailability.cash ? 1 : 0) + (hasExchangeShop ? 1 : 0);
@@ -113,8 +122,8 @@ export const MultiConverter = ({
 
   const getNextAvailableOption = (
     availability: ReturnType<typeof getUnifiedRateAvailability>,
-  ): UnifiedRateOption | null => {
-    const order: UnifiedRateOption[] = ['spot', 'cash', 'exchange-shop'];
+  ): FxRateOption | null => {
+    const order: FxRateOption[] = ['spot', 'cash', 'exchange-shop'];
     const currentIndex = order.indexOf(availability.current);
     for (let i = 1; i <= order.length; i++) {
       const nextIndex = (currentIndex + i) % order.length;
@@ -145,7 +154,7 @@ export const MultiConverter = ({
     }
   };
 
-  const getOptionLabel = (option: UnifiedRateOption): string => {
+  const getOptionLabel = (option: FxRateOption): string => {
     switch (option) {
       case 'spot':
         return t('multiConverter.spotRate');
@@ -331,8 +340,7 @@ export const MultiConverter = ({
                     {(() => {
                       const availability = getUnifiedRateAvailability(code);
                       const nextOption = getNextAvailableOption(availability);
-                      const canToggle =
-                        !estimatePair && availability.availableCount > 1 && nextOption !== null;
+                      const canToggle = availability.availableCount > 1 && nextOption !== null;
 
                       return canToggle ? (
                         // 負 margin 讓 44px 觸控目標不撐高列高（WCAG 2.5.8）。

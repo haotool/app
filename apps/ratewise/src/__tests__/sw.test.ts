@@ -11,7 +11,12 @@
 
 import { describe, it, expect, vi, beforeAll, afterEach } from 'vitest';
 
-const { matchPrecacheMock, navigationHandlerRef } = vi.hoisted(() => ({
+const { matchPrecacheMock, navigationHandlerRef, catchHandlerRef } = vi.hoisted(() => ({
+  catchHandlerRef: {
+    current: null as
+      | null
+      | ((params: { event: FetchEvent; request?: Request }) => Promise<Response>),
+  },
   matchPrecacheMock: vi.fn(),
   navigationHandlerRef: {
     current: null as
@@ -39,7 +44,9 @@ vi.mock('workbox-routing', () => ({
     }
   },
   registerRoute: vi.fn(),
-  setCatchHandler: vi.fn(),
+  setCatchHandler: (handler: typeof catchHandlerRef.current) => {
+    catchHandlerRef.current = handler;
+  },
 }));
 
 vi.mock('workbox-strategies', () => ({
@@ -546,6 +553,19 @@ describe('handleNavigationRequest', () => {
     });
   }
 
+  it('background shell fetch failure returns HTTP 503 instead of a browser network error', async () => {
+    const request = new Request(mockScope);
+    const response = await catchHandlerRef.current!({ event: { request } as FetchEvent, request });
+    expect(response.status).toBe(503);
+    expect(response.type).not.toBe('error');
+  });
+
+  it('other failed resource fetches retain network error semantics', async () => {
+    const request = new Request(`${mockScope}api/latest.json`);
+    const response = await catchHandlerRef.current!({ event: { request } as FetchEvent, request });
+    expect(response.type).toBe('error');
+  });
+
   it('case 2: cold cache timeout falls back to precache index.html', async () => {
     vi.useFakeTimers();
 
@@ -614,6 +634,19 @@ describe('handleNavigationRequest', () => {
     } finally {
       process.off('unhandledRejection', onRejection);
     }
+  });
+
+  it('never returns or caches a network error response as navigation HTML', async () => {
+    const shell = createOfflineFallbackResponse();
+    htmlCache.match.mockResolvedValue(undefined);
+    matchPrecacheMock.mockResolvedValue(shell);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.error()));
+    const response = await navigationHandlerRef.current!({
+      event: createNavigationEvent(),
+      request: new Request(navigationUrl),
+    });
+    expect(response).toBe(shell);
+    expect(htmlCache.put).not.toHaveBeenCalled();
   });
 
   it('cold cache 200 response returns network HTML and writes html-cache', async () => {

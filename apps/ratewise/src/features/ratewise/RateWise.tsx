@@ -39,7 +39,8 @@ import {
   resolveRateTypeByAvailability,
 } from '../../utils/exchangeRateCalculation';
 import { isFxV3Public } from '../../config/api-endpoints';
-import { formatFxSubstitution } from './fxSubstitutionText';
+import { getFxRateOption } from './fxRateAvailability';
+import { getSingleFxQuoteNotices } from './fxQuoteNotices';
 
 const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: boolean } = {}) => {
   const [searchParams] = useSearchParams();
@@ -111,6 +112,8 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
     exchangeShopCurrency,
     effectiveRateSource,
     fxEstimate,
+    getRateAvailability,
+    isExchangeShopAvailableInContext,
     fxError,
     fxFallbackActive,
     fxQuotes,
@@ -122,11 +125,6 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
     providerQuotes,
     providerStatuses,
   } = useCurrencyConverter({ exchangeRates, details, rateType, rateSource, mode: 'single' });
-
-  const isProviderCheckFailed = (providerId: string) => {
-    const status = providerStatuses?.get(providerId);
-    return status !== undefined && status !== 'ok';
-  };
 
   // v3 公開時徽章只反映實際採用的已驗證 quote；legacy 端點僅在回滾（旗標關閉）時使用。
   const exchangeShopBadgeRate = isFxV3Public()
@@ -158,8 +156,10 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
   // 註：rateSource 換錢所→銀行 fallback 已收斂到 useCurrencyConverter（SSOT），頁面層不再重複。
 
   const rateTypeAvailability = useMemo(
-    () => getPairRateTypeAvailability(fromCurrency, toCurrency, details),
-    [fromCurrency, toCurrency, details],
+    () =>
+      getRateAvailability?.(fromCurrency, toCurrency) ??
+      getPairRateTypeAvailability(fromCurrency, toCurrency, details),
+    [fromCurrency, toCurrency, details, getRateAvailability],
   );
 
   useEffect(() => {
@@ -182,11 +182,30 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
 
   const handleRateSourceChange = useCallback(
     (nextSource: RateSource) => {
-      if (nextSource === 'exchange-shop' && !exchangeShopCurrency) return;
+      if (nextSource === 'exchange-shop' && !isExchangeShopAvailableInContext) return;
       setRateSource(nextSource);
     },
-    [exchangeShopCurrency, setRateSource],
+    [isExchangeShopAvailableInContext, setRateSource],
   );
+
+  const actualRateOption = getFxRateOption(fxEstimate, fxQuotes);
+  let displayedRateType = rateType;
+  if (actualRateOption === 'cash' || actualRateOption === 'spot')
+    displayedRateType = actualRateOption;
+
+  const fxNotices = getSingleFxQuoteNotices({
+    error: fxError,
+    fallbackActive: fxFallbackActive,
+    hasQuotes: fxQuotes.length > 0,
+    estimate: fxEstimate,
+    selectedQuote,
+    evidence: selectedQuoteEvidence,
+    estimateFreshness,
+    providerStatus: selectedProviderStatus,
+    substitutions: contextSubstitutions,
+    providerQuotes,
+    providerStatuses,
+  });
 
   // 首屏使用 build-time rates 直接渲染；只有完全沒有可用資料時才顯示 skeleton。
   const shouldShowSkeleton = ratesLoading && !isTestEnv;
@@ -259,136 +278,16 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
             </div>
           )}
 
-          {fxError && fxFallbackActive && (
-            <p
-              role="status"
-              data-testid="fx-v3-degraded-notice"
-              className="mb-3 text-xs text-warning-text"
-            >
-              最新報價載入失敗，暫以備援牌告顯示，換錢所報價暫不可用。
-            </p>
-          )}
-
-          {fxError && !fxFallbackActive && fxQuotes.length > 0 && (
-            <p
-              role="status"
-              data-testid="fx-v3-refresh-failed-notice"
-              className="mb-3 text-xs text-warning-text"
-            >
-              最新報價更新失敗，暫以上次已驗證的報價顯示，請留意發布時間。
-            </p>
-          )}
-
           {/* 單幣別轉換區塊 - RWD 全頁面佈局 */}
           <section className={rateWiseLayoutTokens.section.className}>
             <div className={rateWiseLayoutTokens.card.className}>
-              {isFxV3Public() && fxEstimate && (
-                <>
-                  <p className="px-3 text-sm" role="status">
-                    {fxEstimate.status === 'unavailable'
-                      ? '此條件無可用牌告；請確認地點、分店、來源及金額。'
-                      : 'kind' in fxEstimate
-                        ? '經中介幣別的兩腿推算，非業者直接牌告；不納入推薦。'
-                        : '依牌告試算，未含未知費用；不保證成交或可交付面額。'}
-                  </p>
-                  {contextSubstitutions.map((substitution, index) => {
-                    return (
-                      <p
-                        className="px-3 text-sm"
-                        role="status"
-                        key={`${substitution.kind}:${index}`}
-                      >
-                        {formatFxSubstitution(substitution)}
-                      </p>
-                    );
-                  })}
-                  {selectedQuoteEvidence.length > 0 && estimateFreshness === 'unknown' && (
-                    <p className="px-3 text-sm" role="status">
-                      來源未提供發布時間，無法判斷新鮮度，僅供參考。
-                    </p>
-                  )}
-                  {selectedQuoteEvidence.length > 0 && estimateFreshness === 'stale' && (
-                    <p className="px-3 text-sm" role="status">
-                      牌告已超過更新門檻（台銀 36 小時、換錢所 24 小時），僅供參考。
-                    </p>
-                  )}
-                  <div className="px-3 text-sm" role="status" aria-label="其他來源牌告狀態">
-                    {providerQuotes
-                      .filter(
-                        (quote) =>
-                          quote.provider.providerId !== selectedQuote?.providerId &&
-                          (quote.freshness === 'stale' ||
-                            quote.freshness === 'unknown' ||
-                            isProviderCheckFailed(quote.provider.providerId)),
-                      )
-                      .map((quote) => (
-                        <p key={quote.quoteId}>
-                          {getRateProvider(quote.provider.providerId)?.label ??
-                            quote.provider.providerId}
-                          {isProviderCheckFailed(quote.provider.providerId)
-                            ? '：來源最近檢查未成功，未列入最佳推薦。'
-                            : quote.freshness === 'unknown'
-                              ? '：來源未提供可判斷的發布時間，未列入最佳推薦。'
-                              : `：來源發布時間 ${
-                                  formatIsoTimestamp(quote.sourcePublishedAt, {
-                                    includeYear: true,
-                                  }) || '未知'
-                                }，已超過更新門檻，未列入最佳推薦。`}
-                        </p>
-                      ))}
-                  </div>
-                  {selectedProviderStatus && selectedProviderStatus !== 'ok' && (
-                    <p className="px-3 text-sm" role="status">
-                      來源最近檢查未成功，顯示上次已驗證快照，僅供參考。
-                    </p>
-                  )}
-                  {'legs' in fxEstimate &&
-                    selectedQuoteEvidence.map((quote) => (
-                      <p className="px-3 text-sm" key={quote.quoteId}>
-                        {quote.fromCurrency} → {quote.toCurrency}：來源發布時間{' '}
-                        {formatIsoTimestamp(quote.sourceQuote.sourcePublishedAt, {
-                          includeYear: true,
-                        }) || '未知'}
-                        。
-                      </p>
-                    ))}
-                  {selectedQuote && (
-                    <div className="px-3 text-sm">
-                      <p>
-                        {getRateProvider(selectedQuote.providerId)?.label ??
-                          selectedQuote.providerId}
-                        ：業者
-                        {selectedQuote.fromCurrency === selectedQuote.sourceQuote.subjectCurrency
-                          ? '買入'
-                          : '賣出'}{' '}
-                        {selectedQuote.sourceQuote.subjectCurrency}。來源發布時間：
-                        {formatIsoTimestamp(selectedQuote.sourceQuote.sourcePublishedAt, {
-                          includeYear: true,
-                        }) || '未知'}
-                        。
-                      </p>
-                      <details>
-                        <summary>進階：原始牌告與牌告中點</summary>
-                        <p>
-                          每 {selectedQuote.sourceQuote.unitAmount}{' '}
-                          {selectedQuote.sourceQuote.subjectCurrency}：業者買入{' '}
-                          {selectedQuote.sourceQuote.providerBuyPrice ?? '未提供'}、賣出{' '}
-                          {selectedQuote.sourceQuote.providerSellPrice ?? '未提供'}{' '}
-                          {selectedQuote.sourceQuote.priceCurrency}。
-                        </p>
-                        <p>
-                          每 1 {selectedQuote.sourceQuote.subjectCurrency} 的牌告中點：
-                          {boardMidpoint(selectedQuote.sourceQuote) ?? '無法計算'}{' '}
-                          {selectedQuote.sourceQuote.priceCurrency}
-                          。此為該業者買賣價平均，非市場中價或交易報價。
-                        </p>
-                      </details>
-                    </div>
-                  )}
-                </>
-              )}
               <SingleConverter
                 fxEstimate={fxEstimate}
+                fxNotices={fxNotices}
+                hasExchangeShop={
+                  isExchangeShopAvailableInContext &&
+                  (exchangeShopCurrency !== null || effectiveRateSource === 'exchange-shop')
+                }
                 fxQuote={isFxV3Public() ? selectedQuote : undefined}
                 fromCurrency={fromCurrency}
                 toCurrency={toCurrency}
@@ -396,7 +295,7 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
                 toAmount={toAmount}
                 exchangeRates={exchangeRates}
                 details={details}
-                rateType={rateType}
+                rateType={displayedRateType}
                 rateSource={effectiveRateSource}
                 moneyBoxRate={moneyBoxRate}
                 exchangeShopCurrency={exchangeShopCurrency}
@@ -412,7 +311,6 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
                 onRateTypeChange={handleRateTypeChange}
                 onRateSourceChange={handleRateSourceChange}
               />
-              {isFxV3Public() && <FxContextControls quotes={fxQuotes} />}
             </div>
           </section>
 
@@ -427,6 +325,56 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
               />
             </div>
           </section>
+
+          {isFxV3Public() && fxEstimate && (
+            <details className="mt-2 text-xs text-text-muted" data-testid="fx-quote-details">
+              <summary className="cursor-pointer">{t('fxUi.quoteDetails')}</summary>
+              <p>依牌告試算，未含未知費用；不保證成交或可交付面額。</p>
+              {'legs' in fxEstimate &&
+                selectedQuoteEvidence.map((quote) => (
+                  <p className="px-3 text-sm" key={quote.quoteId}>
+                    {quote.fromCurrency} → {quote.toCurrency}：來源發布時間{' '}
+                    {formatIsoTimestamp(quote.sourceQuote.sourcePublishedAt, {
+                      includeYear: true,
+                    }) || '未知'}
+                    。
+                  </p>
+                ))}
+              {selectedQuote && (
+                <div className="px-3 text-sm">
+                  <p>
+                    {getRateProvider(selectedQuote.providerId)?.label ?? selectedQuote.providerId}
+                    ：業者
+                    {selectedQuote.fromCurrency === selectedQuote.sourceQuote.subjectCurrency
+                      ? '買入'
+                      : '賣出'}{' '}
+                    {selectedQuote.sourceQuote.subjectCurrency}。來源發布時間：
+                    {formatIsoTimestamp(selectedQuote.sourceQuote.sourcePublishedAt, {
+                      includeYear: true,
+                    }) || '未知'}
+                    。
+                  </p>
+                  <div>
+                    <p className="font-medium">原始牌告與牌告中點</p>
+                    <p>
+                      每 {selectedQuote.sourceQuote.unitAmount}{' '}
+                      {selectedQuote.sourceQuote.subjectCurrency}：業者買入{' '}
+                      {selectedQuote.sourceQuote.providerBuyPrice ?? '未提供'}、賣出{' '}
+                      {selectedQuote.sourceQuote.providerSellPrice ?? '未提供'}{' '}
+                      {selectedQuote.sourceQuote.priceCurrency}。
+                    </p>
+                    <p>
+                      每 1 {selectedQuote.sourceQuote.subjectCurrency} 的牌告中點：
+                      {boardMidpoint(selectedQuote.sourceQuote) ?? '無法計算'}{' '}
+                      {selectedQuote.sourceQuote.priceCurrency}
+                      。此為該業者買賣價平均，非市場中價或交易報價。
+                    </p>
+                  </div>
+                </div>
+              )}
+            </details>
+          )}
+          {isFxV3Public() && <FxContextControls quotes={fxQuotes} />}
 
           {/* 資料來源與更新時間區塊 - 固定最小高度避免載入完成後 footer 位移 */}
           <section

@@ -6,6 +6,17 @@ import { APP_INFO, getCopyrightYears } from '../../config/app-info';
 
 const ja = {
   // Common
+  fxUi: {
+    quoteDetails: 'レートの詳細',
+    conditions: '両替条件',
+    advancedConditions: '詳細な両替条件',
+    location: '場所',
+    provider: '提供元',
+    compareBoardRates: '手数料を含まないレートを比較',
+    unavailableInLocation: 'この場所のレートなし',
+    branch: '支店',
+    chooseBranch: '支店を選択',
+  },
   common: {
     loading: '読み込み中...',
     error: 'エラーが発生しました',

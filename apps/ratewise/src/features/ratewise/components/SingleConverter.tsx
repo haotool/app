@@ -71,6 +71,8 @@ function getDateKeyFromUpdateTime(updateTime: string | undefined, fallback: stri
 interface SingleConverterProps {
   fxEstimate?: EstimateResult;
   fxQuote?: QuoteSnapshot | null;
+  fxNotices?: string[];
+  hasExchangeShop?: boolean;
   fromCurrency: CurrencyCode;
   toCurrency: CurrencyCode;
   fromAmount: string;
@@ -97,6 +99,7 @@ interface SingleConverterProps {
 export const SingleConverter = ({
   fxEstimate,
   fxQuote,
+  fxNotices = [],
   fromCurrency,
   toCurrency,
   fromAmount,
@@ -117,6 +120,7 @@ export const SingleConverter = ({
   rateSource = DEFAULT_RATE_SOURCE,
   moneyBoxRate = null,
   exchangeShopCurrency = null,
+  hasExchangeShop = !!exchangeShopCurrency,
   onRateSourceChange,
 }: SingleConverterProps) => {
   const { t } = useTranslation();
@@ -522,16 +526,14 @@ export const SingleConverter = ({
           <div
             className={`relative text-center px-4 flex flex-col items-center justify-center transition-transform duration-300 group-hover:scale-[1.02] rounded-t-xl ${singleConverterLayoutTokens.rateCard.infoPadding}`}
           >
-            {!fxEstimate && (
-              <RateSelector
-                rateType={rateType}
-                rateSource={rateSource}
-                rateTypeAvailability={rateTypeAvailability}
-                hasExchangeShop={!!exchangeShopCurrency}
-                onRateTypeChange={onRateTypeChange}
-                onRateSourceChange={onRateSourceChange ?? (() => undefined)}
-              />
-            )}
+            <RateSelector
+              rateType={rateType}
+              rateSource={rateSource}
+              rateTypeAvailability={rateTypeAvailability}
+              hasExchangeShop={hasExchangeShop}
+              onRateTypeChange={onRateTypeChange}
+              onRateSourceChange={onRateSourceChange ?? (() => undefined)}
+            />
 
             {/* 匯率顯示 - 使用 SSOT text 色；固定高度避免計價基準 pill / live 匯率載入 CLS */}
             <div className={`w-full ${singleConverterLayoutTokens.rateCard.rateTextBlock}`}>
@@ -775,6 +777,14 @@ export const SingleConverter = ({
           ))}
         </div>
       </div>
+
+      {fxNotices.length > 0 && (
+        <div role="status" aria-label="報價來源狀態" className="mb-2 text-xs text-warning-text">
+          {fxNotices.map((notice) => (
+            <p key={notice}>{notice}</p>
+          ))}
+        </div>
+      )}
 
       {/* 加入歷史記錄按鈕 - 現代化微互動設計
        *
