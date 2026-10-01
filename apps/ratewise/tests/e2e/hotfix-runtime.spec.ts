@@ -1,5 +1,10 @@
 import { test, expect } from '@playwright/test';
 
+const BASE_PATH =
+  `${process.env['E2E_BASE_PATH'] || process.env['VITE_RATEWISE_BASE_PATH'] || '/ratewise'}/`.replace(
+    /\/+$/,
+    '/',
+  );
 test.use({ serviceWorkers: 'allow' });
 
 for (const [language, sourceLabel] of [
@@ -15,7 +20,7 @@ for (const [language, sourceLabel] of [
       if (message.type() === 'error') errors.push(message.text());
     });
     await page.addInitScript((lang) => localStorage.setItem('ratewise-language', lang), language);
-    await page.goto('/ratewise/');
+    await page.goto(BASE_PATH);
     await page.waitForFunction(() =>
       document.documentElement.hasAttribute('data-ratewise-app-ready'),
     );
@@ -38,14 +43,14 @@ for (const [language, sourceLabel] of [
 
 test.describe('Service Worker shell 背景預熱失敗', () => {
   test('快取被清除且離線時回傳 503，頁面導覽仍有離線回退', async ({ page, context }) => {
-    await page.goto('/ratewise/');
+    await page.goto(BASE_PATH);
     await page.waitForFunction(() => navigator.serviceWorker.controller !== null);
     await page.evaluate(async () => {
       await Promise.all((await caches.keys()).map((key) => caches.delete(key)));
     });
     await context.setOffline(true);
     try {
-      const status = await page.evaluate(async () => (await fetch('/ratewise/')).status);
+      const status = await page.evaluate(async (path) => (await fetch(path)).status, BASE_PATH);
       expect(status).toBe(503);
       const response = await page.reload();
       expect(response?.status()).toBe(200);

@@ -1,6 +1,11 @@
 import { test, expect } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 
+const BASE_PATH =
+  `${process.env['E2E_BASE_PATH'] || process.env['VITE_RATEWISE_BASE_PATH'] || '/ratewise'}/`.replace(
+    /\/+$/,
+    '/',
+  );
 test.use({ serviceWorkers: 'allow' });
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
@@ -14,7 +19,7 @@ test('原版換算卡片與切換器，v3 詳情收合且正常報價不占首�
   page.on('console', (message) => {
     if (message.type() === 'error') errors.push(message.text());
   });
-  await page.goto('/ratewise/');
+  await page.goto(BASE_PATH);
   await page.waitForFunction(() =>
     document.documentElement.hasAttribute('data-ratewise-app-ready'),
   );
@@ -73,7 +78,7 @@ test('原版換算卡片與切換器，v3 詳情收合且正常報價不占首�
 });
 
 test('計算機正反向輸入、交換與加入歷史', async ({ page }) => {
-  await page.goto('/ratewise/');
+  await page.goto(BASE_PATH);
   const source = page.getByTestId('amount-input');
   const result = page.getByTestId('amount-output');
   for (const [field, value] of [
@@ -108,7 +113,7 @@ test('計算機正反向輸入、交換與加入歷史', async ({ page }) => {
 });
 
 test('多幣別保留逐列匯率切換，進階條件預設收合', async ({ page }) => {
-  await page.goto('/ratewise/multi/');
+  await page.goto(`${BASE_PATH}multi/`);
   await expect(page.getByRole('region', { name: '貨幣列表' })).toBeVisible();
   const toggle = page.getByRole('button', { name: /^切換到/ }).first();
   await expect(toggle).toBeVisible();

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+407
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+408
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-10-02
+- ID：reward-ratewise-e2e-route-base
+- 原因：新回歸測試固定使用正式站子路徑，完整 CI 根路徑建置因此測到錯誤路由。
+- 解法：沿用既有 E2E_BASE_PATH 與 VITE_RATEWISE_BASE_PATH，統一導覽及離線 fetch 的路徑，分別驗證根路徑與正式子路徑。
 
 - 日期：2026-10-02
 - ID：reward-ratewise-restore-ui-v3-runtime
