@@ -36,8 +36,8 @@ runs:
         restore-keys: |
           playwright-${{ steps.pw-version.outputs.slug }}-${{ runner.os }}-
 
-    # 僅在 cache miss 時下載瀏覽器。瀏覽器下載偶發卡死是 E2E job 失敗主因；
-    # 過往僅調高單次 timeout 無法解決 CDN 暫時性卡死，改為每次嘗試加 timeout + 最多 3 次退避重試。
+    # cache miss 才下載；沿用 Playwright 原生 socket 逾時，避免中斷仍有進度的下載。
+    # 失敗後最多三次退避重試，整段由呼叫端十五分鐘上限守門。
     - name: Install Playwright browsers
       if: steps.pw-cache.outputs.cache-hit != 'true'
       shell: bash
@@ -45,7 +45,7 @@ runs:
         PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT: '120000'
       run: |
         for attempt in 1 2 3; do
-          if timeout 600 pnpm --filter "${{ inputs.app-filter }}" exec playwright install ${{ inputs.browsers }}; then
+          if pnpm --filter "${{ inputs.app-filter }}" exec playwright install ${{ inputs.browsers }}; then
             echo "✅ 瀏覽器（${{ inputs.browsers }}）安裝成功（第 ${attempt} 次嘗試）"
             exit 0
           fi
@@ -55,20 +55,15 @@ runs:
         echo "❌ 瀏覽器重試 3 次仍失敗"
         exit 1
 
-    # OS 相依套件不在 cache 內，cache hit/miss 皆需安裝。
-    # 與瀏覽器下載拆開並加 timeout，避免 apt lock/網路問題無限掛起。
-    #
-    # #961：修前僅有 timeout 而無重試，保護與上方瀏覽器下載不對稱——apt lock 或
-    # 鏡像站暫時性緩慢會使整個 E2E job 直接死亡（exit 124），且測試根本沒開始跑。
-    # 實測 main 連續三次 E2E Full shard 失敗皆止於本步，而同 run 的另一 shard 成功，
-    # 確認為基礎設施偶發而非程式碼問題。改為與瀏覽器下載同構的退避重試。
+    # apt 以 root 執行；外層 timeout 無法保證終止 apt，重試會撞上殘留鎖。
+    # 等 install-deps 完整結束後才重試，整段由呼叫端 step 的 15 分鐘上限守門。
     - name: Install Playwright system deps
       shell: bash
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
         for attempt in 1 2 3; do
-          if timeout 300 pnpm --filter "${{ inputs.app-filter }}" exec playwright install-deps ${{ inputs.browsers }}; then
+          if pnpm --filter "${{ inputs.app-filter }}" exec playwright install-deps ${{ inputs.browsers }}; then
             echo "✅ OS 相依套件安裝成功（第 ${attempt} 次嘗試）"
             exit 0
           fi

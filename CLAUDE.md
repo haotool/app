@@ -439,3 +439,7 @@ squirrelscan 會將這些報為「not in sitemap」— **這是正確的**，不
 
 **最後更新**: 2026-05-02T09:00:00+0800
 **版本**: v5.5（納入 SEO 迭代治理與監控 SOP）
+
+### Playwright OS 套件安裝逾時
+
+共用 `setup-playwright` 的 OS 套件安裝必須等待 `install-deps` 完整結束後才重試；禁止以非 root 的外層 `timeout` 中斷 root apt，避免遺留鎖。CI 呼叫步驟使用 `timeout-minutes: 15`，逾時直接失敗，不繼續重試。瀏覽器下載沿用 Playwright 原生 120 秒 socket 逾時，禁止以整體下載秒數中斷仍有進度的安裝。共用 action 變更必須觸發全部使用它的 app PR smoke。依據：[GitHub step timeout](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idstepstimeout-minutes)。
