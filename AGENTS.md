@@ -979,3 +979,7 @@ Agent 在結案或提交時，應能提供下列證據（依任務適用性）�
 
 **最後更新**: 2026-07-27T13:10:00+0800
 **版本**: v5.7（rebase 稽核前置、難度驗收證據階層與 strangler 兩段式 commit 慣例）
+
+### Playwright OS 套件安裝逾時
+
+共用 `setup-playwright` 的 OS 套件安裝必須等待 `install-deps` 完整結束後才重試；禁止以非 root 的外層 `timeout` 中斷 root apt，避免遺留鎖。CI 呼叫步驟使用 `timeout-minutes: 15`，逾時直接失敗，不繼續重試。瀏覽器下載沿用 Playwright 原生 120 秒 socket 逾時，禁止以整體下載秒數中斷仍有進度的安裝。共用 action 變更必須觸發全部使用它的 app PR smoke。依據：[GitHub step timeout](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idstepstimeout-minutes)。

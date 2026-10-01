@@ -213,21 +213,26 @@ jobs:
         with:
           filters: |
             starpuff:
+              - '.github/actions/setup-playwright/**'
               - 'apps/starpuff/**'
               - 'pnpm-lock.yaml'
             park-keeper:
+              - '.github/actions/setup-playwright/**'
               - 'apps/park-keeper/**'
               - 'apps/shared/**'
               - 'pnpm-lock.yaml'
             papertrade:
+              - '.github/actions/setup-playwright/**'
               - 'apps/papertrade/**'
               - 'apps/shared/**'
               - 'pnpm-lock.yaml'
             split-meow:
+              - '.github/actions/setup-playwright/**'
               - 'apps/split-meow/**'
               - 'apps/shared/**'
               - 'pnpm-lock.yaml'
             a320-flight-deck:
+              - '.github/actions/setup-playwright/**'
               - 'apps/a320-flight-deck/**'
               - 'pnpm-lock.yaml'
 
@@ -281,6 +286,7 @@ jobs:
 
       - name: Setup Playwright Chromium
         uses: ./.github/actions/setup-playwright
+        timeout-minutes: 15
         with:
           app-filter: '@app/starpuff'
           browsers: chromium
@@ -343,6 +349,7 @@ jobs:
       # PR smoke 只安裝實際會使用的 Chromium；完整 main/nightly 仍由 app job 補齊 WebKit。
       - name: Setup Playwright Chromium
         uses: ./.github/actions/setup-playwright
+        timeout-minutes: 15
         with:
           app-filter: '@app/${{ matrix.app }}'
           browsers: chromium
@@ -432,6 +439,7 @@ jobs:
       # browserName，走 webkit 引擎——不砍其測試矩陣，改為顯式加裝 webkit。
       - name: Setup Playwright browsers
         uses: ./.github/actions/setup-playwright
+        timeout-minutes: 15
         with:
           app-filter: '@app/${{ matrix.app }}'
           browsers: ${{ (matrix.app == 'papertrade' || matrix.app == 'split-meow') && 'chromium webkit' || 'chromium' }}
@@ -485,6 +493,7 @@ jobs:
 
       - name: Setup Playwright Chromium
         uses: ./.github/actions/setup-playwright
+        timeout-minutes: 15
         with:
           app-filter: '@app/ratewise'
 
@@ -574,6 +583,7 @@ jobs:
 
       - name: Setup Playwright Chromium
         uses: ./.github/actions/setup-playwright
+        timeout-minutes: 15
         with:
           app-filter: '@app/ratewise'
 
@@ -714,6 +724,7 @@ jobs:
 
       - name: Setup Playwright Chromium
         uses: ./.github/actions/setup-playwright
+        timeout-minutes: 15
         with:
           app-filter: '@app/starpuff'
           browsers: chromium

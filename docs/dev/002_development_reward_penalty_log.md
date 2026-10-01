@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+408
+> 本次分數變化：+1（reward 1、penalty 0、neutral 2）｜累計總分：+409
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,21 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-10-02
+- ID：neutral-playwright-shared-action-smoke
+- 原因：共用 Playwright action 變更只觸發 RateWise，其他使用者 app 的 PR smoke 被略過。
+- 解法：五個 app filter 同步包含共用 action 路徑，並以回歸守門完整觸發清單。
+
+- 日期：2026-10-02
+- ID：neutral-playwright-timeout-review-budget
+- 原因：對抗審查指出外層下載秒數上限可能中斷持續有進度的 Chromium／WebKit 安裝。
+- 解法：沿用 Playwright 原生 socket 逾時與失敗後退避重試，由整段十五分鐘上限守門並補回歸。
+
+- 日期：2026-10-02
+- ID：reward-playwright-deps-timeout-lock
+- 原因：非 root timeout 中斷安裝入口後 apt 仍持鎖，後續重試全部失敗。
+- 解法：等待 OS 安裝完整返回後才重試，由 GitHub 呼叫步驟的十五分鐘上限守門並補回歸驗證。
 
 - 日期：2026-10-02
 - ID：reward-ratewise-e2e-route-base
