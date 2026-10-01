@@ -178,7 +178,7 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
-  # E2E path filter：PR 僅在 ratewise/nihonname/shared 或 lockfile 變更時執行。
+  # E2E path filter：PR 依 app、共用依賴及 CI 執行環境變更觸發。
   e2e-filter:
     name: E2E Path Filter
     runs-on: ubuntu-latest
@@ -197,6 +197,7 @@ jobs:
         with:
           filters: |
             e2e:
+              - '.github/workflows/ci.yml'
               - 'apps/ratewise/**'
               - 'apps/nihonname/**'
               - 'apps/shared/**'
@@ -213,26 +214,27 @@ jobs:
         with:
           filters: |
             starpuff:
+              - '.github/workflows/ci.yml'
               - '.github/actions/setup-playwright/**'
               - 'apps/starpuff/**'
               - 'pnpm-lock.yaml'
             park-keeper:
-              - '.github/actions/setup-playwright/**'
+              - '.github/workflows/ci.yml'
               - 'apps/park-keeper/**'
               - 'apps/shared/**'
               - 'pnpm-lock.yaml'
             papertrade:
-              - '.github/actions/setup-playwright/**'
+              - '.github/workflows/ci.yml'
               - 'apps/papertrade/**'
               - 'apps/shared/**'
               - 'pnpm-lock.yaml'
             split-meow:
-              - '.github/actions/setup-playwright/**'
+              - '.github/workflows/ci.yml'
               - 'apps/split-meow/**'
               - 'apps/shared/**'
               - 'pnpm-lock.yaml'
             a320-flight-deck:
-              - '.github/actions/setup-playwright/**'
+              - '.github/workflows/ci.yml'
               - 'apps/a320-flight-deck/**'
               - 'pnpm-lock.yaml'
 
@@ -320,6 +322,9 @@ jobs:
       github.event_name == 'pull_request' &&
       needs.e2e-filter.outputs.non_starpuff_apps != '[]'
     runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.61.1-noble
+      options: --init --ipc=host
     timeout-minutes: 20
     permissions:
       contents: read
@@ -345,14 +350,6 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
-      # PR smoke 只安裝實際會使用的 Chromium；完整 main/nightly 仍由 app job 補齊 WebKit。
-      - name: Setup Playwright Chromium
-        uses: ./.github/actions/setup-playwright
-        timeout-minutes: 15
-        with:
-          app-filter: '@app/${{ matrix.app }}'
-          browsers: chromium
 
       - name: Run affected app smoke
         env:
@@ -398,7 +395,7 @@ jobs:
           if-no-files-found: ignore
 
   # 非 StarPuff app 的完整 E2E（#918）：只在 main／nightly／release dispatch 執行。
-  # PR 改走下方受影響 app smoke，避免每次迭代重跑整套 app。
+  # PR 使用相同官方預裝 image 跑受影響 app smoke。
   e2e-apps:
     name: E2E ${{ matrix.app }}
     needs: [quality, e2e-filter]
@@ -407,8 +404,10 @@ jobs:
       github.event_name != 'pull_request' &&
       needs.e2e-filter.outputs.non_starpuff_apps != '[]'
     runs-on: ubuntu-latest
-    # starpuff 全套 136 案在 workers:1／fullyParallel:false 下本機實測約 16 min，
-    # CI 較慢且 retries:2，連同安裝與 build 抓 45 min 與 e2e-full 對齊。
+    container:
+      image: mcr.microsoft.com/playwright:v1.61.1-noble
+      options: --init --ipc=host
+    # 預裝瀏覽器及 OS 套件，完整跨引擎測試保留 45 分鐘上限。
     timeout-minutes: 45
     permissions:
       contents: read
@@ -434,15 +433,6 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
-      # papertrade／split-meow 的 mobile project 用 devices['iPhone 13'] 未覆寫
-      # browserName，走 webkit 引擎——不砍其測試矩陣，改為顯式加裝 webkit。
-      - name: Setup Playwright browsers
-        uses: ./.github/actions/setup-playwright
-        timeout-minutes: 15
-        with:
-          app-filter: '@app/${{ matrix.app }}'
-          browsers: ${{ (matrix.app == 'papertrade' || matrix.app == 'split-meow') && 'chromium webkit' || 'chromium' }}
 
       - name: Run E2E tests
         env:
