@@ -1,5 +1,11 @@
 # @app/ratewise
 
+## 2.29.3
+
+### Patch Changes
+
+- 7d2b1d9: 修復自動驗證在瀏覽器系統套件安裝緩慢時反覆撞鎖失敗的問題。
+
 ## 2.29.2
 
 ### Patch Changes
