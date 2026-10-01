@@ -1,5 +1,11 @@
 # @app/ratewise
 
+## 2.29.2
+
+### Patch Changes
+
+- a92c578: 確保原版換算操作於不同部署路徑下均有正確的自動回歸驗證。
+
 ## 2.29.1
 
 ### Patch Changes
