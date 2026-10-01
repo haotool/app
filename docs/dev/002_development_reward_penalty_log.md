@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 2）｜累計總分：+409
+> 本次分數變化：+0（reward 1、penalty 1、neutral 0）｜累計總分：+409
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-10-02
+- ID：penalty-root-ci-package-changeset
+- 原因：誤把純 root CI 維護列為 RateWise 套件升版，製造無使用者功能變更的 release intent。
+- 解法：依 CLAUDE Phase 7 移除本 PR changeset，保留已發布的 2.29.3 歷史，避免再次產生無意義升版。
+
+- 日期：2026-10-02
+- ID：reward-playwright-preinstalled-webkit-image
+- 原因：Ubuntu apt mirror 持續緩慢下載，使完整 WebKit 安裝超過十五分鐘步驟上限。
+- 解法：PR smoke 與 main 完整 app E2E 同用官方預裝 image，保留完整測試矩陣並守門 image 與鎖定版本一致。
 
 - 日期：2026-10-02
 - ID：neutral-playwright-shared-action-smoke

@@ -443,3 +443,7 @@ squirrelscan 會將這些報為「not in sitemap」— **這是正確的**，不
 ### Playwright OS 套件安裝逾時
 
 共用 `setup-playwright` 的 OS 套件安裝必須等待 `install-deps` 完整結束後才重試；禁止以非 root 的外層 `timeout` 中斷 root apt，避免遺留鎖。CI 呼叫步驟使用 `timeout-minutes: 15`，逾時直接失敗，不繼續重試。瀏覽器下載沿用 Playwright 原生 120 秒 socket 逾時，禁止以整體下載秒數中斷仍有進度的安裝。共用 action 變更必須觸發全部使用它的 app PR smoke。依據：[GitHub step timeout](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idstepstimeout-minutes)。
+
+### 完整跨瀏覽器 E2E 環境
+
+其他 app 的 PR smoke 與 main/full E2E 使用固定版 `mcr.microsoft.com/playwright:v1.61.1-noble`，沿用預裝瀏覽器及 OS 套件，避免臨時 apt mirror 安裝阻斷。image 版本必須與鎖定的 Playwright 版本一致，由 root 回歸測試守門；CI workflow 變更觸發全部受影響 app smoke。依據：[Playwright Docker](https://playwright.dev/docs/docker)。
