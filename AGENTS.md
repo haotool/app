@@ -814,6 +814,13 @@ git 史上無法證明測試曾在舊架構上驗證過語意等價（checkout �
 - `SEO Production Validation` workflow 的 `health-check` 必須先跑此腳本，再跑 `verify-all-apps.mjs`
 - RateWise PWA 發版後，`health-check` 必須再跑 `VERIFY_PRECACHE_SOURCE=live VERIFY_BASE_URL=https://app.haotool.org/ratewise/ node scripts/verify-precache-assets.mjs`
 - live precache 驗證若出現「querystring 可 200、原 URL 為 404」，必須判定為 Cloudflare stale edge 404，先 purge CDN 再視為部署完成
+
+Live precache 驗證涵蓋全部 SW 清單，僅原始 URL 404 以 15/30/60/75 秒間隔重試（最多 5 次）；最終失敗輸出原 URL 與 querystring 狀態，querystring 成功仍判失敗。每個 HTTP 請求上限 10 秒。
+
+RateWise Cache Storage 清理（含 hydration 前 bootstrap 與冷啟動逾時畫面與容量清理）必須共用 `src/utils/cacheOwnership.ts`：新 runtime cache 使用 `ratewise-` 前綴，Workbox precache 以完整 scope 辨識；舊通用 HTML/image/font cache 僅刪自身 scope URL，保留同 origin 其他 app。SW 修復與健康檢查使用 Workbox `cacheNames.precache`，禁止取第一個 Workbox cache。
+
+根站（haotool）的 generateSW 必須停用 `cleanupOutdatedCaches`，避免 root scope 子字串命中子 app；同一 precache 的舊 manifest entries 仍由 Workbox 原生 activate 清理。不相容歷史版本的整個 cache 暫保留，禁止全 origin 清除。
+
 - RateWise release 若涉及正式站資產更新，必須先用 cache-busting probe 確認 `/ratewise/` 的 `app-version` 已切到目標版本，再執行 Cloudflare purge
 - RateWise Cloudflare purge 必須使用目標 URL + prefix（至少涵蓋 `/ratewise/`、`sw.js`、`registerSW.js`、`manifest.webmanifest`、`offline.html`、`assets`、`workbox-`、`static-loader-data-manifest`），purge 後立即重跑 live precache 驗證
 

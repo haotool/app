@@ -9,9 +9,10 @@
  */
 
 import { logger } from './logger';
+import { clearRatewiseCaches } from './cacheOwnership';
 
 /**
- * 清除所有 Service Worker 快取
+ * 清除 RateWise Service Worker 快取
  *
  * @returns Promise<number> 清除的快取數量
  */
@@ -28,16 +29,12 @@ export async function clearAllServiceWorkerCaches(): Promise<number> {
   }
 
   try {
-    const cacheNames = await caches.keys();
-    const deletePromises = cacheNames.map((name) => caches.delete(name));
-    await Promise.all(deletePromises);
-
-    logger.info('All Service Worker caches cleared', {
-      count: cacheNames.length,
-      cacheNames,
-    });
-
-    return cacheNames.length;
+    const count = await clearRatewiseCaches(
+      caches,
+      new URL(import.meta.env.BASE_URL, window.location.href).href,
+    );
+    logger.info('RateWise Service Worker caches cleared', { count });
+    return count;
   } catch (error) {
     logger.error('Failed to clear Service Worker caches', error as Error);
     return 0;
@@ -132,7 +129,7 @@ export async function forceServiceWorkerUpdate(): Promise<boolean> {
 }
 
 /**
- * 傳送 FORCE_HARD_RESET 訊息給 SW，讓 SW 清除所有快取後重載。
+ * 傳送 FORCE_HARD_RESET 訊息給 SW，讓 SW 清除自身快取後重載。
  *
  * 優先使用 SW message（讓 SW 從內部清除快取），
  * 若 SW 不存在則直接由 client 清除快取。

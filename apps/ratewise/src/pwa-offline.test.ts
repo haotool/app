@@ -141,7 +141,7 @@ describe('PWA 離線功能測試', () => {
       // 暖快取 SWR；冷快取先 network fetch 正確 SSG HTML，離線才回退 index.html shell。
       expect(swContent).toContain('handleNavigationRequest');
       expect(swContent).toContain('new NavigationRoute(handleNavigationRequest)');
-      expect(swContent).toContain("const HTML_CACHE_NAME = 'html-cache'");
+      expect(swContent).toContain("const HTML_CACHE_NAME = 'ratewise-html-cache'");
       expect(swContent).toContain('event.waitUntil(');
       expect(swContent).toContain('fetchAndCacheNavigation(request, cache)');
       expect(swContent).toContain("matchPrecache('index.html')");
@@ -194,7 +194,7 @@ describe('PWA 離線功能測試', () => {
         resolve(ROOT_PATH, 'src/utils/pwaStorageManager.ts'),
         'utf-8',
       );
-      expect(storageManager).toContain("caches.open('critical-launch-cache')");
+      expect(storageManager).toContain("caches.open('ratewise-critical-launch-cache')");
       expect(storageManager).not.toContain("name.startsWith('workbox-precache')");
     });
 

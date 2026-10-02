@@ -124,8 +124,8 @@ function formatDateInTaipei(date = new Date()) {
 // 產出與其他常數一致的單引號字面值；缺值輸出 null。
 const formatBoardDateLiteral = (date) => (date ? `'${date}'` : 'null');
 
-// 回退用的 updateTime 為抓取時間而非牌告時間；缺 sourcePublishedAt 時週末可能標成抓取當日（已知限制）。
-export function getBoardDate(sourcePublishedAt, updateTime) {
+// 牌告日期只接受來源發布時間；抓取時間不能代表牌告日期。
+export function getBoardDate(sourcePublishedAt) {
   const publishedAt =
     typeof sourcePublishedAt === 'string' &&
     /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.exec(
@@ -148,21 +148,7 @@ export function getBoardDate(sourcePublishedAt, updateTime) {
     }
   }
 
-  const match =
-    typeof updateTime === 'string' &&
-    /^(\d{4})\/(\d{2})\/(\d{2}) (\d{2}):(\d{2}):(\d{2})$/.exec(updateTime);
-  if (!match) return null;
-
-  const [, year, month, day, hour, minute, second] = match.map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day, hour, minute, second));
-  return date.getUTCFullYear() === year &&
-    date.getUTCMonth() === month - 1 &&
-    date.getUTCDate() === day &&
-    hour < 24 &&
-    minute < 60 &&
-    second < 60
-    ? `${match[1]}-${match[2]}-${match[3]}`
-    : null;
+  return null;
 }
 
 /**
@@ -462,7 +448,7 @@ async function main() {
   lines.push(`export const SEO_RATE_EXAMPLES_UPDATE_TIME = '${updateTime}';`);
   lines.push(``);
   lines.push(
-    `export const SEO_RATE_EXAMPLES_BOARD_DATE: string | null = ${formatBoardDateLiteral(getBoardDate(twData.sourcePublishedAt, updateTime))};`,
+    `export const SEO_RATE_EXAMPLES_BOARD_DATE: string | null = ${formatBoardDateLiteral(getBoardDate(twData.sourcePublishedAt))};`,
   );
   lines.push(``);
   lines.push(`/** 生成日期 */`);

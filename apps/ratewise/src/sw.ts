@@ -2,8 +2,13 @@
 
 /// <reference lib="webworker" />
 
-import { clientsClaim } from 'workbox-core';
-import { cleanupOutdatedCaches, matchPrecache, precacheAndRoute } from 'workbox-precaching';
+import { cacheNames, clientsClaim } from 'workbox-core';
+import {
+  cleanupOutdatedCaches,
+  getCacheKeyForURL,
+  matchPrecache,
+  precacheAndRoute,
+} from 'workbox-precaching';
 import { NavigationRoute, registerRoute, setCatchHandler } from 'workbox-routing';
 import { CacheFirst, NetworkFirst, NetworkOnly, StaleWhileRevalidate } from 'workbox-strategies';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
@@ -12,6 +17,7 @@ import {
   resolveOfflineDocumentFallback,
   resolveOfflineStaticResourceFallback,
 } from './utils/pwaOfflineFallback';
+import { clearRatewiseCaches } from './utils/cacheOwnership';
 import { FX_V3_PUBLIC } from './config/api-endpoints';
 
 declare const self: ServiceWorkerGlobalScope & typeof globalThis;
@@ -31,7 +37,7 @@ self.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
 
 // 保存 manifest 供 VERIFY_AND_REPAIR_PRECACHE 使用。
 const WB_MANIFEST = self.__WB_MANIFEST;
-const HTML_CACHE_NAME = 'html-cache';
+const HTML_CACHE_NAME = 'ratewise-html-cache';
 const NAVIGATION_FETCH_TIMEOUT_MS = 8000;
 
 // 預快取 Vite 產出的靜態資源。
@@ -76,14 +82,7 @@ async function ensureOfflineHtmlCached(): Promise<void> {
 // precache 完整性驗證與修復：補回 iOS cache eviction 清除的 JS/CSS chunk。
 async function verifyAndRepairPrecache(): Promise<void> {
   try {
-    const cacheNames = await caches.keys();
-    const precacheName = cacheNames.find((n) => n.startsWith('workbox-precache-v2'));
-    if (!precacheName) {
-      console.warn('[SW] Precache 快取不存在，跳過修復');
-      return;
-    }
-
-    const cache = await caches.open(precacheName);
+    const cache = await caches.open(cacheNames.precache);
     const cachedRequests = await cache.keys();
     const cachedUrls = new Set(cachedRequests.map((r) => r.url));
     const scope = self.registration.scope;
@@ -99,7 +98,7 @@ async function verifyAndRepairPrecache(): Promise<void> {
         relUrl.includes('static-loader-data-manifest');
       if (!isRepairable) return false;
       const fullUrl = new URL(relUrl, scope).href;
-      return !cachedUrls.has(fullUrl);
+      return !cachedUrls.has(getCacheKeyForURL(fullUrl) ?? fullUrl);
     });
 
     if (missing.length === 0) {
@@ -114,7 +113,7 @@ async function verifyAndRepairPrecache(): Promise<void> {
         try {
           const response = await fetch(fullUrl, { cache: 'no-cache' });
           if (response.ok) {
-            await cache.put(fullUrl, response);
+            await cache.put(getCacheKeyForURL(fullUrl) ?? fullUrl, response);
           }
         } catch (err) {
           console.warn(`[SW] 修復失敗: ${fullUrl}`, err);
@@ -140,8 +139,12 @@ async function clearNavigationHtmlCacheOnActivate(): Promise<void> {
 
 async function clearInactiveFxHistoryCachesOnActivate(): Promise<void> {
   const unusedCaches = FX_V3_PUBLIC
-    ? ['history-rates-cdn', 'history-rates-raw', 'history-aggregate-cache']
-    : ['history-validated-v2'];
+    ? [
+        'ratewise-history-rates-cdn',
+        'ratewise-history-rates-raw',
+        'ratewise-history-aggregate-cache',
+      ]
+    : ['ratewise-history-validated-v2'];
   try {
     await Promise.all(unusedCaches.map((name) => caches.delete(name)));
   } catch {
@@ -170,21 +173,35 @@ async function checkAndCleanupCacheBudget(): Promise<void> {
 
     // 清理優先順序：舊歷史資料 > 圖片 > 字型（保留 precache 與 html-cache）
     // FX_V3_PUBLIC=false 與 main 相同；開啟後 legacy aggregate 快取不再使用，一併列入清理。
-    const cleanupOrder = FX_V3_PUBLIC
+    const currentCleanupOrder = FX_V3_PUBLIC
       ? [
-          'history-rates-cdn',
-          'history-rates-raw',
-          'history-aggregate-cache',
-          'history-validated-v2',
-          'image-cache',
-          'font-cache',
+          'ratewise-history-rates-cdn',
+          'ratewise-history-rates-raw',
+          'ratewise-history-aggregate-cache',
+          'ratewise-history-validated-v2',
+          'ratewise-image-cache',
+          'ratewise-font-cache',
         ]
-      : ['history-rates-cdn', 'history-rates-raw', 'image-cache', 'font-cache'];
+      : [
+          'ratewise-history-rates-cdn',
+          'ratewise-history-rates-raw',
+          'ratewise-image-cache',
+          'ratewise-font-cache',
+        ];
+    const cleanupOrder = [
+      'history-rates-cdn',
+      'history-rates-raw',
+      'history-aggregate-cache',
+      'history-validated-v2',
+      'image-cache',
+      'font-cache',
+      ...currentCleanupOrder,
+    ];
     for (const cacheName of cleanupOrder) {
       const cacheExists = await caches.has(cacheName);
       if (cacheExists) {
-        await caches.delete(cacheName);
-        console.warn(`[SW] Deleted cache: ${cacheName}`);
+        await clearRatewiseCaches(caches, self.registration.scope, [cacheName]);
+        console.warn(`[SW] Cleaned owned entries in cache: ${cacheName}`);
 
         const { usage: newUsage } = await navigator.storage.estimate();
         if (newUsage && newUsage / 1024 / 1024 <= budgetMB) {
@@ -239,12 +256,8 @@ self.addEventListener('message', (event: ExtendableMessageEvent) => {
         let precacheEntryCount = 0;
         try {
           hasIndexShell = Boolean(await matchPrecache('index.html'));
-          const cacheNames = await caches.keys();
-          const precacheName = cacheNames.find((name) => name.startsWith('workbox-precache-v2'));
-          if (precacheName) {
-            const precache = await caches.open(precacheName);
-            precacheEntryCount = (await precache.keys()).length;
-          }
+          const precache = await caches.open(cacheNames.precache);
+          precacheEntryCount = (await precache.keys()).length;
         } catch {
           hasIndexShell = false;
         }
@@ -265,11 +278,10 @@ self.addEventListener('message', (event: ExtendableMessageEvent) => {
 
   event.waitUntil(
     (async () => {
-      console.warn('[SW] FORCE_HARD_RESET 收到，清除所有快取並通知 client 重載');
+      console.warn('[SW] FORCE_HARD_RESET 收到，清除自身快取並通知 client 重載');
       try {
-        const cacheNames = await caches.keys();
-        await Promise.all(cacheNames.map((name) => caches.delete(name)));
-        console.warn(`[SW] 已清除 ${String(cacheNames.length)} 個快取`);
+        const count = await clearRatewiseCaches(caches, self.registration.scope);
+        console.warn(`[SW] 已清除 ${String(count)} 個自身快取`);
       } catch (err) {
         console.error('[SW] 清除快取失敗:', err);
       }
@@ -439,7 +451,7 @@ if (FX_V3_PUBLIC) {
         url.pathname,
       ),
     new NetworkFirst({
-      cacheName: 'history-validated-v2',
+      cacheName: 'ratewise-history-validated-v2',
       networkTimeoutSeconds: 5,
       plugins: [
         new CacheableResponsePlugin({ statuses: [200] }),
@@ -461,7 +473,7 @@ if (FX_V3_PUBLIC) {
         (url.pathname.includes('/public/rates/history-30d.json') ||
           url.pathname.includes('/public/rates/providers/moneybox/history-30d.json'))),
     new StaleWhileRevalidate({
-      cacheName: 'history-aggregate-cache',
+      cacheName: 'ratewise-history-aggregate-cache',
       plugins: [
         new CacheableResponsePlugin({ statuses: [0, 200] }),
         new ExpirationPlugin({
@@ -479,7 +491,7 @@ if (FX_V3_PUBLIC) {
       url.pathname.includes('/public/rates/history/') &&
       url.pathname.endsWith('.json'),
     new CacheFirst({
-      cacheName: 'history-rates-cdn',
+      cacheName: 'ratewise-history-rates-cdn',
       plugins: [
         new CacheableResponsePlugin({ statuses: [0, 200] }),
         new ExpirationPlugin({
@@ -497,7 +509,7 @@ if (FX_V3_PUBLIC) {
       url.pathname.includes('/public/rates/history/') &&
       url.pathname.endsWith('.json'),
     new CacheFirst({
-      cacheName: 'history-rates-raw',
+      cacheName: 'ratewise-history-rates-raw',
       plugins: [
         new CacheableResponsePlugin({ statuses: [0, 200] }),
         new ExpirationPlugin({
@@ -525,7 +537,7 @@ registerRoute(
     url.origin === 'https://raw.githubusercontent.com' &&
     url.pathname.includes('/public/rates/latest.json'),
   new StaleWhileRevalidate({
-    cacheName: 'latest-rate-cache',
+    cacheName: 'ratewise-latest-rate-cache',
     plugins: LATEST_RATE_SWR_PLUGINS,
   }),
 );
@@ -537,7 +549,7 @@ registerRoute(
     (url.pathname.endsWith('/api/latest.json') ||
       (url.pathname.includes('/api/pairs/') && url.pathname.endsWith('.json'))),
   new StaleWhileRevalidate({
-    cacheName: 'latest-rate-cache',
+    cacheName: 'ratewise-latest-rate-cache',
     plugins: LATEST_RATE_SWR_PLUGINS,
   }),
 );
@@ -549,7 +561,7 @@ registerRoute(
   ({ request, url }: { request: Request; url: URL }) =>
     request.destination === 'image' || IMAGE_EXTENSION_PATTERN.test(url.pathname),
   new CacheFirst({
-    cacheName: 'image-cache',
+    cacheName: 'ratewise-image-cache',
     plugins: [
       new CacheableResponsePlugin({ statuses: [0, 200] }),
       new ExpirationPlugin({
@@ -564,7 +576,7 @@ registerRoute(
 registerRoute(
   ({ request }: { request: Request }) => request.destination === 'font',
   new CacheFirst({
-    cacheName: 'font-cache',
+    cacheName: 'ratewise-font-cache',
     plugins: [
       new CacheableResponsePlugin({ statuses: [0, 200] }),
       new ExpirationPlugin({
@@ -580,7 +592,7 @@ registerRoute(
   ({ request }: { request: Request }) =>
     request.destination === 'script' || request.destination === 'style',
   new CacheFirst({
-    cacheName: 'static-resources',
+    cacheName: 'ratewise-static-resources',
     plugins: [
       new CacheableResponsePlugin({ statuses: [0, 200] }),
       new ExpirationPlugin({
@@ -598,7 +610,7 @@ registerRoute(({ url }: { url: URL }) => url.pathname.endsWith('.webmanifest'), 
 registerRoute(
   ({ url }: { url: URL }) => /\.(txt|xml)$/.test(url.pathname),
   new StaleWhileRevalidate({
-    cacheName: 'seo-files-cache',
+    cacheName: 'ratewise-seo-files-cache',
     plugins: [
       new CacheableResponsePlugin({ statuses: [0, 200] }),
       new ExpirationPlugin({

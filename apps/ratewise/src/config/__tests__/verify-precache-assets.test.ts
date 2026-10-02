@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -8,6 +8,72 @@ async function loadVerifyPrecacheModule() {
 }
 
 describe('verify-precache-assets script', () => {
+  it.each([9000, 20000])('HEAD 延遲或逾時（%s ms）後，GET 仍能成功', async (headDelay) => {
+    const { probe } = await loadVerifyPrecacheModule();
+    vi.useFakeTimers();
+    const timeout = vi.spyOn(AbortSignal, 'timeout').mockImplementation((milliseconds) => {
+      const controller = new AbortController();
+      setTimeout(() => controller.abort('timeout'), milliseconds);
+      return controller.signal;
+    });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        (_url: string, options: RequestInit) =>
+          new Promise((resolve, reject) => {
+            options.signal?.addEventListener('abort', () => reject(new Error('request aborted')), {
+              once: true,
+            });
+            setTimeout(
+              () =>
+                resolve({
+                  ok: options.method === 'GET',
+                  status: options.method === 'GET' ? 200 : 405,
+                }),
+              options.method === 'HEAD' ? headDelay : 2000,
+            );
+          }),
+      ),
+    );
+    try {
+      const result = probe('https://example.com/assets/main.js');
+      await vi.advanceTimersByTimeAsync(Math.min(headDelay, 10000) + 2000);
+      expect(await result).toEqual({ ok: true, status: 200 });
+      expect(timeout).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.restoreAllMocks();
+      vi.unstubAllGlobals();
+      vi.useRealTimers();
+    }
+  });
+
+  it('僅重試原始 404，恢復才成功，querystring 成功不能掩蓋持續缺檔', async () => {
+    const { probeLiveAssets } = await loadVerifyPrecacheModule();
+    const transient = 'https://example.com/assets/transient.js';
+    const missing = 'https://example.com/offline.html';
+    const forbidden = 'https://example.com/assets/forbidden.js';
+    const counts = new Map<string, number>();
+    const probe = vi.fn((url: string) => {
+      const count = (counts.get(url) ?? 0) + 1;
+      counts.set(url, count);
+      const status =
+        url.includes('?') || (url === transient && count === 3)
+          ? 200
+          : url === forbidden
+            ? 403
+            : 404;
+      return Promise.resolve({ ok: status === 200, status });
+    });
+    const wait = vi.fn((_milliseconds: number) => Promise.resolve());
+    const results = await probeLiveAssets([transient, missing, forbidden], probe, wait);
+    expect(results.get(transient).ok).toBe(true);
+    expect(results.get(missing)).toEqual({ ok: false, status: 404 });
+    expect(counts.get(transient)).toBe(3);
+    expect(counts.get(missing)).toBe(5);
+    expect(counts.get(forbidden)).toBe(1);
+    expect(wait.mock.calls.map(([ms]) => ms)).toEqual([15000, 30000, 60000, 75000]);
+  });
+
   it('should default to the /ratewise/ subpath for local and live validation', async () => {
     const script = await loadVerifyPrecacheModule();
 

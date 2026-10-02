@@ -176,7 +176,7 @@ export async function recacheCriticalResourcesOnLaunch(baseUrl: string): Promise
     recordPwaDiagnostic('critical-recache-start', { resourceCount: CRITICAL_RESOURCES.length });
 
     // 啟動補熱資源使用獨立 cache，避免污染 Workbox precache。
-    const cache = await caches.open('critical-launch-cache');
+    const cache = await caches.open('ratewise-critical-launch-cache');
     let successCount = 0;
 
     // 平行預熱所有關鍵資源

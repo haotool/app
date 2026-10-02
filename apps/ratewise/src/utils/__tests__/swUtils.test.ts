@@ -36,7 +36,7 @@ function setOnline(value: boolean) {
   });
 }
 
-function mockCaches(cacheNames: string[] = ['precache-v1', 'runtime']) {
+function mockCaches(cacheNames: string[] = ['ratewise-precache-v1', 'ratewise-runtime']) {
   const keysStub = vi.fn().mockResolvedValue(cacheNames);
   const deleteStub = vi.fn().mockResolvedValue(true);
 
@@ -55,10 +55,11 @@ describe('swUtils', () => {
   let reloadMock: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
+    vi.stubEnv('BASE_URL', '/ratewise/');
     reloadMock = vi.fn();
     Object.defineProperty(window, 'location', {
       configurable: true,
-      value: { reload: reloadMock },
+      value: { reload: reloadMock, href: 'https://app.haotool.org/ratewise/' },
     });
 
     // default: online
@@ -78,6 +79,7 @@ describe('swUtils', () => {
 
   afterEach(() => {
     vi.clearAllMocks();
+    vi.unstubAllEnvs();
   });
 
   // ── clearAllServiceWorkerCaches ──────────────────────────────────────────
@@ -93,15 +95,22 @@ describe('swUtils', () => {
       expect(keysStub).not.toHaveBeenCalled();
     });
 
-    it('在線時正常清除所有快取並回傳數量', async () => {
+    it('在線時只清除自己的快取，保留其他 app 的 precache', async () => {
       setOnline(true);
-      const { keysStub, deleteStub } = mockCaches(['cache-a', 'cache-b']);
+      const { keysStub, deleteStub } = mockCaches([
+        'ratewise-image-cache',
+        'workbox-precache-v2-https://app.haotool.org/ratewise/',
+        'workbox-precache-v2-https://app.haotool.org/starpuff/',
+      ]);
 
       const result = await clearAllServiceWorkerCaches();
 
       expect(result).toBe(2);
       expect(keysStub).toHaveBeenCalledOnce();
       expect(deleteStub).toHaveBeenCalledTimes(2);
+      expect(deleteStub).not.toHaveBeenCalledWith(
+        'workbox-precache-v2-https://app.haotool.org/starpuff/',
+      );
     });
 
     it('caches API 不存在時直接回傳 0', async () => {
@@ -133,7 +142,7 @@ describe('swUtils', () => {
 
     it('在線且無 SW 時清除快取後重載', async () => {
       setOnline(true);
-      const { deleteStub } = mockCaches(['precache-v1']);
+      const { deleteStub } = mockCaches(['ratewise-precache-v1']);
 
       await forceHardReset();
 
@@ -289,7 +298,7 @@ describe('swUtils', () => {
 
     it('在線時執行完整重置流程', async () => {
       setOnline(true);
-      const { deleteStub } = mockCaches(['precache-v1']);
+      const { deleteStub } = mockCaches(['ratewise-precache-v1']);
 
       await performFullRefresh();
 

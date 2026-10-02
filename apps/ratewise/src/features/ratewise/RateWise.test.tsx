@@ -446,7 +446,13 @@ describe('RateWise Component', () => {
     it('triggers refresh when pull-to-refresh is activated', async () => {
       // Mock caches API
       const mockCaches = {
-        keys: vi.fn().mockResolvedValue(['cache-1', 'cache-2']),
+        keys: vi
+          .fn()
+          .mockResolvedValue([
+            'ratewise-html-cache',
+            'ratewise-critical-launch-cache',
+            'workbox-precache-v2-https://example.com/starpuff/',
+          ]),
         delete: vi.fn().mockResolvedValue(true),
       };
       Object.defineProperty(window, 'caches', {
@@ -491,8 +497,11 @@ describe('RateWise Component', () => {
 
       // Verify caches were cleared
       expect(mockCaches.keys).toHaveBeenCalled();
-      expect(mockCaches.delete).toHaveBeenCalledWith('cache-1');
-      expect(mockCaches.delete).toHaveBeenCalledWith('cache-2');
+      expect(mockCaches.delete).toHaveBeenCalledWith('ratewise-html-cache');
+      expect(mockCaches.delete).toHaveBeenCalledWith('ratewise-critical-launch-cache');
+      expect(mockCaches.delete).not.toHaveBeenCalledWith(
+        'workbox-precache-v2-https://example.com/starpuff/',
+      );
 
       // Restore spy
       usePullToRefreshSpy.mockRestore();

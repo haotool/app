@@ -50,7 +50,7 @@ haotool Apps 是一個專業的 pnpm Monorepo，包含多個高品質的 React 1
 - 即時匯率：每 5 分鐘同步臺灣銀行牌告匯率
 - 匯率 API v3 已公開（`FX_V3_PUBLIC=true`）：以支付幣別 → 取得幣別表達方向，保留來源買賣側、條件與 SHA-256 release manifest；Open Data 與 App 均使用 v3。回滾只需以一行 PR 關閉此開關，data 發佈 gate 獨立運作
 - 趨勢圖表：30 天歷史匯率走勢視覺化
-- PWA 支援：可安裝至手機，支援離線使用
+- PWA 支援：可安裝至手機，支援離線使用；重新整理與錯誤恢復只清除 RateWise 自身快取，保留同站其他工具的離線資料
 - 收藏管理：自訂常用貨幣快速存取
 - 程序化 SEO：249 個可索引 SEO path（幣對頁 + 金額頁）
 
@@ -201,6 +201,8 @@ Pull requests Read&Write），changesets 會改以 PAT 開 PR，CI 全原生觸�
 changesets release PR，需先確認較早的 production deployment 已完成，避免舊 SHA 在 release
 SHA 之後才變成 active，造成正式站版本回退。Release 後以
 `app-version`、GitHub deployment status 與 live precache 驗證作為完成證據。
+
+Live precache 驗證涵蓋全部 SW 清單，僅原始 URL 404 以 15/30/60/75 秒間隔重試（最多 5 次）；最終失敗輸出原 URL 與 querystring 狀態，querystring 成功仍判失敗。每個 HTTP 請求上限 10 秒。
 
 Cloudflare Pages 的公開流量均先經 `security-headers` Worker；Pages main push
 會先部署 candidate branch，通過 contract-only parity 後才更新 production。只有完成 Preview

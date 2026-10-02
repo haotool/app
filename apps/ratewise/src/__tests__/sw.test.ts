@@ -26,11 +26,14 @@ const { matchPrecacheMock, navigationHandlerRef, catchHandlerRef } = vi.hoisted(
 }));
 
 vi.mock('workbox-core', () => ({
+  cacheNames: { precache: 'workbox-precache-v2-https://example.com/' },
   clientsClaim: vi.fn(),
 }));
 
 vi.mock('workbox-precaching', () => ({
   cleanupOutdatedCaches: vi.fn(),
+  getCacheKeyForURL: (url: string) =>
+    url.includes('static-loader-data-manifest') ? `${url}?__WB_REVISION__=loader-v1` : url,
   matchPrecache: (...args: unknown[]) => matchPrecacheMock(...args),
   precacheAndRoute: vi.fn(),
 }));
@@ -197,10 +200,10 @@ describe('Service Worker Cache Strategies', () => {
    * 驗證快取策略配置（預期值 = 修復後的正確配置）
    */
   const expectedStrategies = {
-    'latest-rate-cache': { strategy: 'StaleWhileRevalidate', maxAge: 7 * 24 * 60 * 60 },
-    'image-cache': { strategy: 'CacheFirst', maxAge: 30 * 24 * 60 * 60, maxEntries: 60 },
-    'font-cache': { strategy: 'CacheFirst', maxAge: 365 * 24 * 60 * 60 },
-    'static-resources': { strategy: 'CacheFirst', maxAge: 30 * 24 * 60 * 60 },
+    'ratewise-latest-rate-cache': { strategy: 'StaleWhileRevalidate', maxAge: 7 * 24 * 60 * 60 },
+    'ratewise-image-cache': { strategy: 'CacheFirst', maxAge: 30 * 24 * 60 * 60, maxEntries: 60 },
+    'ratewise-font-cache': { strategy: 'CacheFirst', maxAge: 365 * 24 * 60 * 60 },
+    'ratewise-static-resources': { strategy: 'CacheFirst', maxAge: 30 * 24 * 60 * 60 },
   };
 
   it('should use NavigationRoute + bounded SWR-style handler for zero-white-screen navigation', async () => {
@@ -227,7 +230,7 @@ describe('Service Worker Cache Strategies', () => {
   });
 
   it('should have correct latest rate cache configuration', () => {
-    const config = expectedStrategies['latest-rate-cache'];
+    const config = expectedStrategies['ratewise-latest-rate-cache'];
     expect(config.strategy).toBe('StaleWhileRevalidate');
     expect(config.maxAge).toBe(7 * 24 * 60 * 60); // 7 days
   });
@@ -278,10 +281,10 @@ describe('Service Worker Cache Strategies', () => {
 
     const swPath = path.resolve(__dirname, '../sw.ts');
     const sourceCode = await fs.readFile(swPath, 'utf-8');
-    const config = expectedStrategies['image-cache'];
+    const config = expectedStrategies['ratewise-image-cache'];
 
     expect(sourceCode).toContain('IMAGE_EXTENSION_PATTERN');
-    expect(sourceCode).toContain("cacheName: 'image-cache'");
+    expect(sourceCode).toContain("cacheName: 'ratewise-image-cache'");
     expect(sourceCode).toContain('maxEntries: 60');
     expect(config.strategy).toBe('CacheFirst');
     expect(config.maxAge).toBe(30 * 24 * 60 * 60);
@@ -318,8 +321,8 @@ describe('Service Worker Cache Strategies', () => {
     const swPath = path.resolve(__dirname, '../sw.ts');
     const sourceCode = await fs.readFile(swPath, 'utf-8');
 
-    // 找到 cacheName: 'static-resources' 所在位置，往前找最近的 new XxxStrategy
-    const cacheNameIdx = sourceCode.indexOf("cacheName: 'static-resources'");
+    // 找到 cacheName: 'ratewise-static-resources' 所在位置，往前找最近的 new XxxStrategy
+    const cacheNameIdx = sourceCode.indexOf("cacheName: 'ratewise-static-resources'");
     expect(cacheNameIdx).toBeGreaterThan(-1);
 
     // 截取 cacheName 前面的一小段程式碼（策略宣告在同一個 registerRoute 內）
@@ -370,7 +373,7 @@ describe('Service Worker Cache Strategies', () => {
     const swPath = path.resolve(__dirname, '../sw.ts');
     const sourceCode = await fs.readFile(swPath, 'utf-8');
 
-    expect(sourceCode).toContain("const HTML_CACHE_NAME = 'html-cache'");
+    expect(sourceCode).toContain("const HTML_CACHE_NAME = 'ratewise-html-cache'");
     expect(sourceCode).toContain('clearNavigationHtmlCacheOnActivate');
     expect(sourceCode).toContain('caches.delete(HTML_CACHE_NAME)');
     expect(sourceCode).toContain('clearInactiveFxHistoryCachesOnActivate');
@@ -502,7 +505,7 @@ describe('Service Worker Denylist', () => {
 });
 
 describe('handleNavigationRequest', () => {
-  const htmlCacheName = 'html-cache';
+  const htmlCacheName = 'ratewise-html-cache';
   const navigationUrl = 'https://example.com/ratewise/about';
   const offlineHtml = '<html>offline fallback</html>';
 
@@ -512,6 +515,7 @@ describe('handleNavigationRequest', () => {
   };
   let cachesOpen: ReturnType<typeof vi.fn>;
   let cachesMatch: ReturnType<typeof vi.fn>;
+  let installHandler: (event: ExtendableEvent) => void;
 
   beforeAll(async () => {
     htmlCache = {
@@ -529,6 +533,7 @@ describe('handleNavigationRequest', () => {
     });
 
     await import('../sw.ts');
+    installHandler = mockSelf.addEventListener.mock.calls.find(([type]) => type === 'install')![1];
     expect(navigationHandlerRef.current).not.toBeNull();
   });
 
@@ -552,6 +557,53 @@ describe('handleNavigationRequest', () => {
       headers: { 'Content-Type': 'text/html; charset=utf-8' },
     });
   }
+
+  it('over-budget upgrades clear legacy history and only own shared image/font entries', async () => {
+    const oldStorage = Object.getOwnPropertyDescriptor(navigator, 'storage');
+    const storage = {
+      estimate: vi.fn().mockResolvedValue({ usage: 60 * 1024 * 1024, quota: 100 * 1024 * 1024 }),
+    };
+    Object.defineProperty(navigator, 'storage', { configurable: true, value: storage });
+    const names = [
+      'history-rates-cdn',
+      'history-rates-raw',
+      'history-aggregate-cache',
+      'history-validated-v2',
+      'image-cache',
+      'font-cache',
+      `workbox-precache-v2-${mockScope}`,
+    ];
+    const own = new Request(`${mockScope}assets/old.png`);
+    const foreign = new Request('https://example.com/starpuff/old.png');
+    const shared = {
+      keys: vi.fn().mockResolvedValue([own, foreign]),
+      delete: vi.fn().mockResolvedValue(true),
+    };
+    const deleteCache = vi.fn().mockResolvedValue(true);
+    const oldCaches = globalThis.caches;
+    vi.stubGlobal('caches', {
+      has: vi.fn((name: string) => Promise.resolve(names.includes(name))),
+      keys: vi.fn().mockResolvedValue(names),
+      open: vi.fn().mockResolvedValue(shared),
+      delete: deleteCache,
+    });
+    try {
+      let completion: Promise<unknown> | undefined;
+      installHandler({
+        waitUntil: (promise: Promise<unknown>) => {
+          completion = promise;
+        },
+      } as ExtendableEvent);
+      await completion;
+      expect(deleteCache.mock.calls.map(([name]) => name)).toEqual(names.slice(0, 4));
+      expect(shared.delete).toHaveBeenCalledTimes(2);
+      expect(shared.delete.mock.calls.every(([request]) => request === own)).toBe(true);
+    } finally {
+      vi.stubGlobal('caches', oldCaches);
+      if (oldStorage) Object.defineProperty(navigator, 'storage', oldStorage);
+      else Reflect.deleteProperty(navigator, 'storage');
+    }
+  });
 
   it('background shell fetch failure returns HTTP 503 instead of a browser network error', async () => {
     const request = new Request(mockScope);

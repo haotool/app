@@ -7,9 +7,14 @@ const { routes, listeners } = vi.hoisted(() => ({
   }[],
   listeners: new Map<string, (event: never) => void>(),
 }));
-vi.mock('workbox-core', () => ({ clientsClaim: vi.fn() }));
+vi.mock('workbox-core', () => ({
+  cacheNames: { precache: 'workbox-precache-v2-https://example.com/' },
+  clientsClaim: vi.fn(),
+}));
 vi.mock('workbox-precaching', () => ({
   cleanupOutdatedCaches: vi.fn(),
+  getCacheKeyForURL: (url: string) =>
+    url.includes('static-loader-data-manifest') ? `${url}?__WB_REVISION__=loader-v1` : url,
   matchPrecache: vi.fn(),
   precacheAndRoute: vi.fn(),
 }));
@@ -41,7 +46,7 @@ vi.mock('workbox-expiration', () => ({
     constructor(public options: unknown) {}
   },
 }));
-const loadSw = async (v3Public: boolean) => {
+const loadSw = async (v3Public: boolean, manifest: { url: string }[] = []) => {
   routes.length = 0;
   listeners.clear();
   vi.resetModules();
@@ -66,7 +71,7 @@ const loadSw = async (v3Public: boolean) => {
   vi.stubGlobal('self', {
     registration: { scope: 'https://example.com/' },
     location: { origin: 'https://example.com' },
-    __WB_MANIFEST: [],
+    __WB_MANIFEST: manifest,
     addEventListener: (type: string, listener: (event: never) => void) =>
       listeners.set(type, listener),
     clients: { claim: vi.fn() },
@@ -98,14 +103,14 @@ it('keeps the main history cache strategies while FX_V3_PUBLIC is false', async 
   for (const path of ['history-30d.json', 'providers/moneybox/history-30d.json']) {
     const handler = handlerFor(`${DATA}${path}`);
     expect(handler?.kind).toBe('StaleWhileRevalidate');
-    expect(handler?.options['cacheName']).toBe('history-aggregate-cache');
+    expect(handler?.options['cacheName']).toBe('ratewise-history-aggregate-cache');
   }
   expect(handlerFor(`${DATA}history/2026-09-21.json`)?.options['cacheName']).toBe(
-    'history-rates-cdn',
+    'ratewise-history-rates-cdn',
   );
   expect(handlerFor(`${DATA}history/2026-09-21.json`)?.kind).toBe('CacheFirst');
   expect(handlerFor(`${RAW}history/2026-09-21.json`)?.options['cacheName']).toBe(
-    'history-rates-raw',
+    'ratewise-history-rates-raw',
   );
   expect(handlerFor(`${DATA}v3/current.json`)).toBeUndefined();
   await activate();
@@ -134,13 +139,58 @@ it('revalidates mutable history with bounded timeout and isolates v3 once public
 it('deletes only caches inactive for the current v3 flag during activation', async () => {
   const legacy = await loadSw(false);
   await legacy.activate();
-  expect(legacy.cacheDeletes).toContain('history-validated-v2');
-  expect(legacy.cacheDeletes).not.toContain('history-rates-cdn');
+  expect(legacy.cacheDeletes).toContain('ratewise-history-validated-v2');
+  expect(legacy.cacheDeletes).not.toContain('ratewise-history-rates-cdn');
 
   const v3 = await loadSw(true);
   await v3.activate();
   expect(v3.cacheDeletes).toEqual(
-    expect.arrayContaining(['history-rates-cdn', 'history-rates-raw', 'history-aggregate-cache']),
+    expect.arrayContaining([
+      'ratewise-history-rates-cdn',
+      'ratewise-history-rates-raw',
+      'ratewise-history-aggregate-cache',
+    ]),
   );
-  expect(v3.cacheDeletes).not.toContain('history-validated-v2');
+  expect(v3.cacheDeletes).not.toContain('ratewise-history-validated-v2');
+});
+
+it('foreign precache 先建立時，修復與健康檢查仍只存取自身 precache', async () => {
+  await loadSw(true, [{ url: 'assets/main.js' }, { url: 'static-loader-data-manifest.json' }]);
+  const own = 'workbox-precache-v2-https://example.com/';
+  const foreign = 'workbox-precache-v2-https://example.com/starpuff/';
+  const cache = { keys: vi.fn().mockResolvedValue([]), put: vi.fn().mockResolvedValue(undefined) };
+  const open = vi.fn().mockResolvedValue(cache);
+  vi.stubGlobal('caches', { keys: vi.fn().mockResolvedValue([foreign, own]), open });
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('asset')));
+  const dispatch = async (type: string) => {
+    let work: Promise<void> | undefined;
+    listeners.get('message')?.({
+      data: { type },
+      waitUntil: (promise: Promise<void>) => {
+        work = promise;
+      },
+    } as never);
+    await work;
+  };
+  try {
+    await dispatch('VERIFY_AND_REPAIR_PRECACHE');
+    expect(open).toHaveBeenCalledExactlyOnceWith(own);
+    expect(cache.put).toHaveBeenCalledWith(
+      'https://example.com/assets/main.js',
+      expect.any(Response),
+    );
+    expect(cache.put).toHaveBeenCalledWith(
+      'https://example.com/static-loader-data-manifest.json?__WB_REVISION__=loader-v1',
+      expect.any(Response),
+    );
+    expect(cache.put).not.toHaveBeenCalledWith(
+      'https://example.com/static-loader-data-manifest.json',
+      expect.any(Response),
+    );
+    await dispatch('CHECK_SHELL_PRECACHE');
+    expect(open).toHaveBeenCalledTimes(2);
+    expect(open).not.toHaveBeenCalledWith(foreign);
+  } finally {
+    vi.unstubAllGlobals();
+  }
 });

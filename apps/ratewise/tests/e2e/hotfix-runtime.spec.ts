@@ -59,3 +59,113 @@ test.describe('Service Worker shell 背景預熱失敗', () => {
     }
   });
 });
+
+test('首次冷載自動修復損毀的持久欄位', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'ratewise-converter',
+      JSON.stringify({
+        state: {
+          fromCurrency: 'INVALID',
+          favorites: ['INVALID', 'JPY'],
+          lastConverterView: 'broken',
+        },
+        version: 0,
+      }),
+    );
+  });
+  await page.goto(BASE_PATH);
+  await page.waitForFunction(() =>
+    document.documentElement.hasAttribute('data-ratewise-app-ready'),
+  );
+  const state = await page.evaluate(
+    () => JSON.parse(localStorage.getItem('ratewise-converter') ?? '{}').state,
+  );
+  expect(state.fromCurrency).toBe('TWD');
+  expect(state.favorites).toEqual(['JPY']);
+  expect(state.lastConverterView).toBe('single');
+});
+
+test('SW hard reset 保留他 app precache 與舊共用快取的他 app 資料', async ({ page }) => {
+  await page.goto(BASE_PATH);
+  await page.waitForFunction(() => navigator.serviceWorker.controller !== null);
+  const report = await page.evaluate(async (scopePath) => {
+    const foreignScope = `${location.origin}/starpuff/`;
+    const foreignName = `workbox-precache-v2-${foreignScope}`;
+    const foreignUrl = `${foreignScope}offline.html`;
+    const ownUrl = new URL('isolation-marker.html', new URL(scopePath, location.href)).href;
+    const foreign = await caches.open(foreignName);
+    await foreign.put(foreignUrl, new Response('foreign offline shell'));
+    const shared = await caches.open('html-cache');
+    await shared.put(foreignUrl, new Response('foreign shared shell'));
+    await shared.put(ownUrl, new Response('own legacy shell'));
+    await caches.open('ratewise-isolation-marker');
+    await new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        navigator.serviceWorker.removeEventListener('message', listener);
+        reject(new Error('hard reset 未回覆'));
+      }, 10000);
+      const listener = (event: MessageEvent) => {
+        if (event.data?.type !== 'SW_HARD_RESET_DONE') return;
+        clearTimeout(timer);
+        navigator.serviceWorker.removeEventListener('message', listener);
+        resolve();
+      };
+      navigator.serviceWorker.addEventListener('message', listener);
+      navigator.serviceWorker.controller?.postMessage({ type: 'FORCE_HARD_RESET' });
+    });
+    return {
+      foreignPrecache: await (await caches.open(foreignName))
+        .match(foreignUrl)
+        .then((response) => response?.text()),
+      foreignShared: await shared.match(foreignUrl).then((response) => response?.text()),
+      ownLegacy: Boolean(await shared.match(ownUrl)),
+      ownCache: await caches.has('ratewise-isolation-marker'),
+    };
+  }, BASE_PATH);
+  expect(report).toEqual({
+    foreignPrecache: 'foreign offline shell',
+    foreignShared: 'foreign shared shell',
+    ownLegacy: false,
+    ownCache: false,
+  });
+});
+
+test('iOS 驅逐 loader manifest 後，SW 修復寫回正確 revision key', async ({ page, context }) => {
+  await page.goto(BASE_PATH);
+  await page.waitForFunction(() => navigator.serviceWorker.controller !== null);
+  const entry = await page.evaluate(async (scopePath) => {
+    const scope = new URL(scopePath, location.href).href;
+    const cacheName = (await caches.keys()).find(
+      (name) => name.startsWith('workbox-precache-') && name.endsWith(`-${scope}`),
+    );
+    if (!cacheName) throw new Error('own precache missing');
+    const cache = await caches.open(cacheName);
+    const request = (await cache.keys()).find((key) =>
+      key.url.includes('static-loader-data-manifest'),
+    );
+    if (!request) throw new Error('loader manifest missing');
+    await cache.delete(request);
+    navigator.serviceWorker.controller?.postMessage({ type: 'VERIFY_AND_REPAIR_PRECACHE' });
+    return { cacheName, key: request.url };
+  }, BASE_PATH);
+  await expect
+    .poll(() =>
+      page.evaluate(
+        async ({ cacheName, key }) => Boolean(await (await caches.open(cacheName)).match(key)),
+        entry,
+      ),
+    )
+    .toBe(true);
+  await context.setOffline(true);
+  try {
+    const status = await page.evaluate(async (key) => {
+      const url = new URL(key);
+      url.searchParams.delete('__WB_REVISION__');
+      return (await fetch(url.href)).status;
+    }, entry.key);
+    expect(status).toBe(200);
+  } finally {
+    await context.setOffline(false);
+  }
+});

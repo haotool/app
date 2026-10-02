@@ -549,6 +549,7 @@
     <script>
       (function () {
         'use strict';
+        /* CACHE_OWNERSHIP_HELPERS */
         var DIAG_KEY = 'ratewise_pwa_diagnostics_v1';
         var APP_READY_ATTR = 'data-ratewise-app-ready';
         var APP_READY_EVENT = 'ratewise:pwa-app-ready';
@@ -719,22 +720,17 @@
           });
         }
         function hardResetAndReload() {
+          var scope = new URL('/__BASE_PATH__', window.location.href).href;
+          if (navigator.onLine === false) {
+            window.location.reload();
+            return;
+          }
           var doReload = function () {
             window.location.reload();
           };
           function directClear() {
             if ('caches' in window) {
-              caches
-                .keys()
-                .then(function (k) {
-                  return Promise.all(
-                    k.map(function (n) {
-                      return caches.delete(n);
-                    }),
-                  );
-                })
-                .then(doReload)
-                .catch(doReload);
+              clearRatewiseCaches(caches, scope).then(doReload).catch(doReload);
             } else {
               doReload();
             }
@@ -743,7 +739,8 @@
             navigator.serviceWorker
               .getRegistration()
               .then(function (reg) {
-                var sw = reg && (reg.active || reg.installing || reg.waiting);
+                var sw =
+                  reg && reg.scope === scope && (reg.active || reg.installing || reg.waiting);
                 if (sw) {
                   navigator.serviceWorker.addEventListener('message', function onMsg(e) {
                     if (e.data && e.data.type === 'SW_HARD_RESET_DONE') {

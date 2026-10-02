@@ -1,8 +1,8 @@
 # 雲端與應用安全基線
 
-> **最後更新**: 2026-09-01T00:00:00+08:00
+> **最後更新**: 2026-10-02T00:00:00+08:00
 > **執行者**: LINUS_GUIDE Agent (Linus Torvalds 風格)  
-> **版本**: v2.3 (補充 CI secret scope、immutable Actions 與 production audit 狀態)
+> **版本**: v2.4 (補充同 origin PWA 快取 ownership 控制)
 > **安全評分**: 82/100 🟡 良好 (React Router moderate advisories 尚待處理)
 > **分層防禦**: Cloudflare 管邊界，前端保持最小攻擊面
 
@@ -41,6 +41,7 @@
 - Error Boundary、使用者友善 fallback
 - 觀測性（logger、request id）、非敏感資料存取
 - `.env`、Secrets 管理與掃描
+- RateWise 快取清理共用 ownership helper，新 runtime cache 使用 `ratewise-` 前綴；Workbox 使用完整 scope，舊共用快取只清自身 URL，不刪其他 app 資料；根站停用會以 root scope 子字串誤刪子 app 的 cleanupOutdatedCaches（2026-10-02 程式控制；正式站由 release 驗證）
 
 > 原則：已於 Cloudflare 處理的標頭不在 Nginx / React 重複設定，僅保留最小 fallback。
 

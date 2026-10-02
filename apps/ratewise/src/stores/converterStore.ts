@@ -522,11 +522,11 @@ export const useConverterStore = create<ConverterState>()(
         history: state.history,
         baseCurrency: state.baseCurrency,
       }),
-      onRehydrateStorage: () => (_state, error) => {
-        if (error) return;
+      onRehydrateStorage: () => (state, error) => {
+        if (error || !state) return;
         // 舊版個別 key 的一次性遷移
-        useConverterStore.getState().__migrateFromLegacy();
-        useConverterStore.getState().__validateAndSanitize();
+        state.__migrateFromLegacy();
+        state.__validateAndSanitize();
       },
     },
   ),

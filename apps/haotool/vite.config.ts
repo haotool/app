@@ -97,7 +97,9 @@ export default defineConfig(({ mode }) => {
           ignoreURLParametersMatching: [/^utm_/, /^fbclid$/],
           navigateFallbackAllowlist: HAOTOOL_NAVIGATE_FALLBACK_ALLOWLIST,
           navigateFallbackDenylist: SIBLING_APP_DENYLIST,
-          cleanupOutdatedCaches: true,
+          // root scope 的 includes 會誤刪子 app；同 cache 的舊條目仍由 precache activate 清理。
+          // ponytail: 保留舊 Workbox 不相容 cache；真有容量壓力再做完整 scope 清理。
+          cleanupOutdatedCaches: false,
           navigationPreload: false,
           runtimeCaching: [
             {
