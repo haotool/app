@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+4（reward 7、penalty 3、neutral 0）｜累計總分：+417
+> 本次分數變化：+0（reward 0、penalty 0、neutral 1）｜累計總分：+417
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-10-02
+- ID：neutral-ratewise-release-2294-final
+- 原因：版本 PR 重新生成後需記錄已合併修補、版本與公開產物的發版同步。
+- 解法：以 Changesets 升級 RateWise 2.29.4 與根站 1.1.9，同步 CHANGELOG 與公開產物；中性記錄維持累計 417 分。
 
 - 日期：2026-10-02
 - ID：reward-ratewise-versioned-reset-protocol
