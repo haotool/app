@@ -9,14 +9,14 @@
  */
 
 import { logger } from './logger';
-import { clearRatewiseCaches } from './cacheOwnership';
+import { clearRatewiseRuntimeCaches as clearRuntimeCaches } from './cacheOwnership';
 
 /**
- * 清除 RateWise Service Worker 快取
+ * 清除 RateWise runtime 快取，保留可用的 precache
  *
  * @returns Promise<number> 清除的快取數量
  */
-export async function clearAllServiceWorkerCaches(): Promise<number> {
+export async function clearRatewiseRuntimeCaches(): Promise<number> {
   if (typeof window === 'undefined' || !('caches' in window)) {
     logger.warn('Service Worker caches API not available');
     return 0;
@@ -29,11 +29,11 @@ export async function clearAllServiceWorkerCaches(): Promise<number> {
   }
 
   try {
-    const count = await clearRatewiseCaches(
+    const count = await clearRuntimeCaches(
       caches,
       new URL(import.meta.env.BASE_URL, window.location.href).href,
     );
-    logger.info('RateWise Service Worker caches cleared', { count });
+    logger.info('RateWise runtime caches cleared', { count });
     return count;
   } catch (error) {
     logger.error('Failed to clear Service Worker caches', error as Error);
@@ -133,7 +133,7 @@ export async function forceServiceWorkerUpdate(): Promise<boolean> {
  *
  * 優先使用 SW message（讓 SW 從內部清除快取），
  * 若 SW 不存在則直接由 client 清除快取。
- * SW 回覆 SW_HARD_RESET_DONE 時頁面重載，或 3 秒 timeout 後強制重載。
+ * SW 回覆 SW_HARD_RESET_DONE 時頁面重載，或 15 秒 timeout 後強制重載。
  *
  * @returns Promise<void>
  */
@@ -152,38 +152,53 @@ export async function forceHardReset(): Promise<void> {
     return;
   }
 
+  let fallbackTimeout: ReturnType<typeof setTimeout> | undefined;
+  let removeResetListener: (() => void) | undefined;
   try {
-    const registration = await navigator.serviceWorker.getRegistration();
-    const sw = registration?.active ?? registration?.installing ?? registration?.waiting;
+    const scope = new URL(import.meta.env.BASE_URL, window.location.href).href;
+    const registration = await navigator.serviceWorker.getRegistration(scope);
+    const sw =
+      registration?.scope === scope
+        ? (registration.active ?? registration.installing ?? registration.waiting)
+        : undefined;
 
     if (sw) {
-      // 等待 SW 回覆後重載，最多 3 秒
+      // 等待 SW 回覆後重載，最多 15 秒
       const reloadOnMessage = (event: MessageEvent) => {
-        if ((event.data as { type?: string })?.type === 'SW_HARD_RESET_DONE') {
-          navigator.serviceWorker.removeEventListener('message', reloadOnMessage);
+        if ((event.data as { type?: string })?.type === 'SW_HARD_RESET_DONE_V2') {
+          removeResetListener?.();
+          clearTimeout(fallbackTimeout);
           window.location.reload();
         }
       };
       navigator.serviceWorker.addEventListener('message', reloadOnMessage);
-      sw.postMessage({ type: 'FORCE_HARD_RESET' });
-
-      // Fallback: 3 秒後若 SW 未回覆（舊版 SW 無 handler）仍清快取後重載
-      setTimeout(() => {
+      removeResetListener = () =>
         navigator.serviceWorker.removeEventListener('message', reloadOnMessage);
-        void clearAllServiceWorkerCaches().finally(() => {
+      // 舊版 SW 未回覆時清除 runtime，保留原本可用的 precache。
+      fallbackTimeout = setTimeout(() => {
+        removeResetListener?.();
+        if (!navigator.onLine) {
           window.location.reload();
-        });
-      }, 3000);
+          return;
+        }
+        void clearRatewiseRuntimeCaches().then(
+          () => window.location.reload(),
+          () => window.location.reload(),
+        );
+      }, 15000);
+      sw.postMessage({ type: 'FORCE_HARD_RESET_V2' });
       return;
     }
   } catch (error) {
+    clearTimeout(fallbackTimeout);
+    removeResetListener?.();
     logger.warn('[swUtils] forceHardReset: SW message failed, fallback to direct clear', {
       error: error instanceof Error ? error.message : String(error),
     });
   }
 
-  // Fallback：直接由 client 清除快取
-  await clearAllServiceWorkerCaches();
+  // 無可用 SW 時只清 runtime，保留 precache 供下次註冊／恢復使用。
+  await clearRatewiseRuntimeCaches();
   window.location.reload();
 }
 

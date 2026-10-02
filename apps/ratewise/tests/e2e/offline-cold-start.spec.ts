@@ -28,7 +28,10 @@ declare global {
 
 const BASE_URL = process.env['PLAYWRIGHT_BASE_URL'] || 'http://localhost:4173';
 const BASE_PATH =
-  process.env['E2E_BASE_PATH'] || process.env['VITE_RATEWISE_BASE_PATH'] || '/ratewise';
+  `${process.env['E2E_BASE_PATH'] || process.env['VITE_RATEWISE_BASE_PATH'] || '/ratewise'}/`.replace(
+    /\/+$/,
+    '/',
+  );
 const BASE = `${BASE_URL}${BASE_PATH}/`.replace(/\/+$/, '/');
 
 interface PrecacheAuditSummary {
@@ -619,13 +622,14 @@ test.describe('飛航模式冷啟動診斷', () => {
       window.__RATEWISE_COLD_START_TIMEOUT_MS__ = 900;
     });
 
-    await page.route('**/ratewise/', async (route) => {
+    await page.route(BASE, async (route) => {
       const response = await route.fetch();
       let body = await response.text();
       body = body.replace(
         "recordDiagnostic('cold-start-watchdog-start'",
         "var __testRoot=document.getElementById('root');if(__testRoot){__testRoot.removeAttribute('data-server-rendered');__testRoot.innerHTML='<div data-test-phantom-root-child=\"true\"></div>';}recordDiagnostic('cold-start-watchdog-start'",
       );
+      expect(body).toContain('data-test-phantom-root-child');
       await route.fulfill({ response, body });
     });
 
@@ -692,8 +696,14 @@ test.describe('飛航模式冷啟動診斷', () => {
 
     await context.close();
   });
-  for (const registrationFailure of [false, true]) {
-    test(`watchdog reset preserves foreign caches when registration ${registrationFailure ? 'rejects' : 'is absent'}`, async ({
+  for (const failureMode of [
+    'absent',
+    'registration-error',
+    'post-error',
+    'no-ack',
+    'legacy-worker',
+  ]) {
+    test(`watchdog reset preserves own precache and foreign caches (${failureMode})`, async ({
       browser,
     }) => {
       const context = await browser.newContext({ serviceWorkers: 'block' });
@@ -703,31 +713,79 @@ test.describe('飛航模式冷啟動診斷', () => {
       });
       await page.route('**/assets/*.js*', (route) => route.abort());
       await page.goto(BASE, { waitUntil: 'domcontentloaded' });
-      await page.evaluate(async (rejects) => {
-        Object.defineProperty(navigator.serviceWorker, 'getRegistration', {
-          value: () =>
-            rejects
-              ? Promise.reject(new Error('registration unavailable'))
-              : Promise.resolve(undefined),
-        });
-        await (
-          await caches.open('ratewise-watchdog-test')
-        ).put('/ratewise/test', new Response('own'));
-        await (
-          await caches.open('workbox-starpuff-test')
-        ).put('/starpuff/test', new Response('foreign'));
-      }, registrationFailure);
-      await page.getByRole('button', { name: '清除快取並重載' }).click();
+      await page.evaluate(
+        async ({ mode, basePath }) => {
+          await (window as unknown as { __RATEWISE_PWA_RECOVERY_PROMISE__?: Promise<unknown> })
+            .__RATEWISE_PWA_RECOVERY_PROMISE__;
+          const appVersion = document.querySelector<HTMLMetaElement>(
+            'meta[name="app-version"]',
+          )?.content;
+          if (!appVersion) throw new Error('app version is missing');
+          localStorage.setItem('app_version', appVersion);
+          const scope = new URL(basePath, location.href).href;
+          Object.defineProperty(navigator.serviceWorker, 'getRegistration', {
+            value: () =>
+              mode === 'registration-error'
+                ? Promise.reject(new Error('registration unavailable'))
+                : Promise.resolve(
+                    mode === 'post-error' || mode === 'no-ack' || mode === 'legacy-worker'
+                      ? {
+                          scope,
+                          active: {
+                            postMessage: (message: { type: string }) => {
+                              if (mode === 'legacy-worker' && message.type === 'FORCE_HARD_RESET') {
+                                void caches.delete(`workbox-precache-v2-${scope}`);
+                                navigator.serviceWorker.dispatchEvent(
+                                  new MessageEvent('message', {
+                                    data: { type: 'SW_HARD_RESET_DONE' },
+                                  }),
+                                );
+                              }
+                              if (mode === 'post-error') throw new Error('message rejected');
+                            },
+                          },
+                        }
+                      : undefined,
+                  ),
+          });
+          await (
+            await caches.open(`workbox-precache-v2-${scope}`)
+          ).put(new URL('offline.html', scope).href, new Response('usable offline shell'));
+          await (
+            await caches.open('ratewise-watchdog-test')
+          ).put('/ratewise/test', new Response('own'));
+          await (
+            await caches.open('workbox-starpuff-test')
+          ).put('/starpuff/test', new Response('foreign'));
+        },
+        { mode: failureMode, basePath: BASE_PATH },
+      );
+      await Promise.all([
+        page.waitForEvent('framenavigated', {
+          predicate: (frame) => frame === page.mainFrame(),
+          timeout: 25000,
+        }),
+        page.getByRole('button', { name: '清除快取並重載' }).click(),
+      ]);
+      await page.waitForLoadState('domcontentloaded');
       await expect
         .poll(async () =>
-          page.evaluate(async () => ({
-            own: await caches.has('ratewise-watchdog-test'),
-            foreign: Boolean(
-              await (await caches.open('workbox-starpuff-test')).match('/starpuff/test'),
-            ),
-          })),
+          page.evaluate(
+            async (basePath) => ({
+              precache: await (
+                await (
+                  await caches.open(`workbox-precache-v2-${new URL(basePath, location.href).href}`)
+                ).match(new URL('offline.html', new URL(basePath, location.href)).href)
+              )?.text(),
+              own: await caches.has('ratewise-watchdog-test'),
+              foreign: Boolean(
+                await (await caches.open('workbox-starpuff-test')).match('/starpuff/test'),
+              ),
+            }),
+            BASE_PATH,
+          ),
         )
-        .toEqual({ own: false, foreign: true });
+        .toEqual({ own: false, foreign: true, precache: 'usable offline shell' });
       await context.close();
     });
   }

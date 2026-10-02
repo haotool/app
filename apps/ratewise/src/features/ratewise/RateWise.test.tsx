@@ -444,15 +444,21 @@ describe('RateWise Component', () => {
 
   describe('Pull-to-Refresh', () => {
     it('triggers refresh when pull-to-refresh is activated', async () => {
+      const ownPrecache = `workbox-precache-v2-${new URL(import.meta.env.BASE_URL, window.location.href).href}`;
+      // 目前 precache 有完整首頁，runtime HTML 與啟動備份才可清除。
       // Mock caches API
       const mockCaches = {
         keys: vi
           .fn()
           .mockResolvedValue([
+            ownPrecache,
             'ratewise-html-cache',
             'ratewise-critical-launch-cache',
             'workbox-precache-v2-https://example.com/starpuff/',
           ]),
+        open: vi
+          .fn()
+          .mockResolvedValue({ match: vi.fn().mockResolvedValue(new Response('current shell')) }),
         delete: vi.fn().mockResolvedValue(true),
       };
       Object.defineProperty(window, 'caches', {

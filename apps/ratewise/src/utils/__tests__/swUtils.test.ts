@@ -9,7 +9,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
-  clearAllServiceWorkerCaches,
+  clearRatewiseRuntimeCaches,
   forceHardReset,
   forceServiceWorkerUpdate,
   performFullRefresh,
@@ -82,32 +82,31 @@ describe('swUtils', () => {
     vi.unstubAllEnvs();
   });
 
-  // ── clearAllServiceWorkerCaches ──────────────────────────────────────────
+  // ── clearRatewiseRuntimeCaches ──────────────────────────────────────────
 
-  describe('clearAllServiceWorkerCaches', () => {
+  describe('clearRatewiseRuntimeCaches', () => {
     it('離線時跳過清除並回傳 0', async () => {
       setOnline(false);
       const { keysStub } = mockCaches();
 
-      const result = await clearAllServiceWorkerCaches();
+      const result = await clearRatewiseRuntimeCaches();
 
       expect(result).toBe(0);
       expect(keysStub).not.toHaveBeenCalled();
     });
 
-    it('在線時只清除自己的快取，保留其他 app 的 precache', async () => {
+    it('在線時只清除自身 runtime，保留自己與其他 app 的 precache', async () => {
       setOnline(true);
-      const { keysStub, deleteStub } = mockCaches([
+      const { deleteStub } = mockCaches([
         'ratewise-image-cache',
         'workbox-precache-v2-https://app.haotool.org/ratewise/',
         'workbox-precache-v2-https://app.haotool.org/starpuff/',
       ]);
 
-      const result = await clearAllServiceWorkerCaches();
+      const result = await clearRatewiseRuntimeCaches();
 
-      expect(result).toBe(2);
-      expect(keysStub).toHaveBeenCalledOnce();
-      expect(deleteStub).toHaveBeenCalledTimes(2);
+      expect(result).toBe(1);
+      expect(deleteStub).toHaveBeenCalledExactlyOnceWith('ratewise-image-cache');
       expect(deleteStub).not.toHaveBeenCalledWith(
         'workbox-precache-v2-https://app.haotool.org/starpuff/',
       );
@@ -121,7 +120,7 @@ describe('swUtils', () => {
         value: undefined,
       });
 
-      const result = await clearAllServiceWorkerCaches();
+      const result = await clearRatewiseRuntimeCaches();
 
       expect(result).toBe(0);
     });
@@ -150,19 +149,106 @@ describe('swUtils', () => {
       expect(reloadMock).toHaveBeenCalledOnce();
     });
 
+    it('hard reset ACK cancels the fallback while reload has not unloaded the page', async () => {
+      vi.useFakeTimers();
+      try {
+        const { deleteStub } = mockCaches();
+        const listeners: ((event: MessageEvent) => void)[] = [];
+        Object.defineProperty(navigator, 'serviceWorker', {
+          configurable: true,
+          value: {
+            getRegistration: vi.fn().mockResolvedValue({
+              scope: 'https://app.haotool.org/ratewise/',
+              active: { postMessage: vi.fn() },
+            }),
+            addEventListener: (_type: string, listener: (event: MessageEvent) => void) =>
+              listeners.push(listener),
+            removeEventListener: vi.fn(),
+          },
+        });
+        await forceHardReset();
+        listeners[0]?.({ data: { type: 'SW_HARD_RESET_DONE_V2' } } as MessageEvent);
+        await vi.advanceTimersByTimeAsync(20000);
+        expect(reloadMock).toHaveBeenCalledOnce();
+        expect(deleteStub).not.toHaveBeenCalled();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it.each(['no-ack', 'throw', 'offline'])(
+      'missing ACK or postMessage error preserves precache (%s)',
+      async (mode) => {
+        vi.useFakeTimers();
+        try {
+          const ownPrecache = 'workbox-precache-v2-https://app.haotool.org/ratewise/';
+          const { deleteStub } = mockCaches([ownPrecache, 'ratewise-runtime']);
+          const removeEventListener = vi.fn();
+          const postMessage = vi.fn(() => {
+            if (mode === 'throw') throw new Error('message rejected');
+          });
+          Object.defineProperty(navigator, 'serviceWorker', {
+            configurable: true,
+            value: {
+              getRegistration: vi.fn().mockResolvedValue({
+                scope: 'https://app.haotool.org/ratewise/',
+                active: { postMessage },
+              }),
+              addEventListener: vi.fn(),
+              removeEventListener,
+            },
+          });
+          await forceHardReset();
+          if (mode === 'offline') setOnline(false);
+          await vi.advanceTimersByTimeAsync(20000);
+          expect(deleteStub).not.toHaveBeenCalledWith(ownPrecache);
+          if (mode === 'offline') expect(deleteStub).not.toHaveBeenCalled();
+          else expect(deleteStub).toHaveBeenCalledWith('ratewise-runtime');
+          expect(reloadMock).toHaveBeenCalledOnce();
+          expect(removeEventListener).toHaveBeenCalledOnce();
+        } finally {
+          vi.useRealTimers();
+        }
+      },
+    );
+
+    it('parent root registration cannot receive a RateWise hard reset', async () => {
+      const postMessage = vi.fn();
+      const { deleteStub } = mockCaches();
+      const getRegistration = vi
+        .fn()
+        .mockResolvedValue({ scope: 'https://app.haotool.org/', active: { postMessage } });
+      Object.defineProperty(navigator, 'serviceWorker', {
+        configurable: true,
+        value: {
+          getRegistration,
+          addEventListener,
+          removeEventListener: vi.fn(),
+        },
+      });
+      await forceHardReset();
+      expect(getRegistration).toHaveBeenCalledExactlyOnceWith('https://app.haotool.org/ratewise/');
+      expect(postMessage).not.toHaveBeenCalled();
+      expect(deleteStub).toHaveBeenCalled();
+      expect(reloadMock).toHaveBeenCalledOnce();
+    });
+
     it('在線且有 active SW 時傳送 FORCE_HARD_RESET 訊息', async () => {
       setOnline(true);
       mockCaches();
 
       const postMessage = vi.fn();
+      const addEventListener = vi.fn();
       const swInstance = { postMessage, state: 'activated' };
 
       Object.defineProperty(window.navigator, 'serviceWorker', {
         writable: true,
         configurable: true,
         value: {
-          getRegistration: vi.fn().mockResolvedValue({ active: swInstance }),
-          addEventListener: vi.fn(),
+          getRegistration: vi
+            .fn()
+            .mockResolvedValue({ scope: 'https://app.haotool.org/ratewise/', active: swInstance }),
+          addEventListener,
           removeEventListener: vi.fn(),
         },
       });
@@ -173,11 +259,13 @@ describe('swUtils', () => {
       // Let microtasks run (getRegistration, postMessage)
       await new Promise((r) => setTimeout(r, 0));
 
-      expect(postMessage).toHaveBeenCalledWith({ type: 'FORCE_HARD_RESET' });
+      expect(postMessage).toHaveBeenCalledWith({ type: 'FORCE_HARD_RESET_V2' });
 
-      // Cleanup: resolve via the SW_HARD_RESET_DONE message path or timeout
-      // (we don't need to wait for reload in this test)
-      promise.catch(() => {}); // prevent unhandled rejection if any
+      const listener = addEventListener.mock.calls[0]?.[1] as (event: MessageEvent) => void;
+      listener({ data: { type: 'SW_HARD_RESET_DONE' } } as MessageEvent);
+      expect(reloadMock).not.toHaveBeenCalled();
+      listener({ data: { type: 'SW_HARD_RESET_DONE_V2' } } as MessageEvent);
+      await promise;
     });
   });
 
@@ -196,7 +284,7 @@ describe('swUtils', () => {
             waiting: { postMessage },
             installing: null,
           }),
-          addEventListener: vi.fn(),
+          addEventListener,
           removeEventListener: vi.fn(),
         },
       });
@@ -220,7 +308,7 @@ describe('swUtils', () => {
             installing: null,
             update: updateStub,
           }),
-          addEventListener: vi.fn(),
+          addEventListener,
           removeEventListener: vi.fn(),
         },
       });
@@ -271,7 +359,7 @@ describe('swUtils', () => {
             installing: null,
             update: updateStub,
           }),
-          addEventListener: vi.fn(),
+          addEventListener,
           removeEventListener: vi.fn(),
         },
       });

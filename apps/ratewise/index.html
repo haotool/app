@@ -725,31 +725,44 @@
             window.location.reload();
             return;
           }
+          var fallbackTimeout;
+          var resetMessageListener;
+          function cleanupResetListener() {
+            clearTimeout(fallbackTimeout);
+            if (resetMessageListener) {
+              navigator.serviceWorker.removeEventListener('message', resetMessageListener);
+              resetMessageListener = undefined;
+            }
+          }
           var doReload = function () {
+            cleanupResetListener();
             window.location.reload();
           };
           function directClear() {
+            cleanupResetListener();
+            if (navigator.onLine === false) {
+              doReload();
+              return;
+            }
             if ('caches' in window) {
-              clearRatewiseCaches(caches, scope).then(doReload).catch(doReload);
+              clearRatewiseRuntimeCaches(caches, scope).then(doReload).catch(doReload);
             } else {
               doReload();
             }
           }
           if ('serviceWorker' in navigator) {
             navigator.serviceWorker
-              .getRegistration()
+              .getRegistration(scope)
               .then(function (reg) {
                 var sw =
                   reg && reg.scope === scope && (reg.active || reg.installing || reg.waiting);
                 if (sw) {
-                  navigator.serviceWorker.addEventListener('message', function onMsg(e) {
-                    if (e.data && e.data.type === 'SW_HARD_RESET_DONE') {
-                      navigator.serviceWorker.removeEventListener('message', onMsg);
-                      doReload();
-                    }
-                  });
-                  sw.postMessage({ type: 'FORCE_HARD_RESET' });
-                  setTimeout(doReload, 3000);
+                  resetMessageListener = function (e) {
+                    if (e.data && e.data.type === 'SW_HARD_RESET_DONE_V2') doReload();
+                  };
+                  navigator.serviceWorker.addEventListener('message', resetMessageListener);
+                  fallbackTimeout = setTimeout(directClear, 15000);
+                  sw.postMessage({ type: 'FORCE_HARD_RESET_V2' });
                 } else {
                   directClear();
                 }

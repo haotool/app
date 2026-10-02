@@ -12,7 +12,6 @@ vi.mock('workbox-core', () => ({
   clientsClaim: vi.fn(),
 }));
 vi.mock('workbox-precaching', () => ({
-  cleanupOutdatedCaches: vi.fn(),
   getCacheKeyForURL: (url: string) =>
     url.includes('static-loader-data-manifest') ? `${url}?__WB_REVISION__=loader-v1` : url,
   matchPrecache: vi.fn(),
@@ -46,7 +45,10 @@ vi.mock('workbox-expiration', () => ({
     constructor(public options: unknown) {}
   },
 }));
-const loadSw = async (v3Public: boolean, manifest: { url: string }[] = []) => {
+const loadSw = async (
+  v3Public: boolean,
+  manifest: { url: string; revision?: string | null }[] = [],
+) => {
   routes.length = 0;
   listeners.clear();
   vi.resetModules();
@@ -155,7 +157,10 @@ it('deletes only caches inactive for the current v3 flag during activation', asy
 });
 
 it('foreign precache 先建立時，修復與健康檢查仍只存取自身 precache', async () => {
-  await loadSw(true, [{ url: 'assets/main.js' }, { url: 'static-loader-data-manifest.json' }]);
+  await loadSw(true, [
+    { url: 'assets/main.js', revision: null },
+    { url: 'static-loader-data-manifest-oldhash.json', revision: 'loader-v1' },
+  ]);
   const own = 'workbox-precache-v2-https://example.com/';
   const foreign = 'workbox-precache-v2-https://example.com/starpuff/';
   const cache = { keys: vi.fn().mockResolvedValue([]), put: vi.fn().mockResolvedValue(undefined) };
@@ -180,7 +185,7 @@ it('foreign precache 先建立時，修復與健康檢查仍只存取自身 prec
       expect.any(Response),
     );
     expect(cache.put).toHaveBeenCalledWith(
-      'https://example.com/static-loader-data-manifest.json?__WB_REVISION__=loader-v1',
+      'https://example.com/static-loader-data-manifest-oldhash.json?__WB_REVISION__=loader-v1',
       expect.any(Response),
     );
     expect(cache.put).not.toHaveBeenCalledWith(

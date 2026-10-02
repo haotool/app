@@ -12,7 +12,11 @@ import { execSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import dns from 'node:dns';
 import { getVersionFromCommitCount as formatVersionFromCommitCount } from './src/utils/version-build-utils';
-import { isRatewiseCache, clearRatewiseCaches } from './src/utils/cacheOwnership';
+import {
+  isRatewiseCache,
+  clearRatewiseCaches,
+  clearRatewiseRuntimeCaches,
+} from './src/utils/cacheOwnership';
 import { APP_INFO } from './src/config/app-info';
 
 // Node.js v17+ DNS 解析一致性修正
@@ -265,7 +269,11 @@ export default defineConfig(({ mode }) => {
             )
             .replaceAll(
               '/* CACHE_OWNERSHIP_HELPERS */',
-              [isRatewiseCache.toString(), clearRatewiseCaches.toString()].join('\n'),
+              [
+                isRatewiseCache.toString(),
+                clearRatewiseCaches.toString(),
+                clearRatewiseRuntimeCaches.toString(),
+              ].join('\n'),
             )
             .replace(/__APP_VERSION__/g, appVersion)
             .replace(/__BUILD_TIME__/g, buildTime)

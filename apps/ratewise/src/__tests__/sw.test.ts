@@ -26,12 +26,11 @@ const { matchPrecacheMock, navigationHandlerRef, catchHandlerRef } = vi.hoisted(
 }));
 
 vi.mock('workbox-core', () => ({
-  cacheNames: { precache: 'workbox-precache-v2-https://example.com/' },
+  cacheNames: { precache: 'workbox-precache-v2-https://example.com/ratewise/' },
   clientsClaim: vi.fn(),
 }));
 
 vi.mock('workbox-precaching', () => ({
-  cleanupOutdatedCaches: vi.fn(),
   getCacheKeyForURL: (url: string) =>
     url.includes('static-loader-data-manifest') ? `${url}?__WB_REVISION__=loader-v1` : url,
   matchPrecache: (...args: unknown[]) => matchPrecacheMock(...args),
@@ -75,11 +74,12 @@ const mockSelf = {
   registration: {
     scope: mockScope,
   },
-  __WB_MANIFEST: [],
+  __WB_MANIFEST: [] as { url: string; revision?: string | null }[],
   skipWaiting: vi.fn(),
   addEventListener: vi.fn(),
   clients: {
     claim: vi.fn(),
+    matchAll: vi.fn().mockResolvedValue([]),
   },
 };
 
@@ -258,7 +258,7 @@ describe('Service Worker Cache Strategies', () => {
     const sourceCode = await fs.readFile(swPath, 'utf-8');
 
     // 防回歸：verifyAndRepairPrecache 必須涵蓋 static-loader-data-manifest（無 runtime route 後備）。
-    expect(sourceCode).toContain("relUrl.includes('static-loader-data-manifest')");
+    expect(sourceCode).toContain("relUrl.startsWith('static-loader-data-manifest-')");
   });
 
   it('should expose CHECK_SHELL_PRECACHE health probe for self-heal', async () => {
@@ -513,16 +513,17 @@ describe('handleNavigationRequest', () => {
     match: ReturnType<typeof vi.fn>;
     put: ReturnType<typeof vi.fn>;
   };
-  let cachesOpen: ReturnType<typeof vi.fn>;
+  let cachesOpen: ReturnType<typeof vi.fn<(name: string) => Promise<unknown>>>;
   let cachesMatch: ReturnType<typeof vi.fn>;
   let installHandler: (event: ExtendableEvent) => void;
+  let messageHandler: (event: ExtendableMessageEvent) => void;
 
   beforeAll(async () => {
     htmlCache = {
       match: vi.fn(),
       put: vi.fn(),
     };
-    cachesOpen = vi.fn().mockResolvedValue(htmlCache);
+    cachesOpen = vi.fn<(name: string) => Promise<unknown>>().mockResolvedValue(htmlCache);
     cachesMatch = vi.fn().mockResolvedValue(undefined);
 
     vi.stubGlobal('caches', {
@@ -534,6 +535,7 @@ describe('handleNavigationRequest', () => {
 
     await import('../sw.ts');
     installHandler = mockSelf.addEventListener.mock.calls.find(([type]) => type === 'install')![1];
+    messageHandler = mockSelf.addEventListener.mock.calls.find(([type]) => type === 'message')![1];
     expect(navigationHandlerRef.current).not.toBeNull();
   });
 
@@ -604,6 +606,199 @@ describe('handleNavigationRequest', () => {
       else Reflect.deleteProperty(navigator, 'storage');
     }
   });
+
+  it.each(['FORCE_HARD_RESET', 'FORCE_HARD_RESET_V2', 'VERIFY_AND_REPAIR_PRECACHE'])(
+    '%s never writes a newer mutable shell under the old revision',
+    async (type) => {
+      mockSelf.__WB_MANIFEST.push(
+        { url: 'index.html', revision: 'old-html' },
+        { url: 'offline.html', revision: 'old-offline' },
+        { url: 'assets/old-chunk.js', revision: null },
+      );
+      const precache = {
+        keys: vi.fn().mockResolvedValue([new Request(`${mockScope}index.html`)]),
+        put: vi.fn(),
+      };
+      cachesOpen.mockResolvedValue(precache);
+      const fetchMock = vi.fn((url: string) =>
+        Promise.resolve(
+          url.endsWith('.js')
+            ? new Response('missing', { status: 404 })
+            : new Response('<script src="assets/new-chunk.js"></script>'),
+        ),
+      );
+      vi.stubGlobal('fetch', fetchMock);
+      try {
+        let completion: Promise<unknown> | undefined;
+        messageHandler({
+          data: { type },
+          waitUntil: (promise: Promise<unknown>) => {
+            completion = promise;
+          },
+        } as ExtendableMessageEvent);
+        await completion;
+        expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+          `${mockScope}assets/old-chunk.js`,
+        ]);
+        expect(precache.put).not.toHaveBeenCalled();
+      } finally {
+        mockSelf.__WB_MANIFEST.length = 0;
+      }
+    },
+  );
+
+  it('hard reset retains the last runtime HTML backup when precache shell was evicted', async () => {
+    const shell = new Response('last usable shell');
+    const precache = {
+      keys: vi.fn().mockResolvedValue([]),
+      match: vi.fn().mockResolvedValue(undefined),
+    };
+    const backup = { match: vi.fn().mockResolvedValue(shell) };
+    const oldCaches = caches;
+    const deleteCache = vi.fn().mockResolvedValue(true);
+    vi.stubGlobal('caches', {
+      keys: vi
+        .fn()
+        .mockResolvedValue([
+          `workbox-precache-v2-${mockScope}`,
+          'ratewise-html-cache',
+          'ratewise-runtime',
+        ]),
+      open: vi.fn((name: string) =>
+        Promise.resolve(name.startsWith('workbox-precache-') ? precache : backup),
+      ),
+      delete: deleteCache,
+    });
+    try {
+      let completion: Promise<unknown> | undefined;
+      messageHandler({
+        data: { type: 'FORCE_HARD_RESET' },
+        waitUntil: (promise: Promise<unknown>) => {
+          completion = promise;
+        },
+      } as ExtendableMessageEvent);
+      await completion;
+      expect(deleteCache).not.toHaveBeenCalledWith('ratewise-html-cache');
+      expect(deleteCache).toHaveBeenCalledWith('ratewise-runtime');
+    } finally {
+      vi.stubGlobal('caches', oldCaches);
+    }
+  });
+
+  it.each(['FORCE_HARD_RESET', 'FORCE_HARD_RESET_V2'])(
+    'hard reset refreshes immutable assets before notifying clients (%s)',
+    async (type) => {
+      const entries = [
+        'index.html',
+        'offline.html',
+        'assets/app.js',
+        'fonts/app.woff2',
+        'static-loader-data-manifest-oldhash.json',
+      ];
+      mockSelf.__WB_MANIFEST.push(
+        ...entries.map((url) => ({ url, revision: url.endsWith('.js') ? null : 'old-revision' })),
+      );
+      const precache = {
+        keys: vi.fn().mockResolvedValue([]),
+        put: vi.fn().mockResolvedValue(undefined),
+      };
+      const postMessage = vi.fn();
+      mockSelf.clients.matchAll.mockResolvedValue([{ postMessage }]);
+      cachesOpen.mockImplementation((name: string) =>
+        Promise.resolve(name.startsWith('workbox-precache-') ? precache : htmlCache),
+      );
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(() => Promise.resolve(new Response('asset'))),
+      );
+      try {
+        let completion: Promise<unknown> | undefined;
+        messageHandler({
+          data: { type },
+          waitUntil: (promise: Promise<unknown>) => {
+            completion = promise;
+          },
+        } as ExtendableMessageEvent);
+        await completion;
+        expect(precache.put).toHaveBeenCalledTimes(2);
+        expect(precache.put).toHaveBeenCalledWith(
+          `${mockScope}static-loader-data-manifest-oldhash.json?__WB_REVISION__=loader-v1`,
+          expect.any(Response),
+        );
+        expect(postMessage).toHaveBeenCalledExactlyOnceWith({
+          type: type === 'FORCE_HARD_RESET_V2' ? 'SW_HARD_RESET_DONE_V2' : 'SW_HARD_RESET_DONE',
+        });
+        expect(Math.max(...precache.put.mock.invocationCallOrder)).toBeLessThan(
+          postMessage.mock.invocationCallOrder[0]!,
+        );
+      } finally {
+        mockSelf.__WB_MANIFEST.length = 0;
+      }
+    },
+  );
+
+  it.each(['404', 'timeout', 'html', 'xhtml'])(
+    'hard reset preserves existing immutable chunk when refresh returns %s',
+    async (failure) => {
+      const ownName = `workbox-precache-v2-${mockScope}`;
+      const ownUrl = `${mockScope}assets/old-chunk.js`;
+      mockSelf.__WB_MANIFEST.push({ url: 'assets/old-chunk.js', revision: null });
+      const entries = new Map([[ownUrl, new Response('usable old shell')]]);
+      const ownCache = {
+        keys: vi.fn(() => Promise.resolve([...entries.keys()].map((url) => new Request(url)))),
+        put: vi.fn((url: string, response: Response) => {
+          entries.set(url, response);
+          return Promise.resolve();
+        }),
+      };
+      const oldCaches = caches;
+      const deleteCache = vi.fn((name: string) => {
+        if (name === ownName) entries.clear();
+        return Promise.resolve(true);
+      });
+      vi.stubGlobal('caches', {
+        keys: vi.fn().mockResolvedValue([ownName, 'ratewise-runtime']),
+        delete: deleteCache,
+        open: vi.fn((name: string) => Promise.resolve(name === ownName ? ownCache : htmlCache)),
+      });
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(() =>
+          failure === '404'
+            ? Promise.resolve(new Response('missing', { status: 404 }))
+            : failure === 'html' || failure === 'xhtml'
+              ? Promise.resolve(
+                  new Response('<html>SPA fallback</html>', {
+                    headers: {
+                      'Content-Type':
+                        failure === 'html' ? 'Text/HTML; charset=utf-8' : 'application/xhtml+xml',
+                    },
+                  }),
+                )
+              : Promise.reject(new DOMException('timeout', 'TimeoutError')),
+        ),
+      );
+      mockSelf.clients.matchAll.mockResolvedValue([{ postMessage: vi.fn() }]);
+      try {
+        let completion: Promise<unknown> | undefined;
+        messageHandler({
+          data: { type: 'FORCE_HARD_RESET' },
+          waitUntil: (promise: Promise<unknown>) => {
+            completion = promise;
+          },
+        } as ExtendableMessageEvent);
+        await completion;
+        expect(await entries.get(ownUrl)?.text()).toBe(
+          failure === '200' ? 'fresh shell' : 'usable old shell',
+        );
+        expect(deleteCache).not.toHaveBeenCalledWith(ownName);
+        expect(deleteCache).toHaveBeenCalledWith('ratewise-runtime');
+      } finally {
+        mockSelf.__WB_MANIFEST.length = 0;
+        vi.stubGlobal('caches', oldCaches);
+      }
+    },
+  );
 
   it('background shell fetch failure returns HTTP 503 instead of a browser network error', async () => {
     const request = new Request(mockScope);
