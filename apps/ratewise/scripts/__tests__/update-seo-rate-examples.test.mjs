@@ -10,8 +10,12 @@ describe('getBoardDate', () => {
     expect(getBoardDate('2026-09-27T18:00:00Z')).toBe('2026-09-28');
   });
 
-  it('falls back to the Taipei-local updateTime', () => {
-    expect(getBoardDate('invalid', '2026/09/28 16:58:28')).toBe('2026-09-28');
+  it('omits board date when only fetch time is available', () => {
+    expect(getBoardDate('invalid', '2026/09/28 16:58:28')).toBeNull();
+  });
+
+  it('keeps Friday board date when fetched on Sunday', () => {
+    expect(getBoardDate('2026-09-25T16:58:28+08:00', '2026/09/27 12:00:00')).toBe('2026-09-25');
   });
 
   it('returns null when neither timestamp is valid', () => {

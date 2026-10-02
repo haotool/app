@@ -12,6 +12,7 @@ import { execSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import dns from 'node:dns';
 import { getVersionFromCommitCount as formatVersionFromCommitCount } from './src/utils/version-build-utils';
+import { isRatewiseCache, clearRatewiseCaches } from './src/utils/cacheOwnership';
 import { APP_INFO } from './src/config/app-info';
 
 // Node.js v17+ DNS 解析一致性修正
@@ -258,7 +259,14 @@ export default defineConfig(({ mode }) => {
         name: 'inject-version-meta',
         transformIndexHtml(html) {
           return html
-            .replace('<!-- PWA Recovery Bootstrap -->', `<script>${pwaRecoveryBootstrap}</script>`)
+            .replace(
+              '<!-- PWA Recovery Bootstrap -->',
+              `<script>${pwaRecoveryBootstrap.replace('__RATEWISE_SCOPE__', htmlBasePath)}</script>`,
+            )
+            .replaceAll(
+              '/* CACHE_OWNERSHIP_HELPERS */',
+              [isRatewiseCache.toString(), clearRatewiseCaches.toString()].join('\n'),
+            )
             .replace(/__APP_VERSION__/g, appVersion)
             .replace(/__BUILD_TIME__/g, buildTime)
             .replace(/__BRAND_FULL__/g, APP_INFO.name)

@@ -303,3 +303,9 @@ If you have reported a security vulnerability and would like to be listed here, 
 **License**: GPL-3.0
 
 Copyright (C) 2025 haotool. All rights reserved.
+
+## 同源 PWA 快取隔離
+
+RateWise 使用獨立 runtime namespace 與完整 Service Worker scope 辨識 precache；錯誤恢復、下拉刷新與啟動遷移共用快取 ownership 規則。歷史共用快取只清自身 URL，不能刪除其他 app 的離線資產。
+
+根站停用跨 cache 的 Workbox 舊版本清理，避免 root scope 子字串匹配子 app；同一 precache 的過期條目仍由原生 activate 清理。

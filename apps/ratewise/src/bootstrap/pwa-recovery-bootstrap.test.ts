@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import vm from 'node:vm';
 import { describe, expect, it, vi } from 'vitest';
+import { isRatewiseCache, clearRatewiseCaches } from '../utils/cacheOwnership';
 import { STORAGE_KEYS } from '../features/ratewise/storage-keys';
 
 function createStorage(initial: Record<string, string> = {}) {
@@ -25,7 +26,13 @@ function createStorage(initial: Record<string, string> = {}) {
 
 function loadBootstrap(appVersion = '2.9.1') {
   const scriptPath = resolve(__dirname, 'pwa-recovery-bootstrap.js');
-  return readFileSync(scriptPath, 'utf-8').replace(/__APP_VERSION__/g, appVersion);
+  return readFileSync(scriptPath, 'utf-8')
+    .replace(/__APP_VERSION__/g, appVersion)
+    .replace('__RATEWISE_SCOPE__', '/ratewise/')
+    .replace(
+      '/* CACHE_OWNERSHIP_HELPERS */',
+      [isRatewiseCache.toString(), clearRatewiseCaches.toString()].join('\n'),
+    );
 }
 
 interface BootstrapContext {
@@ -47,7 +54,7 @@ describe('pwa-recovery-bootstrap', () => {
     });
     const context: BootstrapContext = {
       globalThis: undefined as unknown,
-      location: { reload },
+      location: { reload, href: 'https://app.haotool.org/ratewise/' },
       navigator: {
         onLine: true,
         serviceWorker: {
@@ -59,12 +66,19 @@ describe('pwa-recovery-bootstrap', () => {
         },
       },
       caches: {
-        keys: vi.fn().mockResolvedValue(['workbox-precache-v2-ratewise', 'third-party-cache']),
+        keys: vi
+          .fn()
+          .mockResolvedValue([
+            'workbox-precache-v2-ratewise',
+            'workbox-precache-v2-https://app.haotool.org/starpuff/',
+            'third-party-cache',
+          ]),
         delete: deleteCache,
       },
       localStorage,
       window: undefined as unknown,
       console,
+      URL,
       Promise,
       setTimeout,
       clearTimeout,
@@ -80,6 +94,9 @@ describe('pwa-recovery-bootstrap', () => {
     expect(unregisterOther).not.toHaveBeenCalled();
     expect(deleteCache).toHaveBeenCalledWith('workbox-precache-v2-ratewise');
     expect(deleteCache).not.toHaveBeenCalledWith('third-party-cache');
+    expect(deleteCache).not.toHaveBeenCalledWith(
+      'workbox-precache-v2-https://app.haotool.org/starpuff/',
+    );
     expect(reload).toHaveBeenCalledOnce();
     expect(localStorage.snapshot()).toEqual({
       favorites: '["USD"]',
@@ -97,7 +114,7 @@ describe('pwa-recovery-bootstrap', () => {
     });
     const context: BootstrapContext = {
       globalThis: undefined as unknown,
-      location: { reload },
+      location: { reload, href: 'https://app.haotool.org/ratewise/' },
       navigator: {
         onLine: true,
         serviceWorker: {
@@ -114,6 +131,7 @@ describe('pwa-recovery-bootstrap', () => {
       localStorage,
       window: undefined as unknown,
       console,
+      URL,
       Promise,
       setTimeout,
       clearTimeout,

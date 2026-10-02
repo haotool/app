@@ -1,3 +1,4 @@
+/* global URL, isRatewiseCache, clearRatewiseCaches */
 (function (globalScope) {
   var APP_VERSION = '__APP_VERSION__';
   // RECOVERY_EPOCH 使用 APP_VERSION：每次部署自動觸發舊版用戶的快取清理。
@@ -7,7 +8,12 @@
   var VERSION_HISTORY_KEY = 'version_history';
   var RECOVERY_KEY = 'ratewise_pwa_recovery_epoch';
   var CACHE_KEYS = ['exchangeRates'];
-  var RATEWISE_SCOPE = '/ratewise/';
+  var RATEWISE_SCOPE = '__RATEWISE_SCOPE__';
+  /* CACHE_OWNERSHIP_HELPERS */
+
+  function getScopeUrl() {
+    return new URL(RATEWISE_SCOPE, globalScope.location.href).href;
+  }
 
   function isSupported() {
     return (
@@ -62,13 +68,7 @@
     return Boolean(
       registration &&
       typeof registration.scope === 'string' &&
-      registration.scope.indexOf(RATEWISE_SCOPE) !== -1,
-    );
-  }
-
-  function isRatewiseCache(name) {
-    return /workbox|ratewise|html-cache|js-css-cache|image-cache|font-cache|static-data|api-cache/i.test(
-      name,
+      registration.scope === getScopeUrl(),
     );
   }
 
@@ -90,7 +90,9 @@
     var registrations = await getRegistrations();
     var cacheNames = await globalScope.caches.keys();
     var hasRatewiseRegistration = registrations.some(isRatewiseRegistration);
-    var hasRatewiseCaches = cacheNames.some(isRatewiseCache);
+    var hasRatewiseCaches = cacheNames.some(function (name) {
+      return isRatewiseCache(name, getScopeUrl());
+    });
 
     if (storedVersion && storedVersion !== APP_VERSION) {
       return true;
@@ -101,19 +103,13 @@
 
   async function recover() {
     var registrations = await getRegistrations();
-    var cacheNames = await globalScope.caches.keys();
-
     await Promise.all(
       registrations.filter(isRatewiseRegistration).map(function (registration) {
         return registration.unregister();
       }),
     );
 
-    await Promise.all(
-      cacheNames.filter(isRatewiseCache).map(function (cacheName) {
-        return globalScope.caches.delete(cacheName);
-      }),
-    );
+    await clearRatewiseCaches(globalScope.caches, getScopeUrl());
 
     try {
       CACHE_KEYS.concat([APP_VERSION_KEY, VERSION_HISTORY_KEY]).forEach(function (key) {

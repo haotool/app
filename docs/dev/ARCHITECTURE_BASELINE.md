@@ -1,7 +1,7 @@
 # 架構基線與目標藍圖
 
-> **最後更新**: 2026-09-01T00:00:00+08:00
-> **版本**: v3.2 (補充 Cloudflare Pages 靜態 origin 與 Direct Upload 邊界)
+> **最後更新**: 2026-10-02T00:00:00+08:00
+> **版本**: v3.3 (補充同源 PWA cache ownership)
 > **狀態**: ✅ 現況完整，已達成大部分藍圖目標
 
 ---
@@ -17,6 +17,12 @@ deployment，Pull Request 產生 preview，`data` branch 不部署前端。
 `rating-api`／KV 責任邊界，待 Pages preview 的 URL、SEO、PWA、404、header 與 API
 驗證完成後，才將 Worker 的 `STATIC_ORIGIN` 切至 Pages。Zeabur 保留作回退，任何 origin fetch、canonical、sitemap、PWA 或 API 回歸都可移除
 `STATIC_ORIGIN` 回退。
+
+## 0.2 PWA Cache Storage ownership
+
+`apps/ratewise/src/utils/cacheOwnership.ts` 是 RateWise SW、client 與 hydration 前 recovery 的共同規則；Vite 將相同函式嵌入 bootstrap 與冷啟動 watchdog，避免維護另一套清理判斷。容量清理也透過同一 helper 處理舊名與新名，保留 precache 與其他 app 的 shared 項目。新 runtime cache 使用 `ratewise-` namespace，precache 以完整 scope 辨識；舊共用 cache 只刪自身 URL。SW repair/health 使用 Workbox 的自身 cache name 與 revision key。根站停用跨 cache 的舊 Workbox 清理，保留原生 manifest entry pruning。
+
+依據：[MDN CacheStorage](https://developer.mozilla.org/en-US/docs/Web/API/CacheStorage)、[Workbox scope 清理實作](https://github.com/GoogleChrome/workbox/blob/v7.4.0/packages/workbox-precaching/src/utils/deleteOutdatedCaches.ts)、[原生 precache activate](https://github.com/GoogleChrome/workbox/blob/v7.4.0/packages/workbox-precaching/src/PrecacheController.ts)。
 
 ## Linus 架構哲學
 

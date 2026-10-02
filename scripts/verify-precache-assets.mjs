@@ -5,6 +5,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { readFile as readFileAsync } from 'node:fs/promises';
 import path from 'node:path';
+import { setTimeout as delay } from 'node:timers/promises';
 
 const VERIFY_SOURCE = process.env.VERIFY_PRECACHE_SOURCE ?? 'local';
 const BASE_URL = process.env.VERIFY_BASE_URL ?? getDefaultBaseUrl(VERIFY_SOURCE);
@@ -93,7 +94,7 @@ async function loadPrecacheEntries() {
     try {
       const swUrl = new URL('sw.js', BASE_URL).toString();
       console.log(`🌐 從遠端取得 Service Worker: ${swUrl}`);
-      const response = await fetch(swUrl);
+      const response = await fetch(swUrl, { signal: AbortSignal.timeout(10000) });
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
@@ -214,9 +215,13 @@ function extractInjectedManifest(swContent) {
 
 async function probe(url) {
   try {
-    const response = await fetch(url, { method: 'HEAD' });
+    const response = await fetch(url, { method: 'HEAD', signal: AbortSignal.timeout(10000) });
     if (response.ok) return { ok: true, status: response.status };
-    const fallback = await fetch(url, { method: 'GET' });
+  } catch {
+    // CDN 可拒絕或逾時 HEAD，仍以獨立預算驗證實際 GET。
+  }
+  try {
+    const fallback = await fetch(url, { method: 'GET', signal: AbortSignal.timeout(10000) });
     return { ok: fallback.ok, status: fallback.status };
   } catch (error) {
     return {
@@ -225,6 +230,32 @@ async function probe(url) {
       message: error instanceof Error ? error.message : String(error),
     };
   }
+}
+
+async function probeLiveAssets(urls, probeAsset = probe, wait = delay) {
+  const results = new Map();
+  let pending = urls;
+  for (const pause of [0, 15000, 30000, 60000, 75000]) {
+    if (pause) await wait(pause);
+    const round = await Promise.all(pending.map(async (url) => [url, await probeAsset(url)]));
+    for (const [url, result] of round) results.set(url, result);
+    pending = round.filter(([, result]) => result.status === 404).map(([url]) => url);
+    if (!pending.length) break;
+    console.warn(`CDN 404：${pending.length} 個原始 URL 待有界重試`);
+  }
+  await Promise.all(
+    [...results]
+      .filter(([, result]) => !result.ok)
+      .map(async ([url, result]) => {
+        const diagnosticUrl = new URL(url);
+        diagnosticUrl.searchParams.set('precache-probe', Date.now().toString());
+        const diagnostic = await probeAsset(diagnosticUrl.toString());
+        console.error(
+          `❌ ${url} 原 URL status: ${result.status}；querystring status: ${diagnostic.status}${result.message ? `；${result.message}` : ''}`,
+        );
+      }),
+  );
+  return results;
 }
 
 async function main() {
@@ -332,18 +363,11 @@ async function main() {
     }
   } else {
     console.log('🌐 直播模式：通過 HTTP 請求驗證資產');
-    for (const entry of assetEntries) {
-      const target = new URL(entry.url.replace(/^\//, ''), base).toString();
-      const result = await probe(target);
-      if (!result.ok) {
-        hasError = true;
-        console.error(`❌ ${target} 無法擷取 (status: ${result.status})`);
-        if (result.message) {
-          console.error(`   ↳ ${result.message}`);
-        }
-      } else {
-        console.log(`✅ ${target} (status: ${result.status})`);
-      }
+    const urls = [...entryUrls].map((url) => resolvePrecacheAssetUrl(url, base));
+    const results = await probeLiveAssets(urls);
+    for (const [target, result] of results) {
+      if (!result.ok) hasError = true;
+      else console.log(`✅ ${target} (status: ${result.status})`);
     }
   }
 
@@ -365,6 +389,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
 // Export functions for testing
 export {
+  probe,
+  probeLiveAssets,
   getDefaultBaseUrl,
   normalizeBase,
   resolvePrecacheAssetUrl,

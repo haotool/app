@@ -252,7 +252,7 @@ test.describe('飛航模式冷啟動診斷', () => {
           }
           // critical-launch-cache 的完整 HTML（initPWAStorageManager 快取的 App Shell）
           if (
-            name === 'critical-launch-cache' &&
+            name === 'ratewise-critical-launch-cache' &&
             (url === baseUrl || url.replace(/\/$/, '') === baseUrl.replace(/\/$/, ''))
           ) {
             result.criticalLaunchHasHtml = true;
@@ -551,10 +551,10 @@ test.describe('飛航模式冷啟動診斷', () => {
     // Phase 2：驗證 html-cache 含 navigation 響應。
     const htmlCacheReport = await page.evaluate(async () => {
       const cacheNames = await caches.keys();
-      const hasHtmlCache = cacheNames.includes('html-cache');
+      const hasHtmlCache = cacheNames.includes('ratewise-html-cache');
       let entries = 0;
       if (hasHtmlCache) {
-        const cache = await caches.open('html-cache');
+        const cache = await caches.open('ratewise-html-cache');
         const keys = await cache.keys();
         entries = keys.length;
       }
@@ -587,7 +587,7 @@ test.describe('飛航模式冷啟動診斷', () => {
 
     // Phase 2：清空 html-cache，模擬 SW 已安裝但深層路由 HTML 尚未暖機（冷導覽）。
     await page.evaluate(async () => {
-      await caches.delete('html-cache');
+      await caches.delete('ratewise-html-cache');
     });
 
     // Phase 3：在線導覽深層路由，攔截 SW 服出的 navigation response 原文。
@@ -692,4 +692,43 @@ test.describe('飛航模式冷啟動診斷', () => {
 
     await context.close();
   });
+  for (const registrationFailure of [false, true]) {
+    test(`watchdog reset preserves foreign caches when registration ${registrationFailure ? 'rejects' : 'is absent'}`, async ({
+      browser,
+    }) => {
+      const context = await browser.newContext({ serviceWorkers: 'block' });
+      const page = await context.newPage();
+      await page.addInitScript(() => {
+        window.__RATEWISE_COLD_START_TIMEOUT_MS__ = 300;
+      });
+      await page.route('**/assets/*.js*', (route) => route.abort());
+      await page.goto(BASE, { waitUntil: 'domcontentloaded' });
+      await page.evaluate(async (rejects) => {
+        Object.defineProperty(navigator.serviceWorker, 'getRegistration', {
+          value: () =>
+            rejects
+              ? Promise.reject(new Error('registration unavailable'))
+              : Promise.resolve(undefined),
+        });
+        await (
+          await caches.open('ratewise-watchdog-test')
+        ).put('/ratewise/test', new Response('own'));
+        await (
+          await caches.open('workbox-starpuff-test')
+        ).put('/starpuff/test', new Response('foreign'));
+      }, registrationFailure);
+      await page.getByRole('button', { name: '清除快取並重載' }).click();
+      await expect
+        .poll(async () =>
+          page.evaluate(async () => ({
+            own: await caches.has('ratewise-watchdog-test'),
+            foreign: Boolean(
+              await (await caches.open('workbox-starpuff-test')).match('/starpuff/test'),
+            ),
+          })),
+        )
+        .toEqual({ own: false, foreign: true });
+      await context.close();
+    });
+  }
 });

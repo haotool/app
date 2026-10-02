@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+0（reward 1、penalty 1、neutral 0）｜累計總分：+409
+> 本次分數變化：+4（reward 5、penalty 1、neutral 0）｜累計總分：+413
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,36 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-10-02
+- ID：reward-ratewise-legacy-cache-budget
+- 原因：容量清理僅辨識新 namespace，升級後舊歷史與圖片字型快取未釋放。
+- 解法：容量清理透過共用 ownership 指定舊與新快取，60 MB install 回歸驗證清理舊歷史並保留 shared foreign 項目及 precache。
+
+- 日期：2026-10-02
+- ID：reward-ratewise-watchdog-cache-isolation
+- 原因：冷啟動逾時按鈕的無 SW 備援仍全量刪除 Cache Storage，影響其他工具離線資料。
+- 解法：Vite 將共用 ownership 注入 watchdog，限定 SW scope 與離線重載，瀏覽器重現 foreign cache 被刪後驗證兩條 fallback 保留。
+
+- 日期：2026-10-02
+- ID：penalty-root-pwa-activation-await
+- 原因：第一版根站測試使用 async waitForFunction，Promise 被視為 truthy，未等待 SW activate 完成而假綠。
+- 解法：故障注入暴露缺口，改 expect.poll 確認實際 activated，原配置重演紅燈後恢復綠燈。
+
+- 日期：2026-10-02
+- ID：reward-ratewise-cold-hydration-state
+- 原因：同步 persist 冷載回呼引用仍在初始化的 store，遷移與 sanitize 被 TDZ 靜默中斷。
+- 解法：直接呼叫 middleware 傳入 state 的方法，以真實首次 import 與瀏覽器冷載驗證遷移及損毀資料修復。
+
+- 日期：2026-10-02
+- ID：reward-ratewise-cache-isolation
+- 原因：刷新與啟動清理會碰其他 app cache，根站 Workbox 子字串清理又刪子 app。
+- 解法：共用 ownership 與 Workbox cacheNames/revision key，包含啟動補熱快取、冷啟動逾時清除與下拉刷新整合守門，根站停用跨 cache 清理，補 eviction 與跨 app 回歸；HEAD/GET 各自逾時，HEAD 拋錯仍 fallback，補延遲與逾時回歸。
+
+- 日期：2026-10-02
+- ID：reward-ratewise-board-date-precache-retry
+- 原因：幣別頁以生成日期冒充牌告日期，live precache 又因 CDN 瞬時 404 誤判發版失敗。
+- 解法：使用牌告日期並省略缺值，全部 SW 資產以原 URL 有界重試並保留最終失敗與整批有界逾時；依 Google 日期指南與 Node AbortSignal 官方文件補回歸。
 
 - 日期：2026-10-02
 - ID：penalty-root-ci-package-changeset
