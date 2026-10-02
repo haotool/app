@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+4（reward 5、penalty 1、neutral 0）｜累計總分：+413
+> 本次分數變化：+4（reward 7、penalty 3、neutral 0）｜累計總分：+417
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,56 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-10-02
+- ID：reward-ratewise-versioned-reset-protocol
+- 原因：新版頁面仍由舊 SW 控制時，同名 reset 訊息會執行舊版破壞性 precache 清除。
+- 解法：client／watchdog 使用 V2 request／ACK，舊 worker 不識別時走安全 runtime 備援；新 SW 相容舊 request，補舊 handler 紅綠重現與 ACK 版本驗證。
+
+- 日期：2026-10-02
+- ID：reward-ratewise-precache-soft-404
+- 原因：獨立 SPA 部署的舊雜湊資產 URL 回傳 200 HTML，刷新會覆寫仍可用的 chunk。
+- 解法：precache repair 寫入前拒絕 HTML／XHTML Content-Type，補實際舊副本不被覆蓋的紅綠回歸。
+
+- 日期：2026-10-02
+- ID：reward-ratewise-last-shell-preservation
+- 原因：iOS 驅逐 precache 首頁後，重設 runtime 會刪除仍可用的最後 HTML 備份。
+- 解法：共用 runtime 清理先確認目前 precache 首頁，缺失或讀取失敗時保留 HTML 與啟動備份；SW、client、watchdog 同規則並補紅綠驗證。
+
+- 日期：2026-10-02
+- ID：penalty-watchdog-canonical-mock-scope
+- 原因：子路徑 watchdog mock registration 少尾斜線，逾時案例提早走 scope 不符備援。
+- 解法：測試 BASE_PATH 統一 canonical 尾斜線，重跑確認無 ACK 案例實際等待 15 秒再清 runtime。
+
+- 日期：2026-10-02
+- ID：reward-ratewise-no-ack-runtime-reset
+- 原因：舊 SW 不回覆時只重載，損壞的 runtime 快取仍導致相同載入錯誤。
+- 解法：一般 reset 與 watchdog 逾時備援清除自身 runtime 並保留 precache，清理前再次確認在線；補 unit 與實際重載紅綠驗證。
+
+- 日期：2026-10-02
+- ID：reward-ratewise-precache-version-coherence
+- 原因：舊 SW 重抓新版 mutable HTML 並寫入舊 revision key，造成新 HTML 與舊 chunk 混用。
+- 解法：一般修復與硬重設只重抓不可變 URL，保留目前 HTML，缺失 mutable 資源交由新版 SW install，補兩條跨版本紅綠回歸。
+
+- 日期：2026-10-02
+- ID：penalty-watchdog-post-reload-cache-proof
+- 原因：第一版 watchdog 快取斷言未等待實際重載，清理中的非一致取樣出現假綠。
+- 解法：等待主 frame 重載並固定版本 marker，舊清理邏輯重演 precache 丟失紅燈後再驗證保留。
+
+- 日期：2026-10-02
+- ID：reward-ratewise-reset-precache-rebuild
+- 原因：硬重設清除 precache 後，同版本 SW 重載不重跑 install，無法保證恢復離線資源。
+- 解法：SW 在完成回覆前原位刷新全部 revisioned precache，404／逾時保留舊副本且網路有界逾時；client 與 watchdog ACK 取消計時器，逾時只重載，失敗備援保留 precache，並限制自身 registration。
+
+- 日期：2026-10-02
+- ID：reward-ratewise-root-scope-peer-ownership
+- 原因：根路徑部署的 shared cache URL 前綴涵蓋所有子 app，跨應用項目仍被誤清。
+- 解法：共用 ownership 讀取較窄 peer scope 保護 shared entries，容量清理同規則，停用跨 cache 舊格式掃描並以 activated 後的 native 回歸驗證。
+
+- 日期：2026-10-02
+- ID：penalty-ratewise-ci-root-base-coverage
+- 原因：先前僅執行正式子路徑的瀏覽器回歸，未驗證 CI 根路徑部署，main 的兩個完整 E2E 分片失敗。
+- 解法：補根路徑共享快取紅綠重現，並將完整 hard reset 後的 precache key 還原納入 native browser 守門。
 
 - 日期：2026-10-02
 - ID：reward-ratewise-legacy-cache-budget

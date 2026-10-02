@@ -18,7 +18,7 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { AlertCircle, RefreshCw, WifiOff } from 'lucide-react';
 import i18n from '../i18n';
-import { clearAllServiceWorkerCaches } from '../utils/swUtils';
+import { forceHardReset } from '../utils/swUtils';
 import { logger } from '../utils/logger';
 import { isChunkLoadError } from '../utils/chunkLoadRecovery';
 import { SupportContactLinks } from './SupportContactLinks';
@@ -115,7 +115,7 @@ export class RouteErrorBoundary extends Component<Props, State> {
   handleReload = () => {
     const reload = () => window.location.reload();
 
-    void clearAllServiceWorkerCaches().finally(reload);
+    void forceHardReset().catch(reload);
   };
 
   override render(): ReactNode {

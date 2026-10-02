@@ -20,7 +20,7 @@ deployment，Pull Request 產生 preview，`data` branch 不部署前端。
 
 ## 0.2 PWA Cache Storage ownership
 
-`apps/ratewise/src/utils/cacheOwnership.ts` 是 RateWise SW、client 與 hydration 前 recovery 的共同規則；Vite 將相同函式嵌入 bootstrap 與冷啟動 watchdog，避免維護另一套清理判斷。容量清理也透過同一 helper 處理舊名與新名，保留 precache 與其他 app 的 shared 項目。新 runtime cache 使用 `ratewise-` namespace，precache 以完整 scope 辨識；舊共用 cache 只刪自身 URL。SW repair/health 使用 Workbox 的自身 cache name 與 revision key。根站停用跨 cache 的舊 Workbox 清理，保留原生 manifest entry pruning。
+`apps/ratewise/src/utils/cacheOwnership.ts` 是 RateWise SW、client 與 hydration 前 recovery 的共同規則；Vite 將相同函式嵌入 bootstrap 與冷啟動 watchdog，避免維護另一套清理判斷。容量清理也透過同一 helper 處理舊名與新名，保留 precache 與其他 app 的 shared 項目。新 runtime cache 使用 `ratewise-` namespace，precache 以完整 scope 辨識；舊共用 cache 只刪自身 URL。SW repair/health 使用 Workbox 的自身 cache name 與 revision key。根站與 RateWise 停用跨 cache 的舊 Workbox 清理，保留原生 manifest entry pruning。RateWise 根路徑部署依既有 peer precache scope 保護較窄子 app；硬重設在 ACK 前保留當前 HTML、只原位刷新不可變 URL 的 precache（拒絕 SPA fallback 的 200 HTML／XHTML），網路失敗保留舊副本，成功回覆取消 client 備援計時器；client/watchdog 使用 V2 request／ACK 避免觸發舊 worker 的破壞性 handler；無 ACK 的備援在線時清 runtime、保留 precache，離線只重載；目前 precache 首頁缺失或讀取失敗時保留 HTML／critical-launch 備份。
 
 依據：[MDN CacheStorage](https://developer.mozilla.org/en-US/docs/Web/API/CacheStorage)、[Workbox scope 清理實作](https://github.com/GoogleChrome/workbox/blob/v7.4.0/packages/workbox-precaching/src/utils/deleteOutdatedCaches.ts)、[原生 precache activate](https://github.com/GoogleChrome/workbox/blob/v7.4.0/packages/workbox-precaching/src/PrecacheController.ts)。
 

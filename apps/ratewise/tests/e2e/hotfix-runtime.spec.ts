@@ -86,10 +86,56 @@ test('首次冷載自動修復損毀的持久欄位', async ({ page }) => {
   expect(state.lastConverterView).toBe('single');
 });
 
+test('SW activate 保留已存在的其他 app precache', async ({ page }) => {
+  await page.goto(`${BASE_PATH}robots.txt`);
+  await page.evaluate(async () => {
+    const peerScope = `${location.origin}/starpuff/`;
+    await (
+      await caches.open(`workbox-precache-v2-${peerScope}`)
+    ).put(`${peerScope}offline.html`, new Response('existing peer shell'));
+  });
+  await page.goto(BASE_PATH);
+  await expect
+    .poll(() =>
+      page.evaluate(async (basePath) => {
+        const scope = new URL(basePath, location.href).href;
+        const registration = await navigator.serviceWorker.getRegistration(scope);
+        return registration?.scope === scope ? registration.active?.state : undefined;
+      }, BASE_PATH),
+    )
+    .toBe('activated');
+  expect(
+    await page.evaluate(async () => {
+      const peerScope = `${location.origin}/starpuff/`;
+      return (
+        await (
+          await caches.open(`workbox-precache-v2-${peerScope}`)
+        ).match(`${peerScope}offline.html`)
+      )?.text();
+    }),
+  ).toBe('existing peer shell');
+});
+
 test('SW hard reset 保留他 app precache 與舊共用快取的他 app 資料', async ({ page }) => {
   await page.goto(BASE_PATH);
   await page.waitForFunction(() => navigator.serviceWorker.controller !== null);
   const report = await page.evaluate(async (scopePath) => {
+    const scope = new URL(scopePath, location.href).href;
+    const ownPrecacheName = (await caches.keys()).find(
+      (name) => name.startsWith('workbox-precache-') && name.endsWith(`-${scope}`),
+    );
+    if (!ownPrecacheName) throw new Error('own precache is missing before reset');
+    const ownRequestsBefore = (await (await caches.open(ownPrecacheName)).keys()).map(
+      (request) => request.url,
+    );
+    const scriptKey = ownRequestsBefore.find((url) => new URL(url).pathname.endsWith('.js'));
+    if (!scriptKey) throw new Error('own precache has no script');
+    await (
+      await caches.open(ownPrecacheName)
+    ).put(
+      scriptKey,
+      new Response('broken cached script', { headers: { 'Content-Type': 'text/javascript' } }),
+    );
     const foreignScope = `${location.origin}/starpuff/`;
     const foreignName = `workbox-precache-v2-${foreignScope}`;
     const foreignUrl = `${foreignScope}offline.html`;
@@ -106,14 +152,17 @@ test('SW hard reset 保留他 app precache 與舊共用快取的他 app 資料',
         reject(new Error('hard reset 未回覆'));
       }, 10000);
       const listener = (event: MessageEvent) => {
-        if (event.data?.type !== 'SW_HARD_RESET_DONE') return;
+        if (event.data?.type !== 'SW_HARD_RESET_DONE_V2') return;
         clearTimeout(timer);
         navigator.serviceWorker.removeEventListener('message', listener);
         resolve();
       };
       navigator.serviceWorker.addEventListener('message', listener);
-      navigator.serviceWorker.controller?.postMessage({ type: 'FORCE_HARD_RESET' });
+      navigator.serviceWorker.controller?.postMessage({ type: 'FORCE_HARD_RESET_V2' });
     });
+    const restoredOwnUrls = (await (await caches.open(ownPrecacheName)).keys()).map(
+      (request) => request.url,
+    );
     return {
       foreignPrecache: await (await caches.open(foreignName))
         .match(foreignUrl)
@@ -121,6 +170,12 @@ test('SW hard reset 保留他 app precache 與舊共用快取的他 app 資料',
       foreignShared: await shared.match(foreignUrl).then((response) => response?.text()),
       ownLegacy: Boolean(await shared.match(ownUrl)),
       ownCache: await caches.has('ratewise-isolation-marker'),
+      ownScriptReplaced:
+        (await (await (await caches.open(ownPrecacheName)).match(scriptKey))?.text()) !==
+        'broken cached script',
+      ownPrecacheRestored:
+        ownRequestsBefore.length > 0 &&
+        ownRequestsBefore.every((url) => restoredOwnUrls.includes(url)),
     };
   }, BASE_PATH);
   expect(report).toEqual({
@@ -128,6 +183,8 @@ test('SW hard reset 保留他 app precache 與舊共用快取的他 app 資料',
     foreignShared: 'foreign shared shell',
     ownLegacy: false,
     ownCache: false,
+    ownPrecacheRestored: true,
+    ownScriptReplaced: true,
   });
 });
 
@@ -165,6 +222,53 @@ test('iOS 驅逐 loader manifest 後，SW 修復寫回正確 revision key', asyn
       return (await fetch(url.href)).status;
     }, entry.key);
     expect(status).toBe(200);
+  } finally {
+    await context.setOffline(false);
+  }
+});
+
+test('首頁 precache 被驅逐後，hard reset 保留最後 HTML 備份供離線重載', async ({
+  page,
+  context,
+}) => {
+  await page.goto(BASE_PATH);
+  await page.waitForFunction(() => navigator.serviceWorker.controller !== null);
+  await page.evaluate(async (scopePath) => {
+    const scope = new URL(scopePath, location.href).href;
+    const cache = await caches.open(`workbox-precache-v2-${scope}`);
+    const index = (await cache.keys()).find(
+      (request) => new URL(request.url).pathname === new URL('index.html', scope).pathname,
+    );
+    if (!index) throw new Error('precache index missing');
+    const shell = await cache.match(index);
+    if (!shell) throw new Error('precache shell missing');
+    await (await caches.open('ratewise-html-cache')).put(new URL('index.html', scope).href, shell);
+    await cache.delete(index);
+    await new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('hard reset 未回覆')), 15000);
+      const listener = (event: MessageEvent) => {
+        if (event.data?.type !== 'SW_HARD_RESET_DONE_V2') return;
+        clearTimeout(timer);
+        navigator.serviceWorker.removeEventListener('message', listener);
+        resolve();
+      };
+      navigator.serviceWorker.addEventListener('message', listener);
+      navigator.serviceWorker.controller?.postMessage({ type: 'FORCE_HARD_RESET_V2' });
+    });
+    if (
+      !(await (await caches.open('ratewise-html-cache')).match(new URL('index.html', scope).href))
+    )
+      throw new Error('last HTML backup deleted');
+  }, BASE_PATH);
+  const cdp = await context.newCDPSession(page);
+  await cdp.send('Network.enable');
+  await cdp.send('Network.setCacheDisabled', { cacheDisabled: true });
+  await context.setOffline(true);
+  try {
+    const response = await page.reload({ waitUntil: 'domcontentloaded' });
+    expect(response?.status()).toBe(200);
+    await expect(page.locator('html')).toHaveAttribute('data-ratewise-app-ready', 'true');
+    await expect(page.locator('#root')).not.toBeEmpty();
   } finally {
     await context.setOffline(false);
   }

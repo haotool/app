@@ -258,7 +258,7 @@ gh pr merge <PR_NUMBER> --squash --delete-branch=false
 
 Live precache 驗證涵蓋全部 SW 清單，僅原始 URL 404 以 15/30/60/75 秒間隔重試（最多 5 次）；最終失敗輸出原 URL 與 querystring 狀態，querystring 成功仍判失敗。每個 HTTP 請求上限 10 秒。
 
-RateWise Cache Storage 清理（含 hydration 前 bootstrap 與冷啟動逾時畫面與容量清理）必須共用 `src/utils/cacheOwnership.ts`：新 runtime cache 使用 `ratewise-` 前綴，Workbox precache 以完整 scope 辨識；舊通用 HTML/image/font cache 僅刪自身 scope URL，保留同 origin 其他 app。SW 修復與健康檢查使用 Workbox `cacheNames.precache`，禁止取第一個 Workbox cache。
+RateWise Cache Storage 清理（含 hydration 前 bootstrap 與冷啟動逾時畫面與容量清理）必須共用 `src/utils/cacheOwnership.ts`：新 runtime cache 使用 `ratewise-` 前綴，Workbox precache 以完整 scope 辨識；舊通用 HTML/image/font cache 僅刪自身 scope URL，保留同 origin 其他 app。SW 修復與健康檢查使用 Workbox `cacheNames.precache`，禁止取第一個 Workbox cache。RateWise 停用跨 cache 的舊格式掃描，保留原生 manifest entry pruning；根路徑部署的 shared 清理需保護既有較窄 peer precache scope；hard reset 必須在 ACK 前保留當前 HTML、只原位刷新不可變 URL 的 precache（拒絕 SPA fallback 的 200 HTML／XHTML） 並於網路失敗時保留舊副本，ACK 需取消 15 秒 client 備援計時器；client/watchdog 使用 V2 request／ACK 避免觸發舊 worker 的破壞性 handler；無 ACK 的備援在線時清 runtime、保留 precache，離線只重載；目前 precache 首頁缺失或讀取失敗時保留 HTML／critical-launch 備份。
 
 根站（haotool）的 generateSW 必須停用 `cleanupOutdatedCaches`，避免 root scope 子字串命中子 app；同一 precache 的舊 manifest entries 仍由 Workbox 原生 activate 清理。不相容歷史版本的整個 cache 暫保留，禁止全 origin 清除。
 

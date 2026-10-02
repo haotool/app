@@ -3,12 +3,7 @@
 /// <reference lib="webworker" />
 
 import { cacheNames, clientsClaim } from 'workbox-core';
-import {
-  cleanupOutdatedCaches,
-  getCacheKeyForURL,
-  matchPrecache,
-  precacheAndRoute,
-} from 'workbox-precaching';
+import { getCacheKeyForURL, matchPrecache, precacheAndRoute } from 'workbox-precaching';
 import { NavigationRoute, registerRoute, setCatchHandler } from 'workbox-routing';
 import { CacheFirst, NetworkFirst, NetworkOnly, StaleWhileRevalidate } from 'workbox-strategies';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
@@ -17,7 +12,7 @@ import {
   resolveOfflineDocumentFallback,
   resolveOfflineStaticResourceFallback,
 } from './utils/pwaOfflineFallback';
-import { clearRatewiseCaches } from './utils/cacheOwnership';
+import { clearRatewiseCaches, clearRatewiseRuntimeCaches } from './utils/cacheOwnership';
 import { FX_V3_PUBLIC } from './config/api-endpoints';
 
 declare const self: ServiceWorkerGlobalScope & typeof globalThis;
@@ -80,7 +75,7 @@ async function ensureOfflineHtmlCached(): Promise<void> {
 }
 
 // precache 完整性驗證與修復：補回 iOS cache eviction 清除的 JS/CSS chunk。
-async function verifyAndRepairPrecache(): Promise<void> {
+async function verifyAndRepairPrecache(refreshAll = false): Promise<void> {
   try {
     const cache = await caches.open(cacheNames.precache);
     const cachedRequests = await cache.keys();
@@ -88,46 +83,69 @@ async function verifyAndRepairPrecache(): Promise<void> {
     const scope = self.registration.scope;
 
     type ManifestEntry = string | { url: string; revision?: string | null };
-    // 補回 iOS eviction 清除的 Tier 1 shell 資產：JS/CSS 與路由 loader 清單。
-    // loader 清單為離線 SPA 子路由導覽必要，且無 runtime route 後備，故一併修復。
-    const missing = (WB_MANIFEST as ManifestEntry[]).filter((entry) => {
+    // 只重抓不可變 URL；新版 mutable HTML 不能寫到舊 SW 的 revision key。
+    // SSG loader 由唯一建置檔名識別，可安全修復 eviction；mutable 缺失交由新版 SW install。
+    const targets = (WB_MANIFEST as ManifestEntry[]).filter((entry) => {
       const relUrl = typeof entry === 'string' ? entry : entry.url;
+      const immutable =
+        (typeof entry !== 'string' && entry.revision === null) ||
+        /^static-loader-data-manifest-[\w-]+\.json$/.test(relUrl);
       const isRepairable =
-        relUrl.endsWith('.js') ||
-        relUrl.endsWith('.css') ||
-        relUrl.includes('static-loader-data-manifest');
+        immutable &&
+        (refreshAll ||
+          relUrl.endsWith('.js') ||
+          relUrl.endsWith('.css') ||
+          relUrl.startsWith('static-loader-data-manifest-'));
       if (!isRepairable) return false;
       const fullUrl = new URL(relUrl, scope).href;
-      return !cachedUrls.has(getCacheKeyForURL(fullUrl) ?? fullUrl);
+      return refreshAll || !cachedUrls.has(getCacheKeyForURL(fullUrl) ?? fullUrl);
     });
 
-    if (missing.length === 0) {
+    if (targets.length === 0) {
       return;
     }
 
-    console.warn(`[SW] Precache 缺少 ${missing.length} 個條目，開始修復`);
+    console.warn(`[SW] ${refreshAll ? '重新驗證' : '修復缺失'} ${targets.length} 個 precache 條目`);
     await Promise.allSettled(
-      missing.map(async (entry) => {
+      targets.map(async (entry) => {
         const relUrl = typeof entry === 'string' ? entry : entry.url;
         const fullUrl = new URL(relUrl, scope).href;
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
         try {
-          const response = await fetch(fullUrl, { cache: 'no-cache' });
-          if (response.ok) {
+          const response = await fetch(fullUrl, {
+            cache: 'no-cache',
+            signal: controller.signal,
+          });
+          const contentType = response.headers
+            .get('content-type')
+            ?.split(';')[0]
+            ?.trim()
+            .toLowerCase();
+          // SPA fallback 的 200 HTML 是邏輯 404，不能取代仍可用的不可變資產。
+          if (
+            response.ok &&
+            contentType !== 'text/html' &&
+            contentType !== 'application/xhtml+xml'
+          ) {
             await cache.put(getCacheKeyForURL(fullUrl) ?? fullUrl, response);
+          } else {
+            console.warn(`[SW] 保留既有離線資源：${fullUrl} (HTTP ${response.status})`);
           }
         } catch (err) {
           console.warn(`[SW] 修復失敗: ${fullUrl}`, err);
+        } finally {
+          clearTimeout(timeout);
         }
       }),
     );
-    console.warn('[SW] Precache 修復完成');
+    console.warn('[SW] Precache 檢查完成');
   } catch (err) {
     console.error('[SW] verifyAndRepairPrecache 執行失敗:', err);
   }
 }
 
-// 清除舊版快取。
-cleanupOutdatedCaches();
+// 同 origin 有多個 app，不啟用跨 cache 的舊格式掃描；precache controller 仍清除自身 obsolete entries。
 
 async function clearNavigationHtmlCacheOnActivate(): Promise<void> {
   try {
@@ -274,37 +292,29 @@ self.addEventListener('message', (event: ExtendableMessageEvent) => {
     return;
   }
 
-  if (data?.type !== 'FORCE_HARD_RESET') return;
+  if (data?.type !== 'FORCE_HARD_RESET' && data?.type !== 'FORCE_HARD_RESET_V2') return;
+  const acknowledgement =
+    data.type === 'FORCE_HARD_RESET_V2' ? 'SW_HARD_RESET_DONE_V2' : 'SW_HARD_RESET_DONE';
 
   event.waitUntil(
     (async () => {
       console.warn('[SW] FORCE_HARD_RESET 收到，清除自身快取並通知 client 重載');
       try {
-        const count = await clearRatewiseCaches(caches, self.registration.scope);
+        const count = await clearRatewiseRuntimeCaches(
+          caches,
+          self.registration.scope,
+          cacheNames.precache,
+        );
         console.warn(`[SW] 已清除 ${String(count)} 個自身快取`);
       } catch (err) {
         console.error('[SW] 清除快取失敗:', err);
       }
-      // 硬重置僅在有網路時觸發（client 端已守門），立即回填 shell 避免清除後裸奔。
-      try {
-        const scope = self.registration.scope;
-        const cache = await caches.open(HTML_CACHE_NAME);
-        await Promise.allSettled(
-          ['index.html', 'offline.html'].map(async (page) => {
-            const fullUrl = new URL(page, scope).href;
-            const response = await fetch(fullUrl, { cache: 'no-cache' });
-            if (response.ok) {
-              await cache.put(fullUrl, response.clone());
-              await cache.put(page, response);
-            }
-          }),
-        );
-      } catch {
-        // shell 回填失敗不阻斷 client 通知流程。
-      }
+      // 相同 SW 重載不會重跑 install；保留目前版本的 HTML，僅更新不可變 URL。
+      // 404／逾時不覆蓋原本可用的離線副本。
+      await verifyAndRepairPrecache(true);
       const clients = await self.clients.matchAll({ type: 'window' });
       for (const client of clients) {
-        client.postMessage({ type: 'SW_HARD_RESET_DONE' });
+        client.postMessage({ type: acknowledgement });
       }
     })(),
   );
