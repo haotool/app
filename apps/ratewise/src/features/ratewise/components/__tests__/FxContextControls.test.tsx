@@ -131,3 +131,22 @@ it('persists the derived country when a branch is chosen so the stored location 
   expect(state.serviceCountry).toBe('KR');
   expect(state.branchId).toBe('hongdae');
 });
+
+it('adopts the only branch of the destination country when the location is switched', () => {
+  useConverterStore.setState({
+    serviceCountry: 'TW',
+    providerPreference: manual('moneybox', 'exchange-shop'),
+  });
+  render(
+    <FxContextControls
+      quotes={[...board('moneybox', 'TW'), ...board('moneybox', 'KR', 'myeongdong')]}
+    />,
+  );
+  open();
+
+  fireEvent.change(screen.getByLabelText('換匯地點'), { target: { value: 'KR' } });
+
+  const state = useConverterStore.getState();
+  expect(state.serviceCountry).toBe('KR');
+  expect(state.branchId).toBe('myeongdong');
+});

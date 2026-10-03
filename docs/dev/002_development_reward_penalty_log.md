@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+2（reward 2、penalty 0、neutral 0）｜累計總分：+420
+> 本次分數變化：+3（reward 3、penalty 0、neutral 0）｜累計總分：+421
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-10-03
+- ID：reward-ratewise-fx-location-switch-branch
+- 原因：同一手動來源跨國時切換地點只呼叫 setServiceCountry，分店被清成 null，而目的國只有一間分店時選擇器隱藏，換算變成無可用牌告且使用者無法補選。
+- 解法：抽出 onlyBranchIn，選來源與切換地點時一併採用該國唯一分店，並補紅綠測試。
 
 - 日期：2026-10-03
 - ID：reward-ratewise-fx-branch-persist-country

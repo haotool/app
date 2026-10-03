@@ -50,6 +50,19 @@ export function FxContextControls({ quotes }: { quotes: readonly QuoteSnapshot[]
   const branches = [
     ...new Set(local.flatMap((q) => (q.sourceQuote.branchId ? [q.sourceQuote.branchId] : []))),
   ];
+  /** 該來源（未指定＝全部來源）在某國只有一間分店時回傳它；setServiceCountry 會清掉分店，需要補回。 */
+  const onlyBranchIn = (providerId: string | undefined, code: string) => {
+    const ids = new Set(
+      quotes
+        .filter(
+          (q) =>
+            (!providerId || q.providerId === providerId) && q.sourceQuote.serviceCountry === code,
+        )
+        .flatMap((q) => (q.sourceQuote.branchId ? [q.sourceQuote.branchId] : [])),
+    );
+    const [only] = [...ids];
+    return ids.size === 1 && only ? only : null;
+  };
   const selectProvider = (providerId: string) => {
     if (providerId === 'best') {
       state.setProviderPreference({ mode: 'best' });
@@ -61,13 +74,8 @@ export function FxContextControls({ quotes }: { quotes: readonly QuoteSnapshot[]
       : available[0];
     if (nextCountry && nextCountry !== state.serviceCountry) state.setServiceCountry(nextCountry);
     // 該來源在此地點只有一間分店時一併採用，避免因分店未選而仍被判定為條件不符。
-    const providerBranches = new Set(
-      quotes
-        .filter((q) => q.providerId === providerId && q.sourceQuote.serviceCountry === nextCountry)
-        .flatMap((q) => (q.sourceQuote.branchId ? [q.sourceQuote.branchId] : [])),
-    );
-    const [onlyBranch] = [...providerBranches];
-    if (providerBranches.size === 1 && onlyBranch) state.setBranchId(onlyBranch);
+    const onlyBranch = nextCountry ? onlyBranchIn(providerId, nextCountry) : null;
+    if (onlyBranch) state.setBranchId(onlyBranch);
     state.setProviderPreference({
       mode: 'manual',
       manualProvider: {
@@ -90,7 +98,12 @@ export function FxContextControls({ quotes }: { quotes: readonly QuoteSnapshot[]
               className={selectClass}
               aria-label="換匯地點"
               value={country}
-              onChange={(e) => state.setServiceCountry(e.target.value)}
+              onChange={(e) => {
+                state.setServiceCountry(e.target.value);
+                // 切換國家會清掉分店；該國只有一間分店時選擇器會隱藏，必須一併採用。
+                const onlyBranch = onlyBranchIn(isBest ? undefined : manual, e.target.value);
+                if (onlyBranch) state.setBranchId(onlyBranch);
+              }}
             >
               {countries.map((country) => (
                 <option key={country} value={country}>
