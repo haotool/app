@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+426
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+427
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-10-03
+- ID：reward-ci-dependabot-ignore-playwright-tseslint
+- 原因：32 個套件的 npm 群組 PR 同時帶入 @playwright/test 1.63（CI 容器映像仍是 1.61.1，E2E 全部找不到瀏覽器）與 typescript-eslint 8.71（測試檔新增 8 個 unbound-method 錯誤），整包被卡住。
+- 解法：dependabot.yml 排除 @playwright/test（升級須與 ci.yml 映像標籤同步）與 typescript-eslint 的 minor，並註明原因與解除條件。
 
 - 日期：2026-10-03
 - ID：reward-ci-dependabot-ignore-breaking
