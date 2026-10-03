@@ -112,3 +112,22 @@ it('offers a branch select only when the provider has several branches', () => {
 
   expect(screen.getByLabelText('換匯分店')).toBeVisible();
 });
+
+it('persists the derived country when a branch is chosen so the stored location cannot go stale', () => {
+  useConverterStore.setState({
+    serviceCountry: 'TW',
+    providerPreference: manual('moneybox', 'exchange-shop'),
+  });
+  render(
+    <FxContextControls
+      quotes={[...board('moneybox', 'KR', 'myeongdong'), ...board('moneybox', 'KR', 'hongdae')]}
+    />,
+  );
+  open();
+
+  fireEvent.change(screen.getByLabelText('換匯分店'), { target: { value: 'hongdae' } });
+
+  const state = useConverterStore.getState();
+  expect(state.serviceCountry).toBe('KR');
+  expect(state.branchId).toBe('hongdae');
+});

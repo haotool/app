@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+419
+> 本次分數變化：+2（reward 2、penalty 0、neutral 0）｜累計總分：+420
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-10-03
+- ID：reward-ratewise-fx-branch-persist-country
+- 原因：持久化的手動來源只在單一國家有多間分店、且 store 仍是舊國家時，地點選擇器隱藏，使用者選分店後換算仍以舊國家建立 context 而全部不適用，介面沒有修正途徑。
+- 解法：選分店時一併把推導出的來源國家寫入 store，並補紅綠測試。
 
 - 日期：2026-10-03
 - ID：reward-ratewise-fx-location-auto

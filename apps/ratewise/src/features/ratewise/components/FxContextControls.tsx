@@ -126,7 +126,11 @@ export function FxContextControls({ quotes }: { quotes: readonly QuoteSnapshot[]
               className={selectClass}
               aria-label="換匯分店"
               value={state.branchId ?? ''}
-              onChange={(e) => state.setBranchId(e.target.value || null)}
+              onChange={(e) => {
+                // 顯示的地點是由來源推導出的；使用者選分店時一併寫入，避免 store 仍留舊國家而全部不適用。
+                if (country !== state.serviceCountry) state.setServiceCountry(country);
+                state.setBranchId(e.target.value || null);
+              }}
             >
               <option value="">{t('fxUi.chooseBranch')}</option>
               {branches.map((branch) => (
