@@ -52,6 +52,11 @@ updates:
         update-types: ['version-update:semver-minor']
       - dependency-name: '@typescript-eslint/*'
         update-types: ['version-update:semver-minor']
+      # 2026-10-04: prettier 3.8.1 → 3.9.9 使 `pnpm format`（CI Format check）在 36 個既有檔案失敗。
+      # 為避免與升級無關的大量格式化雜訊混進依賴 PR，先排除 minor；
+      # 升級時應另開 PR 同時執行 `pnpm format:fix` 並單獨審查格式差異。
+      - dependency-name: 'prettier'
+        update-types: ['version-update:semver-minor']
 
   # security-headers Worker 自帶 npm + package-lock.json，不在 pnpm workspace 內，
   # 沒有這個 entry 就只會在漏洞警報觸發時被動冒出 security update PR（例：PR #979）。

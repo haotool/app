@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+427
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+428
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-10-04
+- ID：reward-ci-dependabot-ignore-prettier
+- 原因：npm 群組 PR 排除 Playwright 與 typescript-eslint 後，prettier 3.9.9 使 CI Format check 在 36 個既有檔案失敗，把格式化雜訊與依賴升級混在一起。
+- 解法：dependabot.yml 排除 prettier 的 minor 並註明須另開 PR 執行 format:fix 後單獨審查格式差異。
 
 - 日期：2026-10-03
 - ID：reward-ci-dependabot-ignore-playwright-tseslint
