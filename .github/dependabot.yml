@@ -35,6 +35,11 @@ updates:
       # 不允許 Dependabot 只改各 app 與 lockfile，卻遺漏 root pnpm.overrides。
       - dependency-name: 'react-router-dom'
         update-types: ['version-update:semver-major']
+      # 2026-10-03: eslint-plugin-react-hooks 7.1.x 新增 set-state-in-effect 等規則，
+      # 升級後 CI lint 出現多處新錯誤（35 個套件群組 PR #1157 因此被卡住）。
+      # 先排除 minor（patch 仍會更新），待逐一評估並修正對應程式碼後再解除。
+      - dependency-name: 'eslint-plugin-react-hooks'
+        update-types: ['version-update:semver-minor']
 
   # security-headers Worker 自帶 npm + package-lock.json，不在 pnpm workspace 內，
   # 沒有這個 entry 就只會在漏洞警報觸發時被動冒出 security update PR（例：PR #979）。
@@ -74,3 +79,10 @@ updates:
       github-actions:
         patterns:
           - '*'
+    ignore:
+      # 2026-10-03: changesets/action v2 破壞性變更——release commit／tag 預設改用 GitHub API 推送，
+      # 且自訂 token 必須透過 github-token input 明確傳入（環境變數與 checkout 憑證不再生效），
+      # `commit-mode` input 也被取代。release.yml 目前依賴 v1 的 commit／title inputs 與
+      # GITHUB_TOKEN／RELEASE_PAT 補償鏈，需先改寫並驗證 release 流程再升級。
+      - dependency-name: 'changesets/action'
+        update-types: ['version-update:semver-major']

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+425
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+426
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-10-03
+- ID：reward-ci-dependabot-ignore-breaking
+- 原因：dependabot 群組 PR 夾帶 eslint-plugin-react-hooks 7.1 新規則（lint 大量失敗）與 changesets/action v2（改用 API 推送、token 須明確傳入，會破壞現有 release 流程），讓整包升級被卡數日。
+- 解法：在 dependabot.yml 排除 eslint-plugin-react-hooks 的 minor 與 changesets/action 的 major 並註明原因，其餘套件的升級不受影響。
 
 - 日期：2026-10-03
 - ID：reward-deps-react-router-6-30-6
