@@ -44,6 +44,7 @@ export const RATE_PROVIDERS = {
     sourceKind: 'exchange-shop',
     label: '明洞換匯所',
     shortLabel: 'MoneyBox',
+    branchLabels: { myeongdong: '明洞' },
     supportedRateTypes: ['cash'],
     supportedCurrencies: getSupportedExchangeShopCurrencies(),
     apiPaths: {

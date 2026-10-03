@@ -1,5 +1,5 @@
 import type { EstimateResult } from '@app/shared/fx';
-import { Suspense, useRef } from 'react';
+import { Suspense, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'motion/react';
 import { Star } from 'lucide-react';
@@ -7,7 +7,11 @@ import { activeHighlight } from '../../../config/animations';
 import { CURRENCY_DEFINITIONS, CURRENCY_QUICK_AMOUNTS, DEFAULT_RATE_SOURCE } from '../constants';
 import type { CurrencyCode, MultiAmountsState, RateMode, RateSource, RateType } from '../types';
 import type { RateDetails } from '../hooks/useExchangeRates';
-import { formatExchangeRate, formatAmountDisplay } from '../../../utils/currencyFormatter';
+import {
+  formatExchangeRate,
+  formatAmountDisplay,
+  formatUnitRateDisplay,
+} from '../../../utils/currencyFormatter';
 import { RateTypeTooltip } from '../../../components/RateTypeTooltip';
 import { useCalculatorModal } from '../hooks/useCalculatorModal';
 import {
@@ -21,7 +25,7 @@ import {
 } from '../../../services/moneyboxRateService';
 import { CalculatorKeyboard } from '../../calculator/components/CalculatorKeyboard';
 import type { FxContextSubstitution } from '../fxEffectiveContext';
-import { formatFxSubstitution } from '../fxSubstitutionText';
+import { summarizeFxSubstitutions } from '../fxSubstitutionText';
 import type { FxRateAvailability, FxRateOption } from '../fxRateAvailability';
 
 interface MultiConverterProps {
@@ -173,7 +177,7 @@ export const MultiConverter = ({
     if (estimatePair) {
       const result = estimatePair('1', baseCurrency, currency);
       return result.rate
-        ? `1 ${baseCurrency} = ${result.rate} ${currency}`
+        ? `1 ${baseCurrency} = ${formatUnitRateDisplay(result.rate)} ${currency}`
         : t('multiConverter.noData');
     }
     const hasCurrencyDetails = (code: CurrencyCode) => code === 'TWD' || Boolean(details?.[code]);
@@ -203,14 +207,21 @@ export const MultiConverter = ({
     return `1 ${baseCurrency} = ${formatExchangeRate(unitRate)} ${currency}`;
   };
 
+  const substitutionNotices = useMemo(
+    () => summarizeFxSubstitutions(contextSubstitutions),
+    [contextSubstitutions],
+  );
+
   return (
     <div className="flex-1 flex flex-col min-h-0">
-      {contextSubstitutions.length > 0 && (
-        <div className="px-3 text-sm" role="status">
-          {contextSubstitutions.map((substitution, index) => (
-            <p key={`${substitution.toCurrency}:${substitution.kind}:${index}`}>
-              {formatFxSubstitution(substitution)}
-            </p>
+      {substitutionNotices.length > 0 && (
+        <div
+          role="status"
+          aria-label="換算條件調整"
+          className="mx-3 mb-3 space-y-1 rounded-xl border border-primary/20 bg-primary/10 px-3 py-2 text-xs leading-relaxed text-neutral-text-secondary"
+        >
+          {substitutionNotices.map((notice) => (
+            <p key={notice}>{notice}</p>
           ))}
         </div>
       )}

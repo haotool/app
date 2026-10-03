@@ -7,7 +7,7 @@ import {
 import { formatIsoTimestamp } from '../../utils/timeFormatter';
 import type { ProviderQuote } from './rateProviderRanking';
 import type { FxContextSubstitution } from './fxEffectiveContext';
-import { formatFxSubstitution } from './fxSubstitutionText';
+import { summarizeFxSubstitutions } from './fxSubstitutionText';
 import { getRateProvider } from '../../config/rateProviders';
 import type { FxProviderStatus } from './hooks/useFxQuotes';
 
@@ -106,7 +106,7 @@ export function getSingleFxQuoteNotices(input: {
     notices.push('此條件無可用牌告；請確認地點、分店、來源及金額。');
   else if ('kind' in input.estimate)
     notices.push('經中介幣別的兩腿推算，非業者直接牌告；不納入推薦。');
-  notices.push(...input.substitutions.map(formatFxSubstitution));
+  notices.push(...summarizeFxSubstitutions(input.substitutions));
   if (input.evidence.length > 0 && input.estimateFreshness === 'unknown')
     notices.push('來源未提供發布時間，無法判斷新鮮度，僅供參考。');
   if (input.evidence.length > 0 && input.estimateFreshness === 'stale')

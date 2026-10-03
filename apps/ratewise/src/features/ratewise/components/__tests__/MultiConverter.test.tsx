@@ -165,8 +165,9 @@ describe('MultiConverter', () => {
       />,
     );
     expect(screen.getAllByRole('status')).toHaveLength(1);
-    expect(screen.getByRole('status')).toHaveTextContent('KRW無即期報價');
-    expect(screen.getByRole('status')).toHaveTextContent('VND無即期報價');
+    // 同原因的多個幣別合併成一句，避免每個幣別各佔一行。
+    expect(screen.getAllByRole('status')[0]?.querySelectorAll('p')).toHaveLength(1);
+    expect(screen.getByRole('status')).toHaveTextContent('KRW、VND無即期報價，改以現鈔計算。');
   });
 
   it('uses branch labels from provider metadata in location notices', () => {

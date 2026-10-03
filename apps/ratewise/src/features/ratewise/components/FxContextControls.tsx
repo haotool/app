@@ -4,6 +4,10 @@ import { useTranslation } from 'react-i18next';
 import { useConverterStore } from '../../../stores/converterStore';
 
 /** Location is an explicit user choice; selecting a provider never changes country. */
+const labelClass = 'flex flex-col gap-1 text-xs text-neutral-text-secondary';
+const selectClass =
+  'w-full rounded-lg border border-primary/20 bg-surface px-2 py-2 text-sm text-text';
+
 export function FxContextControls({ quotes }: { quotes: readonly QuoteSnapshot[] }) {
   const { i18n, t } = useTranslation();
   const state = useConverterStore();
@@ -25,13 +29,16 @@ export function FxContextControls({ quotes }: { quotes: readonly QuoteSnapshot[]
   ];
   const manual = state.providerPreference.manualProvider?.providerId;
   return (
-    <details className="mt-2 text-xs text-text-muted">
-      <summary className="cursor-pointer">{t('fxUi.conditions')}</summary>
-      <fieldset className="flex flex-wrap gap-3 p-3 text-sm">
+    <details className="mx-3 mt-3 rounded-xl border border-primary/15 bg-surface text-xs">
+      <summary className="cursor-pointer select-none px-3 py-2 text-sm font-medium text-text">
+        {t('fxUi.conditions')}
+      </summary>
+      <fieldset className="grid grid-cols-1 gap-3 border-t border-primary/10 p-3 text-sm">
         <legend className="sr-only">{t('fxUi.advancedConditions')}</legend>
-        <label>
+        <label className={labelClass}>
           {t('fxUi.location')}{' '}
           <select
+            className={selectClass}
             aria-label="換匯地點"
             value={state.serviceCountry}
             onChange={(e) => state.setServiceCountry(e.target.value)}
@@ -43,9 +50,10 @@ export function FxContextControls({ quotes }: { quotes: readonly QuoteSnapshot[]
             ))}
           </select>
         </label>
-        <label>
+        <label className={labelClass}>
           {t('fxUi.provider')}{' '}
           <select
+            className={selectClass}
             aria-label="牌告來源"
             value={state.providerPreference.mode === 'best' ? 'best' : (manual ?? '')}
             onChange={(e) =>
@@ -76,9 +84,10 @@ export function FxContextControls({ quotes }: { quotes: readonly QuoteSnapshot[]
           </select>
         </label>
         {branches.length > 0 && (
-          <label>
+          <label className={labelClass}>
             {t('fxUi.branch')}{' '}
             <select
+              className={selectClass}
               aria-label="換匯分店"
               value={state.branchId ?? ''}
               onChange={(e) => state.setBranchId(e.target.value || null)}
