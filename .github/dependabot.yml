@@ -40,6 +40,18 @@ updates:
       # 先排除 minor（patch 仍會更新），待逐一評估並修正對應程式碼後再解除。
       - dependency-name: 'eslint-plugin-react-hooks'
         update-types: ['version-update:semver-minor']
+      # 2026-10-03: CI 的 E2E 跑在 mcr.microsoft.com/playwright:vX.Y.Z-noble 容器（ci.yml），
+      # 瀏覽器版本與 @playwright/test 綁定；只升套件不升映像會讓所有 E2E 以
+      # 「chromium_headless_shell 不存在」失敗（群組 PR #1177）。
+      # 升級時須手動讓 package.json 與 ci.yml 兩處映像標籤同步，故排除所有版本。
+      - dependency-name: '@playwright/test'
+      # 2026-10-03: typescript-eslint 8.64 → 8.71 使 unbound-method 在測試檔新增 8 個錯誤
+      # （useNavigation / storage / voidra 等 *.test.*）。先排除 minor，
+      # 待決定對測試檔關閉該規則或逐一修正後再解除。
+      - dependency-name: 'typescript-eslint'
+        update-types: ['version-update:semver-minor']
+      - dependency-name: '@typescript-eslint/*'
+        update-types: ['version-update:semver-minor']
 
   # security-headers Worker 自帶 npm + package-lock.json，不在 pnpm workspace 內，
   # 沒有這個 entry 就只會在漏洞警報觸發時被動冒出 security update PR（例：PR #979）。
