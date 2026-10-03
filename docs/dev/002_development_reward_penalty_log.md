@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+423
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+424
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-10-03
+- ID：reward-deps-esbuild-0-28-fx-artifacts
+- 原因：dependabot 升級 esbuild 0.28.2 後，FX 契約產物（validators）的 esbuild 輸出多了 CJS wrapper 的 try/catch，generate:fx --check 失敗而卡住 PR 長達數日。
+- 解法：以最新 main 重做 esbuild 升級並重新產生 validators 產物（僅 helper 差異），typecheck、lint、FX 與 split-meow 測試通過。
 
 - 日期：2026-10-03
 - ID：reward-ratewise-sidenav-cls
