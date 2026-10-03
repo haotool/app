@@ -31,14 +31,15 @@ export function FxContextControls({ quotes }: { quotes: readonly QuoteSnapshot[]
   const manualCountries = manual ? [...(countriesByProvider.get(manual) ?? [])] : [];
   // 手動來源在目前地點沒有牌告時，換算會改用其地點；介面也以該地點呈現，不顯示矛盾的狀態。
   const country =
-    !isBest && manualCountries.length > 0 && !manualCountries.includes(state.serviceCountry)
+    !isBest && manualCountries.length === 1 && !manualCountries.includes(state.serviceCountry)
       ? (manualCountries[0] ?? state.serviceCountry)
       : state.serviceCountry;
   const countries = [
     ...new Set(
       (isBest
         ? ['TW', state.serviceCountry, ...quotes.map((q) => q.sourceQuote.serviceCountry)]
-        : manualCountries
+        : // 多國來源且儲存的國家不在其中：選單如實呈現 store 的國家，由使用者明確選擇，不暗中改寫。
+          [...manualCountries, ...(manualCountries.length > 1 ? [state.serviceCountry] : [])]
       ).filter((code): code is string => /^[A-Z]{2}$/.test(code)),
     ),
   ];

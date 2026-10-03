@@ -150,3 +150,26 @@ it('adopts the only branch of the destination country when the location is switc
   expect(state.serviceCountry).toBe('KR');
   expect(state.branchId).toBe('myeongdong');
 });
+
+it('shows the real stored country and lets the user choose explicitly when it matches none of a multi-country provider', () => {
+  useConverterStore.setState({
+    serviceCountry: 'TW',
+    branchId: null,
+    providerPreference: manual('moneybox', 'exchange-shop'),
+  });
+  render(
+    <FxContextControls
+      quotes={[...board('moneybox', 'KR', 'myeongdong'), ...board('moneybox', 'JP')]}
+    />,
+  );
+  open();
+
+  const location = screen.getByLabelText('換匯地點');
+  expect(location).toHaveValue('TW');
+  expect(useConverterStore.getState().serviceCountry).toBe('TW');
+
+  fireEvent.change(location, { target: { value: 'KR' } });
+
+  expect(useConverterStore.getState().serviceCountry).toBe('KR');
+  expect(useConverterStore.getState().branchId).toBe('myeongdong');
+});
