@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+424
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+425
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-10-03
+- ID：reward-deps-react-router-6-30-6
+- 原因：dependabot 的 react-router-dom 6.30.6 升級只改 lockfile，未同步根 package.json 的 pnpm.overrides，frozen install 出現 LOCKFILE_CONFIG_MISMATCH，所有 CI 在安裝依賴步驟失敗。
+- 解法：在 ^6 範圍內同步更新各 app 宣告與根 overrides 並重建 lockfile，frozen install、typecheck、lint 與測試通過。
 
 - 日期：2026-10-03
 - ID：reward-deps-esbuild-0-28-fx-artifacts
