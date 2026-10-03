@@ -81,7 +81,7 @@ export function SideNavigation({ className = '' }: SideNavigationProps) {
     <aside
       className={`
         ${className}
-        w-64
+        w-64 shrink-0
         bg-[rgb(var(--color-surface))]
         border-r border-[rgb(var(--color-border))]
         flex flex-col
