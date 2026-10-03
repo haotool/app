@@ -40,13 +40,15 @@ export function formatFxSubstitution(
 
 /**
  * 多幣別頁每個幣別各產生一筆相同原因的替換；依原因合併成一句，並列出受影響幣別。
- * 原因相同＝種類、來源與目標地點／交付方式、來源名單皆相同。
+ * 原因相同＝種類與交付方式皆相同。地點替換不提示（見迴圈內說明）。
  */
 export function summarizeFxSubstitutions(
   substitutions: readonly FxContextSubstitution[],
 ): string[] {
   const groups = new Map<string, { sample: FxContextSubstitution; currencies: string[] }>();
   for (const substitution of substitutions) {
+    // 地點由所選來源決定（選來源時已自動採用其地點），不再另外提示，維持簡潔。
+    if (substitution.kind === 'location') continue;
     const key = [
       substitution.kind,
       substitution.from,

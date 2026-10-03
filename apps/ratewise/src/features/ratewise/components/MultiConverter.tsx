@@ -218,7 +218,7 @@ export const MultiConverter = ({
         <div
           role="status"
           aria-label="換算條件調整"
-          className="mx-3 mb-3 space-y-1 rounded-xl border border-primary/20 bg-primary/10 px-3 py-2 text-xs leading-relaxed text-neutral-text-secondary"
+          className="mb-2 space-y-0.5 px-3 text-xs leading-relaxed text-neutral-text-secondary"
         >
           {substitutionNotices.map((notice) => (
             <p key={notice}>{notice}</p>
