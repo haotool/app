@@ -3,7 +3,7 @@
 > HaoRate 提供臺灣銀行與 MoneyBox 的 v3 方向化匯率 JSON：不可變 release manifest、SHA-256 objects、來源/擷取時間與 legacy adapter，支援 curl / JS / Python 查詢。免 API Key；資料使用依各 provider 條款。
 
 - Canonical: https://app.haotool.org/ratewise/open-data/
-- Version: v2.29.5
+- Version: v2.29.6
 
 ## 端點
 
@@ -136,5 +136,5 @@ jsDelivr CDN（建議）：全球 PoP 節點加速，無明確請求上限；Git
 
 ---
 
-_本 Markdown 鏡像由 `scripts/generate-markdown-mirrors.mjs` 於 build 時自動產生（v2.29.5），與 HTML 頁面語義一致。_
+_本 Markdown 鏡像由 `scripts/generate-markdown-mirrors.mjs` 於 build 時自動產生（v2.29.6），與 HTML 頁面語義一致。_
 _正式人眼版本請見對應 HTML URL。_
