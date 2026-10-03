@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+4（reward 4、penalty 0、neutral 0）｜累計總分：+422
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+423
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-10-03
+- ID：reward-ratewise-sidenav-cls
+- 原因：桌面版首次繪製時側欄被主內容擠壓成約 130px，hydration 後跳到 256px，整個主區塊橫向位移，首頁 CLS 0.087 使 Lighthouse 基準連續紅燈。
+- 解法：側欄 w-64 加 shrink-0 固定寬度；本機建置實測 CLS 0.0026（3 次），並補固定寬度的回歸測試。
 
 - 日期：2026-10-03
 - ID：reward-ratewise-fx-multi-country-honest-select
