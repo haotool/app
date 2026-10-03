@@ -14,6 +14,7 @@ import {
   getCurrencyDecimalPlaces,
   formatCurrency,
   formatExchangeRate,
+  formatUnitRateDisplay,
   formatAmountInput,
   formatAmountDisplay,
 } from '../currencyFormatter';
@@ -218,5 +219,23 @@ describe('currencyFormatter', () => {
         expect(display).toBeTruthy();
       });
     });
+  });
+});
+
+describe('formatUnitRateDisplay', () => {
+  it.each([
+    ['4.7906976744', '4.7907'],
+    ['41.2', '41.2'],
+    ['735.714285714292', '735.71'],
+    ['0.204975124374', '0.205'],
+    ['0.030518518529', '0.03052'],
+    ['508641.975308655', '508,641.98'],
+  ])('shortens %s to %s for display', (raw, expected) => {
+    expect(formatUnitRateDisplay(raw)).toBe(expected);
+  });
+
+  it('returns unparsable or non-positive input unchanged', () => {
+    expect(formatUnitRateDisplay('n/a')).toBe('n/a');
+    expect(formatUnitRateDisplay('0')).toBe('0');
   });
 });

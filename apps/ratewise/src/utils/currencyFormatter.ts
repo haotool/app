@@ -69,6 +69,27 @@ export function formatExchangeRate(value: number): string {
 }
 
 /**
+ * 顯示用單位匯率（v3 的 decimal string 最多 12 位小數，直接顯示會難以閱讀）。
+ * 約 4 位有效數字：>=100 取 2 位小數、>=1 取 4 位、<1 依量級補足（上限 8 位），並去除多餘的 0。
+ * 僅用於顯示，換算一律使用完整精度。
+ *
+ * @example
+ * formatUnitRateDisplay('4.7906976744') // "4.7907"
+ * formatUnitRateDisplay('735.714285714292') // "735.71"
+ * formatUnitRateDisplay('0.030518518529') // "0.03052"
+ */
+export function formatUnitRateDisplay(rate: string | number): string {
+  const value = Number(rate);
+  if (!Number.isFinite(value) || value <= 0) return String(rate);
+  const decimals =
+    value >= 100 ? 2 : value >= 1 ? 4 : Math.min(8, Math.max(4, 3 - Math.floor(Math.log10(value))));
+  return value.toLocaleString('zh-TW', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: decimals,
+  });
+}
+
+/**
  * 取得貨幣的標準小數位數
  * 根據 ISO 4217 標準與實務慣例
  *
