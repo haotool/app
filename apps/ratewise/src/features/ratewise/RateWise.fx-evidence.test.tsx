@@ -381,7 +381,9 @@ it('restores the original rate switch and keeps normal v3 details outside the co
   expect(screen.getByRole('button', { name: /切換到現金/ })).toBeVisible();
   expect(screen.getByText('依牌告試算，未含未知費用；不保證成交或可交付面額。')).not.toBeVisible();
   expect(screen.getByText('報價詳情')).toBeVisible();
-  expect(screen.getByLabelText('換匯地點')).not.toBeVisible();
+  // 只有單一地點時不需要使用者另外選地點；來源選擇仍收在條件區塊內。
+  expect(screen.queryByLabelText('換匯地點')).not.toBeInTheDocument();
+  expect(screen.getByLabelText('牌告來源')).not.toBeVisible();
   expect(screen.queryByLabelText('換匯方式')).not.toBeInTheDocument();
 });
 

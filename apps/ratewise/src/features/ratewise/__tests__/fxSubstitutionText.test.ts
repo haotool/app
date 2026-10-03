@@ -13,6 +13,14 @@ const location = (toCurrency: string, providerIds = ['moneybox']): FxContextSubs
   providerIds,
 });
 
+const delivery = (toCurrency: string): FxContextSubstitution => ({
+  kind: 'deliveryMethod',
+  from: 'account',
+  to: 'cash',
+  fromCurrency: 'TWD',
+  toCurrency,
+});
+
 describe('fxSubstitutionText', () => {
   it('shows the provider branch label instead of the raw branch id', () => {
     const text = formatFxSubstitution(location('KRW'));
@@ -27,37 +35,27 @@ describe('fxSubstitutionText', () => {
     );
   });
 
+  it('does not announce location substitutions; the chosen provider already implies them', () => {
+    expect(summarizeFxSubstitutions([location('JPY'), location('KRW')])).toEqual([]);
+  });
+
   it('collapses the same reason across many currencies into one line', () => {
     const currencies = ['JPY', 'KRW', 'CNY', 'VND', 'THB', 'HKD', 'PHP', 'MYR'];
 
-    const lines = summarizeFxSubstitutions(currencies.map((currency) => location(currency)));
-
-    expect(lines).toEqual([
-      'JPY、KRW、CNY 等 8 種幣別：明洞換匯所僅提供南韓（明洞）據點報價，已以該地點計算。',
+    expect(summarizeFxSubstitutions(currencies.map(delivery))).toEqual([
+      'JPY、KRW、CNY 等 8 種幣別無即期報價，改以現鈔計算。',
     ]);
   });
 
-  it('lists few currencies explicitly and keeps different reasons on separate lines', () => {
-    const lines = summarizeFxSubstitutions([
-      location('JPY'),
-      location('KRW'),
-      {
-        kind: 'deliveryMethod',
-        from: 'account',
-        to: 'cash',
-        fromCurrency: 'USD',
-        toCurrency: 'VND',
-      },
-    ]);
-
-    expect(lines).toEqual([
-      'JPY、KRW：明洞換匯所僅提供南韓（明洞）據點報價，已以該地點計算。',
-      'VND無即期報價，改以現鈔計算。',
+  it('lists few currencies explicitly and keeps location out of the result', () => {
+    expect(summarizeFxSubstitutions([location('JPY'), delivery('KRW'), delivery('VND')])).toEqual([
+      'KRW、VND無即期報價，改以現鈔計算。',
     ]);
   });
 
   it('does not repeat a currency that appears twice for the same reason', () => {
-    expect(summarizeFxSubstitutions([location('JPY'), location('JPY')])).toHaveLength(1);
-    expect(summarizeFxSubstitutions([location('JPY'), location('JPY')])[0]).toMatch(/^JPY：/);
+    expect(summarizeFxSubstitutions([delivery('JPY'), delivery('JPY')])).toEqual([
+      'JPY無即期報價，改以現鈔計算。',
+    ]);
   });
 });
