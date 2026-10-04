@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-10-04T00:35:58.964Z",
-  "fetchedAt": "2026-10-04T00:35:58.964Z",
-  "sourcePublishedAt": "2026-10-04T00:34:38.614Z",
+  "timestamp": "2026-10-04T06:18:56.008Z",
+  "fetchedAt": "2026-10-04T06:18:56.008Z",
+  "sourcePublishedAt": "2026-10-04T04:40:57.343Z",
   "sourceQuotes": {
     "AED": {
       "buy": "342",
@@ -10,12 +10,12 @@
     },
     "AUD": {
       "buy": "925",
-      "sell": "937",
+      "sell": "936",
       "unitAmount": "1"
     },
     "CAD": {
       "buy": "940",
-      "sell": "960",
+      "sell": "965",
       "unitAmount": "1"
     },
     "CHF": {
@@ -24,22 +24,22 @@
       "unitAmount": "1"
     },
     "CNY": {
-      "buy": "199.5",
+      "buy": "199.6",
       "sell": "200.5",
       "unitAmount": "1"
     },
     "EUR": {
       "buy": "1490",
-      "sell": "1518",
+      "sell": "1515",
       "unitAmount": "1"
     },
     "GBP": {
       "buy": "1760",
-      "sell": "1800",
+      "sell": "1795",
       "unitAmount": "1"
     },
     "HKD": {
-      "buy": "172",
+      "buy": "172.3",
       "sell": "175",
       "unitAmount": "1"
     },
@@ -49,8 +49,8 @@
       "unitAmount": "1"
     },
     "JPY": {
-      "buy": "8.5",
-      "sell": "8.6",
+      "buy": "8.51",
+      "sell": "8.65",
       "unitAmount": "1"
     },
     "MYR": {
@@ -74,7 +74,7 @@
       "unitAmount": "1"
     },
     "SGD": {
-      "buy": "1047",
+      "buy": "1045",
       "sell": "1070",
       "unitAmount": "1"
     },
@@ -84,12 +84,12 @@
       "unitAmount": "1"
     },
     "TWD": {
-      "buy": "41.3",
+      "buy": "41.4",
       "sell": "41.5",
       "unitAmount": "1"
     },
     "USD": {
-      "buy": "1345",
+      "buy": "1347",
       "sell": "1355",
       "unitAmount": "1"
     },
@@ -99,7 +99,7 @@
       "unitAmount": "1"
     }
   },
-  "updateTime": "2026/10/04 09:35:58",
+  "updateTime": "2026/10/04 15:18:56",
   "source": "MoneyBox (明洞換匯所聯盟)",
   "sourceUrl": "https://moneybox-exchange.com/zh-CHT/exchange",
   "apiUrl": "https://moneybox-exchange.com/api/rates",
@@ -115,16 +115,16 @@
     },
     "AUD": {
       "currency": "AUD",
-      "base": 931,
-      "buy": 937,
+      "base": 930.5,
+      "buy": 936,
       "sell": 925,
       "spbuy": null,
       "spsell": null
     },
     "CAD": {
       "currency": "CAD",
-      "base": 950,
-      "buy": 960,
+      "base": 952.5,
+      "buy": 965,
       "sell": 940,
       "spbuy": null,
       "spsell": null
@@ -139,33 +139,33 @@
     },
     "CNY": {
       "currency": "CNY",
-      "base": 200,
+      "base": 200.05,
       "buy": 200.5,
-      "sell": 199.5,
+      "sell": 199.6,
       "spbuy": null,
       "spsell": null
     },
     "EUR": {
       "currency": "EUR",
-      "base": 1504,
-      "buy": 1518,
+      "base": 1502.5,
+      "buy": 1515,
       "sell": 1490,
       "spbuy": null,
       "spsell": null
     },
     "GBP": {
       "currency": "GBP",
-      "base": 1780,
-      "buy": 1800,
+      "base": 1777.5,
+      "buy": 1795,
       "sell": 1760,
       "spbuy": null,
       "spsell": null
     },
     "HKD": {
       "currency": "HKD",
-      "base": 173.5,
+      "base": 173.65,
       "buy": 175,
-      "sell": 172,
+      "sell": 172.3,
       "spbuy": null,
       "spsell": null
     },
@@ -179,9 +179,9 @@
     },
     "JPY": {
       "currency": "JPY",
-      "base": 855,
-      "buy": 860,
-      "sell": 850,
+      "base": 858,
+      "buy": 865,
+      "sell": 851,
       "spbuy": null,
       "spsell": null
     },
@@ -219,9 +219,9 @@
     },
     "SGD": {
       "currency": "SGD",
-      "base": 1058.5,
+      "base": 1057.5,
       "buy": 1070,
-      "sell": 1047,
+      "sell": 1045,
       "spbuy": null,
       "spsell": null
     },
@@ -235,17 +235,17 @@
     },
     "TWD": {
       "currency": "TWD",
-      "base": 41.4,
+      "base": 41.45,
       "buy": 41.5,
-      "sell": 41.3,
+      "sell": 41.4,
       "spbuy": null,
       "spsell": null
     },
     "USD": {
       "currency": "USD",
-      "base": 1350,
+      "base": 1351,
       "buy": 1355,
-      "sell": 1345,
+      "sell": 1347,
       "spbuy": null,
       "spsell": null
     },
