@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-10-10T17:32:31.679Z",
-  "fetchedAt": "2026-10-10T17:32:31.679Z",
-  "sourcePublishedAt": "2026-10-10T07:58:28.767Z",
+  "timestamp": "2026-10-10T23:50:58.347Z",
+  "fetchedAt": "2026-10-10T23:50:58.347Z",
+  "sourcePublishedAt": "2026-10-10T23:43:59.346Z",
   "sourceQuotes": {
     "AED": {
       "buy": "340",
@@ -49,7 +49,7 @@
       "unitAmount": "1"
     },
     "JPY": {
-      "buy": "8.46",
+      "buy": "8.4",
       "sell": "8.5",
       "unitAmount": "1"
     },
@@ -89,7 +89,7 @@
       "unitAmount": "1"
     },
     "USD": {
-      "buy": "1342",
+      "buy": "1340",
       "sell": "1345",
       "unitAmount": "1"
     },
@@ -99,7 +99,7 @@
       "unitAmount": "1"
     }
   },
-  "updateTime": "2026/10/11 02:32:31",
+  "updateTime": "2026/10/11 08:50:58",
   "source": "MoneyBox (明洞換匯所聯盟)",
   "sourceUrl": "https://moneybox-exchange.com/zh-CHT/exchange",
   "apiUrl": "https://moneybox-exchange.com/api/rates",
@@ -224,16 +224,16 @@
     },
     "JPY": {
       "currency": "JPY",
-      "base": 848,
+      "base": 845,
       "buy": 850,
-      "sell": 846,
+      "sell": 840,
       "spbuy": null,
       "spsell": null,
-      "customerBuyForeignRate": 846,
+      "customerBuyForeignRate": 840,
       "customerSellForeignRate": 850,
-      "midMarketRate": 848,
+      "midMarketRate": 845,
       "quoteUnit": "KRW_PER_100_FOREIGN",
-      "quotePerBaseUnit": 0.00118203
+      "quotePerBaseUnit": 0.00119048
     },
     "MYR": {
       "currency": "MYR",
@@ -328,16 +328,16 @@
     },
     "USD": {
       "currency": "USD",
-      "base": 1343.5,
+      "base": 1342.5,
       "buy": 1345,
-      "sell": 1342,
+      "sell": 1340,
       "spbuy": null,
       "spsell": null,
-      "customerBuyForeignRate": 1342,
+      "customerBuyForeignRate": 1340,
       "customerSellForeignRate": 1345,
-      "midMarketRate": 1343.5,
+      "midMarketRate": 1342.5,
       "quoteUnit": "KRW_PER_FOREIGN",
-      "quotePerBaseUnit": 0.00074516
+      "quotePerBaseUnit": 0.00074627
     },
     "VND": {
       "currency": "VND",
@@ -354,7 +354,7 @@
     }
   },
   "schemaVersion": "2.0",
-  "asOf": "2026-10-10T17:32:31.679Z",
+  "asOf": "2026-10-10T23:50:58.347Z",
   "semanticFieldMapping": {
     "schemaVersion": "2.0",
     "semanticsDoc": "https://app.haotool.org/ratewise/open-data/",
