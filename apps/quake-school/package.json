@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "@app/shared": "workspace:^",
-    "motion": "^12.42.2",
+    "motion": "^14.0.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-router-dom": "^6.30.6"
