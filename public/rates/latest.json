@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-10-09T23:11:17.381Z",
-  "fetchedAt": "2026-10-09T23:11:17.381Z",
-  "sourcePublishedAt": "2026-10-09T21:31:00.000Z",
+  "timestamp": "2026-10-10T02:22:36.332Z",
+  "fetchedAt": "2026-10-10T02:22:36.332Z",
+  "sourcePublishedAt": "2026-10-10T01:25:00.000Z",
   "sourceQuotes": {
     "USD": {
       "cash": {
@@ -25,12 +25,12 @@
     },
     "GBP": {
       "cash": {
-        "buy": "41.01000",
-        "sell": "43.13000"
+        "buy": "41.00000",
+        "sell": "43.12000"
       },
       "spot": {
-        "buy": "41.90500",
-        "sell": "42.53500"
+        "buy": "41.89500",
+        "sell": "42.52500"
       }
     },
     "AUD": {
@@ -194,14 +194,14 @@
       }
     }
   },
-  "updateTime": "2026/10/10 07:11:17",
+  "updateTime": "2026/10/10 10:22:36",
   "source": "Taiwan Bank (臺灣銀行牌告匯率)",
   "sourceUrl": "https://rate.bot.com.tw/xrt",
   "base": "TWD",
   "rates": {
     "USD": 32.15,
     "HKD": 4.111,
-    "GBP": 43.13,
+    "GBP": 43.12,
     "AUD": 22.66,
     "CAD": 22.79,
     "SGD": 25.23,
@@ -243,12 +243,12 @@
     "GBP": {
       "name": "英鎊",
       "spot": {
-        "buy": 41.905,
-        "sell": 42.535
+        "buy": 41.895,
+        "sell": 42.525
       },
       "cash": {
-        "buy": 41.01,
-        "sell": 43.13
+        "buy": 41,
+        "sell": 43.12
       }
     },
     "AUD": {
