@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-10-10T23:50:58.347Z",
-  "fetchedAt": "2026-10-10T23:50:58.347Z",
-  "sourcePublishedAt": "2026-10-10T23:43:59.346Z",
+  "timestamp": "2026-10-11T02:27:43.676Z",
+  "fetchedAt": "2026-10-11T02:27:43.676Z",
+  "sourcePublishedAt": "2026-10-11T02:22:45.614Z",
   "sourceQuotes": {
     "AED": {
       "buy": "340",
@@ -30,7 +30,7 @@
     },
     "EUR": {
       "buy": "1480",
-      "sell": "1505",
+      "sell": "1500",
       "unitAmount": "1"
     },
     "GBP": {
@@ -49,7 +49,7 @@
       "unitAmount": "1"
     },
     "JPY": {
-      "buy": "8.4",
+      "buy": "8.44",
       "sell": "8.5",
       "unitAmount": "1"
     },
@@ -70,7 +70,7 @@
     },
     "RUB": {
       "buy": "13",
-      "sell": "15",
+      "sell": "16",
       "unitAmount": "1"
     },
     "SGD": {
@@ -90,7 +90,7 @@
     },
     "USD": {
       "buy": "1340",
-      "sell": "1345",
+      "sell": "1350",
       "unitAmount": "1"
     },
     "VND": {
@@ -99,7 +99,7 @@
       "unitAmount": "1"
     }
   },
-  "updateTime": "2026/10/11 08:50:58",
+  "updateTime": "2026/10/11 11:27:43",
   "source": "MoneyBox (明洞換匯所聯盟)",
   "sourceUrl": "https://moneybox-exchange.com/zh-CHT/exchange",
   "apiUrl": "https://moneybox-exchange.com/api/rates",
@@ -147,8 +147,8 @@
     },
     "EUR": {
       "currency": "EUR",
-      "base": 1492.5,
-      "buy": 1505,
+      "base": 1490,
+      "buy": 1500,
       "sell": 1480,
       "spbuy": null,
       "spsell": null
@@ -179,9 +179,9 @@
     },
     "JPY": {
       "currency": "JPY",
-      "base": 845,
+      "base": 847,
       "buy": 850,
-      "sell": 840,
+      "sell": 844,
       "spbuy": null,
       "spsell": null
     },
@@ -211,8 +211,8 @@
     },
     "RUB": {
       "currency": "RUB",
-      "base": 14,
-      "buy": 15,
+      "base": 14.5,
+      "buy": 16,
       "sell": 13,
       "spbuy": null,
       "spsell": null
@@ -243,8 +243,8 @@
     },
     "USD": {
       "currency": "USD",
-      "base": 1342.5,
-      "buy": 1345,
+      "base": 1345,
+      "buy": 1350,
       "sell": 1340,
       "spbuy": null,
       "spsell": null
