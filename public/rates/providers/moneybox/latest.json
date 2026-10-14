@@ -1,11 +1,11 @@
 {
-  "timestamp": "2026-10-14T10:05:04.007Z",
-  "fetchedAt": "2026-10-14T10:05:04.007Z",
-  "sourcePublishedAt": "2026-10-14T09:58:16.507Z",
+  "timestamp": "2026-10-14T15:03:15.685Z",
+  "fetchedAt": "2026-10-14T15:03:15.685Z",
+  "sourcePublishedAt": "2026-10-14T15:02:17.815Z",
   "sourceQuotes": {
     "AED": {
       "buy": "338",
-      "sell": "383.77",
+      "sell": "385.91",
       "unitAmount": "1"
     },
     "AUD": {
@@ -60,7 +60,7 @@
     },
     "NZD": {
       "buy": "740",
-      "sell": "765.41",
+      "sell": "763.41",
       "unitAmount": "1"
     },
     "PHP": {
@@ -99,7 +99,7 @@
       "unitAmount": "1"
     }
   },
-  "updateTime": "2026/10/14 19:05:04",
+  "updateTime": "2026/10/15 00:03:15",
   "source": "MoneyBox (明洞換匯所聯盟)",
   "sourceUrl": "https://moneybox-exchange.com/zh-CHT/exchange",
   "apiUrl": "https://moneybox-exchange.com/api/rates",
@@ -107,14 +107,14 @@
   "rates": {
     "AED": {
       "currency": "AED",
-      "base": 360.885,
-      "buy": 383.77,
+      "base": 361.955,
+      "buy": 385.91,
       "sell": 338,
       "spbuy": null,
       "spsell": null,
       "customerBuyForeignRate": 338,
-      "customerSellForeignRate": 383.77,
-      "midMarketRate": 360.885,
+      "customerSellForeignRate": 385.91,
+      "midMarketRate": 361.955,
       "quoteUnit": "KRW_PER_FOREIGN",
       "quotePerBaseUnit": 0.00295858
     },
@@ -250,14 +250,14 @@
     },
     "NZD": {
       "currency": "NZD",
-      "base": 752.705,
-      "buy": 765.41,
+      "base": 751.705,
+      "buy": 763.41,
       "sell": 740,
       "spbuy": null,
       "spsell": null,
       "customerBuyForeignRate": 740,
-      "customerSellForeignRate": 765.41,
-      "midMarketRate": 752.705,
+      "customerSellForeignRate": 763.41,
+      "midMarketRate": 751.705,
       "quoteUnit": "KRW_PER_FOREIGN",
       "quotePerBaseUnit": 0.00135135
     },
@@ -354,7 +354,7 @@
     }
   },
   "schemaVersion": "2.0",
-  "asOf": "2026-10-14T10:05:04.007Z",
+  "asOf": "2026-10-14T15:03:15.685Z",
   "semanticFieldMapping": {
     "schemaVersion": "2.0",
     "semanticsDoc": "https://app.haotool.org/ratewise/open-data/",
