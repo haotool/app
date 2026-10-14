@@ -1,6 +1,6 @@
 {
-  "total": 519,
-  "converted": 509,
+  "total": 520,
+  "converted": 510,
   "quarantined": 10,
   "entries": [
     {
@@ -29998,6 +29998,92 @@
       ]
     },
     {
+      "path": "public/rates/history/2026-10-14.json",
+      "date": "2026-10-14",
+      "providerId": "bot",
+      "sourceHash": "f8cb8ef5b846620098e3d18c3977b3204c1d7ca84fa4103af50f7efd08719f74",
+      "sourceVersion": "legacy",
+      "methodVersion": "1",
+      "status": "converted",
+      "reason": null,
+      "evidence": {
+        "path": "evidence/482f19d9bcbd39f1c877a830b1a0cecfc8f357ecc00f20bcd7ed16e9fbc35736.json",
+        "sha256": "482f19d9bcbd39f1c877a830b1a0cecfc8f357ecc00f20bcd7ed16e9fbc35736"
+      },
+      "outputHash": "34d97f4b86776b77072dd6722ec9fc76f991458cfc433fe1a34361858c8ca79c",
+      "snapshot": {
+        "path": "objects/34d97f4b86776b77072dd6722ec9fc76f991458cfc433fe1a34361858c8ca79c.json",
+        "sha256": "34d97f4b86776b77072dd6722ec9fc76f991458cfc433fe1a34361858c8ca79c"
+      },
+      "coverage": [
+        "USD->TWD:cash",
+        "TWD->USD:cash",
+        "USD->TWD:account",
+        "TWD->USD:account",
+        "HKD->TWD:cash",
+        "TWD->HKD:cash",
+        "HKD->TWD:account",
+        "TWD->HKD:account",
+        "GBP->TWD:cash",
+        "TWD->GBP:cash",
+        "GBP->TWD:account",
+        "TWD->GBP:account",
+        "AUD->TWD:cash",
+        "TWD->AUD:cash",
+        "AUD->TWD:account",
+        "TWD->AUD:account",
+        "CAD->TWD:cash",
+        "TWD->CAD:cash",
+        "CAD->TWD:account",
+        "TWD->CAD:account",
+        "SGD->TWD:cash",
+        "TWD->SGD:cash",
+        "SGD->TWD:account",
+        "TWD->SGD:account",
+        "CHF->TWD:cash",
+        "TWD->CHF:cash",
+        "CHF->TWD:account",
+        "TWD->CHF:account",
+        "JPY->TWD:cash",
+        "TWD->JPY:cash",
+        "JPY->TWD:account",
+        "TWD->JPY:account",
+        "ZAR->TWD:account",
+        "TWD->ZAR:account",
+        "SEK->TWD:account",
+        "TWD->SEK:account",
+        "NZD->TWD:cash",
+        "TWD->NZD:cash",
+        "NZD->TWD:account",
+        "TWD->NZD:account",
+        "THB->TWD:cash",
+        "TWD->THB:cash",
+        "THB->TWD:account",
+        "TWD->THB:account",
+        "PHP->TWD:cash",
+        "TWD->PHP:cash",
+        "IDR->TWD:cash",
+        "TWD->IDR:cash",
+        "EUR->TWD:cash",
+        "TWD->EUR:cash",
+        "EUR->TWD:account",
+        "TWD->EUR:account",
+        "KRW->TWD:cash",
+        "TWD->KRW:cash",
+        "VND->TWD:cash",
+        "TWD->VND:cash",
+        "MYR->TWD:cash",
+        "TWD->MYR:cash",
+        "CNY->TWD:cash",
+        "TWD->CNY:cash",
+        "CNY->TWD:account",
+        "TWD->CNY:account"
+      ],
+      "units": [
+        "1"
+      ]
+    },
+    {
       "path": "public/rates/providers/moneybox/history/2026-05-10.json",
       "date": "2026-05-10",
       "providerId": "moneybox",
@@ -39704,19 +39790,19 @@
       "path": "public/rates/providers/moneybox/history/2026-10-14.json",
       "date": "2026-10-14",
       "providerId": "moneybox",
-      "sourceHash": "a7c6bb7ef3a5d4fa4e1a1107b5bd1d4816e9e4a7e4092ace4d003b564a623ae1",
+      "sourceHash": "0c8451b1c70f1afa38d14cf4fa5611b0c841fc8970f340a1cfa7e27da92d68cb",
       "sourceVersion": "legacy",
       "methodVersion": "1",
       "status": "converted",
       "reason": null,
       "evidence": {
-        "path": "evidence/0237cd231e90bd8b32497b4bc47a5a339737a6c6734e6cabaf88cec1fff65632.json",
-        "sha256": "0237cd231e90bd8b32497b4bc47a5a339737a6c6734e6cabaf88cec1fff65632"
+        "path": "evidence/1f22f4d889a324a2584d934bb4c015c867728ef9ce649af88ca697cc6c44052f.json",
+        "sha256": "1f22f4d889a324a2584d934bb4c015c867728ef9ce649af88ca697cc6c44052f"
       },
-      "outputHash": "1c562d5e23529afd35bbf4d3e54397ee0ab4b0f6373e5032df6a30a988dba1f7",
+      "outputHash": "ecf02beaab2f1070ad47627b267fc00114616837c9702df853c5f90cd06e21f0",
       "snapshot": {
-        "path": "objects/1c562d5e23529afd35bbf4d3e54397ee0ab4b0f6373e5032df6a30a988dba1f7.json",
-        "sha256": "1c562d5e23529afd35bbf4d3e54397ee0ab4b0f6373e5032df6a30a988dba1f7"
+        "path": "objects/ecf02beaab2f1070ad47627b267fc00114616837c9702df853c5f90cd06e21f0.json",
+        "sha256": "ecf02beaab2f1070ad47627b267fc00114616837c9702df853c5f90cd06e21f0"
       },
       "coverage": [
         "AED->KRW:cash",
