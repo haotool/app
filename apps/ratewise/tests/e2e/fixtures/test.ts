@@ -27,6 +27,11 @@ export const test = base.extend<RateWiseFixtures>({
     await context.clearCookies();
     await context.clearPermissions();
 
+    // 行動版 UA 會在 1.8 秒後彈出 PWA 安裝提示並遮擋點擊；預先標記已關閉以避免 CI 高負載下間歇逾時。
+    await page.addInitScript(() => {
+      sessionStorage.setItem('ratewise:pwa-install-guide-dismissed:v1', 'true');
+    });
+
     // Build full URL from base path
     const baseURL = process.env['PLAYWRIGHT_BASE_URL'] || '';
     const makeUrl = (path: string) =>
