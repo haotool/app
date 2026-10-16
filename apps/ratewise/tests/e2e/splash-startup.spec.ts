@@ -97,7 +97,8 @@ test.describe('品牌啟動頁 rw-splash', () => {
   test('首次載入視覺 parity：inline splash 使用共用 .ratewise-splash 樣式與動畫 class', async ({
     page,
   }) => {
-    await page.goto(HOME_PATH, { waitUntil: 'commit' });
+    // 等待 DOMContentLoaded：commit 時 HTML 可能僅解析到 splash 容器，子節點尚未建立。
+    await page.goto(HOME_PATH, { waitUntil: 'domcontentloaded' });
     // 於 splash 尚未被 app-ready 移除前取樣（2500ms 硬上限內）。
     const parity = await page.evaluate(() => {
       const el = document.getElementById('rw-splash');
