@@ -1,6 +1,6 @@
 {
-  "total": 526,
-  "converted": 516,
+  "total": 527,
+  "converted": 517,
   "quarantined": 10,
   "entries": [
     {
@@ -40247,6 +40247,68 @@
       "snapshot": {
         "path": "objects/1380df4e8a8df447fc6929d7b49c09b3189f6b1828677a7f7e240191154e5e43.json",
         "sha256": "1380df4e8a8df447fc6929d7b49c09b3189f6b1828677a7f7e240191154e5e43"
+      },
+      "coverage": [
+        "AED->KRW:cash",
+        "KRW->AED:cash",
+        "AUD->KRW:cash",
+        "KRW->AUD:cash",
+        "CAD->KRW:cash",
+        "KRW->CAD:cash",
+        "CHF->KRW:cash",
+        "KRW->CHF:cash",
+        "CNY->KRW:cash",
+        "KRW->CNY:cash",
+        "EUR->KRW:cash",
+        "KRW->EUR:cash",
+        "GBP->KRW:cash",
+        "KRW->GBP:cash",
+        "HKD->KRW:cash",
+        "KRW->HKD:cash",
+        "IDR->KRW:cash",
+        "KRW->IDR:cash",
+        "JPY->KRW:cash",
+        "KRW->JPY:cash",
+        "MYR->KRW:cash",
+        "KRW->MYR:cash",
+        "NZD->KRW:cash",
+        "KRW->NZD:cash",
+        "PHP->KRW:cash",
+        "KRW->PHP:cash",
+        "RUB->KRW:cash",
+        "KRW->RUB:cash",
+        "SGD->KRW:cash",
+        "KRW->SGD:cash",
+        "THB->KRW:cash",
+        "KRW->THB:cash",
+        "TWD->KRW:cash",
+        "KRW->TWD:cash",
+        "USD->KRW:cash",
+        "KRW->USD:cash",
+        "VND->KRW:cash",
+        "KRW->VND:cash"
+      ],
+      "units": [
+        "1"
+      ]
+    },
+    {
+      "path": "public/rates/providers/moneybox/history/2026-10-18.json",
+      "date": "2026-10-18",
+      "providerId": "moneybox",
+      "sourceHash": "678b7f5cba3e83c0e4fd0d89f7677c09778b7775815e71125263301d8e363d2a",
+      "sourceVersion": "legacy",
+      "methodVersion": "1",
+      "status": "converted",
+      "reason": null,
+      "evidence": {
+        "path": "evidence/be5c67ff8c97b5bb242eb1498bcac980fd74e32265d32f2de56833662b8c61cf.json",
+        "sha256": "be5c67ff8c97b5bb242eb1498bcac980fd74e32265d32f2de56833662b8c61cf"
+      },
+      "outputHash": "058b43e79438e3e03f74a79a200602946116a55c71b5c6268575ad2c824ac596",
+      "snapshot": {
+        "path": "objects/058b43e79438e3e03f74a79a200602946116a55c71b5c6268575ad2c824ac596.json",
+        "sha256": "058b43e79438e3e03f74a79a200602946116a55c71b5c6268575ad2c824ac596"
       },
       "coverage": [
         "AED->KRW:cash",
