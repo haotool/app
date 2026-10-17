@@ -40148,19 +40148,19 @@
       "path": "public/rates/providers/moneybox/history/2026-10-17.json",
       "date": "2026-10-17",
       "providerId": "moneybox",
-      "sourceHash": "9b104ee7146c5b2befb1c38eadf36e820989919bd6916ad9eff4b9680973dfc8",
+      "sourceHash": "9860fec8766ee6916d389d41c43a7ff16989f8c8457bdd98377607ce23c38991",
       "sourceVersion": "legacy",
       "methodVersion": "1",
       "status": "converted",
       "reason": null,
       "evidence": {
-        "path": "evidence/65e8fe5ec649044ed1a5cb283d6a85bdb062a74f28b50ed481aabc37d3918f73.json",
-        "sha256": "65e8fe5ec649044ed1a5cb283d6a85bdb062a74f28b50ed481aabc37d3918f73"
+        "path": "evidence/0b7802b29ede4c4f5d3eb4e220a2d1310f9ce75527df2a73a3534dd7a480eefc.json",
+        "sha256": "0b7802b29ede4c4f5d3eb4e220a2d1310f9ce75527df2a73a3534dd7a480eefc"
       },
-      "outputHash": "8afe88e7c2629c0bf8dcc01f996ad616a7e1d0ccbf017b6e63cabf9ac0f63945",
+      "outputHash": "44080198880a01fd0ccf8690c6d955cf65b504dac4a01c6bc61c1cea64ab1c60",
       "snapshot": {
-        "path": "objects/8afe88e7c2629c0bf8dcc01f996ad616a7e1d0ccbf017b6e63cabf9ac0f63945.json",
-        "sha256": "8afe88e7c2629c0bf8dcc01f996ad616a7e1d0ccbf017b6e63cabf9ac0f63945"
+        "path": "objects/44080198880a01fd0ccf8690c6d955cf65b504dac4a01c6bc61c1cea64ab1c60.json",
+        "sha256": "44080198880a01fd0ccf8690c6d955cf65b504dac4a01c6bc61c1cea64ab1c60"
       },
       "coverage": [
         "AED->KRW:cash",
