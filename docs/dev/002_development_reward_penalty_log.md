@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+428
+> 本次分數變化：+3（reward 3、penalty 0、neutral 0）｜累計總分：+431
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,21 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-10-16
+- ID：reward-ci-papertrade-chartpage-async-timeout
+- 原因：papertrade ChartPage 首個測試在 CI 並行高負載下，首次 lazy 路由渲染超過 Testing Library 預設 1 秒的 findBy 逾時（2026-09-28 同 SHA 重跑才過、10-03 於無關的依賴升級 PR 失敗且 DOM 仍停在載入骨架），本機加 CPU 壓力可重現同一錯誤。
+- 解法：setupTests 以官方 configure API 將 asyncUtilTimeout 提高到 5 秒（對齊 haotool 既有作法，只放寬上限不拖慢通過案例）；壓力下基準版 5 次有 1 次失敗、修後 8/8 通過，全套 630 項通過。
+
+- 日期：2026-10-16
+- ID：reward-ci-e2e-mobile-pwa-guide-overlay
+- 原因：chromium-mobile 的 Android UA 會在載入 1.8 秒後彈出 PWA 安裝提示，CI 高負載下互動晚於此時點就被提示遮擋點擊而逾時，近兩週 4 次（2 次連重試也失敗、2 次重跑才過）。
+- 解法：共用 rateWisePage fixture 以 init script 預先標記提示已關閉（沿用 restored-layout 既有作法）；本機延遲 2.5 秒再點擊，修前手機專案穩定失敗（點擊被提示攔截）、修後通過，PR smoke 三支 spec 雙專案重複 3 輪無失敗。
+
+- 日期：2026-10-16
+- ID：reward-ci-e2e-splash-parity-dcl
+- 原因：splash 視覺 parity 測試以 waitUntil commit 取樣，HTML 分段到達時只解析到 splash 容器、子節點尚未建立，hasCoinSolid 偶發為 false（2026-09-06、09-30 各一次、重跑即過）。
+- 解法：改等 domcontentloaded 後再取樣（DOM 已完整，splash 仍在顯示窗內）；以慢速分段 HTML 代理可穩定重現，修前失敗於 hasCoinSolid、修後通過，一般伺服器重複 30 次通過。
 
 - 日期：2026-10-04
 - ID：reward-ci-dependabot-ignore-prettier
