@@ -922,7 +922,7 @@ jobs:
 
       - name: Upload Trivy FS results to GitHub Security
         if: always() && hashFiles('trivy-fs.sarif') != ''
-        uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4
+        uses: github/codeql-action/upload-sarif@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4
         with:
           sarif_file: 'trivy-fs.sarif'
           category: 'trivy-fs'
@@ -942,7 +942,7 @@ jobs:
 
       - name: Upload Trivy Image results to GitHub Security
         if: always() && hashFiles('trivy-image.sarif') != ''
-        uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4
+        uses: github/codeql-action/upload-sarif@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4
         with:
           sarif_file: 'trivy-image.sarif'
           category: 'trivy-image'
