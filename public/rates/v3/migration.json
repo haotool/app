@@ -30775,19 +30775,19 @@
       "path": "public/rates/history/2026-10-23.json",
       "date": "2026-10-23",
       "providerId": "bot",
-      "sourceHash": "90b29f30786517f7266726443eb6db91c426ccda6463ca65c2d9ed5c1fe826d8",
+      "sourceHash": "1b9099486af1c9273ae8a348cc5b26d2e6f1dafa1eaa33da18b9a1aa58d735a4",
       "sourceVersion": "legacy",
       "methodVersion": "1",
       "status": "converted",
       "reason": null,
       "evidence": {
-        "path": "evidence/1bf79ceffbb141bdef22e22d4b4d2c839aece756393f4845ab4d3a7d2f70fb79.json",
-        "sha256": "1bf79ceffbb141bdef22e22d4b4d2c839aece756393f4845ab4d3a7d2f70fb79"
+        "path": "evidence/d0c85a349c6bf24212f0984a476c7c004fad330ad175c97e25b12ed1920d0367.json",
+        "sha256": "d0c85a349c6bf24212f0984a476c7c004fad330ad175c97e25b12ed1920d0367"
       },
-      "outputHash": "b0136dacb8c894e279dd9773418c01411e32688bb36e6c546ae8a2e81e84faca",
+      "outputHash": "2ce7186a2cc9a31c09e98ba03723e1104e85c046f598480b2bbd15cc4e396c1f",
       "snapshot": {
-        "path": "objects/b0136dacb8c894e279dd9773418c01411e32688bb36e6c546ae8a2e81e84faca.json",
-        "sha256": "b0136dacb8c894e279dd9773418c01411e32688bb36e6c546ae8a2e81e84faca"
+        "path": "objects/2ce7186a2cc9a31c09e98ba03723e1104e85c046f598480b2bbd15cc4e396c1f.json",
+        "sha256": "2ce7186a2cc9a31c09e98ba03723e1104e85c046f598480b2bbd15cc4e396c1f"
       },
       "coverage": [
         "USD->TWD:cash",
@@ -41122,19 +41122,19 @@
       "path": "public/rates/providers/moneybox/history/2026-10-23.json",
       "date": "2026-10-23",
       "providerId": "moneybox",
-      "sourceHash": "c18ab78512122464d5ebe8677d52f5e15188f8baea6313983adf4b6d7d822db4",
+      "sourceHash": "8a61329555e3bc41ce78018dc50549017529e7acfd33829ae047f0753c68e186",
       "sourceVersion": "legacy",
       "methodVersion": "1",
       "status": "converted",
       "reason": null,
       "evidence": {
-        "path": "evidence/603ffdda049f4eb8ee349348df4022a8adda38bdc421ddaed222c037573e9dbf.json",
-        "sha256": "603ffdda049f4eb8ee349348df4022a8adda38bdc421ddaed222c037573e9dbf"
+        "path": "evidence/e5719d2c57a1c20b699c56bae8030c7096d3f6cc17c3a876fdea7466c9bc4d5c.json",
+        "sha256": "e5719d2c57a1c20b699c56bae8030c7096d3f6cc17c3a876fdea7466c9bc4d5c"
       },
-      "outputHash": "229efe66c1b3572c62272ef5b1d69d69c0d38412f42f0041fea9c40d3065aaee",
+      "outputHash": "ddda913263af26ee943c58756eff35f30a86d1d226e5093f5c1ff7661e0769b6",
       "snapshot": {
-        "path": "objects/229efe66c1b3572c62272ef5b1d69d69c0d38412f42f0041fea9c40d3065aaee.json",
-        "sha256": "229efe66c1b3572c62272ef5b1d69d69c0d38412f42f0041fea9c40d3065aaee"
+        "path": "objects/ddda913263af26ee943c58756eff35f30a86d1d226e5093f5c1ff7661e0769b6.json",
+        "sha256": "ddda913263af26ee943c58756eff35f30a86d1d226e5093f5c1ff7661e0769b6"
       },
       "coverage": [
         "AED->KRW:cash",
