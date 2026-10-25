@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-10-25T12:06:45.440Z",
-  "fetchedAt": "2026-10-25T12:06:45.440Z",
+  "timestamp": "2026-10-25T16:08:43.142Z",
+  "fetchedAt": "2026-10-25T16:08:43.142Z",
   "sourcePublishedAt": "2026-10-25T10:08:33.689Z",
   "sourceQuotes": {
     "AED": {
@@ -99,7 +99,7 @@
       "unitAmount": "1"
     }
   },
-  "updateTime": "2026/10/25 21:06:45",
+  "updateTime": "2026/10/26 01:08:43",
   "source": "MoneyBox (明洞換匯所聯盟)",
   "sourceUrl": "https://moneybox-exchange.com/zh-CHT/exchange",
   "apiUrl": "https://moneybox-exchange.com/api/rates",
@@ -354,7 +354,7 @@
     }
   },
   "schemaVersion": "2.0",
-  "asOf": "2026-10-25T12:06:45.440Z",
+  "asOf": "2026-10-25T16:08:43.142Z",
   "semanticFieldMapping": {
     "schemaVersion": "2.0",
     "semanticsDoc": "https://app.haotool.org/ratewise/open-data/",
