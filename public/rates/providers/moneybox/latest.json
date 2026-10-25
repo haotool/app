@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-10-25T06:48:40.887Z",
-  "fetchedAt": "2026-10-25T06:48:40.887Z",
-  "sourcePublishedAt": "2026-10-25T06:31:24.901Z",
+  "timestamp": "2026-10-25T12:06:45.440Z",
+  "fetchedAt": "2026-10-25T12:06:45.440Z",
+  "sourcePublishedAt": "2026-10-25T10:08:33.689Z",
   "sourceQuotes": {
     "AED": {
       "buy": "335",
@@ -90,7 +90,7 @@
     },
     "USD": {
       "buy": "1325",
-      "sell": "1328",
+      "sell": "1327",
       "unitAmount": "1"
     },
     "VND": {
@@ -99,7 +99,7 @@
       "unitAmount": "1"
     }
   },
-  "updateTime": "2026/10/25 15:48:40",
+  "updateTime": "2026/10/25 21:06:45",
   "source": "MoneyBox (明洞換匯所聯盟)",
   "sourceUrl": "https://moneybox-exchange.com/zh-CHT/exchange",
   "apiUrl": "https://moneybox-exchange.com/api/rates",
@@ -328,14 +328,14 @@
     },
     "USD": {
       "currency": "USD",
-      "base": 1326.5,
-      "buy": 1328,
+      "base": 1326,
+      "buy": 1327,
       "sell": 1325,
       "spbuy": null,
       "spsell": null,
       "customerBuyForeignRate": 1325,
-      "customerSellForeignRate": 1328,
-      "midMarketRate": 1326.5,
+      "customerSellForeignRate": 1327,
+      "midMarketRate": 1326,
       "quoteUnit": "KRW_PER_FOREIGN",
       "quotePerBaseUnit": 0.00075472
     },
@@ -354,7 +354,7 @@
     }
   },
   "schemaVersion": "2.0",
-  "asOf": "2026-10-25T06:48:40.887Z",
+  "asOf": "2026-10-25T12:06:45.440Z",
   "semanticFieldMapping": {
     "schemaVersion": "2.0",
     "semanticsDoc": "https://app.haotool.org/ratewise/open-data/",
