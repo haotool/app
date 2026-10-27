@@ -1,11 +1,11 @@
 {
-  "timestamp": "2026-10-27T07:59:48.540Z",
-  "fetchedAt": "2026-10-27T07:59:48.540Z",
-  "sourcePublishedAt": "2026-10-27T07:58:18.348Z",
+  "timestamp": "2026-10-27T14:20:20.511Z",
+  "fetchedAt": "2026-10-27T14:20:20.511Z",
+  "sourcePublishedAt": "2026-10-27T14:20:14.978Z",
   "sourceQuotes": {
     "AED": {
       "buy": "335",
-      "sell": "380.81",
+      "sell": "381.29",
       "unitAmount": "1"
     },
     "AUD": {
@@ -60,7 +60,7 @@
     },
     "NZD": {
       "buy": "745",
-      "sell": "769.32",
+      "sell": "771.44",
       "unitAmount": "1"
     },
     "PHP": {
@@ -99,7 +99,7 @@
       "unitAmount": "1"
     }
   },
-  "updateTime": "2026/10/27 16:59:48",
+  "updateTime": "2026/10/27 23:20:20",
   "source": "MoneyBox (明洞換匯所聯盟)",
   "sourceUrl": "https://moneybox-exchange.com/zh-CHT/exchange",
   "apiUrl": "https://moneybox-exchange.com/api/rates",
@@ -107,8 +107,8 @@
   "rates": {
     "AED": {
       "currency": "AED",
-      "base": 357.905,
-      "buy": 380.81,
+      "base": 358.145,
+      "buy": 381.29,
       "sell": 335,
       "spbuy": null,
       "spsell": null
@@ -195,8 +195,8 @@
     },
     "NZD": {
       "currency": "NZD",
-      "base": 757.16,
-      "buy": 769.32,
+      "base": 758.22,
+      "buy": 771.44,
       "sell": 745,
       "spbuy": null,
       "spsell": null
