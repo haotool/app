@@ -285,8 +285,8 @@ export function buildSiteJsonLd(): JsonLdBlock[] {
       dateModified: BUILD_TIME,
       author: { '@id': orgId },
       screenshot: [
-        buildAbsoluteAssetUrl('/screenshots/mobile-home.png'),
-        buildAbsoluteAssetUrl('/screenshots/desktop-features.png'),
+        buildAbsoluteAssetUrl('/screenshots/mobile-home-v2.png'),
+        buildAbsoluteAssetUrl('/screenshots/desktop-features-v2.png'),
       ],
       offers: {
         '@type': 'Offer',
@@ -1121,49 +1121,48 @@ export const GUIDE_HOW_TO_STEPS = [
     position: 1,
     name: `開啟 ${APP_INFO.shortName}`,
     text: `在瀏覽器中開啟 ${APP_INFO.name}，或將其加入手機主畫面作為 PWA 應用程式使用。`,
-    image: '/screenshots/mobile-home.png',
+    image: '/screenshots/mobile-home-v2.png',
   },
   {
     position: 2,
     name: '選擇換算模式',
     text: '在頁面頂部選擇單幣別或多幣別換算模式，依需求查看一對一或一對多的匯率結果。',
-    image: '/screenshots/desktop-features.png',
+    image: '/screenshots/desktop-converter-v2.png',
   },
   {
     position: 3,
     name: '選擇原始貨幣',
     text: '在從欄位選擇您要兌換的貨幣，例如 TWD 台幣。',
-    image: '/screenshots/mobile-converter-active.png',
+    image: '/screenshots/mobile-converter-active-v2.png',
   },
   {
     position: 4,
     name: '選擇目標貨幣',
     text: '在到欄位選擇您要兌換成的貨幣，例如 USD 美元或 JPY 日圓。',
-    image: '/screenshots/desktop-converter.png',
+    image: '/screenshots/desktop-converter-v2.png',
   },
   {
     position: 5,
     name: '輸入金額',
     text: '輸入欲換算金額，或使用快速金額按鈕，系統會即時計算並顯示結果。',
-    image: '/screenshots/mobile-converter-active.png',
+    image: '/screenshots/mobile-converter-active-v2.png',
   },
   {
     position: 6,
     name: '選擇匯率類型',
     text: '依換匯情境切換現金匯率或即期匯率。',
-    image: '/screenshots/mobile-features.png',
+    image: '/screenshots/mobile-home-v2.png',
   },
   {
     position: 7,
     name: '查看歷史趨勢',
     text: '展開匯率卡片可查看過去 30 天的歷史趨勢圖與波動資訊。',
-    image: '/screenshots/desktop-features.png',
+    image: '/screenshots/desktop-converter-v2.png',
   },
   {
     position: 8,
     name: '收藏常用貨幣',
     text: '點擊星號圖示收藏常用貨幣，方便未來快速存取。',
-    image: '/screenshots/mobile-features.png',
   },
 ] as const satisfies readonly HowToStep[];
 

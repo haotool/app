@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+428
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+429
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-10-29
+- ID：reward-ratewise-image-brand-refresh
+- 原因：安裝引導與分享圖片仍使用舊品牌，截圖也未反映現行介面，且固定圖片網址可能命中舊快取。
+- 解法：更新圖片、改用版本化安裝圖與截圖網址，並驗證圖片尺寸、載入失敗與 SEO 引用。
 
 - 日期：2026-10-04
 - ID：reward-ci-dependabot-ignore-prettier

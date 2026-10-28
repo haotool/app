@@ -62,8 +62,19 @@ describe('PwaInstallGuide', () => {
     expect(screen.queryByTestId('inapp-corner-pointer')).not.toBeInTheDocument();
     expect(screen.getByRole('img', { name: title })).toHaveAttribute(
       'src',
-      '/pwa-install/ios-install-guide.png',
+      '/pwa-install/ios-install-guide-v2.png',
     );
+  });
+
+  it('keeps the installation steps visible if the poster cannot load', () => {
+    mockNavigator('Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) Safari/604.1', 'iPhone');
+    render(<PwaInstallGuide />);
+    showGuide();
+
+    fireEvent.error(screen.getByRole('img'));
+
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    expect(screen.getByText('加入主畫面')).toBeInTheDocument();
   });
 
   it.each([
@@ -114,7 +125,7 @@ describe('PwaInstallGuide', () => {
 
     expect(
       screen.getByRole('img', { name: `把 ${APP_INFO.shortName} 安裝到 Android` }),
-    ).toHaveAttribute('src', '/pwa-install/android-install-guide.png');
+    ).toHaveAttribute('src', '/pwa-install/android-install-guide-v2.png');
 
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: `立即安裝 ${APP_INFO.shortName}` }));
