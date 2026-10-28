@@ -60,35 +60,35 @@
   ],
   "screenshots": [
     {
-      "src": "screenshots/mobile-home.png?v=2.29.7",
-      "sizes": "1080x1920",
+      "src": "screenshots/mobile-home-v2.png?v=2.29.7",
+      "sizes": "1170x2532",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "HaoRate 匯率好工具 首頁 - 即時匯率換算與趨勢圖"
     },
     {
-      "src": "screenshots/mobile-converter-active.png?v=2.29.7",
-      "sizes": "1080x1920",
+      "src": "screenshots/mobile-converter-active-v2.png?v=2.29.7",
+      "sizes": "1170x2532",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "貨幣轉換 - 輸入金額即時顯示匯率結果"
     },
     {
-      "src": "screenshots/mobile-features.png?v=2.29.7",
-      "sizes": "1080x1920",
+      "src": "screenshots/mobile-features-v2.png?v=2.29.7",
+      "sizes": "1170x2532",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "常見問題與功能介紹"
     },
     {
-      "src": "screenshots/desktop-converter.png?v=2.29.7",
+      "src": "screenshots/desktop-converter-v2.png?v=2.29.7",
       "sizes": "1920x1080",
       "type": "image/png",
       "form_factor": "wide",
       "label": "桌面版 - 完整匯率轉換介面與趨勢圖表"
     },
     {
-      "src": "screenshots/desktop-features.png?v=2.29.7",
+      "src": "screenshots/desktop-features-v2.png?v=2.29.7",
       "sizes": "1920x1080",
       "type": "image/png",
       "form_factor": "wide",

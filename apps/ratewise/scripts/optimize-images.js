@@ -47,7 +47,7 @@ const CONFIG = {
   ],
 
   // 需要優化的圖片
-  targets: ['logo.png', 'apple-touch-icon.png', 'og-image.png', 'twitter-image.png'],
+  targets: ['logo.png', 'apple-touch-icon.png', 'og-image.jpg', 'twitter-image.jpg'],
 };
 
 /**
@@ -68,7 +68,7 @@ const POSTER_CONFIG = {
     { ext: 'avif', quality: 80 },
     { ext: 'webp', quality: 85 },
   ],
-  targets: ['ios-install-guide.png', 'android-install-guide.png'],
+  targets: ['ios-install-guide-v2.webp', 'android-install-guide-v2.webp'],
 };
 
 /**
