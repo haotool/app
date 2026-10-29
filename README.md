@@ -196,6 +196,11 @@ protection 把關），並補派 main 上的 `release.yml` / `ci.yml` 完成 tag
 全程無需人工介入。若設定 `RELEASE_PAT` secret（fine-grained PAT，Actions/Contents/
 Pull requests Read&Write），changesets 會改以 PAT 開 PR，CI 全原生觸發。
 
+Production Lighthouse 排程量測通過後，以 `chore/lighthouse-production-baseline` 分支
+提出 baseline 更新 PR；需審查量測結果、確認必要 checks 並合併後才會更新 main。
+工作流程優先使用 `RELEASE_PAT`，否則使用 `GITHUB_TOKEN`；後者建立的 PR 可能需要
+人工核准或重新觸發原生 CI。量測失敗時不提出 baseline 更新 PR。
+
 正式站由 GitHub Actions `Deploy Cloudflare Pages` 在 main push 時自動部署至 Cloudflare Pages
 `haotool-static`，並經 `security-headers` Worker 的 `STATIC_ORIGIN` 對外提供。合併一般 PR 後若會再合併
 changesets release PR，需先確認較早的 production deployment 已完成，避免舊 SHA 在 release
