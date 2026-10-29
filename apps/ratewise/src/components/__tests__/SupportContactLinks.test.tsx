@@ -14,10 +14,12 @@ describe('SupportContactLinks', () => {
     const threadsLink = screen.getByRole('link', { name: /threads/i });
     expect(threadsLink).toHaveAttribute('href', APP_INFO.threadsUrl);
     expect(threadsLink).toHaveTextContent(APP_INFO.socialHandle);
+    expect(threadsLink).toHaveAccessibleName(`Threads ${APP_INFO.socialHandle}`);
 
     const emailLink = screen.getByRole('link', { name: /email/i });
     expect(emailLink).toHaveAttribute('href', `mailto:${APP_INFO.email}`);
     expect(emailLink).toHaveTextContent(APP_INFO.email);
+    expect(emailLink).toHaveAccessibleName(`Email ${APP_INFO.email}`);
   });
 
   it('keeps the container non-blocking while preserving clickable contact links', () => {

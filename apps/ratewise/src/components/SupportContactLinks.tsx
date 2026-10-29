@@ -62,14 +62,13 @@ export function SupportContactLinks({
               href={link.href}
               {...(link.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
               className={`pointer-events-auto group flex items-center justify-between gap-3 rounded-xl border px-3 py-2 transition-colors duration-200 ${styles.item}`}
-              aria-label={link.label}
             >
               <span className="flex min-w-0 items-center gap-2">
                 <Icon className={`h-4 w-4 flex-shrink-0 ${styles.icon}`} aria-hidden="true" />
                 <span className={`text-xs font-medium uppercase tracking-[0.18em] ${styles.label}`}>
                   {link.label}
                 </span>
-              </span>
+              </span>{' '}
               <span className={`truncate text-sm font-medium ${styles.value}`}>{link.value}</span>
             </a>
           );

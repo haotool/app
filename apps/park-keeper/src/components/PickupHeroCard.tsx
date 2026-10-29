@@ -24,7 +24,7 @@ export default function PickupHeroCard({ record, theme, onNavigate }: PickupHero
       type="button"
       data-testid="pickup-hero-card"
       onClick={() => onNavigate(record)}
-      aria-label={t('home.pickup_hero_aria', { floor: record.floor })}
+      aria-label={`${t('home.pickup_label')} ${record.floor} ${plateLabel} ${elapsed}: ${t('home.pickup_hero_aria', { floor: record.floor })}`}
       className="block w-full rounded-4xl overflow-hidden shadow-elevation-3 text-left active:scale-[0.99] transition-transform"
       style={{
         backgroundColor: theme.colors.surface,

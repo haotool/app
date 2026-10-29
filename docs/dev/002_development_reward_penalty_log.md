@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+429
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+430
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-10-29
+- ID：reward-cicd-accessibility-workflow-repair
+- 原因：互動項目的可見文字與無障礙名稱或對比不符，排程直推受保護主支且 Dependabot 命令缺少儲存庫上下文。
+- 解法：修正名稱與對比，改由 PR 提議 baseline 更新，並明確指定 Dependabot 儲存庫。
 
 - 日期：2026-10-29
 - ID：reward-ratewise-image-brand-refresh

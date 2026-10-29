@@ -138,7 +138,7 @@ describe('MultiConverter', () => {
         }
       />,
     );
-    fireEvent.click(screen.getAllByRole('button', { name: '切換到現金' })[0]!);
+    fireEvent.click(screen.getAllByRole('button', { name: /即期: 切換到現金/ })[0]!);
     expect(defaultProps.onRateTypeChange).toHaveBeenCalledWith('cash');
   });
 
@@ -268,7 +268,7 @@ describe('MultiConverter', () => {
       render(<MultiConverter {...defaultProps} />);
 
       const twdAmountBtn = screen.getByRole('button', {
-        name: '新台幣 (TWD) 金額，點擊開啟計算機',
+        name: /新台幣 \(TWD\) 金額，點擊開啟計算機/,
       });
       fireEvent.click(twdAmountBtn);
 
@@ -279,7 +279,7 @@ describe('MultiConverter', () => {
       render(<MultiConverter {...defaultProps} />);
 
       const twdAmountBtn = screen.getByRole('button', {
-        name: '新台幣 (TWD) 金額，點擊開啟計算機',
+        name: /新台幣 \(TWD\) 金額，點擊開啟計算機/,
       });
       fireEvent.click(twdAmountBtn);
 
@@ -292,7 +292,7 @@ describe('MultiConverter', () => {
       render(<MultiConverter {...defaultProps} />);
 
       const twdAmountBtn = screen.getByRole('button', {
-        name: '新台幣 (TWD) 金額，點擊開啟計算機',
+        name: /新台幣 \(TWD\) 金額，點擊開啟計算機/,
       });
       fireEvent.click(twdAmountBtn);
 
@@ -305,7 +305,7 @@ describe('MultiConverter', () => {
       render(<MultiConverter {...defaultProps} />);
 
       const twdAmountBtn = screen.getByRole('button', {
-        name: '新台幣 (TWD) 金額，點擊開啟計算機',
+        name: /新台幣 \(TWD\) 金額，點擊開啟計算機/,
       });
       fireEvent.keyDown(twdAmountBtn, { key: 'Enter' });
 
@@ -316,7 +316,7 @@ describe('MultiConverter', () => {
       render(<MultiConverter {...defaultProps} />);
 
       const twdAmountBtn = screen.getByRole('button', {
-        name: '新台幣 (TWD) 金額，點擊開啟計算機',
+        name: /新台幣 \(TWD\) 金額，點擊開啟計算機/,
       });
       fireEvent.keyDown(twdAmountBtn, { key: ' ' });
 
@@ -543,7 +543,7 @@ describe('MultiConverter', () => {
       render(<MultiConverter {...defaultProps} />);
 
       expect(
-        screen.getByRole('button', { name: '新台幣 (TWD) 金額，點擊開啟計算機' }),
+        screen.getByRole('button', { name: /新台幣 \(TWD\) 金額，點擊開啟計算機/ }),
       ).toBeInTheDocument();
     });
 
