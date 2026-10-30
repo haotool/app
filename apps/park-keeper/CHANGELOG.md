@@ -1,5 +1,11 @@
 # @app/park-keeper
 
+## 1.3.14
+
+### Patch Changes
+
+- 548bab6: 改善操作項目的無障礙名稱與文字對比，讓輔助技術能正確辨識可見內容。
+
 ## 1.3.13
 
 ### Patch Changes

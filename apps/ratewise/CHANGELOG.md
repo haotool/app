@@ -1,5 +1,11 @@
 # @app/ratewise
 
+## 2.29.9
+
+### Patch Changes
+
+- 548bab6: 改善操作項目的無障礙名稱與文字對比，讓輔助技術能正確辨識可見內容。
+
 ## 2.29.8
 
 ### Patch Changes
