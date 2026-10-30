@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+429
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+430
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-10-31
+- ID：reward-ci-lighthouse-no-direct-push
+- 原因：Lighthouse Production Baseline 量測本身已全數通過（首頁 96、CLS 0.004），但排程仍連日紅燈，因為最後的 Persist baseline 步驟直接 git push 到 main，被 protected branch hook 拒絕，且 push 前還會在 CI 內跑完整 pre-push 檢查約 5 分鐘。
+- 解法：移除無法成功的直接 push 步驟並將 job 權限降為 contents: read，文件註明 baseline 需要更新時以 PR 提交。
 
 - 日期：2026-10-29
 - ID：reward-ratewise-image-brand-refresh

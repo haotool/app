@@ -81,7 +81,7 @@ Production baseline 比較採**相對 + 絕對雙門檻**：兩者同時超過�
 2. **Lighthouse Production Baseline**
    - 每日 cron 執行 production URL（一般 ratewise PR 不觸發，見上方 CI 觸發範圍）
    - 腳本：`scripts/lighthouse-production.mjs`（漂移邏輯：`scripts/lighthouse-drift.mjs`）
-   - 每頁 3 次取中位數，持續更新 `scripts/lighthouse-baseline.production.json`
+   - 每頁 5 次取中位數，與 `scripts/lighthouse-baseline.production.json` 比較（排程不再自動回寫 baseline：main 受 branch protection 保護，直接 push 會被拒絕；需要更新基準時以 PR 提交）
    - 硬性門檻：LCP ≤ 2,500ms、INP ≤ 200ms、CLS ≤ 0.1、Performance ≥ 90
    - 退化：相對 >5% **且** 絕對漂移超過 DRIFT_ABSOLUTE_TOLERANCE 才 fail
 
