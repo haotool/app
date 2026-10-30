@@ -103,7 +103,7 @@ function BottomNavigationItem({
       <span
         className={`
           text-[8px] font-black uppercase tracking-[0.15em] transition-all duration-200
-          ${isActive ? 'text-primary-on-surface translate-y-0' : 'text-text-muted translate-y-px'}
+          ${isActive ? 'text-[rgb(var(--color-primary-strong,var(--color-primary)))] translate-y-0' : 'text-text-muted translate-y-px'}
         `}
       >
         {t(item.labelKey)}
