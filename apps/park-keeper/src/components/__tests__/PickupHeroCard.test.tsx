@@ -42,7 +42,8 @@ describe('PickupHeroCard', () => {
     const onNavigate = vi.fn();
     render(<PickupHeroCard record={baseRecord} theme={theme} onNavigate={onNavigate} />);
 
-    fireEvent.click(screen.getByRole('button', { name: '導航前往 B2 取車' }));
+    const button = screen.getByRole('button', { name: /取車 B2 ABC-1234.*導航前往 B2 取車/ });
+    fireEvent.click(button);
     expect(onNavigate).toHaveBeenCalledWith(baseRecord);
   });
 

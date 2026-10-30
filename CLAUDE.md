@@ -294,6 +294,7 @@ RateWise Cache Storage 清理（含 hydration 前 bootstrap 與冷啟動逾時�
 ## Documentation Sync Map（文件同步地圖）
 
 - **CI/CD / Hooks / commitlint** 變更 → 更新 `AGENTS.md`、`CLAUDE.md`
+- **Production Lighthouse baseline**：排程量測通過後以 `chore/lighthouse-production-baseline` 分支提出 PR，由人審查結果與必要 checks 並依 PR 控制合併；排程成功不代表 main 已更新，量測失敗不提出 PR。優先使用 `RELEASE_PAT`，否則使用 `GITHUB_TOKEN`；後者建立的 PR 可能需人工核准或重新觸發原生 CI，必須確認權限與 checks。
 - **部署 / Docker / Nginx** 變更 → 更新 `docs/DEPLOYMENT.md` 與相關配置註解
 - **Cloudflare Pages**：靜態 8-app 產物由 `scripts/build-pages.mjs` 組裝，GitHub Actions 以 lockfile 安裝的 Wrangler Direct Upload 先部署 immutable candidate，通過 contract-only parity 後才更新 `haotool-static` production；Pages Git integration 僅保留連線、停用自動 Production／Preview deployment；正式網域仍由 `security-headers` Worker 控制，未完成 preview／SEO／PWA／header／API 驗證前不得切換 `STATIC_ORIGIN`
 - **安全策略** 變更 → 更新 `SECURITY.md` / `docs/SECURITY_BASELINE.md`

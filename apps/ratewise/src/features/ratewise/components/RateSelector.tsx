@@ -91,10 +91,9 @@ export const RateSelector = ({
             }}
             whileHover={isUnavailable ? undefined : segmentedSwitch.item.whileHover}
             whileTap={isUnavailable ? undefined : segmentedSwitch.item.whileTap}
-            animate={{ opacity: isActive ? 1 : segmentedSwitch.inactiveOpacity }}
             className={`flex h-6 min-h-0 min-w-0 items-center justify-center gap-0.5 whitespace-nowrap leading-none ${singleConverterLayoutTokens.rateCard.rateTypeButton} rounded-full font-semibold relative ${
-              isActive ? 'text-white' : 'text-text/70 hover:text-text'
-            } ${isUnavailable ? 'cursor-not-allowed opacity-60' : ''}`}
+              isActive ? 'text-white' : 'text-text'
+            } ${isUnavailable ? 'cursor-not-allowed' : ''}`}
             aria-label={option.ariaLabel}
             aria-pressed={isActive}
             // 用 aria-disabled 而非原生 disabled：原生 disabled 會吞掉點擊，
@@ -132,11 +131,8 @@ export const RateSelector = ({
           onClick={() => onRateSourceChange('exchange-shop')}
           whileHover={segmentedSwitch.item.whileHover}
           whileTap={segmentedSwitch.item.whileTap}
-          animate={{
-            opacity: rateSource === 'exchange-shop' ? 1 : segmentedSwitch.inactiveOpacity,
-          }}
           className={`flex h-6 min-h-0 min-w-0 items-center justify-center gap-0.5 whitespace-nowrap leading-none ${singleConverterLayoutTokens.rateCard.rateTypeButton} rounded-full font-semibold relative ${
-            rateSource === 'exchange-shop' ? 'text-white' : 'text-text/70 hover:text-text'
+            rateSource === 'exchange-shop' ? 'text-white' : 'text-text'
           }`}
           aria-pressed={rateSource === 'exchange-shop'}
           aria-label={t('singleConverter.switchToExchangeShop')}

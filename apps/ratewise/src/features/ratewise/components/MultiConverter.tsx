@@ -340,10 +340,13 @@ export const MultiConverter = ({
                       }
                     }}
                     className="text-right text-base font-bold leading-tight cursor-pointer transition hover:opacity-80"
-                    aria-label={t('multiConverter.amountClickCalculator', {
-                      name: t(`currencies.${code}`),
-                      code,
-                    })}
+                    aria-label={`${formatAmountDisplay(multiAmounts[code] ?? '', code) || '0.00'}: ${t(
+                      'multiConverter.amountClickCalculator',
+                      {
+                        name: t(`currencies.${code}`),
+                        code,
+                      },
+                    )}`}
                   >
                     {formatAmountDisplay(multiAmounts[code] ?? '', code) || '0.00'}
                   </div>
@@ -364,9 +367,12 @@ export const MultiConverter = ({
                             handleUnifiedToggle(code);
                           }}
                           className="group/ratetype relative -my-[15px] inline-flex min-h-11 min-w-11 items-center justify-center align-middle focus-visible:outline-none"
-                          aria-label={t('multiConverter.switchToNextRate', {
-                            next: getOptionLabel(nextOption),
-                          })}
+                          aria-label={`${getOptionLabel(availability.current)}: ${t(
+                            'multiConverter.switchToNextRate',
+                            {
+                              next: getOptionLabel(nextOption),
+                            },
+                          )}`}
                         >
                           <span className="inline-flex items-center whitespace-nowrap rounded-full bg-primary/10 px-2 py-0.5 font-semibold text-primary-dark transition-all group-hover/ratetype:bg-primary/15 group-hover/ratetype:text-primary-darker group-active/ratetype:scale-95 group-focus-visible/ratetype:ring-2 group-focus-visible/ratetype:ring-primary/50">
                             {getOptionLabel(availability.current)}
@@ -379,7 +385,7 @@ export const MultiConverter = ({
                         >
                           <button
                             className="font-medium text-text cursor-help"
-                            aria-label={t('multiConverter.onlyOneRateAvailable')}
+                            aria-label={`${getOptionLabel(availability.current)}: ${t('multiConverter.onlyOneRateAvailable')}`}
                           >
                             {getOptionLabel(availability.current)}
                           </button>
