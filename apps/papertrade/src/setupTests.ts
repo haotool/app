@@ -1,9 +1,13 @@
 import '@testing-library/jest-dom/vitest';
+import { configure } from '@testing-library/react';
 import { expect, vi } from 'vitest';
 import * as matchers from '@testing-library/jest-dom/matchers';
 import { DISCLAIMER_STORAGE_KEY } from './config/trading';
 
 expect.extend(matchers);
+
+// CI 並行高負載時首個 lazy 路由渲染可能超過預設 1s，提高 async utils timeout 以消除間歇紅。
+configure({ asyncUtilTimeout: 5000 });
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean;
