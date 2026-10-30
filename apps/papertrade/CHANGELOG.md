@@ -1,5 +1,11 @@
 # @app/papertrade
 
+## 0.7.7
+
+### Patch Changes
+
+- 0637808: 修正自動回歸驗證在 CI 高負載下的間歇性失敗（無使用者可見行為變更）。
+
 ## 0.7.6
 
 ### Patch Changes
