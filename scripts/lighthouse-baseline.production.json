@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-09-30T18:06:22.362Z",
+  "updatedAt": "2026-10-31T09:39:38.190Z",
   "generatedBy": "scripts/lighthouse-production.mjs",
   "status": "active",
   "runs": 5,
@@ -10,74 +10,74 @@
     "home": {
       "path": "/",
       "median": {
-        "performanceScore": 94,
-        "lcpMs": 1196.2,
-        "inpMs": 55,
-        "cls": 0.06
+        "performanceScore": 96,
+        "lcpMs": 1066.39,
+        "inpMs": 49,
+        "cls": 0.005
       },
       "runs": [
         {
           "run": 1,
-          "performanceScore": 91,
-          "lcpMs": 1497.25,
-          "inpMs": 65,
-          "cls": 0.063,
+          "performanceScore": 95,
+          "lcpMs": 1106.91,
+          "inpMs": 80,
+          "cls": 0.005,
           "lighthouseScore": {
-            "performance": 0.91,
+            "performance": 0.95,
             "accessibility": 1,
-            "bestPractices": 0.96,
+            "bestPractices": 1,
             "seo": 1
           }
         },
         {
           "run": 2,
-          "performanceScore": 95,
-          "lcpMs": 1157.97,
-          "inpMs": 55,
-          "cls": 0.06,
+          "performanceScore": 97,
+          "lcpMs": 1039.16,
+          "inpMs": 57,
+          "cls": 0.005,
           "lighthouseScore": {
-            "performance": 0.95,
+            "performance": 0.97,
             "accessibility": 1,
-            "bestPractices": 0.96,
+            "bestPractices": 1,
             "seo": 1
           }
         },
         {
           "run": 3,
-          "performanceScore": 92,
-          "lcpMs": 1368.75,
-          "inpMs": 52,
-          "cls": 0.06,
+          "performanceScore": 96,
+          "lcpMs": 1066.39,
+          "inpMs": 45,
+          "cls": 0.004,
           "lighthouseScore": {
-            "performance": 0.92,
+            "performance": 0.96,
             "accessibility": 1,
-            "bestPractices": 0.96,
+            "bestPractices": 1,
             "seo": 1
           }
         },
         {
           "run": 4,
-          "performanceScore": 94,
-          "lcpMs": 1196.2,
-          "inpMs": 51,
-          "cls": 0.06,
+          "performanceScore": 96,
+          "lcpMs": 1028.06,
+          "inpMs": 49,
+          "cls": 0.005,
           "lighthouseScore": {
-            "performance": 0.94,
+            "performance": 0.96,
             "accessibility": 1,
-            "bestPractices": 0.96,
+            "bestPractices": 1,
             "seo": 1
           }
         },
         {
           "run": 5,
-          "performanceScore": 96,
-          "lcpMs": 1119.95,
-          "inpMs": 55,
-          "cls": 0,
+          "performanceScore": 94,
+          "lcpMs": 1184.76,
+          "inpMs": 45,
+          "cls": 0.004,
           "lighthouseScore": {
-            "performance": 0.96,
+            "performance": 0.94,
             "accessibility": 1,
-            "bestPractices": 0.96,
+            "bestPractices": 1,
             "seo": 1
           }
         }
@@ -86,74 +86,74 @@
     "faq-": {
       "path": "/faq/",
       "median": {
-        "performanceScore": 94,
-        "lcpMs": 1212.7,
-        "inpMs": 21,
+        "performanceScore": 96,
+        "lcpMs": 1091.5,
+        "inpMs": 16,
         "cls": 0
       },
       "runs": [
         {
           "run": 1,
-          "performanceScore": 91,
-          "lcpMs": 1433.75,
-          "inpMs": 22,
+          "performanceScore": 96,
+          "lcpMs": 1083.67,
+          "inpMs": 16,
           "cls": 0,
           "lighthouseScore": {
-            "performance": 0.91,
+            "performance": 0.96,
             "accessibility": 0.95,
-            "bestPractices": 0.96,
+            "bestPractices": 1,
             "seo": 1
           }
         },
         {
           "run": 2,
-          "performanceScore": 99,
-          "lcpMs": 848.4,
-          "inpMs": 22,
+          "performanceScore": 94,
+          "lcpMs": 1247.48,
+          "inpMs": 16,
           "cls": 0,
           "lighthouseScore": {
-            "performance": 0.99,
+            "performance": 0.94,
             "accessibility": 0.95,
-            "bestPractices": 0.96,
+            "bestPractices": 1,
             "seo": 1
           }
         },
         {
           "run": 3,
-          "performanceScore": 94,
-          "lcpMs": 1242.05,
-          "inpMs": 17,
+          "performanceScore": 96,
+          "lcpMs": 1081.96,
+          "inpMs": 18,
           "cls": 0,
           "lighthouseScore": {
-            "performance": 0.94,
+            "performance": 0.96,
             "accessibility": 0.95,
-            "bestPractices": 0.96,
+            "bestPractices": 1,
             "seo": 1
           }
         },
         {
           "run": 4,
-          "performanceScore": 97,
-          "lcpMs": 1024.01,
+          "performanceScore": 96,
+          "lcpMs": 1091.5,
           "inpMs": 16,
           "cls": 0,
           "lighthouseScore": {
-            "performance": 0.97,
+            "performance": 0.96,
             "accessibility": 0.95,
-            "bestPractices": 0.96,
+            "bestPractices": 1,
             "seo": 1
           }
         },
         {
           "run": 5,
-          "performanceScore": 94,
-          "lcpMs": 1212.7,
-          "inpMs": 21,
+          "performanceScore": 96,
+          "lcpMs": 1138.12,
+          "inpMs": 16,
           "cls": 0,
           "lighthouseScore": {
-            "performance": 0.94,
+            "performance": 0.96,
             "accessibility": 0.95,
-            "bestPractices": 0.96,
+            "bestPractices": 1,
             "seo": 1
           }
         }
@@ -162,74 +162,74 @@
     "about-": {
       "path": "/about/",
       "median": {
-        "performanceScore": 96,
-        "lcpMs": 1109.47,
-        "inpMs": 19,
+        "performanceScore": 97,
+        "lcpMs": 1034.52,
+        "inpMs": 18,
         "cls": 0
       },
       "runs": [
         {
           "run": 1,
           "performanceScore": 97,
-          "lcpMs": 1030.06,
+          "lcpMs": 1005.28,
           "inpMs": 19,
           "cls": 0,
           "lighthouseScore": {
             "performance": 0.97,
             "accessibility": 0.95,
-            "bestPractices": 0.96,
+            "bestPractices": 1,
             "seo": 1
           }
         },
         {
           "run": 2,
-          "performanceScore": 96,
-          "lcpMs": 1109.47,
-          "inpMs": 19,
+          "performanceScore": 97,
+          "lcpMs": 1009.38,
+          "inpMs": 32,
           "cls": 0,
           "lighthouseScore": {
-            "performance": 0.96,
+            "performance": 0.97,
             "accessibility": 0.95,
-            "bestPractices": 0.96,
+            "bestPractices": 1,
             "seo": 1
           }
         },
         {
           "run": 3,
-          "performanceScore": 96,
-          "lcpMs": 1074.26,
-          "inpMs": 21,
+          "performanceScore": 97,
+          "lcpMs": 1034.52,
+          "inpMs": 18,
           "cls": 0,
           "lighthouseScore": {
-            "performance": 0.96,
+            "performance": 0.97,
             "accessibility": 0.95,
-            "bestPractices": 0.96,
+            "bestPractices": 1,
             "seo": 1
           }
         },
         {
           "run": 4,
-          "performanceScore": 95,
-          "lcpMs": 1175.26,
-          "inpMs": 16,
+          "performanceScore": 97,
+          "lcpMs": 1053.59,
+          "inpMs": 17,
           "cls": 0,
           "lighthouseScore": {
-            "performance": 0.95,
+            "performance": 0.97,
             "accessibility": 0.95,
-            "bestPractices": 0.96,
+            "bestPractices": 1,
             "seo": 1
           }
         },
         {
           "run": 5,
-          "performanceScore": 94,
-          "lcpMs": 1218.97,
-          "inpMs": 17,
+          "performanceScore": 96,
+          "lcpMs": 1102.53,
+          "inpMs": 18,
           "cls": 0,
           "lighthouseScore": {
-            "performance": 0.94,
+            "performance": 0.96,
             "accessibility": 0.95,
-            "bestPractices": 0.96,
+            "bestPractices": 1,
             "seo": 1
           }
         }
