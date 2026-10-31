@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+3（reward 3、penalty 0、neutral 0）｜累計總分：+433
+> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+432
 
 ## 新增模板（4 行）
 
@@ -4285,3 +4285,7 @@
 - ID：neutral-starpuff-t2a-changeset-release-intent
 - 原因：T2a 五項修復缺 changeset，發版 intent 未落盤即開 PR 會漏升版。
 - 解法：補 @app/starpuff patch changeset（使用者可感知修復描述），隨列車入 PR。
+- 日期：2026-10-31
+- ID：penalty-ratewise-e2e-toggle-name-anchor-regression
+- 原因：#1227 將多幣別匯率切換鈕 aria-label 改為「可見文字: 動作」以符合 label-in-name，但僅在完整 E2E 執行的 restored-layout 仍以 `/^切換到/` 錨定開頭，PR 的 smoke 未涵蓋，合併後排程 CI 才失敗。
+- 解法：定位器改為 `/切換到/` 不錨定開頭；合併前以 grep 確認其餘測試與原始碼無相同錨定。

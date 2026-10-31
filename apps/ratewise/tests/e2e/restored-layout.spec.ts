@@ -115,7 +115,7 @@ test('計算機正反向輸入、交換與加入歷史', async ({ page }) => {
 test('多幣別保留逐列匯率切換，進階條件預設收合', async ({ page }) => {
   await page.goto(`${BASE_PATH}multi/`);
   await expect(page.getByRole('region', { name: '貨幣列表' })).toBeVisible();
-  const toggle = page.getByRole('button', { name: /^切換到/ }).first();
+  const toggle = page.getByRole('button', { name: /切換到/ }).first();
   await expect(toggle).toBeVisible();
   const before = await toggle.textContent();
   await toggle.click();
