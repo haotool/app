@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+432
+> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+431
 
 ## 新增模板（4 行）
 
@@ -4289,3 +4289,7 @@
 - ID：penalty-ratewise-e2e-toggle-name-anchor-regression
 - 原因：#1227 將多幣別匯率切換鈕 aria-label 改為「可見文字: 動作」以符合 label-in-name，但僅在完整 E2E 執行的 restored-layout 仍以 `/^切換到/` 錨定開頭，PR 的 smoke 未涵蓋，合併後排程 CI 才失敗。
 - 解法：定位器改為 `/切換到/` 不錨定開頭；合併前以 grep 確認其餘測試與原始碼無相同錨定。
+- 日期：2026-10-31
+- ID：penalty-merge-1232-with-unresolved-changeset-thread
+- 原因：#1232 動到 `apps/ratewise/tests/e2e/` 卻以「僅測試變更」略過 changeset，且合併指令未先以未解決 thread 數量把關，Codex 的 P1（AGT-VER-01）在合併後才處理。
+- 解法：補 `@app/ratewise` patch changeset 並於原 thread 回覆後標記 resolved；之後合併一律先確認 unresolved 為 0 再執行合併。
