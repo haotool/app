@@ -1,5 +1,11 @@
 # @app/ratewise
 
+## 2.29.11
+
+### Patch Changes
+
+- 2eb3f0b: 修正多幣別匯率切換鈕在自動回歸驗證中的定位方式（無使用者可見行為變更）。
+
 ## 2.29.10
 
 ### Patch Changes
