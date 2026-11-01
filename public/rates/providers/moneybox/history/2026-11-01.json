@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-11-01T00:59:01.919Z",
-  "fetchedAt": "2026-11-01T00:59:01.919Z",
-  "sourcePublishedAt": "2026-11-01T00:41:42.545Z",
+  "timestamp": "2026-11-01T07:20:43.926Z",
+  "fetchedAt": "2026-11-01T07:20:43.926Z",
+  "sourcePublishedAt": "2026-11-01T05:45:12.616Z",
   "sourceQuotes": {
     "AED": {
       "buy": "338",
@@ -24,7 +24,7 @@
       "unitAmount": "1"
     },
     "CNY": {
-      "buy": "199",
+      "buy": "199.3",
       "sell": "200",
       "unitAmount": "1"
     },
@@ -39,8 +39,8 @@
       "unitAmount": "1"
     },
     "HKD": {
-      "buy": "169.3",
-      "sell": "171",
+      "buy": "169.5",
+      "sell": "170.2",
       "unitAmount": "1"
     },
     "IDR": {
@@ -49,8 +49,8 @@
       "unitAmount": "1"
     },
     "JPY": {
-      "buy": "8.41",
-      "sell": "9",
+      "buy": "8.43",
+      "sell": "8.48",
       "unitAmount": "1"
     },
     "MYR": {
@@ -99,7 +99,7 @@
       "unitAmount": "1"
     }
   },
-  "updateTime": "2026/11/01 09:59:01",
+  "updateTime": "2026/11/01 16:20:43",
   "source": "MoneyBox (明洞換匯所聯盟)",
   "sourceUrl": "https://moneybox-exchange.com/zh-CHT/exchange",
   "apiUrl": "https://moneybox-exchange.com/api/rates",
@@ -139,9 +139,9 @@
     },
     "CNY": {
       "currency": "CNY",
-      "base": 199.5,
+      "base": 199.65,
       "buy": 200,
-      "sell": 199,
+      "sell": 199.3,
       "spbuy": null,
       "spsell": null
     },
@@ -163,9 +163,9 @@
     },
     "HKD": {
       "currency": "HKD",
-      "base": 170.15,
-      "buy": 171,
-      "sell": 169.3,
+      "base": 169.85,
+      "buy": 170.2,
+      "sell": 169.5,
       "spbuy": null,
       "spsell": null
     },
@@ -179,9 +179,9 @@
     },
     "JPY": {
       "currency": "JPY",
-      "base": 870.5,
-      "buy": 900,
-      "sell": 841,
+      "base": 845.5,
+      "buy": 848,
+      "sell": 843,
       "spbuy": null,
       "spsell": null
     },
