@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-11-03T07:59:37.740Z",
-  "fetchedAt": "2026-11-03T07:59:37.740Z",
-  "sourcePublishedAt": "2026-11-03T06:23:46.190Z",
+  "timestamp": "2026-11-03T16:04:29.992Z",
+  "fetchedAt": "2026-11-03T16:04:29.992Z",
+  "sourcePublishedAt": "2026-11-03T11:20:20.332Z",
   "sourceQuotes": {
     "AED": {
       "buy": "338",
@@ -25,7 +25,7 @@
     },
     "CNY": {
       "buy": "200",
-      "sell": "201.5",
+      "sell": "202",
       "unitAmount": "1"
     },
     "EUR": {
@@ -49,7 +49,7 @@
       "unitAmount": "1"
     },
     "JPY": {
-      "buy": "8.45",
+      "buy": "8.43",
       "sell": "8.52",
       "unitAmount": "1"
     },
@@ -84,12 +84,12 @@
       "unitAmount": "1"
     },
     "TWD": {
-      "buy": "40.6",
+      "buy": "40.4",
       "sell": "41",
       "unitAmount": "1"
     },
     "USD": {
-      "buy": "1336",
+      "buy": "1335",
       "sell": "1340",
       "unitAmount": "1"
     },
@@ -99,7 +99,7 @@
       "unitAmount": "1"
     }
   },
-  "updateTime": "2026/11/03 16:59:37",
+  "updateTime": "2026/11/04 01:04:29",
   "source": "MoneyBox (明洞換匯所聯盟)",
   "sourceUrl": "https://moneybox-exchange.com/zh-CHT/exchange",
   "apiUrl": "https://moneybox-exchange.com/api/rates",
@@ -159,14 +159,14 @@
     },
     "CNY": {
       "currency": "CNY",
-      "base": 200.75,
-      "buy": 201.5,
+      "base": 201,
+      "buy": 202,
       "sell": 200,
       "spbuy": null,
       "spsell": null,
       "customerBuyForeignRate": 200,
-      "customerSellForeignRate": 201.5,
-      "midMarketRate": 200.75,
+      "customerSellForeignRate": 202,
+      "midMarketRate": 201,
       "quoteUnit": "KRW_PER_FOREIGN",
       "quotePerBaseUnit": 0.005
     },
@@ -224,16 +224,16 @@
     },
     "JPY": {
       "currency": "JPY",
-      "base": 848.5,
+      "base": 847.5,
       "buy": 852,
-      "sell": 845,
+      "sell": 843,
       "spbuy": null,
       "spsell": null,
-      "customerBuyForeignRate": 845,
+      "customerBuyForeignRate": 843,
       "customerSellForeignRate": 852,
-      "midMarketRate": 848.5,
+      "midMarketRate": 847.5,
       "quoteUnit": "KRW_PER_100_FOREIGN",
-      "quotePerBaseUnit": 0.00118343
+      "quotePerBaseUnit": 0.00118624
     },
     "MYR": {
       "currency": "MYR",
@@ -315,29 +315,29 @@
     },
     "TWD": {
       "currency": "TWD",
-      "base": 40.8,
+      "base": 40.7,
       "buy": 41,
-      "sell": 40.6,
+      "sell": 40.4,
       "spbuy": null,
       "spsell": null,
-      "customerBuyForeignRate": 40.6,
+      "customerBuyForeignRate": 40.4,
       "customerSellForeignRate": 41,
-      "midMarketRate": 40.8,
+      "midMarketRate": 40.7,
       "quoteUnit": "KRW_PER_TWD",
-      "quotePerBaseUnit": 40.6
+      "quotePerBaseUnit": 40.4
     },
     "USD": {
       "currency": "USD",
-      "base": 1338,
+      "base": 1337.5,
       "buy": 1340,
-      "sell": 1336,
+      "sell": 1335,
       "spbuy": null,
       "spsell": null,
-      "customerBuyForeignRate": 1336,
+      "customerBuyForeignRate": 1335,
       "customerSellForeignRate": 1340,
-      "midMarketRate": 1338,
+      "midMarketRate": 1337.5,
       "quoteUnit": "KRW_PER_FOREIGN",
-      "quotePerBaseUnit": 0.0007485
+      "quotePerBaseUnit": 0.00074906
     },
     "VND": {
       "currency": "VND",
@@ -354,7 +354,7 @@
     }
   },
   "schemaVersion": "2.0",
-  "asOf": "2026-11-03T07:59:37.740Z",
+  "asOf": "2026-11-03T16:04:29.992Z",
   "semanticFieldMapping": {
     "schemaVersion": "2.0",
     "semanticsDoc": "https://app.haotool.org/ratewise/open-data/",
