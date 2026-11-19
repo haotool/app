@@ -33097,19 +33097,19 @@
       "path": "public/rates/history/2026-11-19.json",
       "date": "2026-11-19",
       "providerId": "bot",
-      "sourceHash": "ca5368b6f1391098ae304fd479a968da34b5cfca7381ce9d4e6e2e5dcb8b2b75",
+      "sourceHash": "32fc13101abdc2ec6b637cd7b09be8e08f89c7cdaf8cdbebe5cefbc63fda6969",
       "sourceVersion": "legacy",
       "methodVersion": "1",
       "status": "converted",
       "reason": null,
       "evidence": {
-        "path": "evidence/62db0fd09f3c9d13ac5fef32bb09e02379a4f7f7ac4208ec627a7e0faa9c483d.json",
-        "sha256": "62db0fd09f3c9d13ac5fef32bb09e02379a4f7f7ac4208ec627a7e0faa9c483d"
+        "path": "evidence/b3b40b1c859823810d870eab1887188c907fe5a110ef5dce2b3aa6b7f1abef71.json",
+        "sha256": "b3b40b1c859823810d870eab1887188c907fe5a110ef5dce2b3aa6b7f1abef71"
       },
-      "outputHash": "8ead22cc0dea9e291568bddc2a0cae82deacca0a8e3b25a24c5c7aec9c30f1a7",
+      "outputHash": "493efbba700b4480309932ca4eb25588ea8570c7a9208535afeab8da9c78a509",
       "snapshot": {
-        "path": "objects/8ead22cc0dea9e291568bddc2a0cae82deacca0a8e3b25a24c5c7aec9c30f1a7.json",
-        "sha256": "8ead22cc0dea9e291568bddc2a0cae82deacca0a8e3b25a24c5c7aec9c30f1a7"
+        "path": "objects/493efbba700b4480309932ca4eb25588ea8570c7a9208535afeab8da9c78a509.json",
+        "sha256": "493efbba700b4480309932ca4eb25588ea8570c7a9208535afeab8da9c78a509"
       },
       "coverage": [
         "USD->TWD:cash",
