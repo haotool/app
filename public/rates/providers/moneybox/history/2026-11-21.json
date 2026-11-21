@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-11-20T15:43:47.774Z",
-  "fetchedAt": "2026-11-20T15:43:47.774Z",
-  "sourcePublishedAt": "2026-11-20T11:58:11.046Z",
+  "timestamp": "2026-11-21T03:18:31.550Z",
+  "fetchedAt": "2026-11-21T03:18:31.550Z",
+  "sourcePublishedAt": "2026-11-21T03:17:28.763Z",
   "sourceQuotes": {
     "AED": {
       "buy": "337",
@@ -9,38 +9,38 @@
       "unitAmount": "1"
     },
     "AUD": {
-      "buy": "880",
+      "buy": "884",
       "sell": "897",
       "unitAmount": "1"
     },
     "CAD": {
-      "buy": "930",
-      "sell": "946",
+      "buy": "937",
+      "sell": "950",
       "unitAmount": "1"
     },
     "CHF": {
-      "buy": "1560",
+      "buy": "1580",
       "sell": "1600",
       "unitAmount": "1"
     },
     "CNY": {
-      "buy": "199.8",
-      "sell": "200.5",
+      "buy": "201",
+      "sell": "202",
       "unitAmount": "1"
     },
     "EUR": {
-      "buy": "1455",
-      "sell": "1470",
+      "buy": "1462",
+      "sell": "1480",
       "unitAmount": "1"
     },
     "GBP": {
-      "buy": "1730",
-      "sell": "1770",
+      "buy": "1737",
+      "sell": "1775",
       "unitAmount": "1"
     },
     "HKD": {
-      "buy": "170.5",
-      "sell": "171.5",
+      "buy": "171.1",
+      "sell": "173.5",
       "unitAmount": "1"
     },
     "IDR": {
@@ -49,23 +49,23 @@
       "unitAmount": "1"
     },
     "JPY": {
-      "buy": "8.37",
-      "sell": "8.45",
+      "buy": "8.45",
+      "sell": "8.49",
       "unitAmount": "1"
     },
     "MYR": {
       "buy": "318",
-      "sell": "326",
+      "sell": "330",
       "unitAmount": "1"
     },
     "NZD": {
-      "buy": "720",
+      "buy": "724",
       "sell": "750",
       "unitAmount": "1"
     },
     "PHP": {
       "buy": "21",
-      "sell": "21.7",
+      "sell": "21.6",
       "unitAmount": "1"
     },
     "RUB": {
@@ -74,32 +74,32 @@
       "unitAmount": "1"
     },
     "SGD": {
-      "buy": "1020",
+      "buy": "1030",
       "sell": "1040",
       "unitAmount": "1"
     },
     "THB": {
       "buy": "39.7",
-      "sell": "40.2",
+      "sell": "40.6",
       "unitAmount": "1"
     },
     "TWD": {
-      "buy": "41.2",
-      "sell": "41.5",
+      "buy": "41.35",
+      "sell": "41.8",
       "unitAmount": "1"
     },
     "USD": {
-      "buy": "1337",
-      "sell": "1345",
+      "buy": "1345",
+      "sell": "1348",
       "unitAmount": "1"
     },
     "VND": {
       "buy": "0.051",
-      "sell": "0.054",
+      "sell": "0.0545",
       "unitAmount": "1"
     }
   },
-  "updateTime": "2026/11/21 00:43:47",
+  "updateTime": "2026/11/21 12:18:31",
   "source": "MoneyBox (明洞換匯所聯盟)",
   "sourceUrl": "https://moneybox-exchange.com/zh-CHT/exchange",
   "apiUrl": "https://moneybox-exchange.com/api/rates",
@@ -115,57 +115,57 @@
     },
     "AUD": {
       "currency": "AUD",
-      "base": 888.5,
+      "base": 890.5,
       "buy": 897,
-      "sell": 880,
+      "sell": 884,
       "spbuy": null,
       "spsell": null
     },
     "CAD": {
       "currency": "CAD",
-      "base": 938,
-      "buy": 946,
-      "sell": 930,
+      "base": 943.5,
+      "buy": 950,
+      "sell": 937,
       "spbuy": null,
       "spsell": null
     },
     "CHF": {
       "currency": "CHF",
-      "base": 1580,
+      "base": 1590,
       "buy": 1600,
-      "sell": 1560,
+      "sell": 1580,
       "spbuy": null,
       "spsell": null
     },
     "CNY": {
       "currency": "CNY",
-      "base": 200.15,
-      "buy": 200.5,
-      "sell": 199.8,
+      "base": 201.5,
+      "buy": 202,
+      "sell": 201,
       "spbuy": null,
       "spsell": null
     },
     "EUR": {
       "currency": "EUR",
-      "base": 1462.5,
-      "buy": 1470,
-      "sell": 1455,
+      "base": 1471,
+      "buy": 1480,
+      "sell": 1462,
       "spbuy": null,
       "spsell": null
     },
     "GBP": {
       "currency": "GBP",
-      "base": 1750,
-      "buy": 1770,
-      "sell": 1730,
+      "base": 1756,
+      "buy": 1775,
+      "sell": 1737,
       "spbuy": null,
       "spsell": null
     },
     "HKD": {
       "currency": "HKD",
-      "base": 171,
-      "buy": 171.5,
-      "sell": 170.5,
+      "base": 172.3,
+      "buy": 173.5,
+      "sell": 171.1,
       "spbuy": null,
       "spsell": null
     },
@@ -179,32 +179,32 @@
     },
     "JPY": {
       "currency": "JPY",
-      "base": 841,
-      "buy": 845,
-      "sell": 837,
+      "base": 847,
+      "buy": 849,
+      "sell": 845,
       "spbuy": null,
       "spsell": null
     },
     "MYR": {
       "currency": "MYR",
-      "base": 322,
-      "buy": 326,
+      "base": 324,
+      "buy": 330,
       "sell": 318,
       "spbuy": null,
       "spsell": null
     },
     "NZD": {
       "currency": "NZD",
-      "base": 735,
+      "base": 737,
       "buy": 750,
-      "sell": 720,
+      "sell": 724,
       "spbuy": null,
       "spsell": null
     },
     "PHP": {
       "currency": "PHP",
-      "base": 21.35,
-      "buy": 21.7,
+      "base": 21.3,
+      "buy": 21.6,
       "sell": 21,
       "spbuy": null,
       "spsell": null
@@ -219,40 +219,40 @@
     },
     "SGD": {
       "currency": "SGD",
-      "base": 1030,
+      "base": 1035,
       "buy": 1040,
-      "sell": 1020,
+      "sell": 1030,
       "spbuy": null,
       "spsell": null
     },
     "THB": {
       "currency": "THB",
-      "base": 39.95,
-      "buy": 40.2,
+      "base": 40.15,
+      "buy": 40.6,
       "sell": 39.7,
       "spbuy": null,
       "spsell": null
     },
     "TWD": {
       "currency": "TWD",
-      "base": 41.35,
-      "buy": 41.5,
-      "sell": 41.2,
+      "base": 41.575,
+      "buy": 41.8,
+      "sell": 41.35,
       "spbuy": null,
       "spsell": null
     },
     "USD": {
       "currency": "USD",
-      "base": 1341,
-      "buy": 1345,
-      "sell": 1337,
+      "base": 1346.5,
+      "buy": 1348,
+      "sell": 1345,
       "spbuy": null,
       "spsell": null
     },
     "VND": {
       "currency": "VND",
-      "base": 5.25,
-      "buy": 5.4,
+      "base": 5.275,
+      "buy": 5.45,
       "sell": 5.1,
       "spbuy": null,
       "spsell": null
