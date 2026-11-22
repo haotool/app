@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-11-22T11:16:21.642Z",
-  "fetchedAt": "2026-11-22T11:16:21.642Z",
-  "sourcePublishedAt": "2026-11-22T08:58:59.504Z",
+  "timestamp": "2026-11-22T18:33:37.875Z",
+  "fetchedAt": "2026-11-22T18:33:37.875Z",
+  "sourcePublishedAt": "2026-11-22T11:34:24.156Z",
   "sourceQuotes": {
     "AED": {
       "buy": "337",
@@ -30,7 +30,7 @@
     },
     "EUR": {
       "buy": "1465",
-      "sell": "1472",
+      "sell": "1475",
       "unitAmount": "1"
     },
     "GBP": {
@@ -99,7 +99,7 @@
       "unitAmount": "1"
     }
   },
-  "updateTime": "2026/11/22 20:16:21",
+  "updateTime": "2026/11/23 03:33:37",
   "source": "MoneyBox (明洞換匯所聯盟)",
   "sourceUrl": "https://moneybox-exchange.com/zh-CHT/exchange",
   "apiUrl": "https://moneybox-exchange.com/api/rates",
@@ -172,14 +172,14 @@
     },
     "EUR": {
       "currency": "EUR",
-      "base": 1468.5,
-      "buy": 1472,
+      "base": 1470,
+      "buy": 1475,
       "sell": 1465,
       "spbuy": null,
       "spsell": null,
       "customerBuyForeignRate": 1465,
-      "customerSellForeignRate": 1472,
-      "midMarketRate": 1468.5,
+      "customerSellForeignRate": 1475,
+      "midMarketRate": 1470,
       "quoteUnit": "KRW_PER_FOREIGN",
       "quotePerBaseUnit": 0.00068259
     },
@@ -354,7 +354,7 @@
     }
   },
   "schemaVersion": "2.0",
-  "asOf": "2026-11-22T11:16:21.642Z",
+  "asOf": "2026-11-22T18:33:37.875Z",
   "semanticFieldMapping": {
     "schemaVersion": "2.0",
     "semanticsDoc": "https://app.haotool.org/ratewise/open-data/",
